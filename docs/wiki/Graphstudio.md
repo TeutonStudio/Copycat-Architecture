@@ -35,7 +35,7 @@ Im Formeditor bleibt der große Referenzwürfel **1 × 1 × 1 Block = 16 × 16 �
 
 **Jede Kante** trägt drei orange Marken ohne Zahlenbeschriftung: bei **8 hB** einen längeren, kräftigeren Strich, bei **4 hB** und **12 hB** jeweils einen kürzeren, schmaleren Strich. Die Achsenlegende verwendet durchgehend Minecraft-X/Y/Z: X Ost/West, Y Höhe, Z Süd/Nord. [Einheiten und Ausrichtung](Einheiten-und-Ausrichtung.md)
 
-Der Blockrahmen und seine Marken erscheinen ausschließlich im Copycat-Formgraphen. Die Gebäudevorschau zeigt die Gebäudegeometrie ohne diesen Rahmen. **3D einpassen** setzt die Kamera auf die aktuelle Vorschau zurück. Die Ansicht lässt sich mit der Maus drehen und zoomen. WebGL 2 ist erforderlich.
+Der Blockrahmen und seine Marken erscheinen bei einzelnen Copycat-Formen: im Formgraphen und beim ausgewählten Copycat-Knoten im Gebäudegraphen. Vorschauen von Segmenten, Räumen, Stockwerken und ganzen Gebäuden erhalten keinen Rahmen. Geometrie über mehr als einen Block wird ebenfalls ohne Blockrahmen dargestellt. **3D einpassen** setzt die Kamera auf die aktuelle Vorschau zurück. Die Ansicht lässt sich mit der Maus drehen und zoomen. WebGL 2 ist erforderlich.
 
 ## Seitenleiste anpassen
 

@@ -1,0 +1,3424 @@
+From fd4eec27defe636a9985a229b302f2500fa14823 Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Sun, 8 Nov 2026 11:52:13 +0100
+Subject: [PATCH] Add React Flow graph editor and live previews
+
+---
+ .github/workflows/graph-editor-pages.yml      |   63 +
+ .../copycatarchitect/domain/BaseShapes.kt     |   10 +-
+ .../copycatarchitect/domain/BuildingGraph.kt  |   51 +-
+ .../copycatarchitect/domain/Geometry.kt       |   36 +-
+ .../copycatarchitect/domain/GraphModels.kt    |   58 +
+ .../copycatarchitect/domain/GraphPlatform.kt  |   10 +
+ .../copycatarchitect/domain/NodeGraph.kt      |   20 +-
+ web/.gitignore                                |    3 +
+ web/README.md                                 |   46 +
+ web/build-engine.sh                           |   48 +
+ web/index.html                                |   14 +
+ web/kotlin/GraphEngine.kt                     |  243 +++
+ web/kotlin/GraphPlatform.kt                   |   57 +
+ web/package-lock.json                         | 1387 +++++++++++++++++
+ web/package.json                              |   19 +
+ web/src/Inspector.jsx                         |  192 +++
+ web/src/Preview.jsx                           |  195 +++
+ web/src/main.jsx                              |  316 ++++
+ web/src/model.js                              |   73 +
+ web/src/preview.worker.js                     |    9 +
+ web/src/style.css                             |  113 ++
+ web/test/graph.test.js                        |   71 +
+ web/vite.config.js                            |   10 +
+ 23 files changed, 2967 insertions(+), 77 deletions(-)
+ create mode 100644 .github/workflows/graph-editor-pages.yml
+ create mode 100644 src/main/kotlin/de/teutonstudio/copycatarchitect/domain/GraphModels.kt
+ create mode 100644 src/main/kotlin/de/teutonstudio/copycatarchitect/domain/GraphPlatform.kt
+ create mode 100644 web/.gitignore
+ create mode 100644 web/README.md
+ create mode 100755 web/build-engine.sh
+ create mode 100644 web/index.html
+ create mode 100644 web/kotlin/GraphEngine.kt
+ create mode 100644 web/kotlin/GraphPlatform.kt
+ create mode 100644 web/package-lock.json
+ create mode 100644 web/package.json
+ create mode 100644 web/src/Inspector.jsx
+ create mode 100644 web/src/Preview.jsx
+ create mode 100644 web/src/main.jsx
+ create mode 100644 web/src/model.js
+ create mode 100644 web/src/preview.worker.js
+ create mode 100644 web/src/style.css
+ create mode 100644 web/test/graph.test.js
+ create mode 100644 web/vite.config.js
+
+diff --git a/.github/workflows/graph-editor-pages.yml b/.github/workflows/graph-editor-pages.yml
+new file mode 100644
+index 0000000..abe612e
+--- /dev/null
++++ b/.github/workflows/graph-editor-pages.yml
+@@ -0,0 +1,63 @@
++name: Graphstudio
++
++on:
++  push:
++    branches: [master]
++    paths:
++      - 'web/**'
++      - 'examples/**'
++      - 'src/main/kotlin/de/teutonstudio/copycatarchitect/domain/**'
++      - '.github/workflows/graph-editor-pages.yml'
++  pull_request:
++    paths:
++      - 'web/**'
++      - 'examples/**'
++      - 'src/main/kotlin/de/teutonstudio/copycatarchitect/domain/**'
++      - '.github/workflows/graph-editor-pages.yml'
++  workflow_dispatch:
++
++permissions:
++  contents: read
++
++concurrency:
++  group: graphstudio-${{ github.ref }}
++  cancel-in-progress: true
++
++jobs:
++  build:
++    runs-on: ubuntu-latest
++    defaults:
++      run:
++        working-directory: web
++    steps:
++      - uses: actions/checkout@v5
++      - uses: actions/setup-java@v5
++        with:
++          distribution: temurin
++          java-version: '21'
++      - uses: actions/setup-node@v5
++        with:
++          node-version: '22'
++          cache: npm
++          cache-dependency-path: web/package-lock.json
++      - run: npm ci
++      - run: npm test
++      - run: npm run build
++      - if: github.ref == 'refs/heads/master'
++        uses: actions/upload-pages-artifact@v4
++        with:
++          path: web/dist
++  deploy:
++    if: github.ref == 'refs/heads/master'
++    needs: build
++    runs-on: ubuntu-latest
++    permissions:
++      pages: write
++      id-token: write
++    environment:
++      name: github-pages
++      url: ${{ steps.deployment.outputs.page_url }}
++    steps:
++      - name: Publish Graphstudio
++        id: deployment
++        uses: actions/deploy-pages@v4
+diff --git a/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/BaseShapes.kt b/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/BaseShapes.kt
+index e7c00bd..6186ab5 100644
+--- a/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/BaseShapes.kt
++++ b/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/BaseShapes.kt
+@@ -24,7 +24,7 @@ internal fun rotatePoint(point:P,axis:RotationAxis,quarterTurns:Int,vector:Boole
+     require(axis!=RotationAxis.NORMAL) { "A point rotation needs a world axis" }
+     val edge=if(vector) 0 else 15
+     var p=point
+-    repeat(Math.floorMod(quarterTurns,4)) {
++    repeat((quarterTurns).mod(4)) {
+         p=when(axis) {
+             RotationAxis.X->P(p.x,edge-p.z,p.y)
+             RotationAxis.Y->P(edge-p.z,p.y,p.x)
+@@ -40,18 +40,18 @@ object PartRotations {
+     private val basis=listOf(P(1,0,0),P(0,1,0),P(0,0,1))
+     private data class Key(val part:Part,val axis:RotationAxis,val quarterTurns:Int)
+     private data class Cached(val part:Part?)
+-    private val cache=java.util.concurrent.ConcurrentHashMap<Key,Cached>()
++    private val cache=GraphCache<Key,Cached>()
+     fun normal(part:Part):P = part.oriented(P(0,1,0),true)
+ 
+     fun rotate(part:Part,axis:RotationAxis,quarterTurns:Int):Part? {
+         if(cache.size>2048) cache.clear()
+-        val key=Key(part,axis,Math.floorMod(quarterTurns,4))
++        val key=Key(part,axis,(quarterTurns).mod(4))
+         return cache.computeIfAbsent(key) { Cached(rotateUncached(it.part,it.axis,it.quarterTurns)) }.part
+     }
+ 
+     private fun rotateUncached(part:Part,axis:RotationAxis,quarterTurns:Int):Part? = runCatching {
+         Solid.part(part)
+-        val q=Math.floorMod(quarterTurns,4)
++        val q=(quarterTurns).mod(4)
+         if(q==0) return@runCatching part
+         val normal=normal(part)
+         val worldAxis=if(axis!=RotationAxis.NORMAL) axis else when {
+@@ -84,5 +84,5 @@ object PartRotations {
+         result
+     }.getOrNull()
+ 
+-    private fun distance(a:Int,b:Int):Int = minOf(Math.floorMod(a-b,4),Math.floorMod(b-a,4))
++    private fun distance(a:Int,b:Int):Int = minOf((a-b).mod(4),(b-a).mod(4))
+ }
+diff --git a/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/BuildingGraph.kt b/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/BuildingGraph.kt
+index bf6959b..dc98a18 100644
+--- a/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/BuildingGraph.kt
++++ b/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/BuildingGraph.kt
+@@ -1,8 +1,5 @@
+ package de.teutonstudio.copycatarchitect.domain
+ 
+-import java.util.concurrent.ConcurrentHashMap
+-
+-enum class BuildingKind { COPYCAT, SEGMENT, PATTERN, FLOOR, CEILING, ROOM, STOREY, ROOF, BUILDING }
+ data class BuildingNode(
+     val id:String="",val kind:BuildingKind=BuildingKind.SEGMENT,val name:String="",val x:Int=0,val y:Int=0,
+     val inputs:List<String> = emptyList(),val module:String="window@1",val block:String="",val length:Int=3,val height:Int=4,
+@@ -14,7 +11,7 @@ data class BuildingNode(
+ )
+ /** Optional Copycat sequences grow through spare ports, so an unused tail is not a required input. */
+ internal fun BuildingNode.trimCopycatInputs():BuildingNode {
+-    if(kind !in setOf(BuildingKind.SEGMENT,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.ROOF)) return this
++    if(kind !in GraphModels.expandableBuildingInputs) return this
+     val trimmed=inputs.dropLastWhile(String::isEmpty)
+     return if(trimmed.size==inputs.size) this else copy(inputs=trimmed,offsets=offsets.take(trimmed.size))
+ }
+@@ -40,11 +37,11 @@ data class BuildingGraph(val schema:Int=1,val nodes:List<BuildingNode> = emptyLi
+                 n.copy(walls=if(n.kind==BuildingKind.ROOF && source.isEmpty()) n.walls-edge else n.walls+(edge to source.ifEmpty { "empty_wall" }))
+             }
+             key.startsWith("level:") -> {
+-                val level=key.removePrefix("level:").toInt();require(level in -8..8)
++                val level=key.removePrefix("level:").toInt();require(level in -GraphModels.LEVELS..GraphModels.LEVELS)
+                 n.copy(levels=compactLevels(if(source.isEmpty()) n.levels-level else n.levels+(level to source)))
+             }
+             key.startsWith("in:") -> {
+-                val i=key.removePrefix("in:").toInt();require(i in 0 until 16 && i<=n.inputs.size)
++                val i=key.removePrefix("in:").toInt();require(i in 0 until GraphModels.SOCKETS && i<=n.inputs.size)
+                 val inputs=n.inputs.toMutableList();if(i==inputs.size) inputs+="";inputs[i]=source
+                 n.copy(inputs=inputs,offsets=List(inputs.size) { n.offsets.getOrNull(it) ?: P() })
+             }
+@@ -55,8 +52,8 @@ data class BuildingGraph(val schema:Int=1,val nodes:List<BuildingNode> = emptyLi
+     companion object {
+         fun compactLevels(levels:Map<Int,String>):Map<Int,String> = buildMap {
+             levels[0]?.takeIf { it.isNotEmpty() }?.let { put(0,it) }
+-            levels.filter { it.key>0 && it.value.isNotEmpty() }.toSortedMap().values.forEachIndexed { i,s -> put(i+1,s) }
+-            levels.filter { it.key<0 && it.value.isNotEmpty() }.toSortedMap(reverseOrder()).values.forEachIndexed { i,s -> put(-i-1,s) }
++            levels.filter { it.key>0 && it.value.isNotEmpty() }.entries.sortedBy { it.key }.forEachIndexed { i,e -> put(i+1,e.value) }
++            levels.filter { it.key<0 && it.value.isNotEmpty() }.entries.sortedByDescending { it.key }.forEachIndexed { i,e -> put(-i-1,e.value) }
+         }
+         fun starter()=BuildingGraph(nodes=listOf(
+             BuildingNode("empty_wall",BuildingKind.SEGMENT,"Empty wall",20,20,block="minecraft:air",length=1),
+@@ -87,7 +84,7 @@ data class WallRun(val id:String,val direction:Int,val cells:List<P>) { val leng
+ object RoomGeometry {
+     val directions=listOf(P(0,0,-1),P(1,0,0),P(0,0,1),P(-1,0,0))
+     private data class Shape(val cells:Set<P>,val edges:List<WallRun>,val corners:Map<P,Pair<P,P>>)
+-    private val cache=ConcurrentHashMap<List<Rect>,Shape>()
++    private val cache=GraphCache<List<Rect>,Shape>()
+     private fun shape(rectangles:List<Rect>):Shape=cache.getOrPut(rectangles.toList()) {
+         require(rectangles.size in 1..16) { "A room needs 1–16 rectangles" }
+         rectangles.forEach { require(it.width in 1..32 && it.length in 1..32 && it.x in -32..32 && it.z in -32..32) { "Room rectangle exceeds grid bounds" } }
+@@ -131,28 +128,6 @@ object RoomGeometry {
+         return node.copy(rectangles=rects,walls=walls)
+     }
+ }
+-data class BuildingPort(val key:String,val source:String,val accepts:Set<BuildingKind>,val number:Int=0,val length:Int=0,val height:Int=0)
+-object BuildingPorts {
+-    private val segments=setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN)
+-    private fun copies(n:BuildingNode,expanding:Boolean)=inputs(n,setOf(BuildingKind.COPYCAT),expanding)
+-    private fun inputs(n:BuildingNode,kinds:Set<BuildingKind>,expanding:Boolean)=
+-        (n.inputs+if(expanding && n.inputs.size<16 && n.inputs.none { it.isEmpty() }) listOf("") else emptyList()).mapIndexed { i,s -> BuildingPort("in:$i",s,kinds,i) }
+-    private fun enclosure(n:BuildingNode)=RoomGeometry.edges(n.rectangles).mapIndexed { i,e -> BuildingPort("wall:${e.id}",n.walls[e.id].orEmpty().ifEmpty { "empty_wall" },segments,i,e.length,n.height) }+
+-        listOf(BuildingPort("floor",n.floor,setOf(BuildingKind.FLOOR)),BuildingPort("ceiling",n.ceiling,setOf(BuildingKind.CEILING)),BuildingPort("corner",n.corner,setOf(BuildingKind.COPYCAT)))
+-    fun of(n:BuildingNode,expanding:Boolean=false):List<BuildingPort> = when(n.kind) {
+-        BuildingKind.SEGMENT -> if(n.id=="empty_wall") emptyList() else copies(n,expanding)
+-        BuildingKind.FLOOR,BuildingKind.CEILING -> copies(n,expanding)
+-        BuildingKind.PATTERN -> n.inputs.mapIndexed { i,s -> BuildingPort("in:$i",s,segments,i) }
+-        BuildingKind.ROOM -> enclosure(n)
+-        BuildingKind.STOREY -> if(n.storeyMode=="walls") enclosure(n) else inputs(n,setOf(BuildingKind.ROOM),expanding)
+-        BuildingKind.ROOF -> copies(n,expanding)+(0..3).map { BuildingPort("wall:$it",n.walls[it.toString()].orEmpty(),segments,it) }
+-        BuildingKind.BUILDING -> {
+-            val levels=n.levels.keys+0+(if(expanding) setOf((n.levels.keys.maxOrNull() ?: 0)+1,(n.levels.keys.minOrNull() ?: 0)-1) else emptySet())
+-            listOf(BuildingPort("roof",n.roof,setOf(BuildingKind.ROOF)))+levels.filter { it in -8..8 }.sortedDescending().map { i -> BuildingPort("level:$i",n.levels[i].orEmpty(),setOf(BuildingKind.STOREY),i) }
+-        }
+-        else -> emptyList()
+-    }
+-}
+ data class SegmentCell(val cell:Cell,val overrideRole:String="")
+ data class FixedSegment(val length:Int,val height:Int,val cells:List<SegmentCell>,val air:Boolean=false)
+ data class CompiledRoom(val plan:Plan,val footprint:Set<P>,val shell:Set<P>,val minimum:Int,val maximum:Int,val bottomThickness:Int,val topThickness:Int,val usableHeight:Int)
+@@ -161,24 +136,24 @@ data class StoreyPosition(val level:Int,val base:Int,val minimum:Int,val maximum
+ data class CompiledBuilding(val plan:Plan,val storeys:List<StoreyPosition>)
+ object BuildingGraphCompiler {
+     fun structure(graph:BuildingGraph) {
+-        require(graph.schema==1 && graph.nodes.size in 1..96) { "Building graph needs 1–96 nodes" }
++        require(graph.schema in GraphModels.buildingSchemas && graph.nodes.size in 1..GraphModels.BUILDING_NODES) { "Building graph needs 1–96 nodes" }
+         val nodes=graph.nodes.associateBy { it.id }
+         require(nodes.size==graph.nodes.size && nodes.keys.all { it.matches(Regex("[a-zA-Z0-9_-]{1,36}")) }) { "Building node IDs must be unique" }
+         require(graph.nodes.count { it.kind==BuildingKind.BUILDING }==1) { "Keep exactly one building result" }
+         require(nodes["empty_wall"]?.let { it.kind==BuildingKind.SEGMENT && it.block=="minecraft:air" && it.inputs.isEmpty() }==true) { "Keep the standard Empty wall source" }
+         for(n in graph.nodes) {
+             require(n.preview in listOf("all","walls","floor","ceiling","roof")) { "Invalid building preview filter" }
+-            require(n.name.length<=64 && n.x in -8192..8192 && n.y in -8192..8192 && n.materialMode in MaterialMode.entries) { "Invalid building node" }
++            require(n.name.length<=64 && n.x in GraphModels.coordinates && n.y in GraphModels.coordinates && n.materialMode in MaterialMode.entries) { "Invalid building node" }
+             require(n.role.matches(Regex("[a-zA-Z0-9_-]{1,32}"))) { "Invalid node material role" }
+-            require(n.length in 1..128 && n.height in 1..16 && n.thickness in 1..4 && n.offsets.size<=16 && n.inputs.size<=16) { "Invalid fixed dimensions" }
++            require(n.length in 1..128 && n.height in 1..16 && n.thickness in 1..4 && n.offsets.size<=GraphModels.SOCKETS && n.inputs.size<=GraphModels.SOCKETS) { "Invalid fixed dimensions" }
+             require(n.offsets.all { it.y==0 && it.x in -64..64 && it.z in -64..64 }) { "Room offset exceeds storey bounds" }
+-            if(n.kind==BuildingKind.PATTERN) require(n.inputs.size in 2..16) { "A pattern needs 2–16 ordered segment inputs" }
++            if(n.kind==BuildingKind.PATTERN) require(n.inputs.size >= GraphModels.requiredBuildingInputs(n.kind,n.storeyMode)) { "A pattern needs 2–16 ordered segment inputs" }
+             if(n.kind==BuildingKind.STOREY) {
+                 require(n.storeyMode in listOf("rooms","walls")) { "Invalid storey assembly mode" }
+-                if(n.storeyMode=="rooms") require(n.inputs.size in 1..16) { "A storey needs 1–16 room inputs" }
++                if(n.storeyMode=="rooms") require(n.inputs.size >= GraphModels.requiredBuildingInputs(n.kind,n.storeyMode)) { "A storey needs 1–16 room inputs" }
+             }
+             if(n.kind==BuildingKind.ROOM || n.kind==BuildingKind.STOREY && n.storeyMode=="walls") { RoomGeometry.cells(n.rectangles);require(n.walls.size<=64) }
+-            if(n.kind==BuildingKind.BUILDING) require(n.levels.size<=17 && n.levels.keys.all { it in -8..8 }) { "At most eight upper and eight lower storeys" }
++            if(n.kind==BuildingKind.BUILDING) require(n.levels.size<=17 && n.levels.keys.all { it in -GraphModels.LEVELS..GraphModels.LEVELS }) { "At most eight upper and eight lower storeys" }
+             if(n.kind==BuildingKind.ROOF) require(n.roofType in listOf("flat","gable") && n.ridge in 0..1 && n.overhang in 0..2 && n.walls.keys.all { it in setOf("0","1","2","3") })
+             require(n.finish.isEmpty() || n.kind==BuildingKind.FLOOR && n.finish in CARPETS && n.thickness>=2) { "Carpet floors need a structural layer below the carpet" }
+             for(p in BuildingPorts.of(n)) if(p.source.isNotEmpty()) {
+@@ -322,7 +297,7 @@ object BuildingGraphCompiler {
+             val n=graph.nodes.single { it.kind==BuildingKind.BUILDING };require(n.levels[0]?.isNotEmpty()==true) { "Connect the ground floor" };require(n.levels.values.all { it.isNotEmpty() })
+             val roof=node(n.roof,BuildingKind.ROOF);val r=Resolver();val positions=mutableListOf<StoreyPosition>();var previous:CompiledStorey?=null;var previousBase=0
+             var last:CompiledStorey?=null;var roofBase=0
+-            for((level,source) in n.levels.toSortedMap()) {
++            for((level,source) in n.levels.entries.sortedBy { it.key }) {
+                 val story=storey(source)
+                 val base=previous?.let { previousBase+it.maximum-story.minimum-minOf(it.topThickness,story.bottomThickness) } ?: -story.minimum
+                 story.plan.placements.forEach { r.add(it.copy(pos=it.pos+P(0,base,0)),true) };story.plan.clear.forEach { r.clear(it+P(0,base,0)) }
+diff --git a/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/Geometry.kt b/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/Geometry.kt
+index 35c41bf..a3d93c0 100644
+--- a/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/Geometry.kt
++++ b/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/Geometry.kt
+@@ -1,12 +1,8 @@
+ package de.teutonstudio.copycatarchitect.domain
+ 
+-import java.util.BitSet
+-import java.util.Base64
+-import java.util.concurrent.ConcurrentHashMap
+-
+ data class P(val x: Int = 0, val y: Int = 0, val z: Int = 0) {
+     operator fun plus(p: P) = P(x+p.x,y+p.y,z+p.z)
+-    fun turn(q: Int): P = when (Math.floorMod(q,4)) { 1 -> P(-z,y,x); 2 -> P(-x,y,-z); 3 -> P(z,y,-x); else -> this }
++    fun turn(q: Int): P = when ((q).mod(4)) { 1 -> P(-z,y,x); 2 -> P(-x,y,-z); 3 -> P(z,y,-x); else -> this }
+ }
+ data class Part(val source: String = "copycats:copycat_slice", val turn: Int = 0, val top: Boolean = false,
+                 val size: Int = 1, val offset: P = P(), val tilt: Int = 0, val group: String = "body", val cutMask: String = "", val recipeSource:String="",
+@@ -21,7 +17,7 @@ data class Part(val source: String = "copycats:copycat_slice", val turn: Int = 0
+         return p
+     }
+     fun sourceProperties():Map<String,String> {
+-        val horizontalTurn=Math.floorMod(turn+spin,4)
++        val horizontalTurn=(turn+spin).mod(4)
+         val horizontal=listOf("south","west","north","east")[horizontalTurn]
+         val normal=oriented(P(0,1,0),true)
+         val facing=directionName(normal)
+@@ -102,13 +98,13 @@ object Adapters {
+     ).associateBy { it.source }
+     fun get(id:String) = all[id] ?: error("Unsupported base shape: $id")
+ }
+-class Solid private constructor(private val bits: BitSet) {
+-    constructor():this(BitSet(4096))
++class Solid private constructor(private val bits: GraphBits) {
++    constructor():this(GraphBits(4096))
+     fun has(x:Int,y:Int,z:Int) = x in 0..15 && y in 0..15 && z in 0..15 && bits[x+16*z+256*y]
+     fun count() = bits.cardinality()
+-    fun union(other:Solid) = Solid((bits.clone() as BitSet).apply { or(other.bits) })
+-    fun intersect(other:Solid) = Solid((bits.clone() as BitSet).apply { and(other.bits) })
+-    fun mask():String = Base64.getEncoder().encodeToString(bits.toByteArray())
++    fun union(other:Solid) = Solid((bits.clone() as GraphBits).apply { or(other.bits) })
++    fun intersect(other:Solid) = Solid((bits.clone() as GraphBits).apply { and(other.bits) })
++    fun mask():String = encodeMask(bits.toByteArray())
+     fun rotate(q:Int):Solid = rotate(RotationAxis.Y,q)
+     fun rotate(axis:RotationAxis,q:Int):Solid {
+         require(axis!=RotationAxis.NORMAL) { "A solid rotation needs a world axis" }
+@@ -116,11 +112,11 @@ class Solid private constructor(private val bits: BitSet) {
+         voxels { x,y,z -> val p=rotatePoint(P(x,y,z),axis,q);result.bits.set(p.x+16*p.z+256*p.y) }
+         return result
+     }
+-    fun minus(other:Solid) = Solid((bits.clone() as BitSet).apply { andNot(other.bits) })
+-    fun contains(other:Solid) = (other.bits.clone() as BitSet).apply { andNot(bits) }.isEmpty
++    fun minus(other:Solid) = Solid((bits.clone() as GraphBits).apply { andNot(other.bits) })
++    fun contains(other:Solid) = (other.bits.clone() as GraphBits).apply { andNot(bits) }.isEmpty
+     fun key() = bits.toLongArray().joinToString(",")
+     fun boxes():List<Box> { // Greedy disjoint cuboids; exact render/collision source.
+-        val todo = bits.clone() as BitSet
++        val todo = bits.clone() as GraphBits
+         val out = mutableListOf<Box>()
+         fun has(x:Int,y:Int,z:Int) = x<16 && y<16 && z<16 && todo[x+16*z+256*y]
+         while (!todo.isEmpty) {
+@@ -137,9 +133,9 @@ class Solid private constructor(private val bits: BitSet) {
+     companion object {
+         fun fromMask(mask:String):Solid {
+             require(mask.length in 1..684) { "Invalid cut mask" }
+-            val bytes=Base64.getDecoder().decode(mask)
++            val bytes=decodeMask(mask)
+             require(bytes.size<=512) { "Cut mask exceeds block" }
+-            return Solid(BitSet.valueOf(bytes))
++            return Solid(GraphBits.valueOf(bytes))
+         }
+         fun part(p:Part):Solid {
+             val a=Adapters.get(p.source)
+@@ -166,9 +162,9 @@ class Solid private constructor(private val bits: BitSet) {
+     }
+ }
+ object Geometry {
+-    private val cache=ConcurrentHashMap<List<Part>,Solid>()
++    private val cache=GraphCache<List<Part>,Solid>()
+     private data class ResolvedKey(val parts:List<Part>,val groups:List<MaterialGroup>)
+-    private val resolvedCache=ConcurrentHashMap<ResolvedKey,ResolvedGeometry>()
++    private val resolvedCache=GraphCache<ResolvedKey,ResolvedGeometry>()
+     fun validateGroups(groups:List<MaterialGroup>,parts:List<Part>) {
+         require(groups.size in 1..8 && groups.map { it.id }.distinct().size==groups.size) { "A form needs 1–8 uniquely named material groups" }
+         require(groups.map { it.priority }.distinct().size==groups.size) { "Material groups need distinct foreground priorities" }
+@@ -235,7 +231,7 @@ object Geometry {
+             if(visible.count()==0) null else if(visible.contains(source)) p else p.copy(cutMask=visible.mask())
+         }
+     }
+-    fun rotate(parts:List<Part>,q:Int) = parts.map { p -> p.copy(turn=Math.floorMod(p.turn+q,4),offset=p.offset.turn(q),cutMask=if(p.cutMask.isEmpty()) "" else Solid.fromMask(p.cutMask).rotate(q).mask()) }
++    fun rotate(parts:List<Part>,q:Int) = parts.map { p -> p.copy(turn=(p.turn+q).mod(4),offset=p.offset.turn(q),cutMask=if(p.cutMask.isEmpty()) "" else Solid.fromMask(p.cutMask).rotate(q).mask()) }
+ }
+ class ResolvedGeometry(val solid:Solid,val owned:Map<String,Solid>) {
+     private val owners=Array<String?>(4096) { null }.apply { owned.forEach { (id,s) -> s.voxels { x,y,z -> this[x+16*z+256*y]=id } } }
+@@ -245,7 +241,7 @@ class ResolvedGeometry(val solid:Solid,val owned:Map<String,Solid>) {
+         owned.forEach { (id,s) -> val material=surfaces[id] ?: base;result[material]=(result[material] ?: Solid()).union(s) }
+         return result
+     }
+-    fun visualKey(base:String,surfaces:Map<String,String>)=materialSolids(base,surfaces).toSortedMap().entries.joinToString(";") { it.key+":"+it.value.key() }
++    fun visualKey(base:String,surfaces:Map<String,String>)=materialSolids(base,surfaces).entries.sortedBy { it.key }.joinToString(";") { it.key+":"+it.value.key() }
+ }
+ // Integer extrusion units: 1 zinc ingot = 256; never round fractional ingots away.
+ // Costs mirror the pinned source cutting output, not visible volume.
+diff --git a/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/GraphModels.kt b/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/GraphModels.kt
+new file mode 100644
+index 0000000..1b056c1
+--- /dev/null
++++ b/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/GraphModels.kt
+@@ -0,0 +1,58 @@
++package de.teutonstudio.copycatarchitect.domain
++
++enum class NodeKind { INPUT, UNION, INTERSECTION, DIFFERENCE, SYMMETRIC_DIFFERENCE, ROTATE, ROTATION, OUTPUT }
++enum class MaterialMode { SEPARATED, GROUPED }
++enum class BuildingKind { COPYCAT, SEGMENT, PATTERN, FLOOR, CEILING, ROOM, STOREY, ROOF, BUILDING }
++
++/** Shared graph contract for the Minecraft and browser editors. */
++object GraphModels {
++    const val FORM_NODES = 64
++    const val FORM_SOURCES = 32
++    const val BUILDING_NODES = 96
++    const val SOCKETS = 16
++    const val LEVELS = 8
++    val formSchemas = 1..2
++    val buildingSchemas = 1..1
++    val coordinates = -8192..8192
++
++    fun inputs(kind: NodeKind): IntRange = when (kind) {
++        NodeKind.INPUT, NodeKind.ROTATION -> 0..0
++        NodeKind.OUTPUT -> 1..1
++        NodeKind.DIFFERENCE, NodeKind.ROTATE -> 2..2
++        NodeKind.UNION, NodeKind.INTERSECTION, NodeKind.SYMMETRIC_DIFFERENCE -> 2..SOCKETS
++    }
++
++    fun accepts(target: NodeKind, slot: Int, source: NodeKind): Boolean =
++        source != NodeKind.OUTPUT && (source == NodeKind.ROTATION) == (target == NodeKind.ROTATE && slot == 1)
++
++    fun requiredBuildingInputs(kind: BuildingKind, storeyMode: String): Int = when (kind) {
++        BuildingKind.PATTERN -> 2
++        BuildingKind.STOREY -> if (storeyMode == "rooms") 1 else 0
++        else -> 0
++    }
++
++    val expandableBuildingInputs = setOf(BuildingKind.SEGMENT, BuildingKind.FLOOR, BuildingKind.CEILING, BuildingKind.ROOF)
++}
++
++data class BuildingPort(val key:String,val source:String,val accepts:Set<BuildingKind>,val number:Int=0,val length:Int=0,val height:Int=0)
++object BuildingPorts {
++    private val segments=setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN)
++    private fun copies(n:BuildingNode,expanding:Boolean)=inputs(n,setOf(BuildingKind.COPYCAT),expanding)
++    private fun inputs(n:BuildingNode,kinds:Set<BuildingKind>,expanding:Boolean)=
++        (n.inputs+if(expanding && n.inputs.size<GraphModels.SOCKETS && n.inputs.none { it.isEmpty() }) listOf("") else emptyList()).mapIndexed { i,s -> BuildingPort("in:$i",s,kinds,i) }
++    private fun enclosure(n:BuildingNode)=RoomGeometry.edges(n.rectangles).mapIndexed { i,e -> BuildingPort("wall:${e.id}",n.walls[e.id].orEmpty().ifEmpty { "empty_wall" },segments,i,e.length,n.height) }+
++        listOf(BuildingPort("floor",n.floor,setOf(BuildingKind.FLOOR)),BuildingPort("ceiling",n.ceiling,setOf(BuildingKind.CEILING)),BuildingPort("corner",n.corner,setOf(BuildingKind.COPYCAT)))
++    fun of(n:BuildingNode,expanding:Boolean=false):List<BuildingPort> = when(n.kind) {
++        BuildingKind.SEGMENT -> if(n.id=="empty_wall") emptyList() else copies(n,expanding)
++        BuildingKind.FLOOR,BuildingKind.CEILING -> copies(n,expanding)
++        BuildingKind.PATTERN -> n.inputs.mapIndexed { i,s -> BuildingPort("in:$i",s,segments,i) }
++        BuildingKind.ROOM -> enclosure(n)
++        BuildingKind.STOREY -> if(n.storeyMode=="walls") enclosure(n) else inputs(n,setOf(BuildingKind.ROOM),expanding)
++        BuildingKind.ROOF -> copies(n,expanding)+(0..3).map { BuildingPort("wall:$it",n.walls[it.toString()].orEmpty(),segments,it) }
++        BuildingKind.BUILDING -> {
++            val levels=n.levels.keys+0+(if(expanding) setOf((n.levels.keys.maxOrNull() ?: 0)+1,(n.levels.keys.minOrNull() ?: 0)-1) else emptySet())
++            listOf(BuildingPort("roof",n.roof,setOf(BuildingKind.ROOF)))+levels.filter { it in -GraphModels.LEVELS..GraphModels.LEVELS }.sortedDescending().map { i -> BuildingPort("level:$i",n.levels[i].orEmpty(),setOf(BuildingKind.STOREY),i) }
++        }
++        else -> emptyList()
++    }
++}
+diff --git a/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/GraphPlatform.kt b/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/GraphPlatform.kt
+new file mode 100644
+index 0000000..234c9fc
+--- /dev/null
++++ b/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/GraphPlatform.kt
+@@ -0,0 +1,10 @@
++package de.teutonstudio.copycatarchitect.domain
++
++import java.util.Base64
++import java.util.BitSet
++import java.util.concurrent.ConcurrentHashMap
++
++internal typealias GraphBits = BitSet
++internal typealias GraphCache<K, V> = ConcurrentHashMap<K, V>
++internal fun encodeMask(bytes: ByteArray): String = Base64.getEncoder().encodeToString(bytes)
++internal fun decodeMask(mask: String): ByteArray = Base64.getDecoder().decode(mask)
+diff --git a/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/NodeGraph.kt b/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/NodeGraph.kt
+index 8dfdfe5..8df6a64 100644
+--- a/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/NodeGraph.kt
++++ b/src/main/kotlin/de/teutonstudio/copycatarchitect/domain/NodeGraph.kt
+@@ -1,8 +1,6 @@
+ package de.teutonstudio.copycatarchitect.domain
+ 
+ /** Edges point to source node IDs. Empty strings are unconnected editor sockets. */
+-enum class NodeKind { INPUT, UNION, INTERSECTION, DIFFERENCE, SYMMETRIC_DIFFERENCE, ROTATE, ROTATION, OUTPUT }
+-enum class MaterialMode { SEPARATED, GROUPED }
+ data class GraphNode(val id:String="",val kind:NodeKind=NodeKind.INPUT,val inputs:List<String> = emptyList(),
+                      val part:Part=Part(),val x:Int=0,val y:Int=0,
+                      val materialMode:MaterialMode=MaterialMode.SEPARATED,val materialGroup:String="",val previewGroup:String="",
+@@ -30,7 +28,7 @@ data class NodeGraph(val schema:Int=2,val nodes:List<GraphNode> = listOf(GraphNo
+ /** Boolean operations preserve leaf provenance, so materials and paid recipes follow the surviving solids. */
+ object GraphCompiler {
+     private data class Key(val graph:NodeGraph,val groups:List<MaterialGroup>)
+-    private val cache=java.util.concurrent.ConcurrentHashMap<Key,List<Part>>()
++    private val cache=GraphCache<Key,List<Part>>()
+     private fun supportsInputGroups(kind:NodeKind)=kind==NodeKind.UNION || kind==NodeKind.SYMMETRIC_DIFFERENCE
+     /** Empty saved assignments inherit the connected branch, including legacy source materials. */
+     fun inputMaterialGroups(graph:NodeGraph,node:GraphNode,slot:Int,groups:List<MaterialGroup> = DEFAULT_GROUPS):Set<String> {
+@@ -65,32 +63,26 @@ object GraphCompiler {
+             node.inputs.indices.map { inputMaterialGroups(graph,node,it,groups) }.let { values -> values.all { it.size==1 } && values.distinct().size==1 }
+ 
+     fun structure(graph:NodeGraph,groups:List<MaterialGroup>) {
+-        require(graph.schema in 1..2 && graph.nodes.size in 1..64) { "Node graph needs 1–64 nodes (schema 1–2)" }
++        require(graph.schema in GraphModels.formSchemas && graph.nodes.size in 1..GraphModels.FORM_NODES) { "Node graph needs 1–64 nodes (schema 1–2)" }
+         val nodes=graph.nodes.associateBy { it.id }
+         require(nodes.size==graph.nodes.size && nodes.keys.all { it.matches(Regex("[a-zA-Z0-9_-]{1,36}")) }) { "Node IDs must be unique" }
+         require(graph.nodes.count { it.kind==NodeKind.OUTPUT }==1) { "Node graph needs exactly one result node" }
+         val leaves=graph.nodes.filter { it.kind==NodeKind.INPUT }
+-        require(leaves.size<=32) { "At most 32 source nodes" };Geometry.validateGroups(groups,leaves.map { it.part })
++        require(leaves.size<=GraphModels.FORM_SOURCES) { "At most 32 source nodes" };Geometry.validateGroups(groups,leaves.map { it.part })
+         graph.nodes.forEach { n ->
+             require(n.materialMode in MaterialMode.entries) { "Invalid node material mode" }
+             require(n.materialGroup.isEmpty() || groups.any { it.id==n.materialGroup }) { "Unknown node material group" }
+             require(n.previewGroup.isEmpty() || groups.any { it.id==n.previewGroup }) { "Unknown preview material group" }
+             require(n.inputGroups.size<=n.inputs.size && n.inputGroups.all { id -> id.isEmpty() || groups.any { it.id==id } }) { "Unknown input material group" }
+             require(n.rotationAxis in RotationAxis.entries && n.quarterTurns in 0..3) { "Invalid node rotation" }
+-            require(n.x in -8192..8192 && n.y in -8192..8192) { "Node position exceeds graph bounds" }
+-            require(when(n.kind) {
+-                NodeKind.INPUT,NodeKind.ROTATION -> n.inputs.isEmpty()
+-                NodeKind.OUTPUT -> n.inputs.size==1
+-                NodeKind.DIFFERENCE,NodeKind.ROTATE -> n.inputs.size==2
+-                NodeKind.UNION,NodeKind.INTERSECTION,NodeKind.SYMMETRIC_DIFFERENCE -> n.inputs.size in 2..16
+-            }) { "Invalid socket count on ${n.id}" }
++            require(n.x in GraphModels.coordinates && n.y in GraphModels.coordinates) { "Node position exceeds graph bounds" }
++            require(n.inputs.size in GraphModels.inputs(n.kind)) { "Invalid socket count on ${n.id}" }
+             if(n.kind==NodeKind.INPUT) {
+                 require(n.part.cutMask.isEmpty() && n.part.recipeSource.isEmpty()) { "Source nodes must use standard Copycat shapes" };Solid.part(n.part)
+             }
+             n.inputs.forEachIndexed { slot,input -> if(input.isNotEmpty()) {
+                 require(nodes[input]!=null && nodes[input]?.kind!=NodeKind.OUTPUT) { "Unknown or invalid source at ${n.id}" }
+-                val rotationSocket=n.kind==NodeKind.ROTATE && slot==1
+-                require((nodes.getValue(input).kind==NodeKind.ROTATION)==rotationSocket) { "Incompatible socket types at ${n.id}" }
++                require(GraphModels.accepts(n.kind,slot,nodes.getValue(input).kind)) { "Incompatible socket types at ${n.id}" }
+             } }
+         }
+         val active=mutableSetOf<String>();val done=mutableSetOf<String>()
+diff --git a/web/.gitignore b/web/.gitignore
+new file mode 100644
+index 0000000..5d77c42
+--- /dev/null
++++ b/web/.gitignore
+@@ -0,0 +1,3 @@
++/node_modules/
++/dist/
++/src/generated/
+diff --git a/web/README.md b/web/README.md
+new file mode 100644
+index 0000000..5e76db5
+--- /dev/null
++++ b/web/README.md
+@@ -0,0 +1,46 @@
++# Copycat Architect Graphstudio
++
++Browsereditor für Form- und Gebäudegraphen. Die Beispieldateien stammen aus
++[`examples/`](../examples). Die beiden Editoren verwalten getrennte Entwürfe.
++
++## Start
++
++Benötigt werden Node.js 22.12 oder neuer, Java 21, Bash und curl.
++
++```sh
++cd web
++npm ci
++npm test
++npm run dev
++```
++
++`npm run build` erzeugt die statische Website in `web/dist`. Der Kotlin-Compiler
++und dessen Laufzeit werden in der gepinnten Version aus Maven Central geholt.
++Die generierten Dateien gehören zum Build.
++
++## Austausch mit Minecraft
++
++Form- und Gebäudedokumente verwenden die JSON-Felder des Mods. React Flow
++übersetzt Verbindungen über die gemeinsame Kotlin-Domänenlogik in diese Felder.
++`GraphModels.kt` definiert die Knotentypen, Graphgrenzen und Anschlüsse beider
++Editoren. Die Gebäudeanschlüsse ergeben sich aus dem Grundriss, den Eingaben
++und den Geschossen. `DiagramEdits` wendet Verbindungsänderungen für
++beide Oberflächen an.
++
++Der Web Worker führt `GraphCompiler` und `BuildingGraphCompiler` aus. Die
++3D-Ansicht zeigt die berechneten Rasterformen und unterscheidet Materialien
++farblich. Minecraft-Texturen und modabhängige Blockmodelle erscheinen als
++Farbersatz. Die Bibliothek lässt sich als JSON mit `forms` und `modules` öffnen.
++Für ältere Gebäudedokumente wird ein in Minecraft erzeugter Gebäudegraph benötigt.
++
++Formexporte enthalten auch das frisch berechnete `parts`-Ergebnis. Bei Gebäuden
++können unvollständige Entwürfe exportiert werden. Zum Bauen müssen die Referenzen
++auflösbar und der Gebäudeplan gültig sein. Die Minecraft-Zwischenablage
++akzeptiert Graphdokumente bis 28.000 Zeichen.
++
++## GitHub Pages
++
++In den Repository-Einstellungen unter **Pages → Source** die Option
++**GitHub Actions** wählen. Der Workflow **Graphstudio** baut den Editor und
++veröffentlicht erfolgreiche Builds von `master`. Die Wiki-Seite
++**Graphstudio** verlinkt die Website und erläutert den Dateiaustausch.
+diff --git a/web/build-engine.sh b/web/build-engine.sh
+new file mode 100755
+index 0000000..e9fa5c5
+--- /dev/null
++++ b/web/build-engine.sh
+@@ -0,0 +1,48 @@
++#!/usr/bin/env bash
++set -euo pipefail
++cd "$(dirname "$0")"
++version=2.2.20
++cache="$PWD/.tools/kotlin-$version"
++out="$PWD/src/generated"
++mkdir -p "$cache" "$out"
++fetch() {
++    local group=$1 name=$2 version=$3 extension=$4 file partial
++    file="$cache/$name-$version.$extension"
++    if [[ ! -s "$file" ]]; then
++        partial="$(mktemp "$cache/.download.XXXXXX")"
++        curl --fail --silent --show-error --retry 2 --location \
++            "https://repo.maven.apache.org/maven2/$group/$name/$version/$name-$version.$extension" -o "$partial" || { rm -f "$partial"; return 1; }
++        mv "$partial" "$file"
++    fi
++}
++pids=()
++fetch org/jetbrains/kotlin kotlin-compiler-embeddable "$version" jar & pids+=("$!")
++fetch org/jetbrains/kotlin kotlin-stdlib "$version" jar & pids+=("$!")
++fetch org/jetbrains/kotlin kotlin-script-runtime "$version" jar & pids+=("$!")
++fetch org/jetbrains/kotlin kotlin-daemon-embeddable "$version" jar & pids+=("$!")
++fetch org/jetbrains/kotlin kotlin-reflect 1.6.10 jar & pids+=("$!")
++fetch org/jetbrains/kotlinx kotlinx-coroutines-core-jvm 1.8.0 jar & pids+=("$!")
++fetch org/jetbrains/kotlin kotlin-stdlib-js "$version" klib & pids+=("$!")
++for pid in "${pids[@]}"; do wait "$pid"; done
++
++domain=../src/main/kotlin/de/teutonstudio/copycatarchitect/domain
++sources=("$domain"/{Geometry,BaseShapes,GraphModels,DiagramEdits,NodeGraph,BuildingGraph,Planning}.kt kotlin/*.kt)
++stdlib="$cache/kotlin-stdlib-js-$version.klib"
++target="$out/engine.mjs"
++if [[ -f "$target" ]]; then
++    rebuild=false
++    for file in "${sources[@]}" "$0" "$stdlib"; do
++        if [[ "$file" -nt "$target" ]]; then rebuild=true; break; fi
++    done
++    if [[ "$rebuild" == false ]]; then exit 0; fi
++fi
++work=$(mktemp -d)
++trap 'rm -rf "$work"' EXIT
++compiler=(java -Xmx768m -cp "$cache/*" org.jetbrains.kotlin.cli.js.K2JSCompiler)
++"${compiler[@]}" -Xir-produce-klib-file -libraries "$stdlib" \
++    -ir-output-dir "$work" -ir-output-name domain "${sources[@]}"
++"${compiler[@]}" -Xir-produce-js -Xir-dce -module-kind es -target es2015 -main noCall \
++    -libraries "$stdlib" -Xinclude="$work/domain.klib" -ir-output-dir "$work/js" -ir-output-name engine
++partial="$(mktemp "$out/.engine.XXXXXX")"
++cp "$work/js/engine.mjs" "$partial"
++mv "$partial" "$target"
+diff --git a/web/index.html b/web/index.html
+new file mode 100644
+index 0000000..669de00
+--- /dev/null
++++ b/web/index.html
+@@ -0,0 +1,14 @@
++<!doctype html>
++<html lang="de">
++  <head>
++    <meta charset="UTF-8">
++    <meta name="viewport" content="width=device-width, initial-scale=1">
++    <meta name="description" content="Formen und Gebäude aus Copycat Architect im Browser bearbeiten und in 3D prüfen.">
++    <meta name="theme-color" content="#10181f">
++    <title>Graphstudio · Copycat Architect</title>
++  </head>
++  <body>
++    <div id="root"></div>
++    <script type="module" src="/src/main.jsx"></script>
++  </body>
++</html>
+diff --git a/web/kotlin/GraphEngine.kt b/web/kotlin/GraphEngine.kt
+new file mode 100644
+index 0000000..830fe41
+--- /dev/null
++++ b/web/kotlin/GraphEngine.kt
+@@ -0,0 +1,243 @@
++@file:OptIn(ExperimentalJsExport::class)
++
++package de.teutonstudio.copycatarchitect.web
++
++import de.teutonstudio.copycatarchitect.domain.*
++import kotlin.js.ExperimentalJsExport
++import kotlin.js.JsExport
++import kotlin.js.Json
++import kotlin.js.json
++
++private fun int(obj: dynamic, key: String, default: Int): Int {
++    val value = obj[key]
++    if (value == null) return default
++    require(jsTypeOf(value) == "number" && isInteger(value)) { "$key must be an integer" }
++    return value.unsafeCast<Int>()
++}
++private fun string(obj: dynamic, key: String, default: String = ""): String {
++    val value = obj[key] ?: return default
++    require(jsTypeOf(value) == "string") { "$key must be a string" }
++    return value.unsafeCast<String>()
++}
++private fun bool(obj: dynamic, key: String, default: Boolean = false): Boolean {
++    val value = obj[key] ?: return default
++    require(jsTypeOf(value) == "boolean") { "$key must be a boolean" }
++    return value.unsafeCast<Boolean>()
++}
++private fun array(obj: dynamic, key: String): Array<dynamic>? {
++    val value = obj[key] ?: return null
++    require(isArray(value)) { "$key must be an array" }
++    return value.unsafeCast<Array<dynamic>>()
++}
++private fun isInteger(value: dynamic): Boolean = js("Number.isInteger(value) && value >= -2147483648 && value <= 2147483647")
++private fun isArray(value: dynamic): Boolean = js("Array.isArray(value)")
++private fun keys(value: dynamic): Array<String> {
++    require(jsTypeOf(value) == "object" && !isArray(value)) { "Expected a JSON object" }
++    return js("Object.keys(value)").unsafeCast<Array<String>>()
++}
++private fun <T> map(value: dynamic, read: (dynamic, String) -> T): Map<String, T> =
++    if (value == null) emptyMap() else keys(value).associateWith { key -> read(value, key) }
++private fun Map<String, String>.asJson(): Json = json(*entries.map { it.key to it.value }.toTypedArray())
++
++private fun point(v: dynamic): P = if (v == null) P() else P(int(v, "x", 0), int(v, "y", 0), int(v, "z", 0))
++private fun P.jsPoint() = json("x" to x, "y" to y, "z" to z)
++private fun rect(v: dynamic): Rect = Rect(int(v, "x", 0), int(v, "z", 0), int(v, "width", 11), int(v, "length", 9))
++private fun Rect.jsRect() = json("x" to x, "z" to z, "width" to width, "length" to length)
++
++private fun part(v: dynamic): Part = if (v == null) Part() else Part(
++    string(v, "source", Part().source), int(v, "turn", 0), bool(v, "top"), int(v, "size", 1),
++    point(v.offset), int(v, "tilt", 0), string(v, "group", "body"), string(v, "cutMask"), string(v, "recipeSource"),
++    int(v, "spin", 0), int(v, "discCut", 0)
++)
++private fun Part.jsPart() = json(
++    "source" to source, "turn" to turn, "top" to top, "size" to size, "offset" to offset.jsPoint(),
++    "tilt" to tilt, "group" to group, "cutMask" to cutMask, "recipeSource" to recipeSource,
++    "spin" to spin, "discCut" to discCut
++)
++private fun groups(v: dynamic): List<MaterialGroup> = array(v, "groups")?.map {
++    MaterialGroup(string(it, "id", "body"), string(it, "name", "Body"), string(it, "role", "surface"), int(it, "priority", 0))
++} ?: DEFAULT_GROUPS
++private fun strings(v: dynamic, key: String): List<String> = array(v, key)?.map {
++    require(jsTypeOf(it) == "string") { "$key must contain strings" }
++    it.unsafeCast<String>()
++}.orEmpty()
++private fun formNode(v: dynamic): GraphNode = GraphNode(
++    string(v, "id"), NodeKind.valueOf(string(v, "kind", "INPUT")), strings(v, "inputs"), part(v.part),
++    int(v, "x", 0), int(v, "y", 0), MaterialMode.valueOf(string(v, "materialMode", "SEPARATED")),
++    string(v, "materialGroup"), string(v, "previewGroup"), strings(v, "inputGroups"),
++    RotationAxis.valueOf(string(v, "rotationAxis", "NORMAL")), int(v, "quarterTurns", 0)
++)
++private fun GraphNode.jsNode() = json(
++    "id" to id, "kind" to kind.name, "inputs" to inputs.toTypedArray(), "part" to part.jsPart(),
++    "x" to x, "y" to y, "materialMode" to materialMode.name, "materialGroup" to materialGroup,
++    "previewGroup" to previewGroup, "inputGroups" to inputGroups.toTypedArray(),
++    "rotationAxis" to rotationAxis.name, "quarterTurns" to quarterTurns
++)
++private fun formGraph(v: dynamic): NodeGraph = NodeGraph(int(v, "schema", 2), array(v, "nodes")?.map(::formNode).orEmpty())
++private fun form(v: dynamic): Form = Form(
++    int(v, "schema", 3), string(v, "id"), int(v, "version", 1), string(v, "name", "Form"),
++    array(v, "parts")?.map(::part) ?: listOf(Part()), groups(v), if (v.graph == null) null else formGraph(v.graph)
++)
++private fun buildingNode(v: dynamic): BuildingNode = BuildingNode(
++    id = string(v, "id"), kind = BuildingKind.valueOf(string(v, "kind", "SEGMENT")), name = string(v, "name"),
++    x = int(v, "x", 0), y = int(v, "y", 0), inputs = strings(v, "inputs"), module = string(v, "module", "window@1"),
++    block = string(v, "block"), length = int(v, "length", 3), height = int(v, "height", 4),
++    rectangles = array(v, "rectangles")?.map(::rect) ?: BuildingNode().rectangles,
++    walls = map(v.walls) { obj, key -> string(obj, key) }, floor = string(v, "floor"), ceiling = string(v, "ceiling"),
++    offsets = array(v, "offsets")?.map(::point).orEmpty(), form = string(v, "form", "full@1"), thickness = int(v, "thickness", 1),
++    occupied = bool(v, "occupied"), finish = string(v, "finish"),
++    levels = map(v.levels) { obj, key -> string(obj, key) }.mapKeys { it.key.toInt() },
++    roof = string(v, "roof"), roofType = string(v, "roofType", "flat"), ridge = int(v, "ridge", 0),
++    overhang = int(v, "overhang", 0), materialMode = MaterialMode.valueOf(string(v, "materialMode", "SEPARATED")),
++    role = string(v, "role", "wall"), preview = string(v, "preview", "all"), storeyMode = string(v, "storeyMode", "rooms"),
++    corner = string(v, "corner")
++)
++private fun BuildingNode.jsNode() = json(
++    "id" to id, "kind" to kind.name, "name" to name, "x" to x, "y" to y, "inputs" to inputs.toTypedArray(),
++    "module" to module, "block" to block, "length" to length, "height" to height,
++    "rectangles" to rectangles.map { it.jsRect() }.toTypedArray(), "walls" to walls.asJson(), "floor" to floor,
++    "ceiling" to ceiling, "offsets" to offsets.map { it.jsPoint() }.toTypedArray(), "form" to form,
++    "thickness" to thickness, "occupied" to occupied, "finish" to finish,
++    "levels" to levels.mapKeys { it.key.toString() }.asJson(), "roof" to roof, "roofType" to roofType,
++    "ridge" to ridge, "overhang" to overhang, "materialMode" to materialMode.name, "role" to role, "preview" to preview,
++    "storeyMode" to storeyMode, "corner" to corner
++)
++private fun buildingGraph(v: dynamic) = BuildingGraph(int(v, "schema", 1), array(v, "nodes")?.map(::buildingNode).orEmpty())
++private fun building(v: dynamic) = Building(
++    schema = int(v, "schema", 2), id = string(v, "id"), version = int(v, "version", 1), name = string(v, "name", "L House"),
++    palette = if (v.palette == null) Building().palette else map(v.palette) { obj, key -> string(obj, key) },
++    graph = buildingGraph(v.graph)
++)
++private fun module(v: dynamic): Module {
++    val width = int(v, "width", 3)
++    return Module(int(v, "schema", 1), string(v, "id"), int(v, "version", 1), string(v, "name", "Module"), width,
++        int(v, "height", 4), int(v, "depth", 1), array(v, "cells")?.map {
++            Cell(point(it.pos), string(it, "form", "full@1"), string(it, "block"), string(it, "role", "wall"),
++                int(it, "turn", 0), bool(it, "empty"), bool(it, "flexible"))
++        }.orEmpty(), int(v, "minWidth", width), int(v, "maxWidth", width))
++}
++
++@JsExport
++fun graphModels(): Json = json(
++    "form" to NodeKind.entries.map { kind -> json("kind" to kind.name,
++        "min" to GraphModels.inputs(kind).first, "max" to GraphModels.inputs(kind).last) }.toTypedArray(),
++    "building" to BuildingKind.entries.map { it.name }.toTypedArray(),
++    "shapes" to Adapters.all.values.map { json("id" to it.source, "name" to it.name, "max" to it.max, "tiltable" to it.tiltable) }.toTypedArray(),
++    "rotationAxes" to RotationAxis.entries.map { it.name }.toTypedArray(),
++    "materialModes" to MaterialMode.entries.map { it.name }.toTypedArray(),
++    "carpets" to BuildingGraphCompiler.CARPETS.toTypedArray(),
++    "formNodes" to GraphModels.FORM_NODES, "formSources" to GraphModels.FORM_SOURCES,
++    "buildingNodes" to GraphModels.BUILDING_NODES, "sockets" to GraphModels.SOCKETS,
++    "positionMin" to GraphModels.coordinates.first, "positionMax" to GraphModels.coordinates.last
++)
++
++@JsExport
++fun inspectGraph(isBuilding: Boolean, document: dynamic): Array<Json> {
++    if (isBuilding) {
++        val graph = buildingGraph(document.graph)
++        BuildingGraphCompiler.structure(graph)
++        return graph.nodes.map { n ->
++            json("node" to n.jsNode(), "ports" to BuildingPorts.of(n, true).map {
++                json("id" to it.key, "source" to it.source, "accepts" to it.accepts.map { kind -> kind.name }.toTypedArray(),
++                    "length" to it.length, "height" to it.height)
++            }.toTypedArray())
++        }.toTypedArray()
++    }
++    val graph = formGraph(document.graph)
++    GraphCompiler.structure(graph, groups(document))
++    return graph.nodes.map { n ->
++        json("node" to n.jsNode(), "ports" to n.inputs.mapIndexed { index, source ->
++            json("id" to index.toString(), "source" to source, "accepts" to NodeKind.entries
++                .filter { GraphModels.accepts(n.kind, index, it) }.map { it.name }.toTypedArray())
++        }.toTypedArray())
++    }.toTypedArray()
++}
++
++@JsExport
++fun applyDiagram(isBuilding: Boolean, document: dynamic, positions: Array<dynamic>, wires: Array<dynamic>): Array<Json> {
++    val layout = positions.map { DiagramPosition(string(it, "id"), int(it, "x", 0), int(it, "y", 0)) }
++    val connections = wires.map { DiagramConnection(string(it, "source"), string(it, "target"), string(it, "port")) }
++    return if (isBuilding) DiagramEdits.building(buildingGraph(document.graph), layout, connections).nodes.map { it.jsNode() }.toTypedArray()
++    else DiagramEdits.shape(formGraph(document.graph), groups(document), layout, connections).nodes.map { it.jsNode() }.toTypedArray()
++}
++
++@JsExport
++fun newNode(isBuilding: Boolean, kind: String, id: String, x: Int, y: Int): Json {
++    if (isBuilding) {
++        val type = BuildingKind.valueOf(kind)
++        val inputs = List(GraphModels.requiredBuildingInputs(type, "rooms")) { "" }
++        val node = BuildingNode(id = id, kind = type, x = x, y = y, inputs = inputs,
++            module = "", role = if (type == BuildingKind.ROOF) "roof" else "wall")
++        return node.jsNode()
++    }
++    val type = NodeKind.valueOf(kind)
++    return GraphNode(id, type, List(GraphModels.inputs(type).first) { "" }, x = x, y = y).jsNode()
++}
++
++@JsExport
++fun adaptRectangles(previous: dynamic, next: dynamic): Json {
++    val old = buildingNode(previous)
++    val changed = buildingNode(next)
++    return RoomGeometry.reshape(old.copy(walls = changed.walls), changed.rectangles).jsNode()
++}
++
++@JsExport
++fun prepareForm(document: dynamic): Array<Json> {
++    val value = form(document)
++    return NodeGraph.fromParts(Geometry.validate(value).parts).nodes.map { it.jsNode() }.toTypedArray()
++}
++
++@JsExport
++fun compileForm(document: dynamic): Array<Json> = Geometry.validate(form(document)).parts.map { it.jsPart() }.toTypedArray()
++
++private data class MeshKey(val parts: List<Part>, val groups: List<MaterialGroup>, val material: String,
++    val surfaces: Map<String, String>, val block: String, val component: String)
++
++private fun boxes(solid: Solid) = solid.boxes().map { box ->
++    intArrayOf(box.x, box.y, box.z, box.maxX, box.maxY, box.maxZ)
++}.toTypedArray()
++private fun solidMesh(material: String, solid: Solid, positions: List<P>, component: String) = json(
++    "material" to material, "boxes" to boxes(solid), "positions" to positions.map { intArrayOf(it.x, it.y, it.z) }.toTypedArray(),
++    "component" to component
++)
++private fun fullBlock(key: MeshKey, positions: List<P>) = json(
++    "material" to key.block, "boxes" to arrayOf(intArrayOf(0, 0, 0, 16, 16, 16)),
++    "positions" to positions.map { intArrayOf(it.x, it.y, it.z) }.toTypedArray(), "component" to key.component
++)
++
++@JsExport
++fun previewGraph(isBuilding: Boolean, document: dynamic, library: dynamic, selected: String): Json {
++    if (!isBuilding) {
++        val f = Geometry.validate(form(document))
++        val filter = f.graph?.nodes?.firstOrNull { it.kind == NodeKind.OUTPUT }?.previewGroup.orEmpty()
++        val owned = Geometry.resolve(f.parts, f.groups).owned
++        val meshes = owned.filterKeys { filter.isEmpty() || it == filter }.map { (id, solid) -> solidMesh(id, solid, listOf(P()), "form") }
++        return json("count" to owned.values.sumOf { it.count() }, "raw" to Extrusion.cost(f.parts, f.groups),
++            "meshes" to meshes.toTypedArray())
++    }
++    val b = building(document)
++    val forms = map(library.forms) { obj, key -> form(obj[key]) }
++    val modules = map(library.modules) { obj, key -> module(obj[key]) }
++    val graph = requireNotNull(b.graph)
++    val plan = when (graph.nodes.firstOrNull { it.id == selected }?.kind) {
++        BuildingKind.ROOM -> BuildingGraphCompiler.Evaluation(graph, b.palette, forms, modules).room(selected).plan
++        BuildingKind.STOREY -> BuildingGraphCompiler.Evaluation(graph, b.palette, forms, modules).storey(selected).plan
++        else -> BuildingGraphCompiler.compile(b, forms, modules).plan
++    }
++    val filter = graph.nodes.firstOrNull { it.id == selected }?.preview
++        ?: graph.nodes.single { it.kind == BuildingKind.BUILDING }.preview
++    val grouped = plan.placements.filter { filter == "all" || it.component == filter ||
++        filter == "walls" && it.component in setOf("wall", "trim") || filter == "roof" && it.component == "gable" }
++        .groupBy({ MeshKey(it.parts, it.groups, it.material, it.surfaces, it.block, it.component) }, { it.pos })
++    val meshes = grouped.flatMap { (key, positions) ->
++        if (key.block.isNotEmpty()) listOf(fullBlock(key, positions))
++        else Geometry.resolve(key.parts, key.groups).materialSolids(key.material, key.surfaces)
++            .map { (material, solid) -> solidMesh(material, solid, positions, key.component) }
++    }
++    return json("count" to plan.placements.size, "raw" to plan.raw, "materials" to plan.materials.mapValues { it.value.toString() }.asJson(),
++        "warnings" to plan.warnings.toTypedArray(), "meshes" to meshes.toTypedArray())
++}
++
++@JsExport
++fun starterBuilding(): Json = json("name" to "Neues Gebäude", "schema" to 2, "palette" to Building().palette.asJson(),
++    "graph" to json("schema" to 1, "nodes" to BuildingGraph.assembledStarter().nodes.map { it.jsNode() }.toTypedArray()))
+diff --git a/web/kotlin/GraphPlatform.kt b/web/kotlin/GraphPlatform.kt
+new file mode 100644
+index 0000000..e34eb29
+--- /dev/null
++++ b/web/kotlin/GraphPlatform.kt
+@@ -0,0 +1,57 @@
++@file:OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
++
++package de.teutonstudio.copycatarchitect.domain
++
++import kotlin.io.encoding.Base64
++
++internal fun encodeMask(bytes: ByteArray): String = Base64.encode(bytes)
++internal fun decodeMask(mask: String): ByteArray = Base64.decode(mask.padEnd((mask.length + 3) / 4 * 4, '='))
++
++internal class GraphCache<K, V> : MutableMap<K, V> by mutableMapOf<K, V>() {
++    fun computeIfAbsent(key: K, compute: (K) -> V): V = getOrPut(key) { compute(key) }
++}
++
++/** Browser implementation of the JVM bit set operations used by the solid raster. */
++internal class GraphBits(size: Int) {
++    private val words = IntArray((size + 31) / 32)
++    val isEmpty get() = words.all { it == 0 }
++
++    operator fun get(index: Int): Boolean = words[index / 32] and (1 shl (index % 32)) != 0
++    fun set(index: Int) { words[index / 32] = words[index / 32] or (1 shl (index % 32)) }
++    fun clear(index: Int) { words[index / 32] = words[index / 32] and (1 shl (index % 32)).inv() }
++    fun cardinality(): Int = words.sumOf { it.countOneBits() }
++    fun clone(): GraphBits = GraphBits(words.size * 32).also { words.copyInto(it.words) }
++    fun or(other: GraphBits) { words.indices.forEach { words[it] = words[it] or other.words[it] } }
++    fun and(other: GraphBits) { words.indices.forEach { words[it] = words[it] and other.words[it] } }
++    fun andNot(other: GraphBits) { words.indices.forEach { words[it] = words[it] and other.words[it].inv() } }
++    fun nextSetBit(start: Int): Int {
++        var index = start / 32
++        if (index >= words.size) return -1
++        var word = words[index] and (-1 shl (start % 32))
++        while (word == 0) {
++            index++
++            if (index == words.size) return -1
++            word = words[index]
++        }
++        return index * 32 + word.countTrailingZeroBits()
++    }
++    fun toByteArray(): ByteArray {
++        val last = words.indexOfLast { it != 0 }
++        if (last < 0) return ByteArray(0)
++        val size = last * 4 + (32 - words[last].countLeadingZeroBits() + 7) / 8
++        return ByteArray(size) { (words[it / 4] ushr (it % 4 * 8)).toByte() }
++    }
++    fun toLongArray(): LongArray {
++        val last = words.indexOfLast { it != 0 }
++        return LongArray((last + 2) / 2) {
++            (words[it * 2].toLong() and 0xffffffffL) or ((words.getOrNull(it * 2 + 1) ?: 0).toLong() shl 32)
++        }
++    }
++    companion object {
++        fun valueOf(bytes: ByteArray): GraphBits = GraphBits(4096).also { bits ->
++            bytes.forEachIndexed { i, value ->
++                bits.words[i / 4] = bits.words[i / 4] or ((value.toInt() and 255) shl (i % 4 * 8))
++            }
++        }
++    }
++}
+diff --git a/web/package-lock.json b/web/package-lock.json
+new file mode 100644
+index 0000000..a2af02c
+--- /dev/null
++++ b/web/package-lock.json
+@@ -0,0 +1,1387 @@
++{
++  "name": "copycat-architect-web",
++  "version": "0.1.0",
++  "lockfileVersion": 3,
++  "requires": true,
++  "packages": {
++    "": {
++      "name": "copycat-architect-web",
++      "version": "0.1.0",
++      "dependencies": {
++        "@xyflow/react": "12.10.0",
++        "react": "19.2.0",
++        "react-dom": "19.2.0",
++        "three": "0.180.0"
++      },
++      "devDependencies": {
++        "vite": "7.2.2"
++      }
++    },
++    "node_modules/@esbuild/aix-ppc64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/aix-ppc64/-/aix-ppc64-0.25.12.tgz",
++      "integrity": "sha512-Hhmwd6CInZ3dwpuGTF8fJG6yoWmsToE+vYgD4nytZVxcu1ulHpUQRAB1UJ8+N1Am3Mz4+xOByoQoSZf4D+CpkA==",
++      "cpu": [
++        "ppc64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "aix"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/android-arm": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/android-arm/-/android-arm-0.25.12.tgz",
++      "integrity": "sha512-VJ+sKvNA/GE7Ccacc9Cha7bpS8nyzVv0jdVgwNDaR4gDMC/2TTRc33Ip8qrNYUcpkOHUT5OZ0bUcNNVZQ9RLlg==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/android-arm64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/android-arm64/-/android-arm64-0.25.12.tgz",
++      "integrity": "sha512-6AAmLG7zwD1Z159jCKPvAxZd4y/VTO0VkprYy+3N2FtJ8+BQWFXU+OxARIwA46c5tdD9SsKGZ/1ocqBS/gAKHg==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/android-x64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/android-x64/-/android-x64-0.25.12.tgz",
++      "integrity": "sha512-5jbb+2hhDHx5phYR2By8GTWEzn6I9UqR11Kwf22iKbNpYrsmRB18aX/9ivc5cabcUiAT/wM+YIZ6SG9QO6a8kg==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/darwin-arm64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/darwin-arm64/-/darwin-arm64-0.25.12.tgz",
++      "integrity": "sha512-N3zl+lxHCifgIlcMUP5016ESkeQjLj/959RxxNYIthIg+CQHInujFuXeWbWMgnTo4cp5XVHqFPmpyu9J65C1Yg==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/darwin-x64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/darwin-x64/-/darwin-x64-0.25.12.tgz",
++      "integrity": "sha512-HQ9ka4Kx21qHXwtlTUVbKJOAnmG1ipXhdWTmNXiPzPfWKpXqASVcWdnf2bnL73wgjNrFXAa3yYvBSd9pzfEIpA==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/freebsd-arm64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/freebsd-arm64/-/freebsd-arm64-0.25.12.tgz",
++      "integrity": "sha512-gA0Bx759+7Jve03K1S0vkOu5Lg/85dou3EseOGUes8flVOGxbhDDh/iZaoek11Y8mtyKPGF3vP8XhnkDEAmzeg==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "freebsd"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/freebsd-x64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/freebsd-x64/-/freebsd-x64-0.25.12.tgz",
++      "integrity": "sha512-TGbO26Yw2xsHzxtbVFGEXBFH0FRAP7gtcPE7P5yP7wGy7cXK2oO7RyOhL5NLiqTlBh47XhmIUXuGciXEqYFfBQ==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "freebsd"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/linux-arm": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-arm/-/linux-arm-0.25.12.tgz",
++      "integrity": "sha512-lPDGyC1JPDou8kGcywY0YILzWlhhnRjdof3UlcoqYmS9El818LLfJJc3PXXgZHrHCAKs/Z2SeZtDJr5MrkxtOw==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/linux-arm64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-arm64/-/linux-arm64-0.25.12.tgz",
++      "integrity": "sha512-8bwX7a8FghIgrupcxb4aUmYDLp8pX06rGh5HqDT7bB+8Rdells6mHvrFHHW2JAOPZUbnjUpKTLg6ECyzvas2AQ==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/linux-ia32": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-ia32/-/linux-ia32-0.25.12.tgz",
++      "integrity": "sha512-0y9KrdVnbMM2/vG8KfU0byhUN+EFCny9+8g202gYqSSVMonbsCfLjUO+rCci7pM0WBEtz+oK/PIwHkzxkyharA==",
++      "cpu": [
++        "ia32"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/linux-loong64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-loong64/-/linux-loong64-0.25.12.tgz",
++      "integrity": "sha512-h///Lr5a9rib/v1GGqXVGzjL4TMvVTv+s1DPoxQdz7l/AYv6LDSxdIwzxkrPW438oUXiDtwM10o9PmwS/6Z0Ng==",
++      "cpu": [
++        "loong64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/linux-mips64el": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-mips64el/-/linux-mips64el-0.25.12.tgz",
++      "integrity": "sha512-iyRrM1Pzy9GFMDLsXn1iHUm18nhKnNMWscjmp4+hpafcZjrr2WbT//d20xaGljXDBYHqRcl8HnxbX6uaA/eGVw==",
++      "cpu": [
++        "mips64el"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/linux-ppc64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-ppc64/-/linux-ppc64-0.25.12.tgz",
++      "integrity": "sha512-9meM/lRXxMi5PSUqEXRCtVjEZBGwB7P/D4yT8UG/mwIdze2aV4Vo6U5gD3+RsoHXKkHCfSxZKzmDssVlRj1QQA==",
++      "cpu": [
++        "ppc64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/linux-riscv64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-riscv64/-/linux-riscv64-0.25.12.tgz",
++      "integrity": "sha512-Zr7KR4hgKUpWAwb1f3o5ygT04MzqVrGEGXGLnj15YQDJErYu/BGg+wmFlIDOdJp0PmB0lLvxFIOXZgFRrdjR0w==",
++      "cpu": [
++        "riscv64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/linux-s390x": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-s390x/-/linux-s390x-0.25.12.tgz",
++      "integrity": "sha512-MsKncOcgTNvdtiISc/jZs/Zf8d0cl/t3gYWX8J9ubBnVOwlk65UIEEvgBORTiljloIWnBzLs4qhzPkJcitIzIg==",
++      "cpu": [
++        "s390x"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/linux-x64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.25.12.tgz",
++      "integrity": "sha512-uqZMTLr/zR/ed4jIGnwSLkaHmPjOjJvnm6TVVitAa08SLS9Z0VM8wIRx7gWbJB5/J54YuIMInDquWyYvQLZkgw==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/netbsd-arm64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/netbsd-arm64/-/netbsd-arm64-0.25.12.tgz",
++      "integrity": "sha512-xXwcTq4GhRM7J9A8Gv5boanHhRa/Q9KLVmcyXHCTaM4wKfIpWkdXiMog/KsnxzJ0A1+nD+zoecuzqPmCRyBGjg==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "netbsd"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/netbsd-x64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/netbsd-x64/-/netbsd-x64-0.25.12.tgz",
++      "integrity": "sha512-Ld5pTlzPy3YwGec4OuHh1aCVCRvOXdH8DgRjfDy/oumVovmuSzWfnSJg+VtakB9Cm0gxNO9BzWkj6mtO1FMXkQ==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "netbsd"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/openbsd-arm64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/openbsd-arm64/-/openbsd-arm64-0.25.12.tgz",
++      "integrity": "sha512-fF96T6KsBo/pkQI950FARU9apGNTSlZGsv1jZBAlcLL1MLjLNIWPBkj5NlSz8aAzYKg+eNqknrUJ24QBybeR5A==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "openbsd"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/openbsd-x64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/openbsd-x64/-/openbsd-x64-0.25.12.tgz",
++      "integrity": "sha512-MZyXUkZHjQxUvzK7rN8DJ3SRmrVrke8ZyRusHlP+kuwqTcfWLyqMOE3sScPPyeIXN/mDJIfGXvcMqCgYKekoQw==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "openbsd"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/openharmony-arm64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/openharmony-arm64/-/openharmony-arm64-0.25.12.tgz",
++      "integrity": "sha512-rm0YWsqUSRrjncSXGA7Zv78Nbnw4XL6/dzr20cyrQf7ZmRcsovpcRBdhD43Nuk3y7XIoW2OxMVvwuRvk9XdASg==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "openharmony"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/sunos-x64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/sunos-x64/-/sunos-x64-0.25.12.tgz",
++      "integrity": "sha512-3wGSCDyuTHQUzt0nV7bocDy72r2lI33QL3gkDNGkod22EsYl04sMf0qLb8luNKTOmgF/eDEDP5BFNwoBKH441w==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "sunos"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/win32-arm64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/win32-arm64/-/win32-arm64-0.25.12.tgz",
++      "integrity": "sha512-rMmLrur64A7+DKlnSuwqUdRKyd3UE7oPJZmnljqEptesKM8wx9J8gx5u0+9Pq0fQQW8vqeKebwNXdfOyP+8Bsg==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/win32-ia32": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/win32-ia32/-/win32-ia32-0.25.12.tgz",
++      "integrity": "sha512-HkqnmmBoCbCwxUKKNPBixiWDGCpQGVsrQfJoVGYLPT41XWF8lHuE5N6WhVia2n4o5QK5M4tYr21827fNhi4byQ==",
++      "cpu": [
++        "ia32"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/win32-x64": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/win32-x64/-/win32-x64-0.25.12.tgz",
++      "integrity": "sha512-alJC0uCZpTFrSL0CCDjcgleBXPnCrEAhTBILpeAp7M/OFgoqtAetfBzX0xM00MUsVVPpVjlPuMbREqnZCXaTnA==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@rollup/rollup-android-arm-eabi": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-android-arm-eabi/-/rollup-android-arm-eabi-4.68.0.tgz",
++      "integrity": "sha512-Ta2n0ntLfzP0LqwwcXOIh2z0mnHjlxMS+h4Y9lo+w33Quyf9KFKEi9QZ2IKqeEBKr0qxNpXc/DQjz5KVIs8AEA==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ]
++    },
++    "node_modules/@rollup/rollup-android-arm64": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-android-arm64/-/rollup-android-arm64-4.68.0.tgz",
++      "integrity": "sha512-iFDtS0oMaBvKbtrRKXmRcBSsI0UaWL2bWpd62iHzb0A8RSPrVz47mUGE0CfrrD0c/7/7dUhNtoN3cc6aEUn1Ow==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ]
++    },
++    "node_modules/@rollup/rollup-android-x64": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-android-x64/-/rollup-android-x64-4.68.0.tgz",
++      "integrity": "sha512-OnYETr+cZYSbesBD1tCvUjrBUTkjSaOcewRUoIHqD0XI3yn5i9WpdFaE3LZwrMlq0yeJNU0N5sxfHK/fNVMqlQ==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ]
++    },
++    "node_modules/@rollup/rollup-darwin-arm64": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-darwin-arm64/-/rollup-darwin-arm64-4.68.0.tgz",
++      "integrity": "sha512-2qavWZtFeon/6oMkjsBF3OH7ENKgRTW4xRTwmz9VJeNUYhmPitpR9Jd4sAAc2OZJryHs2neoovMTCYnNvhvANQ==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ]
++    },
++    "node_modules/@rollup/rollup-darwin-x64": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-darwin-x64/-/rollup-darwin-x64-4.68.0.tgz",
++      "integrity": "sha512-QpgJO+GwNQDPt6uYcFSjZTFVyHNIeumN2am7RISDR9Nf3e/h8sur9cIfplPGihZPUn+sTw9j3JErZIUkHg8+Pw==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ]
++    },
++    "node_modules/@rollup/rollup-freebsd-arm64": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-freebsd-arm64/-/rollup-freebsd-arm64-4.68.0.tgz",
++      "integrity": "sha512-TERqEn6P9bp4lsTyoFjT3nLKV6G++76HhGb4k6dRGcs+jvhVcTGaS2zkeRdLLRjwKxpBtdCZe11kUQ2hNGgFSA==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "freebsd"
++      ]
++    },
++    "node_modules/@rollup/rollup-freebsd-x64": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-freebsd-x64/-/rollup-freebsd-x64-4.68.0.tgz",
++      "integrity": "sha512-RBjDrqb7h5l6Xgdgz5eKYvbpnUkii/z5ejWuZmHJsXORi0X0tTtFzEEgJj2DX995kW18c6T9LGFn/deEAMXDcQ==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "freebsd"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-arm-gnueabihf": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-arm-gnueabihf/-/rollup-linux-arm-gnueabihf-4.68.0.tgz",
++      "integrity": "sha512-HtLgXBqjF1Ampt9eJjzSmoGDvNb4LP8Y2aPXQZeQ5qhyExXLmoXJB9Jfm/nPi/8fJ3UFn4sZ7pQKyr8V+oTN8g==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-arm-musleabihf": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-arm-musleabihf/-/rollup-linux-arm-musleabihf-4.68.0.tgz",
++      "integrity": "sha512-q51xJyqjaqCNtDjYD7xNVwsPa2TcVfAIBeP6E20wicKZ6XYp8Taz9SUPYhIENojAQIAoV7cO3mUdMUgWYEAuhQ==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-arm64-gnu": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-arm64-gnu/-/rollup-linux-arm64-gnu-4.68.0.tgz",
++      "integrity": "sha512-wejnVabl92oFC/o4sr/EEJuJZMHtMq4C+LBIPphN4EUiVHe9qvZNw+biqhVHpX2ggs1+Z3ugXGwJxT+qhyaaYQ==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-arm64-musl": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-arm64-musl/-/rollup-linux-arm64-musl-4.68.0.tgz",
++      "integrity": "sha512-tyu+hrsCWHHqV6+2tligV/recJH+HVvNV2Sp4nS1C+MKQPkNXRovKIzyHy0V0xXjm6igCLgsT2vTky5CvWP37g==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-loong64-gnu": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-loong64-gnu/-/rollup-linux-loong64-gnu-4.68.0.tgz",
++      "integrity": "sha512-5gjJNglKDfgs3OmnGi/RVZQPhEfRoCIHxwSAP9ngmdnxreu0Vl9lI4gxmFBXOhKdftpS82xRdc/7Dp5/A1F0qg==",
++      "cpu": [
++        "loong64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-loong64-musl": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-loong64-musl/-/rollup-linux-loong64-musl-4.68.0.tgz",
++      "integrity": "sha512-2IBxTUds33rFYwOIEyf77wfW8WQThwiQQ1ofXSraZQG7PiIq7BnQBf/ge0qEI/Ny/2cSc7SKkGO/wUDqmYXqTg==",
++      "cpu": [
++        "loong64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-ppc64-gnu": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-ppc64-gnu/-/rollup-linux-ppc64-gnu-4.68.0.tgz",
++      "integrity": "sha512-mE/Pj2PPTZIVHkNNuHq+eYoU3td8LCm73zjrXoBWkNlnuULJS2l/fxwgGPpN4WUCNZgKZ1IXwrnnETPyOcWPmg==",
++      "cpu": [
++        "ppc64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-ppc64-musl": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-ppc64-musl/-/rollup-linux-ppc64-musl-4.68.0.tgz",
++      "integrity": "sha512-dYuykUkAiTv+RQdP3Ib47XcFiImkBWiRpTGSQWAMfZPQyoQYGe8Je4IUeZYNUQWIojmRCUnt5xsH4BbUb2uqSw==",
++      "cpu": [
++        "ppc64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-riscv64-gnu": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-riscv64-gnu/-/rollup-linux-riscv64-gnu-4.68.0.tgz",
++      "integrity": "sha512-OnPDDFXLqJewY56T6ow8sA4wuzbqlliD7QJgkrx2KX+pWOpjI3usYXgB0pwK3nsgTF2odCw9IuJs0Uis/jy2qA==",
++      "cpu": [
++        "riscv64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-riscv64-musl": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-riscv64-musl/-/rollup-linux-riscv64-musl-4.68.0.tgz",
++      "integrity": "sha512-CqoQf06cK0brrRfDqH7Mt8G4MdteFGbjBdC61zEMaSVna6xo6QMUixa9bAkAD4a92g3ElPbQAkLMUzdf+Lk8dg==",
++      "cpu": [
++        "riscv64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-s390x-gnu": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-s390x-gnu/-/rollup-linux-s390x-gnu-4.68.0.tgz",
++      "integrity": "sha512-LPHNmE8GwiyELGLUTkqj4zsP1YEHzGdtwnKxAcdP/swsNxXsfxPtpe5nrD/KGxr136xPB+eWv2r/SGj9md0pnQ==",
++      "cpu": [
++        "s390x"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-x64-gnu": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-x64-gnu/-/rollup-linux-x64-gnu-4.68.0.tgz",
++      "integrity": "sha512-GDOmvgephpRCNyNGRQOZh0KD2gTyRVM1Bb1iOo759xeCUpCAoRCmJioOOSu2MwyWfNOocGd0V5I9vYLfteC6/A==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-x64-musl": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-x64-musl/-/rollup-linux-x64-musl-4.68.0.tgz",
++      "integrity": "sha512-HADRxkvl5eg3hbemCmv81UwTfdQy/CiSJDOabLE+p5tpm3OTjuRtzpLXy5zPfGY9FQD4Qv7qHptXmG/YjmNmyw==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-openbsd-x64": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-openbsd-x64/-/rollup-openbsd-x64-4.68.0.tgz",
++      "integrity": "sha512-iERrpqu1VEfyX736HLKiXRbwGDkCV/iybARY/mn14KcI6oKhJGBx1e+bU+g+umTKghtiGSPaHkwwpII4/N3RjA==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "openbsd"
++      ]
++    },
++    "node_modules/@rollup/rollup-openharmony-arm64": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-openharmony-arm64/-/rollup-openharmony-arm64-4.68.0.tgz",
++      "integrity": "sha512-hBn57IqAbpXpyktckonwePTaFOQS6THph8ZnpRO3eZHY4LncuZGjSsseigBnKuSMKKpLnJJ7PemDvXEzniXC+A==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "openharmony"
++      ]
++    },
++    "node_modules/@rollup/rollup-win32-arm64-msvc": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-win32-arm64-msvc/-/rollup-win32-arm64-msvc-4.68.0.tgz",
++      "integrity": "sha512-pJWb7mIw9Z25Hl3Q6nHFjl7AnczfOpm2gbOFYguSRv6TiH7DzsoAk/thymb/URSQu9OUEK7uaDMC5Xfm+7TAww==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ]
++    },
++    "node_modules/@rollup/rollup-win32-ia32-msvc": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-win32-ia32-msvc/-/rollup-win32-ia32-msvc-4.68.0.tgz",
++      "integrity": "sha512-pnrhmoyF2otH2Mezol14/ELUFGuRddOCz6+I+J0pq2Itnp4UxkjABQcXawCNMaKNsCRiuL90BtNzbEd0fHjpIg==",
++      "cpu": [
++        "ia32"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ]
++    },
++    "node_modules/@rollup/rollup-win32-x64-gnu": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-win32-x64-gnu/-/rollup-win32-x64-gnu-4.68.0.tgz",
++      "integrity": "sha512-1dJ3U+ktdtaIdPaOZKwIX57+bKQk4iAjs5M1wQWLKRB6Wglp98qf8LUeuN4u6bGlIYouZKaySZJ5Qd4OalUMnA==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ]
++    },
++    "node_modules/@rollup/rollup-win32-x64-msvc": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.68.0.tgz",
++      "integrity": "sha512-e/NRJFl48wL5DFNSzQrvm4kaB5dzNNmqWjIJ6And2Sjuw4klO3w3TXMvCAEF1tHTrQQgpOD4QVkBE/92/yBGrQ==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ]
++    },
++    "node_modules/@types/d3-color": {
++      "version": "3.1.3",
++      "resolved": "https://registry.npmjs.org/@types/d3-color/-/d3-color-3.1.3.tgz",
++      "integrity": "sha512-iO90scth9WAbmgv7ogoq57O9YpKmFBbmoEoCHDB2xMBY0+/KVrqAaCDyCE16dUspeOvIxFFRI+0sEtqDqy2b4A==",
++      "license": "MIT"
++    },
++    "node_modules/@types/d3-drag": {
++      "version": "3.0.7",
++      "resolved": "https://registry.npmjs.org/@types/d3-drag/-/d3-drag-3.0.7.tgz",
++      "integrity": "sha512-HE3jVKlzU9AaMazNufooRJ5ZpWmLIoc90A37WU2JMmeq28w1FQqCZswHZ3xR+SuxYftzHq6WU6KJHvqxKzTxxQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@types/d3-selection": "*"
++      }
++    },
++    "node_modules/@types/d3-interpolate": {
++      "version": "3.0.4",
++      "resolved": "https://registry.npmjs.org/@types/d3-interpolate/-/d3-interpolate-3.0.4.tgz",
++      "integrity": "sha512-mgLPETlrpVV1YRJIglr4Ez47g7Yxjl1lj7YKsiMCb27VJH9W8NVM6Bb9d8kkpG/uAQS5AmbA48q2IAolKKo1MA==",
++      "license": "MIT",
++      "dependencies": {
++        "@types/d3-color": "*"
++      }
++    },
++    "node_modules/@types/d3-selection": {
++      "version": "3.0.12",
++      "resolved": "https://registry.npmjs.org/@types/d3-selection/-/d3-selection-3.0.12.tgz",
++      "integrity": "sha512-Qe/KWYhEiIIxGs7HrAAjMfShxKldx19SJtr5zu53f3afPsdZNz7HHtdTLXo/kqeiWNXVycI24kSnfzBYkTzpgw==",
++      "license": "MIT"
++    },
++    "node_modules/@types/d3-transition": {
++      "version": "3.0.9",
++      "resolved": "https://registry.npmjs.org/@types/d3-transition/-/d3-transition-3.0.9.tgz",
++      "integrity": "sha512-uZS5shfxzO3rGlu0cC3bjmMFKsXv+SmZZcgp0KD22ts4uGXp5EVYGzu/0YdwZeKmddhcAccYtREJKkPfXkZuCg==",
++      "license": "MIT",
++      "dependencies": {
++        "@types/d3-selection": "*"
++      }
++    },
++    "node_modules/@types/d3-zoom": {
++      "version": "3.0.9",
++      "resolved": "https://registry.npmjs.org/@types/d3-zoom/-/d3-zoom-3.0.9.tgz",
++      "integrity": "sha512-0sE1406XBYJGiqD3AusTl9ZqC//2mIXix51tbom25gDCA8ri4xnSZg28CaSE8Srl6FClqABUKfsn0qghgdepMA==",
++      "license": "MIT",
++      "dependencies": {
++        "@types/d3-interpolate": "*",
++        "@types/d3-selection": "*"
++      }
++    },
++    "node_modules/@types/estree": {
++      "version": "1.0.10",
++      "resolved": "https://registry.npmjs.org/@types/estree/-/estree-1.0.10.tgz",
++      "integrity": "sha512-lTyOMnOcmRBzdCv6/4zUZCrEhV0xrqQiUZBZtVcbmLHBXKLnN8q89v/wKRF/Q0HbwVsqbIG3o5HDoFl9sduM+g==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/@xyflow/react": {
++      "version": "12.10.0",
++      "resolved": "https://registry.npmjs.org/@xyflow/react/-/react-12.10.0.tgz",
++      "integrity": "sha512-eOtz3whDMWrB4KWVatIBrKuxECHqip6PfA8fTpaS2RUGVpiEAe+nqDKsLqkViVWxDGreq0lWX71Xth/SPAzXiw==",
++      "license": "MIT",
++      "dependencies": {
++        "@xyflow/system": "0.0.74",
++        "classcat": "^5.0.3",
++        "zustand": "^4.4.0"
++      },
++      "peerDependencies": {
++        "react": ">=17",
++        "react-dom": ">=17"
++      }
++    },
++    "node_modules/@xyflow/system": {
++      "version": "0.0.74",
++      "resolved": "https://registry.npmjs.org/@xyflow/system/-/system-0.0.74.tgz",
++      "integrity": "sha512-7v7B/PkiVrkdZzSbL+inGAo6tkR/WQHHG0/jhSvLQToCsfa8YubOGmBYd1s08tpKpihdHDZFwzQZeR69QSBb4Q==",
++      "license": "MIT",
++      "dependencies": {
++        "@types/d3-drag": "^3.0.7",
++        "@types/d3-interpolate": "^3.0.4",
++        "@types/d3-selection": "^3.0.10",
++        "@types/d3-transition": "^3.0.8",
++        "@types/d3-zoom": "^3.0.8",
++        "d3-drag": "^3.0.0",
++        "d3-interpolate": "^3.0.1",
++        "d3-selection": "^3.0.0",
++        "d3-zoom": "^3.0.0"
++      }
++    },
++    "node_modules/classcat": {
++      "version": "5.0.5",
++      "resolved": "https://registry.npmjs.org/classcat/-/classcat-5.0.5.tgz",
++      "integrity": "sha512-JhZUT7JFcQy/EzW605k/ktHtncoo9vnyW/2GspNYwFlN1C/WmjuV/xtS04e9SOkL2sTdw0VAZ2UGCcQ9lR6p6w==",
++      "license": "MIT"
++    },
++    "node_modules/d3-color": {
++      "version": "3.1.1",
++      "resolved": "https://registry.npmjs.org/d3-color/-/d3-color-3.1.1.tgz",
++      "integrity": "sha512-lfab8x0Bj0UO7SNsY8dZSbNIA6ipbkE3X0NG9nqjCu6CfCHZseuDnOSJY7hidKrjpP++i1M2qT+FlAdPKYRilA==",
++      "license": "ISC",
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-dispatch": {
++      "version": "3.0.2",
++      "resolved": "https://registry.npmjs.org/d3-dispatch/-/d3-dispatch-3.0.2.tgz",
++      "integrity": "sha512-sAzH4Y4nsLo8eSqw5jKiZt+LU2wZmL/qS+OkxQGjhwazB/D7TY34R/QK1eshfGr7cZEKymKZ/Haem7m+lu98Sg==",
++      "license": "ISC",
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-drag": {
++      "version": "3.0.1",
++      "resolved": "https://registry.npmjs.org/d3-drag/-/d3-drag-3.0.1.tgz",
++      "integrity": "sha512-OWeoayCq8J69hUIjvL+Mb6Q6Oaj/fyHV5XaXByEUAG+JUjIfTGDnk3qGpcXrD3VmQ3BSV96fcbM6fqq7C0tbPA==",
++      "license": "ISC",
++      "dependencies": {
++        "d3-dispatch": "1 - 3",
++        "d3-selection": "3"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-ease": {
++      "version": "3.0.2",
++      "resolved": "https://registry.npmjs.org/d3-ease/-/d3-ease-3.0.2.tgz",
++      "integrity": "sha512-B5znKqRmKROAN4oHWQ50W/qisVjA9GXh2WMsVKdFVp4DxWmcrOsweqgUOUVsv5th96kwaZlokU6SlV4J3gak1w==",
++      "license": "BSD-3-Clause",
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-interpolate": {
++      "version": "3.0.2",
++      "resolved": "https://registry.npmjs.org/d3-interpolate/-/d3-interpolate-3.0.2.tgz",
++      "integrity": "sha512-IRzGU62DtxhvsnSTWMQIdnoZ6gA+BCWwBon1EJI6SjoN595799b6z/QRBzXfFhE8iupUPp3042yBNo0STPqnzQ==",
++      "license": "ISC",
++      "dependencies": {
++        "d3-color": "1 - 3"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-selection": {
++      "version": "3.0.1",
++      "resolved": "https://registry.npmjs.org/d3-selection/-/d3-selection-3.0.1.tgz",
++      "integrity": "sha512-ODSf35vqCrlCfp7hrm0eZjvOosSXSYLjqvIlhMBV9q9VOx7EBJG6pc+uXBswEZNJgCGJ+qnKYcWutbZDIxe/Xg==",
++      "license": "ISC",
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-timer": {
++      "version": "3.0.2",
++      "resolved": "https://registry.npmjs.org/d3-timer/-/d3-timer-3.0.2.tgz",
++      "integrity": "sha512-1Il1aliroVSErrv5aulRBxAY+7+DnaoLIWGd1C6SsBTWDeobWiP/V69vwb8vT6abR1kKwaNe1196pmaQ1fK90A==",
++      "license": "ISC",
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-transition": {
++      "version": "3.0.2",
++      "resolved": "https://registry.npmjs.org/d3-transition/-/d3-transition-3.0.2.tgz",
++      "integrity": "sha512-RcjCsdFgyFoDB+QXLC5m60ZkTN0k9zH+ovoLlTdJnDS1AbfbcuowiM4pCKSTOclNibS4f4J4cbv2m7O7y8NTOQ==",
++      "license": "ISC",
++      "dependencies": {
++        "d3-color": "1 - 3",
++        "d3-dispatch": "1 - 3",
++        "d3-ease": "1 - 3",
++        "d3-interpolate": "1 - 3",
++        "d3-timer": "1 - 3"
++      },
++      "engines": {
++        "node": ">=12"
++      },
++      "peerDependencies": {
++        "d3-selection": "2 - 3"
++      }
++    },
++    "node_modules/d3-zoom": {
++      "version": "3.0.1",
++      "resolved": "https://registry.npmjs.org/d3-zoom/-/d3-zoom-3.0.1.tgz",
++      "integrity": "sha512-kfjD3BDQu/FOatpZ6JdMSyIoDwTxIpI29ySTI2J5ZlDaH1WbuJGQJ2Q9oJkWTEZEW98j6idezoomSD3Cn2zwiw==",
++      "license": "ISC",
++      "dependencies": {
++        "d3-dispatch": "1 - 3",
++        "d3-drag": "2 - 3",
++        "d3-interpolate": "1 - 3",
++        "d3-selection": "2 - 3",
++        "d3-transition": "2 - 3"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/esbuild": {
++      "version": "0.25.12",
++      "resolved": "https://registry.npmjs.org/esbuild/-/esbuild-0.25.12.tgz",
++      "integrity": "sha512-bbPBYYrtZbkt6Os6FiTLCTFxvq4tt3JKall1vRwshA3fdVztsLAatFaZobhkBC8/BrPetoa0oksYoKXoG4ryJg==",
++      "dev": true,
++      "hasInstallScript": true,
++      "license": "MIT",
++      "bin": {
++        "esbuild": "bin/esbuild"
++      },
++      "engines": {
++        "node": ">=18"
++      },
++      "optionalDependencies": {
++        "@esbuild/aix-ppc64": "0.25.12",
++        "@esbuild/android-arm": "0.25.12",
++        "@esbuild/android-arm64": "0.25.12",
++        "@esbuild/android-x64": "0.25.12",
++        "@esbuild/darwin-arm64": "0.25.12",
++        "@esbuild/darwin-x64": "0.25.12",
++        "@esbuild/freebsd-arm64": "0.25.12",
++        "@esbuild/freebsd-x64": "0.25.12",
++        "@esbuild/linux-arm": "0.25.12",
++        "@esbuild/linux-arm64": "0.25.12",
++        "@esbuild/linux-ia32": "0.25.12",
++        "@esbuild/linux-loong64": "0.25.12",
++        "@esbuild/linux-mips64el": "0.25.12",
++        "@esbuild/linux-ppc64": "0.25.12",
++        "@esbuild/linux-riscv64": "0.25.12",
++        "@esbuild/linux-s390x": "0.25.12",
++        "@esbuild/linux-x64": "0.25.12",
++        "@esbuild/netbsd-arm64": "0.25.12",
++        "@esbuild/netbsd-x64": "0.25.12",
++        "@esbuild/openbsd-arm64": "0.25.12",
++        "@esbuild/openbsd-x64": "0.25.12",
++        "@esbuild/openharmony-arm64": "0.25.12",
++        "@esbuild/sunos-x64": "0.25.12",
++        "@esbuild/win32-arm64": "0.25.12",
++        "@esbuild/win32-ia32": "0.25.12",
++        "@esbuild/win32-x64": "0.25.12"
++      }
++    },
++    "node_modules/fdir": {
++      "version": "6.5.0",
++      "resolved": "https://registry.npmjs.org/fdir/-/fdir-6.5.0.tgz",
++      "integrity": "sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=12.0.0"
++      },
++      "peerDependencies": {
++        "picomatch": "^3 || ^4"
++      },
++      "peerDependenciesMeta": {
++        "picomatch": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/fsevents": {
++      "version": "2.3.3",
++      "resolved": "https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz",
++      "integrity": "sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==",
++      "dev": true,
++      "hasInstallScript": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": "^8.16.0 || ^10.6.0 || >=11.0.0"
++      }
++    },
++    "node_modules/nanoid": {
++      "version": "3.3.20",
++      "resolved": "https://registry.npmjs.org/nanoid/-/nanoid-3.3.20.tgz",
++      "integrity": "sha512-uKdg2G3GNCKQn9byYOpxbGqrT2fGO5KRt5J/8b3pok8rT6qxGWF6hxMyJiEYtAf+FVyYuD9hRaDqX5uPFYJ4ZQ==",
++      "dev": true,
++      "funding": [
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/ai"
++        }
++      ],
++      "license": "MIT",
++      "bin": {
++        "nanoid": "bin/nanoid.cjs"
++      },
++      "engines": {
++        "node": "^10 || ^12 || ^13.7 || ^14 || >=15.0.1"
++      }
++    },
++    "node_modules/picocolors": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz",
++      "integrity": "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==",
++      "dev": true,
++      "license": "ISC"
++    },
++    "node_modules/picomatch": {
++      "version": "4.0.7",
++      "resolved": "https://registry.npmjs.org/picomatch/-/picomatch-4.0.7.tgz",
++      "integrity": "sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=12"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/jonschlinkert"
++      }
++    },
++    "node_modules/postcss": {
++      "version": "8.5.32",
++      "resolved": "https://registry.npmjs.org/postcss/-/postcss-8.5.32.tgz",
++      "integrity": "sha512-LJlKCCAUFKOuZxipUdYw1NzIITEsPcgyOG9LkvRJvuKj/bRzbuRY0ARXvL0pWGpsZvn8jku+LMep2eU0seHp8g==",
++      "dev": true,
++      "funding": [
++        {
++          "type": "opencollective",
++          "url": "https://opencollective.com/postcss/"
++        },
++        {
++          "type": "tidelift",
++          "url": "https://tidelift.com/funding/github/npm/postcss"
++        },
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/ai"
++        }
++      ],
++      "license": "MIT",
++      "dependencies": {
++        "nanoid": "^3.3.20",
++        "picocolors": "^1.1.1",
++        "source-map-js": "^1.2.2"
++      },
++      "engines": {
++        "node": "^10 || ^12 || >=14"
++      }
++    },
++    "node_modules/react": {
++      "version": "19.2.0",
++      "resolved": "https://registry.npmjs.org/react/-/react-19.2.0.tgz",
++      "integrity": "sha512-tmbWg6W31tQLeB5cdIBOicJDJRR2KzXsV7uSK9iNfLWQ5bIZfxuPEHp7M8wiHyHnn0DD1i7w3Zmin0FtkrwoCQ==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
++    "node_modules/react-dom": {
++      "version": "19.2.0",
++      "resolved": "https://registry.npmjs.org/react-dom/-/react-dom-19.2.0.tgz",
++      "integrity": "sha512-UlbRu4cAiGaIewkPyiRGJk0imDN2T3JjieT6spoL2UeSf5od4n5LB/mQ4ejmxhCFT1tYe8IvaFulzynWovsEFQ==",
++      "license": "MIT",
++      "dependencies": {
++        "scheduler": "^0.27.0"
++      },
++      "peerDependencies": {
++        "react": "^19.2.0"
++      }
++    },
++    "node_modules/rollup": {
++      "version": "4.68.0",
++      "resolved": "https://registry.npmjs.org/rollup/-/rollup-4.68.0.tgz",
++      "integrity": "sha512-BIHWnc1Qjdy+WLfOdcSd67sxO4iW6pTnhdZosg+7ywSaiMWxxzKldkkNpUJqeXYAiJzyB14P2cIjqC6tlb6xzw==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@types/estree": "^1.0.10"
++      },
++      "bin": {
++        "rollup": "dist/bin/rollup"
++      },
++      "engines": {
++        "node": ">=18.0.0",
++        "npm": ">=8.0.0"
++      },
++      "optionalDependencies": {
++        "@rollup/rollup-android-arm-eabi": "4.68.0",
++        "@rollup/rollup-android-arm64": "4.68.0",
++        "@rollup/rollup-android-x64": "4.68.0",
++        "@rollup/rollup-darwin-arm64": "4.68.0",
++        "@rollup/rollup-darwin-x64": "4.68.0",
++        "@rollup/rollup-freebsd-arm64": "4.68.0",
++        "@rollup/rollup-freebsd-x64": "4.68.0",
++        "@rollup/rollup-linux-arm-gnueabihf": "4.68.0",
++        "@rollup/rollup-linux-arm-musleabihf": "4.68.0",
++        "@rollup/rollup-linux-arm64-gnu": "4.68.0",
++        "@rollup/rollup-linux-arm64-musl": "4.68.0",
++        "@rollup/rollup-linux-loong64-gnu": "4.68.0",
++        "@rollup/rollup-linux-loong64-musl": "4.68.0",
++        "@rollup/rollup-linux-ppc64-gnu": "4.68.0",
++        "@rollup/rollup-linux-ppc64-musl": "4.68.0",
++        "@rollup/rollup-linux-riscv64-gnu": "4.68.0",
++        "@rollup/rollup-linux-riscv64-musl": "4.68.0",
++        "@rollup/rollup-linux-s390x-gnu": "4.68.0",
++        "@rollup/rollup-linux-x64-gnu": "4.68.0",
++        "@rollup/rollup-linux-x64-musl": "4.68.0",
++        "@rollup/rollup-openbsd-x64": "4.68.0",
++        "@rollup/rollup-openharmony-arm64": "4.68.0",
++        "@rollup/rollup-win32-arm64-msvc": "4.68.0",
++        "@rollup/rollup-win32-ia32-msvc": "4.68.0",
++        "@rollup/rollup-win32-x64-gnu": "4.68.0",
++        "@rollup/rollup-win32-x64-msvc": "4.68.0",
++        "fsevents": "~2.3.2"
++      }
++    },
++    "node_modules/scheduler": {
++      "version": "0.27.0",
++      "resolved": "https://registry.npmjs.org/scheduler/-/scheduler-0.27.0.tgz",
++      "integrity": "sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==",
++      "license": "MIT"
++    },
++    "node_modules/source-map-js": {
++      "version": "1.2.2",
++      "resolved": "https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.2.tgz",
++      "integrity": "sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==",
++      "dev": true,
++      "license": "BSD-3-Clause",
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
++    "node_modules/three": {
++      "version": "0.180.0",
++      "resolved": "https://registry.npmjs.org/three/-/three-0.180.0.tgz",
++      "integrity": "sha512-o+qycAMZrh+TsE01GqWUxUIKR1AL0S8pq7zDkYOQw8GqfX8b8VoCKYUoHbhiX5j+7hr8XsuHDVU6+gkQJQKg9w==",
++      "license": "MIT"
++    },
++    "node_modules/tinyglobby": {
++      "version": "0.2.17",
++      "resolved": "https://registry.npmjs.org/tinyglobby/-/tinyglobby-0.2.17.tgz",
++      "integrity": "sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "fdir": "^6.5.0",
++        "picomatch": "^4.0.4"
++      },
++      "engines": {
++        "node": ">=12.0.0"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/SuperchupuDev"
++      }
++    },
++    "node_modules/use-sync-external-store": {
++      "version": "1.7.0",
++      "resolved": "https://registry.npmjs.org/use-sync-external-store/-/use-sync-external-store-1.7.0.tgz",
++      "integrity": "sha512-6L+EeigHMQhdaIPNIFUKwfWJSwWFQ8gJbJ2DLOs5sDIegTwR9fRxvnM3uciHKjIZhFz+KAv2emhWMRvDmMcY8A==",
++      "license": "MIT",
++      "peerDependencies": {
++        "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
++      }
++    },
++    "node_modules/vite": {
++      "version": "7.2.2",
++      "resolved": "https://registry.npmjs.org/vite/-/vite-7.2.2.tgz",
++      "integrity": "sha512-BxAKBWmIbrDgrokdGZH1IgkIk/5mMHDreLDmCJ0qpyJaAteP8NvMhkwr/ZCQNqNH97bw/dANTE9PDzqwJghfMQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "esbuild": "^0.25.0",
++        "fdir": "^6.5.0",
++        "picomatch": "^4.0.3",
++        "postcss": "^8.5.6",
++        "rollup": "^4.43.0",
++        "tinyglobby": "^0.2.15"
++      },
++      "bin": {
++        "vite": "bin/vite.js"
++      },
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      },
++      "funding": {
++        "url": "https://github.com/vitejs/vite?sponsor=1"
++      },
++      "optionalDependencies": {
++        "fsevents": "~2.3.3"
++      },
++      "peerDependencies": {
++        "@types/node": "^20.19.0 || >=22.12.0",
++        "jiti": ">=1.21.0",
++        "less": "^4.0.0",
++        "lightningcss": "^1.21.0",
++        "sass": "^1.70.0",
++        "sass-embedded": "^1.70.0",
++        "stylus": ">=0.54.8",
++        "sugarss": "^5.0.0",
++        "terser": "^5.16.0",
++        "tsx": "^4.8.1",
++        "yaml": "^2.4.2"
++      },
++      "peerDependenciesMeta": {
++        "@types/node": {
++          "optional": true
++        },
++        "jiti": {
++          "optional": true
++        },
++        "less": {
++          "optional": true
++        },
++        "lightningcss": {
++          "optional": true
++        },
++        "sass": {
++          "optional": true
++        },
++        "sass-embedded": {
++          "optional": true
++        },
++        "stylus": {
++          "optional": true
++        },
++        "sugarss": {
++          "optional": true
++        },
++        "terser": {
++          "optional": true
++        },
++        "tsx": {
++          "optional": true
++        },
++        "yaml": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/zustand": {
++      "version": "4.5.7",
++      "resolved": "https://registry.npmjs.org/zustand/-/zustand-4.5.7.tgz",
++      "integrity": "sha512-CHOUy7mu3lbD6o6LJLfllpjkzhHXSBlX8B9+qPddUsIfeF5S/UZ5q0kmCsnRqT1UHFQZchNFDDzMbQsuesHWlw==",
++      "license": "MIT",
++      "dependencies": {
++        "use-sync-external-store": "^1.2.2"
++      },
++      "engines": {
++        "node": ">=12.7.0"
++      },
++      "peerDependencies": {
++        "@types/react": ">=16.8",
++        "immer": ">=9.0.6",
++        "react": ">=16.8"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "immer": {
++          "optional": true
++        },
++        "react": {
++          "optional": true
++        }
++      }
++    }
++  }
++}
+diff --git a/web/package.json b/web/package.json
+new file mode 100644
+index 0000000..56f57dd
+--- /dev/null
++++ b/web/package.json
+@@ -0,0 +1,19 @@
++{
++  "name": "copycat-architect-web",
++  "version": "0.1.0",
++  "private": true,
++  "type": "module",
++  "scripts": {
++    "engine": "bash build-engine.sh",
++    "dev": "npm run engine && vite",
++    "test": "npm run engine && node --test",
++    "build": "npm run engine && vite build && cp ../LICENSE dist/LICENSE"
++  },
++  "dependencies": {
++    "@xyflow/react": "12.10.0",
++    "react": "19.2.0",
++    "react-dom": "19.2.0",
++    "three": "0.180.0"
++  },
++  "devDependencies": {"vite": "7.2.2"}
++}
+diff --git a/web/src/Inspector.jsx b/web/src/Inspector.jsx
+new file mode 100644
+index 0000000..28679dd
+--- /dev/null
++++ b/web/src/Inspector.jsx
+@@ -0,0 +1,192 @@
++import { useState } from 'react'
++import { formGroups, model } from './model.js'
++
++export const names = {
++  INPUT: 'Grundform', UNION: 'Vereinigung', INTERSECTION: 'Schnitt', DIFFERENCE: 'Differenz',
++  SYMMETRIC_DIFFERENCE: 'Symmetrische Differenz', ROTATE: 'Copycat rotieren', ROTATION: 'Rotation', OUTPUT: 'Ergebnis',
++  COPYCAT: 'Copycat-Referenz', SEGMENT: 'Wandsegment', PATTERN: 'Wandmuster', FLOOR: 'Boden', CEILING: 'Decke',
++  ROOM: 'Raum', STOREY: 'Geschoss', ROOF: 'Dach', BUILDING: 'Gebäude'
++}
++
++export function portName(port, node) {
++  const [kind, key] = port.id.split(':')
++  if (kind === 'in') return `${node.kind === 'PATTERN' ? 'Segment' : node.kind === 'STOREY' ? 'Raum' : 'Copycat'} ${Number(key) + 1}`
++  if (kind === 'wall') return `Wand ${port.id.slice(5)}${port.length ? ` · ${port.length} B` : ''}`
++  if (kind === 'level') return Number(key) === 0 ? 'Erdgeschoss' : `Geschoss ${Number(key) > 0 ? '+' : ''}${key}`
++  if (kind === 'floor') return 'Boden'
++  if (kind === 'ceiling') return 'Decke'
++  if (kind === 'corner') return 'Ecke'
++  if (kind === 'roof') return 'Dach'
++  if (node.kind === 'ROTATE' && kind === '1') return 'Rotation'
++  if (node.kind === 'DIFFERENCE') return kind === '0' ? 'A' : 'B'
++  return `Eingang ${Number(kind) + 1}`
++}
++
++export function Field({ label, value, onChange, options, type = 'text', min, max, list, maxLength }) {
++  const [draft, setDraft] = useState(null)
++  if (options) return <label>{label}<select aria-label={label} value={value} onChange={e => onChange(e.target.value)}>
++    {options.map(option => {
++      const [id, text] = Array.isArray(option) ? option : [option, option]
++      return <option key={id} value={id}>{text}</option>
++    })}
++  </select></label>
++  if (type === 'checkbox') return <label className="check"><input aria-label={label} type="checkbox" checked={value} onChange={e => onChange(e.target.checked)} />{label}</label>
++  return <label>{label}<input aria-label={label} value={draft ?? value} type={type} min={min} max={max} list={list} maxLength={maxLength}
++    onChange={e => setDraft(e.target.value)}
++    onBlur={() => {
++      if (draft !== null) {
++        setDraft(null)
++        const next = type === 'number' ? Number(draft) : draft
++        if (type === 'number' && (!draft.trim() || !Number.isInteger(next) || next < min || next > max)) return
++        if (next !== value) onChange(next)
++      }
++    }}
++    onKeyDown={e => {
++      if (e.key === 'Enter') e.currentTarget.blur()
++      if (e.key === 'Escape') setDraft(null)
++    }} /></label>
++}
++
++const groupOptions = (groups, empty) => [['', empty], ...groups.map(group => [group.id, group.name])]
++const materialModes = [['SEPARATED', 'Separiert'], ['GROUPED', 'Gruppiert']]
++const viewFilters = [['all', 'Alles'], ['walls', 'Wände'], ['floor', 'Boden'], ['ceiling', 'Decke'], ['roof', 'Dach']]
++const typeNames = [['flat', 'Flachdach'], ['gable', 'Satteldach']]
++
++function NumberGrid({ entries, keys, ranges, update, prefix }) {
++  return entries.map((entry, index) => <div key={index} className="number-grid">
++    {keys.map(key => <Field key={key} label={`${prefix} ${index + 1} · ${key}`} value={entry[key]} type="number"
++      min={ranges[key][0]} max={ranges[key][1]} onChange={value => update(index, { ...entry, [key]: value })} />)}
++  </div>)
++}
++
++export function NodeFields({ mode, node, document, edit, library }) {
++  const field = (key, label, options, type, min, max) =>
++    <Field key={key} label={label} value={node[key]} onChange={value => edit({ [key]: value })} {...{ options, type, min, max }} />
++  const number = (key, label, min, max) => field(key, label, undefined, 'number', min, max)
++  const groups = formGroups(document)
++  if (mode === 'form') {
++    const part = node.part
++    const partField = (key, label, options, type, min, max) =>
++      <Field key={key} label={label} value={part[key]} onChange={value => edit({ part: { ...part, [key]: value } })}
++        {...{ options, type, min, max }} />
++    const adapter = model.shapes.find(shape => shape.id === part.source)
++    const groupFields = ['UNION', 'SYMMETRIC_DIFFERENCE'].includes(node.kind)
++    return <>
++      {node.kind === 'INPUT' && <>
++        <Field label="Copycat-Grundform" value={part.source} options={model.shapes.map(shape => [shape.id, shape.name])}
++          onChange={source => edit({ part: { ...part, source, size: 1, tilt: 0, discCut: 0, offset: { x: 0, y: 0, z: 0 } } })} />
++        {partField('size', 'Größe', undefined, 'number', 1, adapter.max)}
++        {partField('turn', 'Drehung', undefined, 'number', 0, 3)}
++        {partField('spin', 'Lokale Drehung', undefined, 'number', 0, 3)}
++        {adapter.tiltable && partField('tilt', 'Neigung', undefined, 'number', 0, 3)}
++        {part.source === 'copycats:copycat_flat_pane' && partField('discCut', 'Scheibenanteil', undefined, 'number', 0, 2)}
++        {partField('top', 'Oberseite', undefined, 'checkbox')}
++        {partField('group', 'Materialgruppe', groups.map(group => [group.id, group.name]))}
++        <NumberGrid entries={[part.offset]} keys={['x', 'y', 'z']} ranges={{ x: [-15, 15], y: [-15, 15], z: [-15, 15] }}
++          prefix="Versatz" update={(_, offset) => edit({ part: { ...part, offset } })} />
++      </>}
++      {['ROTATE', 'ROTATION'].includes(node.kind) && <>
++        {field('rotationAxis', 'Achse', model.rotationAxes)}
++        {number('quarterTurns', 'Vierteldrehungen', 0, 3)}
++      </>}
++      {groupFields && field('materialMode', 'Materialmodus', materialModes)}
++      {node.materialMode === 'GROUPED' && field('materialGroup', 'Ergebnisgruppe', groupOptions(groups, 'Erste Gruppe'))}
++      {groupFields && node.materialMode === 'SEPARATED' && node.inputs.map((_, index) =>
++        <Field key={index} label={`Gruppe Eingang ${index + 1}`} options={groupOptions(groups, 'Vom Eingang übernehmen')}
++          value={node.inputGroups[index] ?? ''} onChange={group => edit({
++            inputGroups: node.inputs.map((_, i) => i === index ? group : node.inputGroups[i] ?? '')
++          })} />)}
++      {node.kind === 'OUTPUT' && field('previewGroup', 'Vorschaugruppe', groupOptions(groups, 'Alle'))}
++      {node.kind === 'DIFFERENCE' && <button type="button" onClick={() => edit({ inputs: [...node.inputs].reverse() })}>A / B tauschen</button>}
++    </>
++  }
++
++  if (node.id === 'empty_wall') return <p className="hint">Standardquelle für eine freie Wandöffnung.</p>
++  const enclosure = node.kind === 'ROOM' || (node.kind === 'STOREY' && node.storeyMode === 'walls')
++  const references = key => Object.keys(library[key] ?? {})
++  const ref = (key, label, list) => <Field label={label} value={node[key]} list={list} onChange={value => edit({ [key]: value })} />
++  const updateRect = (index, rect) => edit({ rectangles: node.rectangles.map((item, i) => i === index ? rect : item) })
++  return <>
++    <datalist id="library-forms">{references('forms').map(id => <option key={id} value={id} />)}</datalist>
++    <datalist id="library-modules">{references('modules').map(id => <option key={id} value={id} />)}</datalist>
++    {field('name', 'Knotenname')}
++    {field('role', 'Materialrolle')}
++    {field('materialMode', 'Materialmodus', materialModes)}
++    {node.kind === 'STOREY' && field('storeyMode', 'Zusammensetzung', [['rooms', 'Aus Räumen'], ['walls', 'Aus Wänden']])}
++    {['COPYCAT', 'SEGMENT', 'FLOOR', 'CEILING', 'ROOF'].includes(node.kind) && ref('form', 'Form aus Bibliothek', 'library-forms')}
++    {node.kind === 'SEGMENT' && <>
++      {ref('module', 'Modul aus Bibliothek', 'library-modules')}
++      {field('block', 'Vollblock-ID')}
++      {number('length', 'Länge', 1, 128)}
++    </>}
++    {(enclosure || ['SEGMENT', 'PATTERN'].includes(node.kind)) && number('height', 'Höhe', 1, 16)}
++    {['FLOOR', 'CEILING', 'ROOF'].includes(node.kind) && number('thickness', 'Dicke', 1, 4)}
++    {['FLOOR', 'CEILING'].includes(node.kind) && field('occupied', 'Raumhöhe belegen', undefined, 'checkbox')}
++    {node.kind === 'FLOOR' && field('finish', 'Bodenbelag', [['', 'Kein Belag'], ...model.carpets])}
++    {node.kind === 'ROOF' && <>
++      {field('roofType', 'Dachform', typeNames)}
++      {number('ridge', 'Firstrichtung', 0, 1)}
++      {number('overhang', 'Überhang', 0, 2)}
++    </>}
++    {['ROOM', 'STOREY', 'BUILDING'].includes(node.kind) && field('preview', 'Vorschaufilter', viewFilters)}
++    {enclosure && <details open><summary>Grundriss</summary>
++      <NumberGrid entries={node.rectangles} keys={['x', 'z', 'width', 'length']}
++        ranges={{ x: [-32, 32], z: [-32, 32], width: [1, 32], length: [1, 32] }} prefix="Fläche" update={updateRect} />
++      <div className="button-row">
++        <button type="button" disabled={node.rectangles.length >= 16} onClick={() => edit({
++          rectangles: [...node.rectangles, { x: 3, z: 0, width: 3, length: 3 }]
++        })}>+ Fläche</button>
++        <button type="button" disabled={node.rectangles.length <= 1}
++          onClick={() => edit({ rectangles: node.rectangles.slice(0, -1) })}>Letzte entfernen</button>
++      </div>
++    </details>}
++    {node.kind === 'STOREY' && !enclosure && <details><summary>Raumversatz</summary>
++      <NumberGrid entries={node.inputs.map((_, i) => node.offsets[i] ?? { x: 0, y: 0, z: 0 })}
++        keys={['x', 'z']} ranges={{ x: [-64, 64], z: [-64, 64] }} prefix="Raum" update={(index, offset) =>
++          edit({ offsets: node.inputs.map((_, i) => i === index ? offset : node.offsets[i] ?? { x: 0, y: 0, z: 0 }) })} />
++    </details>}
++  </>
++}
++
++export function DocumentFields({ mode, document, edit, library }) {
++  const groups = formGroups(document)
++  const usedGroups = new Set(document.graph.nodes.flatMap(node => [
++    node.kind === 'INPUT' ? node.part?.group : null, node.materialGroup, node.previewGroup, ...(node.inputGroups ?? [])
++  ]))
++  function updateGroup(id, patch) {
++    edit({ ...document, groups: groups.map(group => group.id === id ? { ...group, ...patch } : group) })
++  }
++  function addGroup() {
++    const id = Array.from({ length: 9 }, (_, i) => `group${i + 1}`).find(id => groups.every(group => group.id !== id))
++    const priority = Array.from({ length: 65 }, (_, i) => i - 32).find(value => groups.every(group => group.priority !== value) && value > 0)
++    edit({ ...document, groups: [...groups, { id, name: id, role: 'surface', priority }] })
++  }
++  const palette = document.palette ?? {}
++  const [role, setRole] = useState('')
++  return <details className="document-fields"><summary>{mode === 'form' ? 'Dokument und Materialgruppen' : 'Dokument und Materialpalette'}</summary>
++    <Field label="Dokumentname" value={document.name ?? 'Entwurf'} maxLength={64}
++      onChange={name => edit({ ...document, name })} />
++    {mode === 'form' ? <>
++      {groups.map(group => <fieldset key={group.id}><legend>{group.id}</legend>
++        <Field label="Name" value={group.name} maxLength={32} onChange={name => updateGroup(group.id, { name })} />
++        <Field label="Materialrolle" value={group.role} onChange={role => updateGroup(group.id, { role })} />
++        <Field label="Vordergrund" value={group.priority} type="number" min={-32} max={32}
++          onChange={priority => updateGroup(group.id, { priority })} />
++        <button type="button" disabled={groups.length <= 1 || usedGroups.has(group.id)}
++          onClick={() => edit({ ...document, groups: groups.filter(item => item.id !== group.id) })}>Gruppe entfernen</button>
++      </fieldset>)}
++      <button type="button" disabled={groups.length >= 8} onClick={addGroup}>+ Materialgruppe</button>
++    </> : <>
++      {Object.entries(palette).map(([id, material]) => <div key={id} className="palette-row">
++        <Field label={id} value={material} onChange={value => edit({ ...document, palette: { ...palette, [id]: value } })} />
++        <button type="button" aria-label={`Rolle ${id} entfernen`} onClick={() => edit({
++          ...document, palette: Object.fromEntries(Object.entries(palette).filter(([key]) => key !== id))
++        })}>×</button>
++      </div>)}
++      <label>Neue Materialrolle<input value={role} onChange={event => setRole(event.target.value)} /></label>
++      <button type="button" disabled={!/^[a-zA-Z0-9_-]{1,32}$/.test(role) || Object.hasOwn(palette, role) || Object.keys(palette).length >= 16}
++        onClick={() => { edit({ ...document, palette: { ...palette, [role]: 'minecraft:stone' } }); setRole('') }}>+ Rolle</button>
++      <p className="hint">{Object.keys(library.forms ?? {}).length} Formen · {Object.keys(library.modules ?? {}).length} Module geladen</p>
++    </>}
++  </details>
++}
+diff --git a/web/src/Preview.jsx b/web/src/Preview.jsx
+new file mode 100644
+index 0000000..6c4b959
+--- /dev/null
++++ b/web/src/Preview.jsx
+@@ -0,0 +1,195 @@
++import { useEffect, useMemo, useRef, useState } from 'react'
++import * as THREE from 'three'
++import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
++
++const colors = {
++  body: '#8ba4a2', cap: '#d29763', 'minecraft:stone_bricks': '#979999',
++  'minecraft:deepslate_tiles': '#434e59', 'minecraft:oak_planks': '#bd9163',
++  'minecraft:glass': '#a6dceb', 'minecraft:stone': '#a1a6ad',
++  'minecraft:spruce_planks': '#846247', 'minecraft:bricks': '#aa6557'
++}
++function color(id) {
++  if (colors[id]) return colors[id]
++  let hash = 0
++  for (const char of id) hash = Math.imul(hash, 31) + char.charCodeAt(0) | 0
++  return new THREE.Color().setHSL((hash >>> 0) % 360 / 360, 0.32, 0.59)
++}
++
++function dispose(group) {
++  group.traverse(item => {
++    if (item.isMesh) {
++      item.geometry.dispose()
++      item.material.dispose()
++      item.dispose?.()
++    }
++  })
++}
++
++function Viewer({ plan }) {
++  const container = useRef(null)
++  const viewer = useRef(null)
++  const [error, setError] = useState('')
++  useEffect(() => {
++    const element = container.current
++    let renderer
++    try {
++      renderer = new THREE.WebGLRenderer({ antialias: true })
++    } catch {
++      setError('WebGL 2 steht in diesem Browser nicht zur Verfügung.')
++      return
++    }
++    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
++    element.append(renderer.domElement)
++    renderer.domElement.setAttribute('aria-label', 'Drehbare 3D-Vorschau')
++    const scene = new THREE.Scene()
++    scene.background = new THREE.Color('#131c23')
++    const camera = new THREE.PerspectiveCamera(42, 1, 0.01, 4096)
++    camera.position.set(4, 3, 5)
++    const controls = new OrbitControls(camera, renderer.domElement)
++    const render = () => renderer.render(scene, camera)
++    controls.addEventListener('change', render)
++    scene.add(new THREE.HemisphereLight('#e8f5ff', '#525764', 2.35))
++    const sun = new THREE.DirectionalLight('#fff2d8', 2.1)
++    sun.position.set(4, 7, 3)
++    scene.add(sun)
++    const model = new THREE.Group()
++    scene.add(model)
++    const resize = new ResizeObserver(() => {
++      const { clientWidth: width, clientHeight: height } = element
++      if (!width || !height) return
++      camera.aspect = width / height
++      camera.updateProjectionMatrix()
++      renderer.setSize(width, height, false)
++      render()
++    })
++    resize.observe(element)
++    viewer.current = { model, camera, controls, render, bounds: null }
++    return () => {
++      resize.disconnect()
++      controls.dispose()
++      dispose(model)
++      renderer.dispose()
++      renderer.domElement.remove()
++      viewer.current = null
++    }
++  }, [])
++
++  const fit = () => {
++    const view = viewer.current
++    if (!view?.bounds || view.bounds.isEmpty()) return
++    const center = view.bounds.getCenter(new THREE.Vector3())
++    const radius = Math.max(view.bounds.getSize(new THREE.Vector3()).length() / 2, 0.75)
++    const angle = Math.min(Math.tan(view.camera.fov * Math.PI / 360), Math.tan(view.camera.fov * Math.PI / 360) * view.camera.aspect)
++    view.controls.target.copy(center)
++    view.camera.position.copy(center).addScaledVector(new THREE.Vector3(1, 0.72, 1.1).normalize(), radius / angle * 1.14)
++    view.controls.update()
++    view.render()
++  }
++
++  useEffect(() => {
++    const view = viewer.current
++    if (!view) return
++    dispose(view.model)
++    view.model.clear()
++    const batches = new Map()
++    for (const mesh of plan?.meshes ?? []) {
++      const list = batches.get(mesh.material) ?? []
++      list.push(mesh)
++      batches.set(mesh.material, list)
++    }
++    const matrix = new THREE.Matrix4()
++    const scale = new THREE.Vector3()
++    const translation = new THREE.Vector3()
++    const bounds = new THREE.Box3()
++    const corner = new THREE.Vector3()
++    for (const [material, meshes] of batches) {
++      const count = meshes.reduce((sum, mesh) => sum + mesh.boxes.length * mesh.positions.length, 0)
++      if (!count) continue
++      const draw = new THREE.InstancedMesh(new THREE.BoxGeometry(), new THREE.MeshLambertMaterial({ color: color(material) }), count)
++      let index = 0
++      for (const mesh of meshes) for (const [px, py, pz] of mesh.positions) {
++        for (const [x, y, z, maxX, maxY, maxZ] of mesh.boxes) {
++          scale.set((maxX - x) / 16, (maxY - y) / 16, (maxZ - z) / 16)
++          translation.set(px + (x + maxX) / 32, py + (y + maxY) / 32, pz + (z + maxZ) / 32)
++          matrix.makeScale(scale.x, scale.y, scale.z).setPosition(translation)
++          draw.setMatrixAt(index++, matrix)
++          bounds.expandByPoint(corner.set(px + x / 16, py + y / 16, pz + z / 16))
++          bounds.expandByPoint(corner.set(px + maxX / 16, py + maxY / 16, pz + maxZ / 16))
++        }
++      }
++      draw.instanceMatrix.needsUpdate = true
++      draw.computeBoundingSphere()
++      view.model.add(draw)
++    }
++    const first = !view.bounds || view.bounds.isEmpty()
++    view.bounds = bounds
++    if (first) fit()
++    view.render()
++  }, [plan])
++
++  return <div className="viewer" ref={container}>
++    <button type="button" className="fit3d" onClick={fit}>3D einpassen</button>
++    {error && <p className="preview-error" role="status">{error}</p>}
++  </div>
++}
++
++export default function Preview({ mode, document, library, selected }) {
++  const worker = useRef(null)
++  const sequence = useRef(0)
++  const running = useRef(false)
++  const queued = useRef(null)
++  const [result, setResult] = useState({})
++  const latest = useRef(document)
++  latest.current = document
++  const content = useMemo(() => JSON.stringify({
++    ...document, graph: { ...document.graph, nodes: document.graph.nodes.map(({ x, y, ...node }) => node) }
++  }), [document])
++  const send = () => {
++    if (!worker.current || running.current || !queued.current) return
++    running.current = true
++    worker.current.postMessage(queued.current)
++    queued.current = null
++  }
++  useEffect(() => {
++    const instance = new Worker(new URL('./preview.worker.js', import.meta.url), { type: 'module' })
++    worker.current = instance
++    instance.onmessage = ({ data }) => {
++      running.current = false
++      if (data.id === sequence.current) {
++        setResult(previous => data.error ? { plan: previous.plan, error: data.error, pending: false } : data)
++      }
++      send()
++    }
++    instance.onerror = event => {
++      running.current = false
++      setResult(previous => ({ ...previous, error: event.message, pending: false }))
++    }
++    return () => instance.terminate()
++  }, [])
++
++  useEffect(() => {
++    const id = ++sequence.current
++    queued.current = null
++    const timer = setTimeout(() => {
++      setResult(previous => ({ ...previous, pending: true, error: '' }))
++      queued.current = { id, mode, document: latest.current, library, selected }
++      send()
++    }, 130)
++    return () => clearTimeout(timer)
++  }, [mode, content, library, selected])
++
++  const noun = mode === 'building' ? 'Platzierungen' : 'Rasterzellen'
++  return <section className="preview-panel" aria-label="Gebäude- und Formvorschau">
++    <div className="panel-heading"><span>3D-Vorschau</span><small>LIVE · KOTLIN</small></div>
++    <Viewer plan={result.plan} />
++    <div className="preview-meta" role="status">
++      {result.error ? <><strong>{result.plan ? 'Letzter gültiger Stand' : 'Vorschau wartet auf einen gültigen Graphen'}</strong><br />{result.error}</>
++        : result.pending ? 'Vorschau wird berechnet …'
++          : result.plan ? <>{result.plan.count.toLocaleString('de-DE')} {noun} · {result.plan.raw.toLocaleString('de-DE')} Zinkeinheiten</>
++            : 'Vorschau wird geladen …'}
++    </div>
++    {result.plan?.materials && <details className="materials"><summary>Materialbedarf</summary>
++      {Object.entries(result.plan.materials).map(([id, count]) => <div key={id}><code>{id}</code><span>{count}</span></div>)}
++    </details>}
++  </section>
++}
+diff --git a/web/src/main.jsx b/web/src/main.jsx
+new file mode 100644
+index 0000000..2340b88
+--- /dev/null
++++ b/web/src/main.jsx
+@@ -0,0 +1,316 @@
++import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
++import { createRoot } from 'react-dom/client'
++import { Background, Controls, Handle, MiniMap, Position, ReactFlow, useUpdateNodeInternals } from '@xyflow/react'
++import '@xyflow/react/dist/style.css'
++import { adaptRectangles, newNode, starterBuilding } from './generated/engine.mjs'
++import { applyWires, connections, formGroups, inspect, model, position, protectedNode, readGraph, replaceNodes, validateLibrary, writeGraph } from './model.js'
++import { DocumentFields, Field, names, NodeFields, portName } from './Inspector.jsx'
++import './style.css'
++import baseLibrary from '../../examples/library.json'
++import formExample from '../../examples/nodegraph-form.json'
++import formRotation from '../../examples/nodegraph-rotation-xor.json'
++import formMaterials from '../../examples/nodegraph-material-groups.json'
++import buildingExample from '../../examples/building-graph.json'
++import buildingAssembly from '../../examples/building-graph-assembly.json'
++import buildingBasements from '../../examples/building-graph-basements.json'
++
++const Preview = lazy(() => import('./Preview.jsx'))
++const wiki = 'https://github.com/TeutonStudio/copycat-architect/wiki'
++const examples = {
++  form: [
++    ['Aussparung', formExample], ['Rotation und Differenz', formRotation], ['Materialgruppen', formMaterials]
++  ],
++  building: [
++    ['Gebäude aus Copycats', buildingAssembly], ['L-förmiges Gebäude', buildingExample], ['Gebäude mit Kellern', buildingBasements]
++  ]
++}
++const initialMode = new URLSearchParams(window.location.search).get('editor') === 'form' ? 'form' : 'building'
++
++function DiagramNode({ id, data: { node, ports }, selected }) {
++  const updateInternals = useUpdateNodeInternals()
++  const signature = ports.map(port => port.id).join('|')
++  useEffect(() => updateInternals(id), [id, signature, updateInternals])
++  const source = !['BUILDING', 'OUTPUT'].includes(node.kind)
++  return <div className={`diagram-node ${selected ? 'selected' : ''} ${source ? '' : 'result-node'}`}>
++    <div className="node-heading">
++      <span className="node-symbol">{source ? '◇' : '◆'}</span>
++      <div><strong>{node.name || names[node.kind]}</strong><small>{node.name ? names[node.kind] : node.id}</small></div>
++      {source && <Handle type="source" position={Position.Right} id="out" aria-label="Ausgang" />}
++    </div>
++    {ports.length > 0 && <div className="ports">{ports.map(port => <div className="port" key={port.id}>
++      <Handle type="target" position={Position.Left} id={port.id} title={portName(port, node)} />
++      <span>{portName(port, node)}</span>
++      <span className={`port-status ${port.source ? 'connected' : ''}`}>{port.source ? '●' : '○'}</span>
++    </div>)}</div>}
++  </div>
++}
++
++const nodeTypes = { architect: memo(DiagramNode) }
++const edgeStyle = { stroke: '#8daeb1', strokeWidth: 1.7 }
++
++function useHistory(initial) {
++  const [state, setState] = useState(() => ({ current: initial, past: [], future: [] }))
++  const push = next => setState(({ current, past }) => ({
++    current: next, past: [...past.slice(-49), current], future: []
++  }))
++  const undo = () => setState(state => state.past.length ? {
++    current: state.past.at(-1), past: state.past.slice(0, -1), future: [state.current, ...state.future]
++  } : state)
++  const redo = () => setState(state => state.future.length ? {
++    current: state.future[0], past: [...state.past, state.current], future: state.future.slice(1)
++  } : state)
++  return { ...state, push, undo, redo }
++}
++
++function downloadJson(document, mode) {
++  const name = (document.name ?? 'copycat').normalize('NFKD').replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/^-|-$/g, '') || 'copycat'
++  const url = URL.createObjectURL(new Blob([JSON.stringify(document) + '\n'], { type: 'application/json' }))
++  const link = window.document.createElement('a')
++  link.href = url
++  link.download = `${name}-${mode}.json`
++  link.click()
++  setTimeout(() => URL.revokeObjectURL(url), 1000)
++}
++
++function Studio({ mode, active }) {
++  const history = useHistory(examples[mode][0][1])
++  const document = history.current
++  const [library, setLibrary] = useState(baseLibrary)
++  const [selected, setSelected] = useState(null)
++  const [selectedWire, setSelectedWire] = useState(null)
++  const [dragging, setDragging] = useState(null)
++  const [message, setMessage] = useState(null)
++  const [flow, setFlow] = useState(null)
++  const [kind, setKind] = useState('')
++  const [workspace, setWorkspace] = useState(0)
++  const graphInput = useRef(null)
++  const libraryInput = useRef(null)
++  const canvas = useRef(null)
++  const entries = useMemo(() => inspect(mode, document), [mode, document])
++  const wires = useMemo(() => connections(entries), [entries])
++  const current = entries.find(({ node }) => node.id === selected)
++  const resultNode = entries.find(({ node }) => ['OUTPUT', 'BUILDING'].includes(node.kind))
++  const visibleNode = current ?? resultNode
++  const kinds = mode === 'form' ? model.form.map(type => type.kind).filter(kind => kind !== 'OUTPUT') : model.building.filter(kind => kind !== 'BUILDING')
++  const edgeId = ({ target, port }) => `${target}/${port}`
++  const nodes = entries.map(data => ({
++    id: data.node.id, type: 'architect', data,
++    position: dragging?.id === data.node.id ? dragging.position : { x: data.node.x, y: data.node.y },
++    selected: data.node.id === selected
++  }))
++  const edges = useMemo(() => wires.map(wire => ({
++    id: edgeId(wire), source: wire.source, sourceHandle: 'out', target: wire.target, targetHandle: wire.port,
++    style: wire.source === 'empty_wall' ? { ...edgeStyle, opacity: 0.38 } : edgeStyle,
++    selected: edgeId(wire) === selectedWire
++  })), [wires, selectedWire])
++
++  const transact = callback => {
++    try {
++      callback()
++      setMessage(null)
++    } catch (error) {
++      setMessage({ error: true, text: error.message || String(error) })
++    }
++  }
++  const commit = next => {
++    inspect(mode, next)
++    if (JSON.stringify(next) !== JSON.stringify(document)) history.push(next)
++  }
++  const patchNode = patch => transact(() => {
++    const { node } = visibleNode
++    let updated = { ...document.graph.nodes.find(item => item.id === node.id), ...patch }
++    if ('rectangles' in patch || patch.storeyMode === 'walls') {
++      const adapted = adaptRectangles(node, updated)
++      updated = { ...updated, walls: adapted.walls }
++    }
++    if (patch.storeyMode === 'rooms' && !node.inputs.length) updated.inputs = ['']
++    commit(replaceNodes(document, document.graph.nodes.map(item => item.id === node.id ? updated : item)))
++  })
++  const setWire = (target, port, source) => transact(() => {
++    const rest = wires.filter(wire => wire.target !== target || wire.port !== port)
++    commit(applyWires(mode, document, entries, source ? [...rest, { source, target, port }] : rest))
++    setSelectedWire(null)
++  })
++  const removeSelection = () => {
++    const wire = wires.find(wire => edgeId(wire) === selectedWire)
++    if (wire) {
++      setWire(wire.target, wire.port, '')
++    } else if (current && !protectedNode(current.node)) {
++      transact(() => {
++        const rest = wires.filter(wire => wire.source !== selected && wire.target !== selected)
++        commit(applyWires(mode, document, entries, rest, [selected]))
++        setSelected(null)
++      })
++    }
++  }
++  const open = raw => {
++    commit(readGraph(raw, mode))
++    setSelected(null)
++    setSelectedWire(null)
++    setWorkspace(key => key + 1)
++  }
++  const add = () => transact(() => {
++    if (!kind) return
++    const { left, top, width, height } = canvas.current.getBoundingClientRect()
++    const center = flow?.screenToFlowPosition({ x: left + width * 0.5, y: top + height * 0.4 }) ?? { x: 50, y: 50 }
++    const id = `node_${crypto.randomUUID().slice(0, 13)}`
++    const node = newNode(mode === 'building', kind, id, position(center.x), position(center.y))
++    if (kind === 'INPUT') node.part.group = formGroups(document)[0].id
++    commit(replaceNodes(document, [...document.graph.nodes, node]))
++    setSelected(id)
++    setSelectedWire(null)
++  })
++  const onDrag = useCallback((_, node) => setDragging({ id: node.id, position: node.position }), [])
++  const onDragStop = (_, node) => {
++    setDragging(null)
++    transact(() => commit(replaceNodes(document, document.graph.nodes.map(item => item.id === node.id
++      ? { ...item, x: position(node.position.x), y: position(node.position.y) } : item))))
++  }
++  const compatible = ({ source, target, targetHandle }) => {
++    const port = entries.find(({ node }) => node.id === target)?.ports.find(port => port.id === targetHandle)
++    const sourceKind = entries.find(({ node }) => node.id === source)?.node.kind
++    return source !== target && Boolean(port?.accepts.includes(sourceKind))
++  }
++  const importFile = async (event, isLibrary) => {
++    const file = event.target.files?.[0]
++    event.target.value = ''
++    if (!file) return
++    try {
++      if (file.size > 16_000_000) throw new Error('Die JSON-Datei ist größer als 16 MB.')
++      const raw = JSON.parse(await file.text())
++      if (isLibrary) {
++        const imported = validateLibrary(raw)
++        setLibrary({ forms: { ...baseLibrary.forms, ...imported.forms }, modules: { ...baseLibrary.modules, ...imported.modules } })
++      }
++      else open(raw)
++      setMessage({ text: `${file.name} geöffnet` })
++    } catch (error) {
++      setMessage({ text: error.message, error: true })
++    }
++  }
++
++  const count = entries.length
++  const maxNodes = mode === 'form' ? model.formNodes : model.buildingNodes
++  const portLimits = mode === 'form' ? model.form.find(type => type.kind === visibleNode.node.kind)
++    : visibleNode.node.kind === 'PATTERN' ? { min: 2, max: model.sockets } : null
++  const isFormSourceLimit = kind === 'INPUT' && entries.filter(({ node }) => node.kind === 'INPUT').length >= model.formSources
++  const previewSelected = current && ['ROOM', 'STOREY', 'BUILDING'].includes(current.node.kind) ? current.node.id : ''
++  const exportFile = () => transact(() => downloadJson(writeGraph(mode, document), mode))
++  const keydown = event => {
++    if (event.target.closest('input, textarea, select, [contenteditable=true]')) return
++    if ((event.ctrlKey || event.metaKey) && ['z', 'y'].includes(event.key.toLowerCase())) {
++      event.preventDefault()
++      if (event.shiftKey || event.key.toLowerCase() === 'y') history.redo()
++      else history.undo()
++    }
++    if (['Delete', 'Backspace'].includes(event.key) && (selected || selectedWire)) {
++      event.preventDefault()
++      removeSelection()
++    }
++  }
++  return <div className="studio" hidden={!active} onKeyDown={keydown}>
++    <div className="toolbar">
++      <label className="example-select"><span>BEISPIELE</span><select aria-label="Beispiel öffnen" value="" onChange={e => transact(() => open(examples[mode][Number(e.target.value)][1]))}>
++        <option value="" disabled>Beispiel öffnen</option>
++        {examples[mode].map(([name], i) => <option key={name} value={i}>{name}</option>)}
++      </select></label>
++      <button type="button" onClick={() => transact(() => open(mode === 'building' ? starterBuilding() :
++        { schema: 3, name: 'Neue Form', parts: [{ source: 'copycats:copycat_slice' }] }))}>Neu</button>
++      <button type="button" onClick={() => graphInput.current.click()}>JSON öffnen</button>
++      <input hidden ref={graphInput} type="file" accept=".json,application/json" onChange={event => importFile(event, false)} />
++      {mode === 'building' && <>
++        <button type="button" onClick={() => libraryInput.current.click()}>Bibliothek öffnen</button>
++        <input hidden ref={libraryInput} type="file" accept=".json,application/json" onChange={event => importFile(event, true)} />
++      </>}
++      <button type="button" className="primary" onClick={exportFile}>JSON exportieren</button>
++      <span className="toolbar-spacer" />
++      <button type="button" aria-label="Rückgängig" title="Rückgängig" disabled={!history.past.length} onClick={history.undo}>↶</button>
++      <button type="button" aria-label="Wiederholen" title="Wiederholen" disabled={!history.future.length} onClick={history.redo}>↷</button>
++    </div>
++
++    <div className="workbench">
++      <section className="canvas-panel" aria-label="Graph bearbeiten">
++        <div className="panel-heading graph-heading">
++          <div><span>{document.name || 'Entwurf'}</span><small>{count} / {maxNodes} Knoten</small></div>
++          <div className="button-row">
++            <select aria-label="Knotentyp" value={kind} onChange={event => setKind(event.target.value)}>
++              <option value="" disabled>Knotentyp</option>
++              {kinds.map(kind => <option key={kind} value={kind}>{names[kind]}</option>)}
++            </select>
++            <button type="button" disabled={!kind || count >= maxNodes || isFormSourceLimit} onClick={add}>+ Knoten</button>
++          </div>
++        </div>
++        <div className="canvas" ref={canvas}>
++          {active && <ReactFlow key={workspace} nodes={nodes} edges={edges} nodeTypes={nodeTypes} onInit={setFlow}
++            fitView fitViewOptions={{ padding: 0.15, maxZoom: 1.1 }} minZoom={0.13} maxZoom={2}
++            onNodeDrag={onDrag} onNodeDragStop={onDragStop} deleteKeyCode={null} nodesConnectable
++            onNodeClick={(_, node) => { setSelected(node.id); setSelectedWire(null) }}
++            onEdgeClick={(_, edge) => { setSelectedWire(edge.id); setSelected(edge.target) }}
++            onPaneClick={() => { setSelected(null); setSelectedWire(null) }}
++            isValidConnection={compatible} onConnect={wire => setWire(wire.target, wire.targetHandle, wire.source)}
++            selectionKeyCode={null} multiSelectionKeyCode={null} onlyRenderVisibleElements
++            colorMode="dark" aria-label="React-Flow-Graph">
++            <Background gap={22} size={1} color="#46606d" />
++            <Controls showInteractive={false} />
++            <MiniMap pannable zoomable nodeColor="#659a9c" maskColor="#18232c88" />
++          </ReactFlow>}
++        </div>
++        <div className={`canvas-footer ${message?.error ? 'error' : ''}`} role="status">
++          {message?.text ?? 'Knoten ziehen · Anschlüsse verbinden · Entf löscht die Auswahl'}
++        </div>
++      </section>
++      <div className="side">
++        {active && <Suspense fallback={<section className="preview-panel"><div className="preview-meta">3D-Vorschau wird geladen …</div></section>}>
++          <Preview mode={mode} document={document} library={library} selected={previewSelected} />
++        </Suspense>}
++        <section className="inspector" aria-label="Knoteninspektor">
++          <div className="panel-heading"><span>Inspektor</span><small>{current ? 'AUSWAHL' : 'ERGEBNIS'}</small></div>
++          <div className="inspector-body" key={visibleNode.node.id}>
++            <h2>{visibleNode.node.name || names[visibleNode.node.kind]}</h2>
++            <div className="node-id">{visibleNode.node.id}</div>
++            {visibleNode.ports.length > 0 && <details open><summary>Verbindungen</summary>
++              {visibleNode.ports.map(port => <Field key={port.id} label={portName(port, visibleNode.node)}
++                value={port.source} options={[[ '', 'Offen' ], ...entries.filter(({ node }) =>
++                  port.accepts.includes(node.kind) && node.id !== visibleNode.node.id)
++                  .map(({ node }) => [node.id, node.name || `${names[node.kind]} · ${node.id}`])]}
++                onChange={source => setWire(visibleNode.node.id, port.id, source)} />)}
++              {portLimits && portLimits.min !== portLimits.max && <div className="button-row">
++                <button type="button" disabled={visibleNode.node.inputs.length >= portLimits.max}
++                  onClick={() => patchNode({ inputs: [...visibleNode.node.inputs, ''] })}>+ Eingang</button>
++                <button type="button" disabled={visibleNode.node.inputs.length <= portLimits.min}
++                  onClick={() => patchNode({ inputs: visibleNode.node.inputs.slice(0, -1),
++                    ...(mode === 'form' ? { inputGroups: visibleNode.node.inputGroups.slice(0, visibleNode.node.inputs.length - 1) } : {})
++                  })}>Letzten Eingang entfernen</button>
++              </div>}
++            </details>}
++            <NodeFields {...{ mode, node: visibleNode.node, document, edit: patchNode, library }} />
++            {(selectedWire || current && !protectedNode(current.node)) &&
++              <button className="danger" type="button" onClick={removeSelection}>{selectedWire ? 'Verbindung trennen' : 'Knoten löschen'}</button>}
++            <DocumentFields {...{ mode, document, library }} edit={next => transact(() => commit(next))} />
++          </div>
++        </section>
++      </div>
++    </div>
++  </div>
++}
++
++function App() {
++  const [mode, setMode] = useState(initialMode)
++  return <>
++    <header className="page-header">
++      <div className="brand-mark" aria-hidden="true">⬡</div>
++      <div className="brand"><span>COPYCAT ARCHITECT</span><h1>Graphstudio</h1></div>
++      <nav aria-label="Graph auswählen">
++        <button type="button" aria-pressed={mode === 'form'} onClick={() => setMode('form')}>Formgraph</button>
++        <button type="button" aria-pressed={mode === 'building'} onClick={() => setMode('building')}>Gebäudegraph</button>
++      </nav>
++      <a href={wiki}>Zum Wiki ↗</a>
++    </header>
++    <main>
++      <Studio mode="form" active={mode === 'form'} />
++      <Studio mode="building" active={mode === 'building'} />
++    </main>
++  </>
++}
++
++createRoot(document.getElementById('root')).render(<App />)
+diff --git a/web/src/model.js b/web/src/model.js
+new file mode 100644
+index 0000000..6fc374c
+--- /dev/null
++++ b/web/src/model.js
+@@ -0,0 +1,73 @@
++import { applyDiagram, compileForm, graphModels, inspectGraph, prepareForm } from './generated/engine.mjs'
++
++export const model = graphModels()
++export const defaults = [{ id: 'body', name: 'Body', role: 'surface', priority: 0 }]
++export const formGroups = document => document.groups ?? defaults
++export const position = value => Math.max(model.positionMin, Math.min(model.positionMax, Math.round(value)))
++export const inspect = (mode, document) => inspectGraph(mode === 'building', document)
++
++export function replaceNodes(document, nodes) {
++  return { ...document, graph: { ...document.graph, nodes } }
++}
++
++export function readGraph(raw, mode) {
++  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Eine Graphdatei muss ein JSON-Objekt sein.')
++  const bare = Array.isArray(raw.nodes)
++  if (!bare && !raw.graph && !Array.isArray(raw.parts) && !raw.wings && !raw.patterns && !raw.palette) {
++    throw new Error('Die Datei enthält weder einen Copycat-Graphen noch eine Form.')
++  }
++  const isBuilding = bare ? raw.nodes.some(node => node.kind === 'BUILDING')
++    : raw.graph ? raw.graph.nodes?.some(node => node.kind === 'BUILDING')
++      : !raw.parts && (raw.wings || raw.patterns || raw.palette)
++  if (Boolean(isBuilding) !== (mode === 'building')) throw new Error('Die Datei gehört zum anderen Editor.')
++  let document = bare ? { name: 'Importierter Graph', schema: isBuilding ? 2 : 3, graph: raw } : raw
++  if (!document.graph) {
++    if (isBuilding) throw new Error('Diese Datei enthält einen älteren Gebäudeplan ohne Gebäudegraph.')
++    document = { ...document, graph: { schema: 2, nodes: prepareForm(document) } }
++  }
++  inspect(mode, document)
++  return document
++}
++
++export function writeGraph(mode, document) {
++  inspect(mode, document)
++  if (mode === 'form') return { ...document, schema: 3, parts: compileForm(document) }
++  return { ...document, schema: 2 }
++}
++
++export function connections(entries) {
++  const known = new Set(entries.map(({ node }) => node.id))
++  return entries.flatMap(({ node, ports }) => ports
++    .filter(port => known.has(port.source))
++    .map(port => ({ source: port.source, target: node.id, port: port.id })))
++}
++
++export function protectedNode(node) {
++  return node.id === 'empty_wall' || ['OUTPUT', 'BUILDING'].includes(node.kind)
++}
++
++export function applyWires(mode, document, entries, wires, removed = []) {
++  const previous = new Map(entries.map(({ node }) => [node.id, node]))
++  const originals = new Map(document.graph.nodes.map(node => [node.id, node]))
++  const layout = entries.map(({ node }) => node).filter(node => !removed.includes(node.id))
++  const next = applyDiagram(mode === 'building', document, layout, wires)
++  return replaceNodes(document, next.map(node => {
++    const before = previous.get(node.id)
++    const original = originals.get(node.id)
++    const fields = mode === 'building' ? ['inputs', 'offsets', 'walls', 'floor', 'ceiling', 'corner', 'levels', 'roof'] : ['inputs']
++    const changed = fields.filter(key => JSON.stringify(before[key]) !== JSON.stringify(node[key]))
++    return { ...original, ...Object.fromEntries(changed.map(key => [key, node[key]])) }
++  }))
++}
++
++export function validateLibrary(data) {
++  if (!data || typeof data !== 'object' || Array.isArray(data) || !('forms' in data || 'modules' in data)) {
++    throw new Error('Erwartet wird eine Copycat-Bibliothek mit forms und/oder modules.')
++  }
++  for (const key of ['forms', 'modules']) {
++    if (key in data && (!data[key] || typeof data[key] !== 'object' || Array.isArray(data[key]))) {
++      throw new Error(`Der Bibliothekseintrag ${key} muss ein Objekt sein.`)
++    }
++  }
++  return data
++}
+diff --git a/web/src/preview.worker.js b/web/src/preview.worker.js
+new file mode 100644
+index 0000000..90d2341
+--- /dev/null
++++ b/web/src/preview.worker.js
+@@ -0,0 +1,9 @@
++import { previewGraph } from './generated/engine.mjs'
++
++self.onmessage = ({ data: { id, mode, document, library, selected } }) => {
++  try {
++    self.postMessage({ id, plan: previewGraph(mode === 'building', document, library, selected) })
++  } catch (error) {
++    self.postMessage({ id, error: error.message || String(error) })
++  }
++}
+diff --git a/web/src/style.css b/web/src/style.css
+new file mode 100644
+index 0000000..721a991
+--- /dev/null
++++ b/web/src/style.css
+@@ -0,0 +1,113 @@
++:root {
++  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
++  color: #e8f0ef;
++  background: #10181f;
++  color-scheme: dark;
++  font-synthesis: none;
++  --panel: #17232c;
++  --line: #30434d;
++  --muted: #a5b7bc;
++  --mint: #a9e2d1;
++}
++* { box-sizing: border-box; }
++body { margin: 0; }
++button, input, select { font: inherit; }
++button, select, input:not([type="checkbox"]) {
++  min-height: 34px; border: 1px solid #3b515c; border-radius: 6px;
++  background: #202e37; color: #edf7f5; padding: 5px 9px;
++}
++button, select, summary { cursor: pointer; }
++button:disabled { cursor: default; opacity: 0.45; }
++button:hover:not(:disabled), select:hover { background: #2c414b; }
++:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
++a { color: var(--mint); text-decoration: none; }
++a:hover { text-decoration: underline; }
++small { color: var(--muted); }
++.page-header {
++  display: flex; align-items: center; gap: 14px; padding: 16px clamp(12px, 3vw, 38px);
++  border-bottom: 1px solid var(--line); background: #141f27;
++}
++.brand-mark {
++  display: grid; place-items: center; width: 48px; height: 48px; border-radius: 10px;
++  border: 1px solid #497067; color: var(--mint); background: #223a3d; font-size: 30px;
++}
++.brand span { color: var(--mint); font-size: 10px; font-weight: 750; letter-spacing: 0.19em; }
++.brand h1 { margin: 2px 0 0; font-size: clamp(21px, 4vw, 29px); font-weight: 650; line-height: 1; }
++.page-header nav { display: flex; flex-wrap: wrap; gap: 6px; margin-inline: auto; }
++.page-header nav button { background: transparent; border-color: transparent; }
++.page-header nav button[aria-pressed="true"] { background: #263c43; border-color: #476b6c; color: var(--mint); }
++.page-header a { font-size: 13px; white-space: nowrap; }
++main { max-width: 1800px; margin: auto; padding: 18px clamp(9px, 2.5vw, 34px); }
++.toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 7px; margin-bottom: 13px; }
++.toolbar .example-select { display: grid; gap: 3px; min-width: 165px; }
++.example-select span { font-size: 10px; letter-spacing: 0.13em; font-weight: 700; color: var(--muted); }
++.toolbar-spacer { flex: 1; }
++button.primary { background: var(--mint); color: #102924; border-color: var(--mint); font-weight: 700; }
++button.primary:hover:not(:disabled) { background: #cef6e9; }
++.workbench { display: grid; grid-template-columns: minmax(0, 1fr) clamp(270px, 28vw, 390px); gap: 12px; }
++.canvas-panel, .inspector, .preview-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; min-width: 0; }
++.canvas-panel { display: flex; flex-direction: column; height: max(580px, calc(100dvh - 166px)); }
++.panel-heading {
++  display: flex; justify-content: space-between; align-items: center; min-height: 43px; gap: 8px; padding: 8px 11px;
++  border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 680;
++}
++.panel-heading small { letter-spacing: 0.09em; font-size: 10px; margin-left: 8px; white-space: nowrap; }
++.graph-heading > div:first-child { display: flex; flex-wrap: wrap; align-items: center; min-width: 0; overflow-wrap: anywhere; }
++.graph-heading button, .graph-heading select { font-size: 12px; }
++.button-row { display: flex; gap: 5px; flex-wrap: wrap; }
++.canvas { flex: 1; min-height: 0; background: #111d26; }
++.canvas-footer { padding: 9px 11px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
++.canvas-footer.error, .preview-error { color: #ffbaab; }
++.side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
++.viewer { position: relative; height: clamp(170px, 28vh, 330px); background: #131c23; }
++.viewer canvas { display: block; width: 100%; height: 100%; touch-action: none; }
++.fit3d { position: absolute; right: 8px; top: 8px; font-size: 11px; min-height: 28px; z-index: 1; }
++.preview-meta, .preview-error { font-size: 12px; padding: 9px 12px; margin: 0; }
++.materials { padding: 0 12px 8px; font-size: 12px; max-height: 140px; overflow: auto; }
++.materials div { display: flex; justify-content: space-between; gap: 6px; padding: 2px 0; }
++.materials code { overflow-wrap: anywhere; }
++.inspector-body { padding: 9px 12px 12px; max-height: 48vh; overflow: auto; }
++.inspector h2 { font-size: 17px; margin: 0; }
++.node-id { font: 11px ui-monospace, monospace; color: var(--muted); margin-bottom: 8px; }
++.inspector label { display: grid; gap: 4px; margin: 6px 0; font-size: 12px; color: #c6d5d7; min-width: 0; }
++.inspector select, .inspector input { width: 100%; min-width: 0; }
++.inspector .check { display: flex; align-items: center; }
++.inspector .check input { width: auto; }
++.inspector details { margin-top: 8px; border-top: 1px solid var(--line); padding-top: 7px; }
++.inspector summary, .materials summary { color: var(--mint); font-weight: 650; font-size: 12px; }
++.inspector button { font-size: 12px; }
++.inspector .danger { margin-top: 8px; color: #ffc1b6; }
++.inspector fieldset { border: 1px solid var(--line); margin: 6px 0; border-radius: 5px; }
++.inspector legend, .hint { color: var(--muted); font-size: 12px; }
++.number-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 5px; }
++.palette-row { display: flex; align-items: end; gap: 4px; }
++.palette-row label { flex: 1; }
++.palette-row button { margin-bottom: 6px; }
++.diagram-node { width: 186px; border: 1px solid #4c6973; border-radius: 8px; background: #1e313b; box-shadow: 0 4px 11px #060d14aa; }
++.diagram-node.selected { outline: 2px solid #b1e7d7; }
++.node-heading { display: flex; align-items: center; gap: 8px; padding: 8px 10px; position: relative; border-radius: 7px 7px 0 0; background: #263e47; }
++.node-heading strong { display: block; font-size: 12px; overflow-wrap: anywhere; }
++.node-heading small { display: block; margin-top: 2px; font-size: 10px; }
++.node-symbol { color: #a9e2d1; font-size: 16px; }
++.result-node .node-heading { background: #39554d; }
++.ports { padding: 3px 0; }
++.port { display: flex; justify-content: space-between; align-items: center; position: relative; min-height: 22px; padding: 2px 8px 2px 12px; font-size: 10px; }
++.port-status { color: #647e82; }
++.port-status.connected { color: var(--mint); }
++.react-flow .react-flow__handle { width: 11px; height: 11px; border: 2px solid #14232b; background: #a1d2c6; }
++.react-flow .react-flow__edge.selected .react-flow__edge-path { stroke: #ffc790 !important; stroke-width: 3px !important; }
++.react-flow__minimap { width: 120px; height: 78px; }
++@media (max-width: 850px) {
++  .workbench { grid-template-columns: minmax(0, 1fr); }
++  .canvas-panel { height: max(420px, 55dvh); }
++  .side { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
++}
++@media (max-width: 520px) {
++  .page-header { flex-wrap: wrap; gap: 8px; }
++  .page-header nav { order: 3; width: 100%; }
++  .page-header a { margin-left: auto; }
++  .side { grid-template-columns: minmax(0, 1fr); }
++  .inspector-body { max-height: none; }
++  .graph-heading { align-items: start; flex-direction: column; }
++  .react-flow__minimap { display: none; }
++}
+diff --git a/web/test/graph.test.js b/web/test/graph.test.js
+new file mode 100644
+index 0000000..c8e0073
+--- /dev/null
++++ b/web/test/graph.test.js
+@@ -0,0 +1,71 @@
++import assert from 'node:assert/strict'
++import { readFileSync } from 'node:fs'
++import test from 'node:test'
++import { newNode, previewGraph, starterBuilding } from '../src/generated/engine.mjs'
++import { applyWires, connections, inspect, readGraph, replaceNodes, writeGraph } from '../src/model.js'
++
++const fixture = name => JSON.parse(readFileSync(new URL(`../../examples/${name}.json`, import.meta.url)))
++const library = fixture('library')
++const forms = ['nodegraph-form', 'nodegraph-rotation-xor', 'nodegraph-material-groups']
++const buildings = ['building-graph', 'building-graph-assembly', 'building-graph-basements']
++
++for (const [mode, fixtures] of [['form', forms], ['building', buildings]]) {
++  for (const file of fixtures) {
++    test(`${file} opens, previews and round-trips`, () => {
++      const document = fixture(file)
++      const loaded = readGraph(document, mode)
++      const plan = previewGraph(mode === 'building', loaded, library, '')
++      assert.ok(plan.count > 0)
++      assert.ok(plan.meshes.length > 0)
++      const exported = writeGraph(mode, loaded)
++      assert.deepEqual(exported.graph, document.graph)
++      assert.deepEqual(previewGraph(mode === 'building', exported, library, ''), plan)
++      const entries = inspect(mode, loaded)
++      const unchanged = applyWires(mode, loaded, entries, connections(entries))
++      assert.deepEqual(unchanged, loaded)
++    })
++  }
++}
++
++test('new starter plans a building with the supplied example library', () => {
++  assert.ok(previewGraph(true, starterBuilding(), library, '').count > 0)
++})
++
++test('removing a form source clears only its connections and keeps custom data', () => {
++  const source = newNode(false, 'INPUT', 'source', 20, 10)
++  const output = { ...newNode(false, 'OUTPUT', 'out', 40, 30), inputs: ['source'], extra: { keep: true } }
++  const document = { name: 'Form', schema: 3, graph: { schema: 2, nodes: [source, output] } }
++  const edited = applyWires('form', document, inspect('form', document), [], ['source'])
++  assert.deepEqual(edited.graph.nodes, [{ ...output, inputs: [''] }])
++  assert.throws(() => writeGraph('form', edited), /Connect every input/)
++})
++
++test('the shared rules reject cycles and incompatible form ports', () => {
++  const rotation = newNode(false, 'ROTATION', 'rot', 0, 0)
++  const union = newNode(false, 'UNION', 'union', 0, 0)
++  const output = newNode(false, 'OUTPUT', 'out', 0, 0)
++  const document = { name: 'Form', schema: 3, graph: { schema: 2, nodes: [rotation, union, output] } }
++  const entries = inspect('form', document)
++  assert.throws(() => applyWires('form', document, entries, [{ source: 'rot', target: 'out', port: '0' }]), /Incompatible socket/)
++  assert.throws(() => applyWires('form', document, entries, [{ source: 'union', target: 'union', port: '0' }]), /Cycle/)
++})
++
++test('building wires write native levels and roof fields and compact basements', () => {
++  const original = fixture('building-graph-basements')
++  const document = replaceNodes(original, original.graph.nodes.map(node => node.kind === 'BUILDING'
++    ? { ...node, levels: { ...node.levels, '-2': node.levels['-1'] } } : node))
++  const entries = inspect('building', document)
++  const root = entries.find(({ node }) => node.kind === 'BUILDING').node
++  const remaining = connections(entries).filter(wire => wire.target !== root.id || !['roof', 'level:-1'].includes(wire.port))
++  const edited = applyWires('building', document, entries, remaining)
++  const result = edited.graph.nodes.find(node => node.id === root.id)
++  assert.equal(result.roof, '')
++  assert.equal(result.levels['-1'], root.levels['-2'])
++  assert.ok(!('-2' in result.levels))
++})
++
++test('unsupported graph schemas fail instead of silently changing the file', () => {
++  const document = fixture('nodegraph-form')
++  const altered = { ...replaceNodes(document, document.graph.nodes), graph: { ...document.graph, schema: 55 } }
++  assert.throws(() => readGraph(altered, 'form'), /schema/)
++})
+diff --git a/web/vite.config.js b/web/vite.config.js
+new file mode 100644
+index 0000000..ed27aad
+--- /dev/null
++++ b/web/vite.config.js
+@@ -0,0 +1,10 @@
++import { defineConfig } from 'vite'
++import { fileURLToPath } from 'node:url'
++
++export default defineConfig({
++  base: './',
++  esbuild: { jsx: 'automatic' },
++  build: { license: { fileName: 'THIRD-PARTY-LICENSES.md' } },
++  server: { fs: { allow: [fileURLToPath(new URL('..', import.meta.url))] } },
++  worker: { format: 'es' }
++})
+-- 
+2.51.1
+

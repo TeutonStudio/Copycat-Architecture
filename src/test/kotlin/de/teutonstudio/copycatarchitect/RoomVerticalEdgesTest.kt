@@ -17,7 +17,7 @@ class RoomVerticalEdgesTest {
         assertEquals(setOf("0:0","3:0","0:3","3:3"),edges.map { it.id }.toSet())
         val ports=BuildingPorts.of(room,graph).filter { it.key.startsWith("edge:") }
         assertEquals(4,ports.size)
-        assertTrue(ports.all { it.source.isEmpty() && it.height==4 && it.accepts==setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE) })
+        assertTrue(ports.all { it.source.isEmpty() && it.height==4 && it.accepts==(setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds) })
         val irregular=listOf(Rect(width=3,length=1),Rect(width=1,length=3))
         val corners=RoomVerticalEdges.of(irregular)
         assertEquals(6,corners.size);assertEquals(1,corners.count { it.concave })

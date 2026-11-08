@@ -27,10 +27,8 @@ function dispose(group) {
   for (const material of materials) { material.map?.dispose(); material.dispose() }
 }
 
-function referenceFrame(group, mode, geometryBounds) {
-  const bounds = mode === 'form' ? new THREE.Box3(new THREE.Vector3(), new THREE.Vector3(1, 1, 1))
-    : geometryBounds.isEmpty() ? new THREE.Box3(new THREE.Vector3(), new THREE.Vector3(1, 1, 1))
-      : new THREE.Box3(geometryBounds.min.clone().floor(), geometryBounds.max.clone().ceil())
+function referenceFrame(group) {
+  const bounds = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3(1, 1, 1))
   const size = bounds.getSize(new THREE.Vector3()).max(new THREE.Vector3(1, 1, 1))
   bounds.max.copy(bounds.min).add(size)
   const geometry = new THREE.CylinderGeometry(1, 1, 1, 8)
@@ -96,7 +94,7 @@ function updateReferenceFrame(group, camera, height) {
   }
 }
 
-function Viewer({ plan, mode }) {
+function Viewer({ plan, blockFrame }) {
   const container = useRef(null)
   const viewer = useRef(null)
   const [error, setError] = useState('')
@@ -199,12 +197,16 @@ function Viewer({ plan, mode }) {
       view.model.add(draw)
     }
     const first = !view.bounds || view.bounds.isEmpty()
+    const hadBlockFrame = Boolean(view.guides.userData.reference)
     dispose(view.guides)
     view.guides.clear()
-    view.bounds = referenceFrame(view.guides, mode, bounds)
-    if (first) fit()
+    const size = bounds.getSize(new THREE.Vector3())
+    const singleBlock = bounds.isEmpty() || (bounds.min.x >= 0 && bounds.min.y >= 0 && bounds.min.z >= 0 && bounds.max.x <= 1 && bounds.max.y <= 1 && bounds.max.z <= 1 && Math.max(size.x, size.y, size.z) <= 1)
+    view.guides.userData.reference = null
+    view.bounds = blockFrame && singleBlock ? referenceFrame(view.guides) : bounds
+    if (first || (view.guides.userData.reference && !hadBlockFrame)) fit()
     view.render()
-  }, [plan, mode])
+  }, [plan, blockFrame])
 
   return <div className="viewer" ref={container}>
     <button type="button" className="fit3d" onClick={fit}>3D einpassen</button>
@@ -220,6 +222,7 @@ export default function Preview({ mode, document, library, selected, previewMode
   const [result, setResult] = useState({})
   const target = previewMode === 'selected' ? selected : ''
   const missingSelection = previewMode === 'selected' && !selected
+  const blockFrame = mode === 'form' || (previewMode === 'selected' && document.graph.nodes.find(node => node.id === selected)?.kind === 'COPYCAT')
   const latest = useRef(document)
   latest.current = document
   useEffect(() => { setResult({}) }, [mode, target, previewMode])
@@ -274,7 +277,7 @@ export default function Preview({ mode, document, library, selected, previewMode
       <button type="button" aria-expanded={!collapsed} aria-controls={`${mode}-preview`} aria-label={collapsed ? '3D-Vorschau ausklappen' : '3D-Vorschau einklappen'} onClick={onToggle}>{collapsed ? '▸' : '▾'}</button>
     </div></div>
     <div id={`${mode}-preview`} className="preview-body" hidden={collapsed}>
-    <Viewer key={`${mode}:${previewMode}:${target}`} plan={result.plan} mode={mode} />
+    <Viewer key={`${mode}:${previewMode}:${target}`} plan={result.plan} blockFrame={blockFrame} />
     <div className="preview-meta" role="status">
       {result.error ? <><strong>{result.plan ? 'Letzter gültiger Stand' : 'Vorschau wartet auf einen gültigen Graphen'}</strong><br />{result.error}</>
         : result.pending ? 'Vorschau wird berechnet …'
@@ -283,8 +286,8 @@ export default function Preview({ mode, document, library, selected, previewMode
     </div>
     {result.plan?.value && <p className="preview-meta">{result.plan.value}</p>}
     {result.plan?.warnings?.map((warning, index) => <p className="preview-meta" key={index}>{warning}</p>)}
-    <p className="axis-legend"><span>X</span> Ost/West · <span>Y</span> Höhe · <span>Z</span> Süd/Nord<br />
-      {mode === 'form' ? 'Rahmen: 16 hB · lange Marke: 8 hB · kurze Marken: 4 / 12 hB' : 'Gebäudehülle · Marken bei ¼ / ½ / ¾ der Kantenlänge'}</p>
+    <p className="axis-legend"><span>X</span> Ost/West · <span>Y</span> Höhe · <span>Z</span> Süd/Nord
+      {blockFrame && <><br />Rahmen: 16 hB · lange Marke: 8 hB · kurze Marken: 4 / 12 hB</>}</p>
     {result.plan?.materials && <details className="materials"><summary>Materialbedarf</summary>
       {Object.entries(result.plan.materials).map(([id, count]) => <div key={id}><code>{id}</code><span>{count}</span></div>)}
     </details>}

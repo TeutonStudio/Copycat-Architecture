@@ -5,12 +5,16 @@ on:
     branches: [master]
     paths:
       - 'web/**'
+      - 'docs/wiki/**'
+      - 'docs/images/**'
       - 'examples/**'
       - 'src/main/kotlin/de/teutonstudio/copycatarchitect/domain/**'
       - '.github/workflows/graph-editor-pages.yml'
   pull_request:
     paths:
       - 'web/**'
+      - 'docs/wiki/**'
+      - 'docs/images/**'
       - 'examples/**'
       - 'src/main/kotlin/de/teutonstudio/copycatarchitect/domain/**'
       - '.github/workflows/graph-editor-pages.yml'

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { sourceMounting, mountSource } from './generated/engine.mjs'
 import { formGroups, model } from './model.js'
 
 export const names = {
@@ -22,16 +23,16 @@ export function portName(port, node) {
   return `Eingang ${Number(kind) + 1}`
 }
 
-export function Field({ label, value, onChange, options, type = 'text', min, max, list, maxLength }) {
+export function Field({ label, value, onChange, options, type = 'text', min, max, list, maxLength, step = 1 }) {
   const [draft, setDraft] = useState(null)
-  if (options) return <label>{label}<select aria-label={label} value={value} onChange={e => onChange(e.target.value)}>
+  if (options) return <label>{label}<select aria-label={label} value={value} onChange={e => onChange(typeof value === 'number' ? Number(e.target.value) : e.target.value)}>
     {options.map(option => {
       const [id, text] = Array.isArray(option) ? option : [option, option]
-      return <option key={id} value={id}>{text}</option>
+      return <option key={id} value={id} disabled={Array.isArray(option) && !!option[2]}>{text}</option>
     })}
   </select></label>
   if (type === 'checkbox') return <label className="check"><input aria-label={label} type="checkbox" checked={value} onChange={e => onChange(e.target.checked)} />{label}</label>
-  return <label>{label}<input aria-label={label} value={draft ?? value} type={type} min={min} max={max} list={list} maxLength={maxLength}
+  return <label>{label}<input aria-label={label} value={draft ?? value} type={type} min={min} max={max} step={step} list={list} maxLength={maxLength}
     onChange={e => setDraft(e.target.value)}
     onBlur={() => {
       if (draft !== null) {
@@ -47,15 +48,20 @@ export function Field({ label, value, onChange, options, type = 'text', min, max
     }} /></label>
 }
 
+const shapeNames = { full: 'Vollblock', slab: 'Stufe', stairs: 'Treppe', panel: 'Panel', slice: 'Gerade Leiste', vertical_slice: 'Vertikale Leiste', corner_slice: 'Eckscheibe', layer: 'Schicht', beam: 'Balken', byte: 'Byte', step: 'Feste Leiste', vertical_step: 'Feste vertikale Leiste', half_panel: 'Halbes Panel', flat_pane: 'Mittige Scheibe', byte_panel: 'Byte-Panel', half_layer: 'Halbe Schicht', vertical_half_layer: 'Vertikale halbe Schicht', stacked_half_layer: 'Gestapelte halbe Schicht' }
+const directions = [[2, 'Nord (−Z)'], [3, 'Ost (+X)'], [0, 'Süd (+Z)'], [1, 'West (−X)']]
+const angles = [[0, '0°'], [1, '90°'], [2, '180°'], [3, '270°']]
+const mountings = [['up', 'Oben (+Y)'], ['down', 'Unten (−Y)'], ['east', 'Seitlich +X'], ['west', 'Seitlich −X'], ['south', 'Seitlich +Z'], ['north', 'Seitlich −Z']]
+const axes = [['X', 'X · Ost/West'], ['Y', 'Y · Höhe'], ['Z', 'Z · Süd/Nord'], ['NORMAL', 'Lokale Normale']]
 const groupOptions = (groups, empty) => [['', empty], ...groups.map(group => [group.id, group.name])]
 const materialModes = [['SEPARATED', 'Separiert'], ['GROUPED', 'Gruppiert']]
 const viewFilters = [['all', 'Alles'], ['walls', 'Wände'], ['floor', 'Boden'], ['ceiling', 'Decke'], ['roof', 'Dach']]
 const typeNames = [['flat', 'Flachdach'], ['gable', 'Satteldach']]
 
-function NumberGrid({ entries, keys, ranges, update, prefix }) {
+function NumberGrid({ entries, keys, ranges, update, prefix, scale = 1, unit = '' }) {
   return entries.map((entry, index) => <div key={index} className="number-grid">
-    {keys.map(key => <Field key={key} label={`${prefix} ${index + 1} · ${key}`} value={entry[key]} type="number"
-      min={ranges[key][0]} max={ranges[key][1]} onChange={value => update(index, { ...entry, [key]: value })} />)}
+    {keys.map(key => <Field key={key} label={`${prefix} ${index + 1} · ${key.toUpperCase()}${unit ? ` (${unit})` : ''}`} value={entry[key] * scale} type="number"
+      step={scale} min={ranges[key][0] * scale} max={ranges[key][1] * scale} onChange={value => { if (Number.isInteger(value / scale)) update(index, { ...entry, [key]: value / scale }) }} />)}
   </div>)
 }
 
@@ -73,21 +79,21 @@ export function NodeFields({ mode, node, document, edit, library }) {
     const groupFields = ['UNION', 'SYMMETRIC_DIFFERENCE'].includes(node.kind)
     return <>
       {node.kind === 'INPUT' && <>
-        <Field label="Copycat-Grundform" value={part.source} options={model.shapes.map(shape => [shape.id, shape.name])}
+        <Field label="Copycat-Grundform" value={part.source} options={model.shapes.map(shape => [shape.id, shapeNames[shape.name] ?? shape.name])}
           onChange={source => edit({ part: { ...part, source, size: 1, tilt: 0, discCut: 0, offset: { x: 0, y: 0, z: 0 } } })} />
         {partField('size', 'Größe', undefined, 'number', 1, adapter.max)}
-        {partField('turn', 'Drehung', undefined, 'number', 0, 3)}
-        {partField('spin', 'Lokale Drehung', undefined, 'number', 0, 3)}
-        {adapter.tiltable && partField('tilt', 'Neigung', undefined, 'number', 0, 3)}
+        {partField('turn', 'Drehung um Y', directions)}
+        {partField('spin', 'Drehung um die lokale Normale', angles)}
+        <Field label="Neigung" value={sourceMounting(part)} options={mountings.map(([id, label]) => [id, label, !adapter.tiltable && !['up', 'down'].includes(id)])} onChange={normal => edit({ part: { ...part, ...mountSource(part, normal) } })} />
         {part.source === 'copycats:copycat_flat_pane' && partField('discCut', 'Scheibenanteil', undefined, 'number', 0, 2)}
-        {partField('top', 'Oberseite', undefined, 'checkbox')}
+        <p className="hint">{!adapter.tiltable && 'Diese native Quelle erlaubt nur Oben/Unten. '}Neigung richtet die lokale Normale aus. Drehung um Y dreht die Form einschließlich ihrer Neigung.</p>
         {partField('group', 'Materialgruppe', groups.map(group => [group.id, group.name]))}
         <NumberGrid entries={[part.offset]} keys={['x', 'y', 'z']} ranges={{ x: [-15, 15], y: [-15, 15], z: [-15, 15] }}
-          prefix="Versatz" update={(_, offset) => edit({ part: { ...part, offset } })} />
+          prefix="Versatz" unit="hB" update={(_, offset) => edit({ part: { ...part, offset } })} />
       </>}
       {['ROTATE', 'ROTATION'].includes(node.kind) && <>
-        {field('rotationAxis', 'Achse', model.rotationAxes)}
-        {number('quarterTurns', 'Vierteldrehungen', 0, 3)}
+        {field('rotationAxis', 'Achse', axes)}
+        {field('quarterTurns', 'Drehwinkel', angles)}
       </>}
       {groupFields && field('materialMode', 'Materialmodus', materialModes)}
       {node.materialMode === 'GROUPED' && field('materialGroup', 'Ergebnisgruppe', groupOptions(groups, 'Erste Gruppe'))}
@@ -125,7 +131,7 @@ export function NodeFields({ mode, node, document, edit, library }) {
     {node.kind === 'FLOOR' && field('finish', 'Bodenbelag', [['', 'Kein Belag'], ...model.carpets])}
     {node.kind === 'ROOF' && <>
       {field('roofType', 'Dachform', typeNames)}
-      {number('ridge', 'Firstrichtung', 0, 1)}
+      {field('ridge', 'Firstrichtung', [[0, 'Nord–Süd (Z)'], [1, 'Ost–West (X)']])}
       {number('overhang', 'Überhang', 0, 2)}
     </>}
     {['ROOM', 'STOREY', 'BUILDING'].includes(node.kind) && field('preview', 'Vorschaufilter', viewFilters)}
@@ -142,7 +148,7 @@ export function NodeFields({ mode, node, document, edit, library }) {
     </details>}
     {node.kind === 'STOREY' && !enclosure && <details><summary>Raumversatz</summary>
       <NumberGrid entries={node.inputs.map((_, i) => node.offsets[i] ?? { x: 0, y: 0, z: 0 })}
-        keys={['x', 'z']} ranges={{ x: [-64, 64], z: [-64, 64] }} prefix="Raum" update={(index, offset) =>
+        keys={['x', 'z']} ranges={{ x: [-64, 64], z: [-64, 64] }} prefix="Raumversatz" scale={16} unit="hB · Raster 16" update={(index, offset) =>
           edit({ offsets: node.inputs.map((_, i) => i === index ? offset : node.offsets[i] ?? { x: 0, y: 0, z: 0 }) })} />
     </details>}
   </>

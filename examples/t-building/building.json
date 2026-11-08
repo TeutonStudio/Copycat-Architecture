@@ -1,0 +1,3069 @@
+{
+  "schema": 2,
+  "id": "t_house",
+  "version": 1,
+  "name": "T-Haus mit drei Stockwerken und Relief-Fassade",
+  "wings": [
+    {
+      "x": 0,
+      "z": 0,
+      "width": 15,
+      "length": 5
+    },
+    {
+      "x": 5,
+      "z": 5,
+      "width": 5,
+      "length": 10
+    }
+  ],
+  "floors": 3,
+  "roomHeight": 5,
+  "patterns": [
+    {
+      "sequence": [
+        "window@1"
+      ],
+      "interlude": "pier@1",
+      "mode": 1,
+      "start": "",
+      "end": "",
+      "remainder": "END",
+      "filler": "pier@1",
+      "partial": false
+    },
+    {
+      "sequence": [
+        "window@1"
+      ],
+      "interlude": "pier@1",
+      "mode": 1,
+      "start": "",
+      "end": "",
+      "remainder": "END",
+      "filler": "pier@1",
+      "partial": false
+    },
+    {
+      "sequence": [
+        "window@1"
+      ],
+      "interlude": "pier@1",
+      "mode": 1,
+      "start": "",
+      "end": "",
+      "remainder": "END",
+      "filler": "pier@1",
+      "partial": false
+    },
+    {
+      "sequence": [
+        "window@1"
+      ],
+      "interlude": "pier@1",
+      "mode": 1,
+      "start": "",
+      "end": "",
+      "remainder": "END",
+      "filler": "pier@1",
+      "partial": false
+    }
+  ],
+  "floorForm": "t_full@1",
+  "ceilingForm": "t_full@1",
+  "floorThickness": 1,
+  "ceilingThickness": 1,
+  "holes": [],
+  "roof": "flat",
+  "ridge": 0,
+  "overhang": 0,
+  "roofThickness": 1,
+  "trimForm": "t_corner@1",
+  "palette": {
+    "wall": "minecraft:stone_bricks",
+    "brick": "minecraft:bricks",
+    "plaster": "minecraft:white_terracotta",
+    "trim": "minecraft:quartz_block",
+    "frame": "minecraft:dark_oak_planks",
+    "glass": "minecraft:glass",
+    "floor": "minecraft:oak_planks",
+    "roof": "minecraft:deepslate_tiles"
+  },
+  "graph": {
+    "schema": 1,
+    "nodes": [
+      {
+        "id": "empty_wall",
+        "kind": "SEGMENT",
+        "name": "Leere Wand",
+        "x": 20,
+        "y": 20,
+        "inputs": [],
+        "module": "window@1",
+        "block": "minecraft:air",
+        "length": 1,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "base_copycat",
+        "kind": "COPYCAT",
+        "name": "Steinsockel und Quarzband",
+        "x": 20,
+        "y": 190,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "t_base@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "pier_copycat",
+        "kind": "COPYCAT",
+        "name": "Stein und Quarzpilaster",
+        "x": 20,
+        "y": 360,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "t_pier@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "window_copycat",
+        "kind": "COPYCAT",
+        "name": "Glas mit dunklem Holzrahmen",
+        "x": 20,
+        "y": 530,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "t_window@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "glass",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "brick_copycat",
+        "kind": "COPYCAT",
+        "name": "Ziegel und erhabenes Quarzquadrat",
+        "x": 20,
+        "y": 700,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "t_inlay@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "brick",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "plaster_copycat",
+        "kind": "COPYCAT",
+        "name": "Putz und erhabenes Quarzquadrat",
+        "x": 20,
+        "y": 870,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "t_inlay@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "plaster",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "cornice_copycat",
+        "kind": "COPYCAT",
+        "name": "Putzgesims und Quarzband",
+        "x": 20,
+        "y": 1040,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "t_cornice@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "plaster",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "air_copycat",
+        "kind": "COPYCAT",
+        "name": "Freier Eingang",
+        "x": 20,
+        "y": 1210,
+        "inputs": [],
+        "module": "window@1",
+        "block": "minecraft:air",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "t_full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "corner_copycat",
+        "kind": "COPYCAT",
+        "name": "Quarzecke",
+        "x": 20,
+        "y": 1380,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "t_corner@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "trim",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "floor_copycat",
+        "kind": "COPYCAT",
+        "name": "Durchgehender Eichenboden",
+        "x": 20,
+        "y": 1550,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "t_full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "floor",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "roof_copycat",
+        "kind": "COPYCAT",
+        "name": "Dunkles Flachdach",
+        "x": 20,
+        "y": 1720,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "t_full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "roof",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "facade_layout",
+        "kind": "SEGMENT_LAYOUT",
+        "name": "Fassadenraster 5 x 5",
+        "x": 360,
+        "y": 70,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 5,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [
+          {
+            "x": 0,
+            "y": 0,
+            "sourceIndex": 0,
+            "turn": 0
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "sourceIndex": 0,
+            "turn": 0
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "sourceIndex": 0,
+            "turn": 0
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "sourceIndex": 0,
+            "turn": 0
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "sourceIndex": 0,
+            "turn": 0
+          },
+          {
+            "x": 0,
+            "y": 1,
+            "sourceIndex": 1,
+            "turn": 0
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "sourceIndex": 2,
+            "turn": 0
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "sourceIndex": 2,
+            "turn": 0
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "sourceIndex": 2,
+            "turn": 0
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "sourceIndex": 1,
+            "turn": 0
+          },
+          {
+            "x": 0,
+            "y": 2,
+            "sourceIndex": 1,
+            "turn": 0
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "sourceIndex": 2,
+            "turn": 0
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "sourceIndex": 2,
+            "turn": 0
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "sourceIndex": 2,
+            "turn": 0
+          },
+          {
+            "x": 4,
+            "y": 2,
+            "sourceIndex": 1,
+            "turn": 0
+          },
+          {
+            "x": 0,
+            "y": 3,
+            "sourceIndex": 3,
+            "turn": 0
+          },
+          {
+            "x": 1,
+            "y": 3,
+            "sourceIndex": 4,
+            "turn": 0
+          },
+          {
+            "x": 2,
+            "y": 3,
+            "sourceIndex": 3,
+            "turn": 0
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "sourceIndex": 4,
+            "turn": 0
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "sourceIndex": 3,
+            "turn": 0
+          },
+          {
+            "x": 0,
+            "y": 4,
+            "sourceIndex": 5,
+            "turn": 0
+          },
+          {
+            "x": 1,
+            "y": 4,
+            "sourceIndex": 5,
+            "turn": 0
+          },
+          {
+            "x": 2,
+            "y": 4,
+            "sourceIndex": 5,
+            "turn": 0
+          },
+          {
+            "x": 3,
+            "y": 4,
+            "sourceIndex": 5,
+            "turn": 0
+          },
+          {
+            "x": 4,
+            "y": 4,
+            "sourceIndex": 5,
+            "turn": 0
+          }
+        ],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "entrance_layout",
+        "kind": "SEGMENT_LAYOUT",
+        "name": "Eingangsraster mit freier Tuer",
+        "x": 360,
+        "y": 330,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 5,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [
+          {
+            "x": 0,
+            "y": 0,
+            "sourceIndex": 0,
+            "turn": 0
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "sourceIndex": 0,
+            "turn": 0
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "sourceIndex": 6,
+            "turn": 0
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "sourceIndex": 0,
+            "turn": 0
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "sourceIndex": 0,
+            "turn": 0
+          },
+          {
+            "x": 0,
+            "y": 1,
+            "sourceIndex": 1,
+            "turn": 0
+          },
+          {
+            "x": 1,
+            "y": 1,
+            "sourceIndex": 2,
+            "turn": 0
+          },
+          {
+            "x": 2,
+            "y": 1,
+            "sourceIndex": 6,
+            "turn": 0
+          },
+          {
+            "x": 3,
+            "y": 1,
+            "sourceIndex": 2,
+            "turn": 0
+          },
+          {
+            "x": 4,
+            "y": 1,
+            "sourceIndex": 1,
+            "turn": 0
+          },
+          {
+            "x": 0,
+            "y": 2,
+            "sourceIndex": 1,
+            "turn": 0
+          },
+          {
+            "x": 1,
+            "y": 2,
+            "sourceIndex": 2,
+            "turn": 0
+          },
+          {
+            "x": 2,
+            "y": 2,
+            "sourceIndex": 6,
+            "turn": 0
+          },
+          {
+            "x": 3,
+            "y": 2,
+            "sourceIndex": 2,
+            "turn": 0
+          },
+          {
+            "x": 4,
+            "y": 2,
+            "sourceIndex": 1,
+            "turn": 0
+          },
+          {
+            "x": 0,
+            "y": 3,
+            "sourceIndex": 3,
+            "turn": 0
+          },
+          {
+            "x": 1,
+            "y": 3,
+            "sourceIndex": 4,
+            "turn": 0
+          },
+          {
+            "x": 2,
+            "y": 3,
+            "sourceIndex": 3,
+            "turn": 0
+          },
+          {
+            "x": 3,
+            "y": 3,
+            "sourceIndex": 4,
+            "turn": 0
+          },
+          {
+            "x": 4,
+            "y": 3,
+            "sourceIndex": 3,
+            "turn": 0
+          },
+          {
+            "x": 0,
+            "y": 4,
+            "sourceIndex": 5,
+            "turn": 0
+          },
+          {
+            "x": 1,
+            "y": 4,
+            "sourceIndex": 5,
+            "turn": 0
+          },
+          {
+            "x": 2,
+            "y": 4,
+            "sourceIndex": 5,
+            "turn": 0
+          },
+          {
+            "x": 3,
+            "y": 4,
+            "sourceIndex": 5,
+            "turn": 0
+          },
+          {
+            "x": 4,
+            "y": 4,
+            "sourceIndex": 5,
+            "turn": 0
+          }
+        ],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "plate_layout",
+        "kind": "SEGMENT_LAYOUT",
+        "name": "Geschossplatte 17 x 17",
+        "x": 360,
+        "y": 590,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 17,
+        "height": 17,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "t_area",
+        "kind": "AREA",
+        "name": "T-Grundriss 125 Bloecke",
+        "x": 360,
+        "y": 850,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [
+          {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 0,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 0,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 0,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 0,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 14
+          }
+        ],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "t_geometry",
+        "kind": "ROOM_GEOMETRY",
+        "name": "T-Lebensraum mit Hoehe 5",
+        "x": 760,
+        "y": 850,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "t_area",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "facade_5",
+        "kind": "SEGMENT",
+        "name": "Fensterbucht mit Relief und Gesims",
+        "x": 760,
+        "y": 70,
+        "inputs": [
+          "base_copycat",
+          "pier_copycat",
+          "window_copycat",
+          "brick_copycat",
+          "plaster_copycat",
+          "cornice_copycat",
+          "air_copycat"
+        ],
+        "module": "",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "facade_layout",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": true,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "entrance",
+        "kind": "SEGMENT",
+        "name": "Eingang mit seitlichen Fenstern",
+        "x": 760,
+        "y": 330,
+        "inputs": [
+          "base_copycat",
+          "pier_copycat",
+          "window_copycat",
+          "brick_copycat",
+          "plaster_copycat",
+          "cornice_copycat",
+          "air_copycat"
+        ],
+        "module": "",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "entrance_layout",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": true,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "plate",
+        "kind": "SEGMENT",
+        "name": "Gemeinsamer Boden und Decke",
+        "x": 760,
+        "y": 590,
+        "inputs": [
+          "floor_copycat"
+        ],
+        "module": "",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "plate_layout",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": true,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "facade_10",
+        "kind": "PATTERN",
+        "name": "Zwei Fensterbuchten",
+        "x": 1010,
+        "y": 1070,
+        "inputs": [
+          "facade_5",
+          "facade_5"
+        ],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": true,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "facade_15",
+        "kind": "PATTERN",
+        "name": "Drei Fensterbuchten",
+        "x": 1010,
+        "y": 1300,
+        "inputs": [
+          "facade_5",
+          "facade_5",
+          "facade_5"
+        ],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": true,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "ground_room",
+        "kind": "ROOM",
+        "name": "T-Lebensraum Erdgeschoss mit Eingang",
+        "x": 1210,
+        "y": 70,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {
+          "0:0:0": "facade_15",
+          "1:14:0": "facade_5",
+          "1:9:5": "facade_10",
+          "2:4:4": "facade_5",
+          "2:14:4": "facade_5",
+          "2:9:14": "entrance",
+          "3:0:4": "facade_5",
+          "3:5:14": "facade_10"
+        },
+        "floor": "plate",
+        "ceiling": "plate",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "corner_copycat",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "t_geometry",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": true,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": [],
+        "joinWallEnds": false
+      },
+      {
+        "id": "upper_room",
+        "kind": "ROOM",
+        "name": "T-Lebensraum Obergeschoss",
+        "x": 1210,
+        "y": 420,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {
+          "0:0:0": "facade_15",
+          "1:14:0": "facade_5",
+          "1:9:5": "facade_10",
+          "2:4:4": "facade_5",
+          "2:14:4": "facade_5",
+          "2:9:14": "facade_5",
+          "3:0:4": "facade_5",
+          "3:5:14": "facade_10"
+        },
+        "floor": "plate",
+        "ceiling": "plate",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "corner_copycat",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "t_geometry",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": true,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": [],
+        "joinWallEnds": false
+      },
+      {
+        "id": "ground_storey",
+        "kind": "STOREY",
+        "name": "Erdgeschoss",
+        "x": 1570,
+        "y": 70,
+        "inputs": [
+          "ground_room"
+        ],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [
+          {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          }
+        ],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "upper_storey",
+        "kind": "STOREY",
+        "name": "Erstes Obergeschoss",
+        "x": 1570,
+        "y": 370,
+        "inputs": [
+          "upper_room"
+        ],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [
+          {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          }
+        ],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "top_storey",
+        "kind": "STOREY",
+        "name": "Zweites Obergeschoss",
+        "x": 1570,
+        "y": 670,
+        "inputs": [
+          "upper_room"
+        ],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [
+          {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          }
+        ],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "roof",
+        "kind": "ROOF",
+        "name": "T-Flachdach aus Tiefenschiefer",
+        "x": 1570,
+        "y": 1000,
+        "inputs": [
+          "roof_copycat"
+        ],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "roof",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "building",
+        "kind": "BUILDING",
+        "name": "Dreistoeckiges T-Haus",
+        "x": 1960,
+        "y": 110,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {
+          "0": "ground_storey",
+          "1": "upper_storey",
+          "2": "top_storey"
+        },
+        "roof": "roof",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      }
+    ],
+    "projection": {
+      "table": {
+        "x": -5,
+        "y": 0,
+        "z": -5
+      },
+      "turn": 0
+    },
+    "nodeGroups": []
+  }
+}

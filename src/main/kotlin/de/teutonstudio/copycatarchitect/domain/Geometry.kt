@@ -215,8 +215,11 @@ object Geometry {
         if(cache.size>2048) cache.clear()
         return cache.computeIfAbsent(parts.toList()) { it.fold(Solid()) { s,p -> s.union(Solid.part(p)) } }
     }
-    fun validate(f:Form):Form {
+    fun validateMetadata(f:Form) {
         require(f.schema in 1..3 && f.name.length in 1..64 && f.version>0) { "Invalid form schema/name/version" }
+    }
+    fun validate(f:Form):Form {
+        validateMetadata(f)
         if(f.graph!=null) return f.copy(schema=3,graph=f.graph.copy(schema=2),parts=GraphCompiler.compile(f.graph,f.groups))
         require(f.parts.all { it.cutMask.isEmpty() && it.recipeSource.isEmpty() }) { "Clipped parts require their editable node graph" }
         return f.copy(schema=3,parts=normalized(f.parts,f.groups))

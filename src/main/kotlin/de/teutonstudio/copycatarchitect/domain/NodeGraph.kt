@@ -27,7 +27,7 @@ data class NodeGraph(val schema:Int=2,val nodes:List<GraphNode> = listOf(GraphNo
 
 /** Boolean operations preserve leaf provenance, so materials and paid recipes follow the surviving solids. */
 object GraphCompiler {
-    private data class Key(val graph:NodeGraph,val groups:List<MaterialGroup>)
+    private data class Key(val graph:NodeGraph,val groups:List<MaterialGroup>,val nodeId:String)
     private val cache=GraphCache<Key,List<Part>>()
     private fun supportsInputGroups(kind:NodeKind)=kind==NodeKind.UNION || kind==NodeKind.SYMMETRIC_DIFFERENCE
     /** Empty saved assignments inherit the connected branch, including legacy source materials. */
@@ -95,7 +95,13 @@ object GraphCompiler {
         nodes.keys.forEach { visit(it) }
     }
     fun compile(graph:NodeGraph,groups:List<MaterialGroup> = DEFAULT_GROUPS):List<Part> {
-        val key=Key(graph,groups.toList())
+        val result=intermediate(graph,graph.nodes.single { it.kind==NodeKind.OUTPUT }.id,groups)
+        require(result.isNotEmpty()) { "Result is empty; change the connected shapes" }
+        return result
+    }
+    /** Evaluate a selected branch without requiring the final output to be connected. */
+    fun intermediate(graph:NodeGraph,nodeId:String,groups:List<MaterialGroup> = DEFAULT_GROUPS):List<Part> {
+        val key=Key(graph,groups.toList(),nodeId)
         cache[key]?.let { return it }
         structure(graph,groups)
         val nodes=graph.nodes.associateBy { it.id }
@@ -143,8 +149,8 @@ object GraphCompiler {
                 }
             }
         }
-        val result=evaluate(graph.nodes.single { it.kind==NodeKind.OUTPUT }.id)
-        require(result.isNotEmpty()) { "Result is empty; change the connected shapes" }
+        require(nodes[nodeId]!=null) { "Select an existing node" }
+        val result=evaluate(nodeId)
         val splitLeaves=result.keys.groupingBy { it.leaf }.eachCount().filterValues { it>1 }.keys
         // Keep an already shared source ahead of a redundant cutter contribution.
         // Its material regions must share one recipe even after normalization.
@@ -152,7 +158,7 @@ object GraphCompiler {
             val p=source.part
             p.copy(group=source.group,cutMask=if(solid.contains(Solid.part(p))) "" else solid.mask(),recipeSource=if(source.leaf in splitLeaves) source.leaf else "")
         }
-        val normalized=Geometry.normalized(parts,groups)
+        val normalized=if(parts.isEmpty()) emptyList() else Geometry.normalized(parts,groups)
         if(cache.size>512) cache.clear()
         cache[key]=normalized
         return normalized

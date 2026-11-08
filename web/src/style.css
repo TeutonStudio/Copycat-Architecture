@@ -111,3 +111,41 @@ button.primary:hover:not(:disabled) { background: #cef6e9; }
   .graph-heading { align-items: start; flex-direction: column; }
   .react-flow__minimap { display: none; }
 }
+
+/* One shared workbench height; only the fully folded sidebar may be shorter. */
+[hidden] { display: none !important; }
+.workbench {
+  height: max(580px, calc(100dvh - 200px));
+  grid-template-columns: minmax(320px, var(--graph-share, 68fr)) 10px minmax(260px, var(--side-share, 32fr));
+  gap: 0;
+  align-items: stretch;
+}
+.canvas-panel { height: 100%; }
+.side { display: grid; grid-template-columns: minmax(0, 1fr); height: 100%; min-height: 0; gap: 0; }
+.side.both-collapsed { height: auto; align-self: start; gap: 8px; }
+.inspector, .preview-panel { display: flex; flex-direction: column; min-height: 0; }
+.panel-heading { flex: 0 0 auto; }
+.panel-heading button, .panel-heading select { min-height: 27px; font-size: 12px; padding: 3px 6px; }
+.panel-heading .button-row { align-items: center; }
+.inspector-body { flex: 1; min-height: 0; max-height: none; overflow: auto; }
+.preview-body { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: auto; }
+.viewer { flex: 1 0 100px; height: auto; min-height: 100px; }
+.axis-legend { margin: 0; padding: 0 10px 7px; color: var(--muted); font-size: 10px; }
+.axis-legend span:nth-of-type(1) { color: #ff857f; }
+.axis-legend span:nth-of-type(2) { color: #a1e889; }
+.axis-legend span:nth-of-type(3) { color: #8ec5ff; }
+.preview-meta { flex: 0 0 auto; }
+.split-handle { display: flex; align-items: center; justify-content: center; touch-action: none; user-select: none; }
+.split-handle:hover, .split-handle:focus-visible { background: #30434d; border-radius: 4px; }
+.split-x { cursor: col-resize; }
+.split-y { cursor: row-resize; }
+.split-x span { width: 3px; height: 36px; background: #6b9195; border-radius: 3px; }
+.split-y span { height: 3px; width: 36px; background: #6b9195; border-radius: 3px; }
+@media (max-width: 850px) {
+  .workbench { height: auto; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .workbench > .split-x { display: none; }
+  .canvas-panel { height: max(420px, 55dvh); }
+  .side { height: max(420px, 55dvh); }
+}
+
+.reference-link { display: inline-block; font-size: 11px; margin-bottom: 6px; }

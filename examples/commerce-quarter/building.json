@@ -1,0 +1,9368 @@
+{
+  "schema": 2,
+  "id": "commerce_quarter",
+  "version": 1,
+  "name": "Handelshof an der gruenen Gasse",
+  "wings": [
+    {
+      "x": 0,
+      "z": 0,
+      "width": 11,
+      "length": 9
+    },
+    {
+      "x": 0,
+      "z": 9,
+      "width": 5,
+      "length": 6
+    }
+  ],
+  "floors": 2,
+  "roomHeight": 5,
+  "patterns": [
+    {
+      "sequence": [
+        "window@1"
+      ],
+      "interlude": "pier@1",
+      "mode": 1,
+      "start": "",
+      "end": "",
+      "remainder": "END",
+      "filler": "pier@1",
+      "partial": false
+    },
+    {
+      "sequence": [
+        "window@1"
+      ],
+      "interlude": "pier@1",
+      "mode": 1,
+      "start": "",
+      "end": "",
+      "remainder": "END",
+      "filler": "pier@1",
+      "partial": false
+    },
+    {
+      "sequence": [
+        "window@1"
+      ],
+      "interlude": "pier@1",
+      "mode": 1,
+      "start": "",
+      "end": "",
+      "remainder": "END",
+      "filler": "pier@1",
+      "partial": false
+    },
+    {
+      "sequence": [
+        "window@1"
+      ],
+      "interlude": "pier@1",
+      "mode": 1,
+      "start": "",
+      "end": "",
+      "remainder": "END",
+      "filler": "pier@1",
+      "partial": false
+    }
+  ],
+  "floorForm": "full@1",
+  "ceilingForm": "full@1",
+  "floorThickness": 1,
+  "ceilingThickness": 1,
+  "holes": [],
+  "roof": "gable",
+  "ridge": 0,
+  "overhang": 1,
+  "roofThickness": 1,
+  "trimForm": "inner@1",
+  "palette": {
+    "wall": "minecraft:polished_andesite",
+    "brick": "minecraft:bricks",
+    "plaster": "minecraft:light_gray_terracotta",
+    "trim": "minecraft:polished_andesite",
+    "frame": "minecraft:dark_oak_planks",
+    "glass": "minecraft:glass",
+    "floor": "minecraft:spruce_planks",
+    "roof": "minecraft:deepslate_tiles",
+    "iron": "minecraft:iron_block",
+    "chimney": "minecraft:deepslate_bricks",
+    "garden": "minecraft:moss_block"
+  },
+  "graph": {
+    "schema": 1,
+    "nodes": [
+      {
+        "id": "empty_wall",
+        "kind": "SEGMENT",
+        "name": "Leere Wand",
+        "x": 20,
+        "y": 20,
+        "inputs": [],
+        "module": "window@1",
+        "block": "minecraft:air",
+        "length": 1,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "floor",
+        "kind": "FLOOR",
+        "name": "Gemeinsamer Holzboden",
+        "x": 20,
+        "y": 200,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "cq_full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "floor",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "ceiling",
+        "kind": "CEILING",
+        "name": "Durchgehende Holzdecke",
+        "x": 20,
+        "y": 380,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "cq_full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "floor",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "chimney_ceiling",
+        "kind": "CEILING",
+        "name": "Kaminkappe",
+        "x": 20,
+        "y": 560,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "cq_full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "chimney",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "inn_wall_0_11",
+        "kind": "SEGMENT",
+        "name": "Wand / inn_wall_0_11",
+        "x": 350,
+        "y": 170,
+        "inputs": [],
+        "module": "inn_wall_0_11@1",
+        "block": "",
+        "length": 11,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "furniture_shelf_1",
+        "kind": "SEGMENT",
+        "name": "Wand / furniture_shelf_1",
+        "x": 350,
+        "y": 340,
+        "inputs": [],
+        "module": "furniture_shelf_1@1",
+        "block": "",
+        "length": 1,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "furniture_stool_1",
+        "kind": "SEGMENT",
+        "name": "Wand / furniture_stool_1",
+        "x": 350,
+        "y": 510,
+        "inputs": [],
+        "module": "furniture_stool_1@1",
+        "block": "",
+        "length": 1,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "furniture_table_1",
+        "kind": "SEGMENT",
+        "name": "Wand / furniture_table_1",
+        "x": 350,
+        "y": 680,
+        "inputs": [],
+        "module": "furniture_table_1@1",
+        "block": "",
+        "length": 1,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "inn_wall_1_13",
+        "kind": "SEGMENT",
+        "name": "Wand / inn_wall_1_13",
+        "x": 350,
+        "y": 850,
+        "inputs": [],
+        "module": "inn_wall_1_13@1",
+        "block": "",
+        "length": 13,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "inn_wall_2_11",
+        "kind": "SEGMENT",
+        "name": "Wand / inn_wall_2_11",
+        "x": 350,
+        "y": 1020,
+        "inputs": [],
+        "module": "inn_wall_2_11@1",
+        "block": "",
+        "length": 11,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "inn_wall_3_13",
+        "kind": "SEGMENT",
+        "name": "Wand / inn_wall_3_13",
+        "x": 350,
+        "y": 1190,
+        "inputs": [],
+        "module": "inn_wall_3_13@1",
+        "block": "",
+        "length": 13,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "inn_area",
+        "kind": "AREA",
+        "name": "Gasthaus und Laden",
+        "x": 1100,
+        "y": 0,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [
+          {
+            "x": 1,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 13
+          }
+        ],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "inn",
+        "kind": "ROOM",
+        "name": "Gasthaus und Laden",
+        "x": 1700,
+        "y": 0,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 1,
+            "z": 1,
+            "width": 11,
+            "length": 2
+          },
+          {
+            "x": 1,
+            "z": 3,
+            "width": 9,
+            "length": 2
+          },
+          {
+            "x": 11,
+            "z": 3,
+            "width": 1,
+            "length": 11
+          },
+          {
+            "x": 10,
+            "z": 4,
+            "width": 1,
+            "length": 10
+          },
+          {
+            "x": 1,
+            "z": 5,
+            "width": 1,
+            "length": 9
+          },
+          {
+            "x": 3,
+            "z": 5,
+            "width": 1,
+            "length": 9
+          },
+          {
+            "x": 5,
+            "z": 5,
+            "width": 1,
+            "length": 9
+          },
+          {
+            "x": 7,
+            "z": 5,
+            "width": 3,
+            "length": 9
+          },
+          {
+            "x": 2,
+            "z": 6,
+            "width": 1,
+            "length": 4
+          },
+          {
+            "x": 4,
+            "z": 6,
+            "width": 1,
+            "length": 4
+          },
+          {
+            "x": 6,
+            "z": 6,
+            "width": 1,
+            "length": 4
+          },
+          {
+            "x": 2,
+            "z": 11,
+            "width": 1,
+            "length": 3
+          },
+          {
+            "x": 4,
+            "z": 11,
+            "width": 1,
+            "length": 3
+          },
+          {
+            "x": 6,
+            "z": 11,
+            "width": 1,
+            "length": 3
+          }
+        ],
+        "walls": {
+          "0:1:1": "inn_wall_0_11",
+          "0:10:4": "furniture_shelf_1",
+          "0:2:6": "furniture_stool_1",
+          "0:4:6": "furniture_table_1",
+          "0:6:6": "furniture_stool_1",
+          "0:2:11": "furniture_stool_1",
+          "0:4:11": "furniture_table_1",
+          "0:6:11": "furniture_stool_1",
+          "1:11:1": "inn_wall_1_13",
+          "1:9:3": "furniture_shelf_1",
+          "1:1:5": "furniture_stool_1",
+          "1:3:5": "furniture_table_1",
+          "1:5:5": "furniture_stool_1",
+          "1:1:10": "furniture_stool_1",
+          "1:3:10": "furniture_table_1",
+          "1:5:10": "furniture_stool_1",
+          "2:10:2": "furniture_shelf_1",
+          "2:2:4": "furniture_stool_1",
+          "2:4:4": "furniture_table_1",
+          "2:6:4": "furniture_stool_1",
+          "2:2:9": "furniture_stool_1",
+          "2:4:9": "furniture_table_1",
+          "2:6:9": "furniture_stool_1",
+          "2:11:13": "inn_wall_2_11",
+          "3:1:13": "inn_wall_3_13",
+          "3:11:3": "furniture_shelf_1",
+          "3:3:5": "furniture_stool_1",
+          "3:5:5": "furniture_table_1",
+          "3:7:5": "furniture_stool_1",
+          "3:3:10": "furniture_stool_1",
+          "3:5:10": "furniture_table_1",
+          "3:7:10": "furniture_stool_1"
+        },
+        "floor": "floor",
+        "ceiling": "ceiling",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "shop_wall_0_13",
+        "kind": "SEGMENT",
+        "name": "Wand / shop_wall_0_13",
+        "x": 570,
+        "y": 0,
+        "inputs": [],
+        "module": "shop_wall_0_13@1",
+        "block": "",
+        "length": 13,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "shop_wall_1_22",
+        "kind": "SEGMENT",
+        "name": "Wand / shop_wall_1_22",
+        "x": 570,
+        "y": 170,
+        "inputs": [],
+        "module": "shop_wall_1_22@1",
+        "block": "",
+        "length": 22,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "shop_wall_2_13",
+        "kind": "SEGMENT",
+        "name": "Wand / shop_wall_2_13",
+        "x": 570,
+        "y": 340,
+        "inputs": [],
+        "module": "shop_wall_2_13@1",
+        "block": "",
+        "length": 13,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "shop_wall_3_22",
+        "kind": "SEGMENT",
+        "name": "Wand / shop_wall_3_22",
+        "x": 570,
+        "y": 510,
+        "inputs": [],
+        "module": "shop_wall_3_22@1",
+        "block": "",
+        "length": 22,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "shop_area",
+        "kind": "AREA",
+        "name": "Handel und Werkstatt",
+        "x": 1100,
+        "y": 190,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [
+          {
+            "x": 19,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 22
+          }
+        ],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "shop",
+        "kind": "ROOM",
+        "name": "Handel und Werkstatt",
+        "x": 1700,
+        "y": 230,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 19,
+            "z": 1,
+            "width": 13,
+            "length": 4
+          },
+          {
+            "x": 19,
+            "z": 5,
+            "width": 11,
+            "length": 1
+          },
+          {
+            "x": 31,
+            "z": 5,
+            "width": 1,
+            "length": 18
+          },
+          {
+            "x": 19,
+            "z": 6,
+            "width": 3,
+            "length": 17
+          },
+          {
+            "x": 23,
+            "z": 6,
+            "width": 3,
+            "length": 17
+          },
+          {
+            "x": 27,
+            "z": 6,
+            "width": 4,
+            "length": 17
+          },
+          {
+            "x": 22,
+            "z": 7,
+            "width": 1,
+            "length": 2
+          },
+          {
+            "x": 26,
+            "z": 7,
+            "width": 1,
+            "length": 16
+          },
+          {
+            "x": 22,
+            "z": 10,
+            "width": 1,
+            "length": 13
+          }
+        ],
+        "walls": {
+          "0:19:1": "shop_wall_0_13",
+          "0:30:6": "furniture_shelf_1",
+          "0:22:7": "furniture_table_1",
+          "0:26:7": "furniture_table_1",
+          "0:22:10": "furniture_stool_1",
+          "1:31:1": "shop_wall_1_22",
+          "1:29:5": "furniture_shelf_1",
+          "1:21:6": "furniture_table_1",
+          "1:25:6": "furniture_table_1",
+          "1:21:9": "furniture_stool_1",
+          "2:30:4": "furniture_shelf_1",
+          "2:22:5": "furniture_table_1",
+          "2:26:5": "furniture_table_1",
+          "2:22:8": "furniture_stool_1",
+          "2:31:22": "shop_wall_2_13",
+          "3:19:22": "shop_wall_3_22",
+          "3:31:5": "furniture_shelf_1",
+          "3:23:6": "furniture_table_1",
+          "3:27:6": "furniture_table_1",
+          "3:23:9": "furniture_stool_1"
+        },
+        "floor": "floor",
+        "ceiling": "ceiling",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "home_wall_0_13",
+        "kind": "SEGMENT",
+        "name": "Wand / home_wall_0_13",
+        "x": 570,
+        "y": 680,
+        "inputs": [],
+        "module": "home_wall_0_13@1",
+        "block": "",
+        "length": 13,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "furniture_table_2",
+        "kind": "SEGMENT",
+        "name": "Wand / furniture_table_2",
+        "x": 570,
+        "y": 850,
+        "inputs": [],
+        "module": "furniture_table_2@1",
+        "block": "",
+        "length": 2,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "furniture_bed_2",
+        "kind": "SEGMENT",
+        "name": "Wand / furniture_bed_2",
+        "x": 570,
+        "y": 1020,
+        "inputs": [],
+        "module": "furniture_bed_2@1",
+        "block": "",
+        "length": 2,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "home_wall_1_22",
+        "kind": "SEGMENT",
+        "name": "Wand / home_wall_1_22",
+        "x": 570,
+        "y": 1190,
+        "inputs": [],
+        "module": "home_wall_1_22@1",
+        "block": "",
+        "length": 22,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "furniture_bed_3",
+        "kind": "SEGMENT",
+        "name": "Wand / furniture_bed_3",
+        "x": 790,
+        "y": 0,
+        "inputs": [],
+        "module": "furniture_bed_3@1",
+        "block": "",
+        "length": 3,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "home_wall_2_13",
+        "kind": "SEGMENT",
+        "name": "Wand / home_wall_2_13",
+        "x": 790,
+        "y": 170,
+        "inputs": [],
+        "module": "home_wall_2_13@1",
+        "block": "",
+        "length": 13,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "home_wall_3_22",
+        "kind": "SEGMENT",
+        "name": "Wand / home_wall_3_22",
+        "x": 790,
+        "y": 340,
+        "inputs": [],
+        "module": "home_wall_3_22@1",
+        "block": "",
+        "length": 22,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "home_area",
+        "kind": "AREA",
+        "name": "Wohnen und Atelier",
+        "x": 1100,
+        "y": 380,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [
+          {
+            "x": 19,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 22
+          }
+        ],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "home",
+        "kind": "ROOM",
+        "name": "Wohnen und Atelier",
+        "x": 1700,
+        "y": 460,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 5,
+        "rectangles": [
+          {
+            "x": 19,
+            "z": 1,
+            "width": 13,
+            "length": 4
+          },
+          {
+            "x": 19,
+            "z": 5,
+            "width": 3,
+            "length": 4
+          },
+          {
+            "x": 24,
+            "z": 5,
+            "width": 6,
+            "length": 1
+          },
+          {
+            "x": 31,
+            "z": 5,
+            "width": 1,
+            "length": 18
+          },
+          {
+            "x": 24,
+            "z": 6,
+            "width": 2,
+            "length": 17
+          },
+          {
+            "x": 27,
+            "z": 6,
+            "width": 4,
+            "length": 17
+          },
+          {
+            "x": 22,
+            "z": 7,
+            "width": 2,
+            "length": 2
+          },
+          {
+            "x": 26,
+            "z": 7,
+            "width": 1,
+            "length": 16
+          },
+          {
+            "x": 19,
+            "z": 9,
+            "width": 2,
+            "length": 14
+          },
+          {
+            "x": 23,
+            "z": 9,
+            "width": 1,
+            "length": 14
+          },
+          {
+            "x": 21,
+            "z": 12,
+            "width": 2,
+            "length": 11
+          }
+        ],
+        "walls": {
+          "0:19:1": "home_wall_0_13",
+          "0:30:6": "furniture_shelf_1",
+          "0:22:7": "furniture_table_2",
+          "0:26:7": "furniture_stool_1",
+          "0:21:12": "furniture_bed_2",
+          "1:31:1": "home_wall_1_22",
+          "1:21:5": "furniture_table_2",
+          "1:29:5": "furniture_shelf_1",
+          "1:25:6": "furniture_stool_1",
+          "1:20:9": "furniture_bed_3",
+          "2:23:4": "furniture_table_2",
+          "2:30:4": "furniture_shelf_1",
+          "2:26:5": "furniture_stool_1",
+          "2:22:8": "furniture_bed_2",
+          "2:31:22": "home_wall_2_13",
+          "3:19:22": "home_wall_3_22",
+          "3:24:6": "furniture_table_2",
+          "3:31:5": "furniture_shelf_1",
+          "3:27:6": "furniture_stool_1",
+          "3:23:11": "furniture_bed_3"
+        },
+        "floor": "floor",
+        "ceiling": "ceiling",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "chimney_wall",
+        "kind": "SEGMENT",
+        "name": "Wand / chimney_wall",
+        "x": 790,
+        "y": 510,
+        "inputs": [],
+        "module": "chimney_wall@1",
+        "block": "",
+        "length": 1,
+        "height": 7,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "chimney_a_area",
+        "kind": "AREA",
+        "name": "Unbewohnter Kaminschacht A",
+        "x": 1100,
+        "y": 570,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [
+          {
+            "x": 24,
+            "y": 0,
+            "z": 5
+          }
+        ],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "chimney_a",
+        "kind": "ROOM",
+        "name": "Unbewohnter Kaminschacht A",
+        "x": 1700,
+        "y": 690,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 7,
+        "rectangles": [
+          {
+            "x": 24,
+            "z": 5,
+            "width": 1,
+            "length": 1
+          }
+        ],
+        "walls": {
+          "0:24:5": "chimney_wall",
+          "1:24:5": "chimney_wall",
+          "2:24:5": "chimney_wall",
+          "3:24:5": "chimney_wall"
+        },
+        "floor": "floor",
+        "ceiling": "chimney_ceiling",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "chimney_b_area",
+        "kind": "AREA",
+        "name": "Unbewohnter Kaminschacht B",
+        "x": 1100,
+        "y": 760,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [
+          {
+            "x": 29,
+            "y": 0,
+            "z": 19
+          }
+        ],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "chimney_b",
+        "kind": "ROOM",
+        "name": "Unbewohnter Kaminschacht B",
+        "x": 1700,
+        "y": 920,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 7,
+        "rectangles": [
+          {
+            "x": 29,
+            "z": 19,
+            "width": 1,
+            "length": 1
+          }
+        ],
+        "walls": {
+          "0:29:19": "chimney_wall",
+          "1:29:19": "chimney_wall",
+          "2:29:19": "chimney_wall",
+          "3:29:19": "chimney_wall"
+        },
+        "floor": "floor",
+        "ceiling": "chimney_ceiling",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "ground",
+        "kind": "STOREY",
+        "name": "EG: Gasthaus, Handel, offene Gasse",
+        "x": 2100,
+        "y": 50,
+        "inputs": [
+          "inn",
+          "shop"
+        ],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "upper",
+        "kind": "STOREY",
+        "name": "OG: Wohnen und Atelier",
+        "x": 2100,
+        "y": 320,
+        "inputs": [
+          "home"
+        ],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "chimneys",
+        "kind": "STOREY",
+        "name": "Technikebene: nur zwei Kaminschaechte",
+        "x": 2100,
+        "y": 590,
+        "inputs": [
+          "chimney_a",
+          "chimney_b"
+        ],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "stairs",
+        "kind": "STAIRWELL",
+        "name": "Begehbare U-Treppe",
+        "x": 2100,
+        "y": 860,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "stairwell": {
+          "layout": "U",
+          "width": 2,
+          "landingDepth": 2,
+          "headroom": 2,
+          "clockwise": true,
+          "enclosed": false,
+          "tread": "",
+          "landing": "",
+          "enclosure": ""
+        },
+        "accessInstances": []
+      },
+      {
+        "id": "inn_roof",
+        "kind": "ROOF_LEVEL",
+        "name": "Niedriges Gasthaus-Satteldach",
+        "x": 2450,
+        "y": 50,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "roofLevel": {
+          "storey": "storey_0",
+          "area": "",
+          "form": "GABLE",
+          "axis": 0,
+          "mode": "ANGLE",
+          "slope": {
+            "p": 2,
+            "q": 3
+          },
+          "upperSlope": {
+            "p": 1,
+            "q": 2
+          },
+          "height16": 64,
+          "knee16": 0,
+          "overhang16": 6,
+          "breakRatio": {
+            "p": 1,
+            "q": 3
+          },
+          "family": ""
+        },
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "home_roof",
+        "kind": "ROOF_LEVEL",
+        "name": "Glattes hohes Handelshaus-Satteldach",
+        "x": 2450,
+        "y": 310,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "roofLevel": {
+          "storey": "storey_1",
+          "area": "",
+          "form": "GABLE",
+          "axis": 0,
+          "mode": "ANGLE",
+          "slope": {
+            "p": 2,
+            "q": 3
+          },
+          "upperSlope": {
+            "p": 1,
+            "q": 2
+          },
+          "height16": 64,
+          "knee16": 0,
+          "overhang16": 6,
+          "breakRatio": {
+            "p": 1,
+            "q": 3
+          },
+          "family": ""
+        },
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "caps",
+        "kind": "ROOF_LEVEL",
+        "name": "Flache Kaminkappen",
+        "x": 2450,
+        "y": 570,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "roofLevel": {
+          "storey": "storey_2",
+          "area": "",
+          "form": "FLAT",
+          "axis": 0,
+          "mode": "ANGLE",
+          "slope": {
+            "p": 1,
+            "q": 1
+          },
+          "upperSlope": {
+            "p": 1,
+            "q": 2
+          },
+          "height16": 64,
+          "knee16": 0,
+          "overhang16": 0,
+          "breakRatio": {
+            "p": 1,
+            "q": 3
+          },
+          "family": ""
+        },
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "roof_layout",
+        "kind": "ROOF_LAYOUT",
+        "name": "Daecher aus drei tragenden Hoehen",
+        "x": 2800,
+        "y": 50,
+        "inputs": [
+          "inn_roof",
+          "home_roof",
+          "caps"
+        ],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "roof",
+        "kind": "ROOF",
+        "name": "Exakte durchgehende Dachflaechen",
+        "x": 3100,
+        "y": 50,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "roof",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "roof_layout",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": true,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "roofConfig": {
+          "family": "builtin",
+          "families": [],
+          "variants": {},
+          "wall": "gable_copycat"
+        },
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "gable_copycat",
+        "kind": "COPYCAT",
+        "name": "Verputzte Giebel",
+        "x": 2800,
+        "y": 500,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "cq_full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "plaster",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "pavement",
+        "kind": "GARDEN",
+        "name": "Andesitplatz und offener Hof",
+        "x": 2450,
+        "y": 1000,
+        "inputs": [],
+        "module": "window@1",
+        "block": "minecraft:stone_bricks",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [
+          {
+            "x": 0,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 0,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 0,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 0,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 0,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 0,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 0,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 0,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 0,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 0,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 0,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 0,
+            "y": 0,
+            "z": 23
+          },
+          {
+            "x": 0,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 0,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 23
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 23
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 23
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 23
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 23
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 5,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 23
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 6,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 23
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 7,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 23
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 8,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": 23
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 12,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 23
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 13,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 23
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 14,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 23
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 15,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 23
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 16,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 0
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 1
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 2
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 3
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 4
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 5
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 6
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 7
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 8
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 9
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 10
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 11
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 12
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 13
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 14
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 15
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 16
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 23
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 17,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 18,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 18,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 18,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 18,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 18,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 19,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 20,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 21,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 22,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 23,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 24,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 25,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 26,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 27,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 28,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 29,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 30,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 31,
+            "y": 0,
+            "z": 25
+          },
+          {
+            "x": 32,
+            "y": 0,
+            "z": -3
+          },
+          {
+            "x": 32,
+            "y": 0,
+            "z": -2
+          },
+          {
+            "x": 32,
+            "y": 0,
+            "z": -1
+          },
+          {
+            "x": 32,
+            "y": 0,
+            "z": 24
+          },
+          {
+            "x": 32,
+            "y": 0,
+            "z": 25
+          }
+        ],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "garden",
+        "kind": "GARDEN",
+        "name": "Gruener Innenhof",
+        "x": 2800,
+        "y": 1000,
+        "inputs": [],
+        "module": "window@1",
+        "block": "minecraft:moss_block",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [
+          {
+            "x": 1,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 2,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 17
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 4,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 9,
+            "y": 0,
+            "z": 23
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 23
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 19
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 22
+          },
+          {
+            "x": 11,
+            "y": 0,
+            "z": 23
+          }
+        ],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "bush_copycat",
+        "kind": "COPYCAT",
+        "name": "Gruene Hofstraeucher",
+        "x": 3100,
+        "y": 1000,
+        "inputs": [],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "cq_bush@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "garden",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "bushes",
+        "kind": "GARDEN",
+        "name": "Niedrige Hofbepflanzung",
+        "x": 3100,
+        "y": 1200,
+        "inputs": [],
+        "module": "window@1",
+        "block": "minecraft:moss_block",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "bush_copycat",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {},
+        "roof": "",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [
+          {
+            "x": 2,
+            "y": 0,
+            "z": 18
+          },
+          {
+            "x": 3,
+            "y": 0,
+            "z": 21
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 20
+          },
+          {
+            "x": 10,
+            "y": 0,
+            "z": 23
+          }
+        ],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 1,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": []
+      },
+      {
+        "id": "building",
+        "kind": "BUILDING",
+        "name": "Handelshof an der gruenen Gasse",
+        "x": 3450,
+        "y": 100,
+        "inputs": [
+          "pavement",
+          "garden",
+          "bushes"
+        ],
+        "module": "window@1",
+        "block": "",
+        "length": 3,
+        "height": 4,
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 3,
+            "length": 3
+          }
+        ],
+        "walls": {},
+        "floor": "",
+        "ceiling": "",
+        "offsets": [],
+        "form": "full@1",
+        "thickness": 1,
+        "occupied": false,
+        "finish": "",
+        "levels": {
+          "0": "ground",
+          "1": "upper",
+          "2": "chimneys"
+        },
+        "roof": "roof",
+        "roofType": "flat",
+        "ridge": 0,
+        "overhang": 0,
+        "materialMode": "SEPARATED",
+        "role": "wall",
+        "preview": "all",
+        "storeyMode": "rooms",
+        "corner": "",
+        "patternAxis": "horizontal",
+        "layout": "",
+        "geometry": "",
+        "coordinates": [],
+        "layoutCells": [],
+        "assembly": false,
+        "depth": 1,
+        "regionCopies": {},
+        "transforms": [],
+        "rotationAxis": "Y",
+        "quarterTurns": 0,
+        "fenced": false,
+        "fenceBlock": "minecraft:oak_fence",
+        "fenceHeight": 1,
+        "pathWidth": 1,
+        "groundDepth": 1,
+        "groundBlock": "minecraft:dirt",
+        "clearance": 0,
+        "elevation": 0,
+        "landscapeOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "buildingOffset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "sitePaths": {},
+        "levelIds": {},
+        "accessInstances": [
+          {
+            "id": "main_stair",
+            "source": "stairs",
+            "position": {
+              "x": 25,
+              "y": 0,
+              "z": 15
+            },
+            "quarterTurns": 0,
+            "fromStorey": "storey_0",
+            "toStorey": "storey_1",
+            "stops": []
+          }
+        ]
+      }
+    ],
+    "projection": {
+      "table": {
+        "x": -5,
+        "y": 0,
+        "z": -5
+      },
+      "turn": 0
+    },
+    "nodeGroups": []
+  }
+}

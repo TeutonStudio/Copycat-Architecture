@@ -1,0 +1,845 @@
+{
+  "version": 1,
+  "copycat": {
+    "graphSchemas": [1, 2, 3],
+    "defaultSchema": 2,
+    "documentSchemas": [1, 2, 3, 4],
+    "defaultDocumentSchema": 3,
+    "maxNodes": 64,
+    "maxSources": 32,
+    "nodeDefaults": {
+      "id": "",
+      "kind": "INPUT",
+      "x": 0,
+      "y": 0,
+      "inputs": [],
+      "part": {
+        "source": "copycats:copycat_slice",
+        "turn": 0,
+        "top": false,
+        "size": 1,
+        "offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "tilt": 0,
+        "group": "body",
+        "cutMask": "",
+        "recipeSource": "",
+        "spin": 0,
+        "discCut": 0
+      },
+      "materialMode": "SEPARATED",
+      "materialGroup": "",
+      "previewGroup": "",
+      "inputGroups": [],
+      "rotationAxis": "NORMAL",
+      "quarterTurns": 0,
+      "mirror": null,
+      "savedCopycat": null
+    },
+    "baseShapes": [
+      {"source": "copycats:copycat_block", "discCut": 0, "labelKey": "full", "maxSize": 1},
+      {"source": "copycats:copycat_slab", "discCut": 0, "labelKey": "slab", "maxSize": 1},
+      {"source": "copycats:copycat_stairs", "discCut": 0, "labelKey": "stairs", "maxSize": 1},
+      {"source": "create:copycat_panel", "discCut": 0, "labelKey": "panel", "maxSize": 1},
+      {"source": "copycats:copycat_slice", "discCut": 0, "labelKey": "slice", "maxSize": 8},
+      {"source": "copycats:copycat_vertical_slice", "discCut": 0, "labelKey": "vertical_slice", "maxSize": 8},
+      {"source": "copycats:copycat_corner_slice", "discCut": 0, "labelKey": "corner_slice", "maxSize": 8},
+      {"source": "copycats:copycat_layer", "discCut": 0, "labelKey": "layer", "maxSize": 8},
+      {"source": "copycats:copycat_beam", "discCut": 0, "labelKey": "beam", "maxSize": 1},
+      {"source": "copycats:copycat_byte", "discCut": 0, "labelKey": "byte", "maxSize": 1},
+      {"source": "create:copycat_step", "discCut": 0, "labelKey": "step", "maxSize": 1},
+      {"source": "copycats:copycat_vertical_step", "discCut": 0, "labelKey": "vertical_step", "maxSize": 1},
+      {"source": "copycats:copycat_half_panel", "discCut": 0, "labelKey": "half_panel", "maxSize": 1},
+      {"source": "copycats:copycat_flat_pane", "discCut": 0, "labelKey": "flat_pane", "maxSize": 1},
+      {"source": "copycats:copycat_flat_pane", "discCut": 1, "labelKey": "half_disc", "maxSize": 1},
+      {"source": "copycats:copycat_flat_pane", "discCut": 2, "labelKey": "quarter_disc", "maxSize": 1},
+      {"source": "copycats:copycat_byte_panel", "discCut": 0, "labelKey": "byte_panel", "maxSize": 1},
+      {"source": "copycats:copycat_half_layer", "discCut": 0, "labelKey": "half_layer", "maxSize": 8},
+      {"source": "copycats:copycat_vertical_half_layer", "discCut": 0, "labelKey": "vertical_half_layer", "maxSize": 8},
+      {"source": "copycats:copycat_stacked_half_layer", "discCut": 0, "labelKey": "stacked_half_layer", "maxSize": 8},
+      {"source": "copycat_architect:copycat_roof", "discCut": 0, "labelKey": "roof_template", "maxSize": 1}
+    ],
+    "nodes": {
+      "INPUT": {
+        "labelKey": "node_input",
+        "output": "shape",
+        "defaults": {"part": {"source": "copycats:copycat_block", "turn": 0, "top": false, "size": 1, "offset": {"x": 0, "y": 0, "z": 0}, "tilt": 0, "group": "body", "cutMask": "", "recipeSource": "", "spin": 0, "discCut": 0}},
+        "inputs": {
+          "min": 0,
+          "max": 0,
+          "types": []
+        },
+        "fields": {
+          "rotationAxis": {
+            "labelKey": "rotation_axis",
+            "choices": ["X", "Y", "Z", "NORMAL"]
+          },
+          "quarterTurns": {
+            "labelKey": "rotation_angle",
+            "min": 0,
+            "max": 3
+          },
+          "part.source": {
+            "labelKey": "choose_base_copycat",
+            "choices": ["copycats:copycat_block", "copycats:copycat_slab", "copycats:copycat_stairs", "create:copycat_panel", "copycats:copycat_slice", "copycats:copycat_vertical_slice", "copycats:copycat_corner_slice", "copycats:copycat_layer", "copycats:copycat_beam", "copycats:copycat_byte", "create:copycat_step", "copycats:copycat_vertical_step", "copycats:copycat_half_panel", "copycats:copycat_flat_pane", "copycats:copycat_byte_panel", "copycats:copycat_half_layer", "copycats:copycat_vertical_half_layer", "copycats:copycat_stacked_half_layer", "copycat_architect:copycat_roof"]
+          },
+          "part.discCut": {
+            "min": 0,
+            "max": 2
+          },
+          "part.size": {
+            "labelKey": "size",
+            "min": 1,
+            "max": 8
+          },
+          "part.top": {
+            "labelKey": "top"
+          },
+          "part.group": {
+            "labelKey": "part_group"
+          },
+          "part.turn": {"min": 0, "max": 3},
+          "part.offset": {},
+          "part.tilt": {"min": 0, "max": 3},
+          "part.spin": {"min": 0, "max": 3}
+        }
+      },
+      "UNION": {
+        "labelKey": "node_union",
+        "output": "shape",
+        "defaults": {},
+        "inputs": {
+          "min": 2,
+          "max": 16,
+          "types": ["shape"]
+        },
+        "fields": {
+          "materialMode": {
+            "labelKey": "material_mode",
+            "choices": ["SEPARATED", "GROUPED"]
+          },
+          "materialGroup": {},
+          "inputGroups": {}
+        }
+      },
+      "INTERSECTION": {
+        "labelKey": "node_intersection",
+        "output": "shape",
+        "defaults": {},
+        "inputs": {
+          "min": 2,
+          "max": 16,
+          "types": ["shape"]
+        },
+        "fields": {}
+      },
+      "DIFFERENCE": {
+        "labelKey": "node_difference",
+        "output": "shape",
+        "defaults": {},
+        "inputs": {
+          "min": 2,
+          "max": 2,
+          "types": ["shape"]
+        },
+        "fields": {}
+      },
+      "SYMMETRIC_DIFFERENCE": {
+        "labelKey": "node_symmetric_difference",
+        "output": "shape",
+        "defaults": {},
+        "inputs": {
+          "min": 2,
+          "max": 16,
+          "types": ["shape"]
+        },
+        "fields": {
+          "materialMode": {
+            "labelKey": "material_mode",
+            "choices": ["SEPARATED", "GROUPED"]
+          },
+          "materialGroup": {},
+          "inputGroups": {}
+        }
+      },
+      "ROTATE": {
+        "labelKey": "node_rotate",
+        "output": "shape",
+        "defaults": {},
+        "inputs": {
+          "min": 2,
+          "max": 2,
+          "types": ["shape", "rotation"]
+        },
+        "fields": {
+          "rotationAxis": {
+            "labelKey": "rotation_axis",
+            "choices": ["X", "Y", "Z", "NORMAL"]
+          },
+          "quarterTurns": {
+            "labelKey": "rotation_angle",
+            "min": 0,
+            "max": 3
+          }
+        }
+      },
+      "ROTATION": {
+        "labelKey": "node_rotation",
+        "output": "rotation",
+        "defaults": {},
+        "inputs": {
+          "min": 0,
+          "max": 0,
+          "types": []
+        },
+        "fields": {
+          "rotationAxis": {
+            "labelKey": "rotation_axis",
+            "choices": ["X", "Y", "Z", "NORMAL"]
+          },
+          "quarterTurns": {
+            "labelKey": "rotation_angle",
+            "min": 0,
+            "max": 3
+          }
+        }
+      },
+      "OUTPUT": {
+        "labelKey": "node_output",
+        "output": null,
+        "defaults": {},
+        "inputs": {
+          "min": 1,
+          "max": 1,
+          "types": ["shape"]
+        },
+        "fields": {
+          "previewGroup": {}
+        }
+      },
+      "MIRROR": {
+        "labelKey": "node_mirror",
+        "output": "shape",
+        "defaults": {},
+        "inputs": {
+          "min": 1,
+          "max": 1,
+          "types": ["shape"]
+        },
+        "fields": {
+          "mirror.plane": {
+            "labelKey": "mirror_plane",
+            "choices": ["X", "Y", "Z", "XY", "XY_NEGATIVE", "XZ", "XZ_NEGATIVE", "YZ", "YZ_NEGATIVE", "BODY_PPP", "BODY_PPN", "BODY_PNP", "BODY_PNN"]
+          }
+        }
+      },
+      "SAVED": {
+        "labelKey": "node_saved",
+        "output": "shape",
+        "defaults": {},
+        "inputs": {
+          "min": 0,
+          "max": 0,
+          "types": []
+        },
+        "fields": {
+          "savedCopycat": {},
+          "rotationAxis": {
+            "labelKey": "rotation_axis",
+            "choices": ["X", "Y", "Z", "NORMAL"]
+          },
+          "quarterTurns": {
+            "labelKey": "rotation_angle",
+            "min": 0,
+            "max": 3
+          }
+        }
+      }
+    }
+  },
+  "building": {
+    "graphSchemas": [1, 2, 3],
+    "defaultSchema": 2,
+    "documentSchemas": [1, 2],
+    "defaultDocumentSchema": 2,
+    "maxNodes": 96,
+    "maxInputs": 16,
+    "nodeDefaults": {
+      "id": "",
+      "kind": "SEGMENT",
+      "name": "",
+      "x": 0,
+      "y": 0,
+      "inputs": [],
+      "module": "window@1",
+      "block": "",
+      "length": 3,
+      "height": 4,
+      "rectangles": [{"x": 0, "z": 0, "width": 3, "length": 3}],
+      "walls": {},
+      "floor": "",
+      "ceiling": "",
+      "offsets": [],
+      "form": "full@1",
+      "thickness": 1,
+      "occupied": false,
+      "finish": "",
+      "levels": {},
+      "roof": "",
+      "roofType": "flat",
+      "ridge": 0,
+      "overhang": 0,
+      "materialMode": "SEPARATED",
+      "role": "wall",
+      "preview": "all",
+      "storeyMode": "rooms",
+      "corner": "",
+      "patternAxis": "horizontal",
+      "layout": "",
+      "geometry": "",
+      "coordinates": [],
+      "layoutCells": [],
+      "assembly": false,
+      "depth": 1,
+      "regionCopies": {},
+      "transforms": [],
+      "rotationAxis": "Y",
+      "quarterTurns": 0,
+      "fenced": false,
+      "fenceBlock": "minecraft:oak_fence",
+      "fenceHeight": 1,
+      "pathWidth": 1,
+      "groundDepth": 1,
+      "groundBlock": "minecraft:dirt",
+      "clearance": 0,
+      "elevation": 0,
+      "landscapeOffset": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "buildingOffset": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "sitePaths": {},
+      "roofLevel": null,
+      "roofConfig": null,
+      "levelIds": {},
+      "stairwell": null,
+      "elevatorShaft": null,
+      "serviceShaft": null,
+      "accessInstances": [],
+      "mirror": null,
+      "mirrorPositionsOnly": null,
+      "surfaces": null,
+      "verticalEdges": null,
+      "joinWallEnds": null,
+      "roomLayout": null,
+      "roomConfig": null,
+      "facade": null,
+      "features": null,
+      "attachments": null
+    },
+    "semanticPorts": [
+      {"key": "semantic:room:filler", "path": ["roomLayout", "filler"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"]},
+      {"key": "semantic:room:interior", "path": ["roomConfig", "interiorSource"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"]},
+      {"key": "semantic:room:partition", "path": ["roomConfig", "defaultPartition"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"]},
+      {"key": "semantic:facade:source", "path": ["facade", "source"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"]},
+      {"key": "semantic:facade:filler", "path": ["facade", "filler"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"]},
+      {"key": "semantic:opening:*:mask", "path": ["features", "openings", "*", "maskSource"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]},
+      {"key": "semantic:opening:*:inset", "path": ["features", "openings", "*", "insetSource"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]},
+      {"key": "semantic:column:*:profile", "path": ["features", "extensions", "*", "profileSource"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"]}
+    ],
+    "nodes": {
+      "AREA": {
+        "labelKey": "bg_area",
+        "output": "AREA",
+        "defaults": {"coordinates": [{"x": 0, "y": 0, "z": 0}, {"x": 1, "y": 0, "z": 0}, {"x": 2, "y": 0, "z": 0}, {"x": 0, "y": 0, "z": 1}, {"x": 1, "y": 0, "z": 1}, {"x": 2, "y": 0, "z": 1}, {"x": 0, "y": 0, "z": 2}, {"x": 1, "y": 0, "z": 2}, {"x": 2, "y": 0, "z": 2}]},
+        "alwaysExplicit": true,
+        "ports": [],
+        "fields": {
+          "coordinates": {}
+        }
+      },
+      "COPYCAT": {
+        "labelKey": "bg_copycat",
+        "output": "COPYCAT",
+        "defaults": {},
+        "ports": [],
+        "fields": {
+          "form": {},
+          "role": {
+            "labelKey": "role"
+          },
+          "surfaces": {}
+        }
+      },
+      "SEGMENT_LAYOUT": {
+        "labelKey": "bg_segment_layout",
+        "output": "SEGMENT_LAYOUT",
+        "defaults": {"module": ""},
+        "alwaysExplicit": true,
+        "ports": [
+          {"key": "geometry", "path": ["geometry"], "accepts": ["AREA"], "labelKey": "bg_area"}
+        ],
+        "fields": {
+          "length": {
+            "labelKey": "bg_fixed_length",
+            "min": 1,
+            "max": 128
+          },
+          "height": {
+            "labelKey": "height",
+            "min": 1,
+            "max": 128
+          },
+          "depth": {
+            "labelKey": "bg_depth",
+            "min": 1,
+            "max": 128
+          },
+          "layoutCells": {}
+        }
+      },
+      "SEGMENT": {
+        "labelKey": "bg_segment",
+        "output": "SEGMENT",
+        "defaults": {"assembly": true, "module": ""},
+        "ports": [
+          {"key": "layout", "path": ["layout"], "accepts": ["SEGMENT_LAYOUT"], "when": {"assembly": true, "id": {"not": "empty_wall"}}, "labelKey": "bg_segment_layout"},
+          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "when": {"id": {"not": "empty_wall"}}, "max": 16, "expand": true},
+          {"key": "region:*", "path": ["regionCopies", "key"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "when": {"assembly": true, "id": {"not": "empty_wall"}}, "dynamic": "segmentRegions"}
+        ],
+        "fields": {
+          "length": {
+            "labelKey": "bg_fixed_length",
+            "min": 1,
+            "max": 128
+          },
+          "height": {
+            "labelKey": "height",
+            "min": 1,
+            "max": 128
+          },
+          "depth": {
+            "labelKey": "bg_depth",
+            "min": 1,
+            "max": 128
+          },
+          "module": {},
+          "block": {
+            "labelKey": "native_block"
+          },
+          "role": {
+            "labelKey": "role"
+          },
+          "materialMode": {
+            "labelKey": "material_mode",
+            "choices": ["SEPARATED", "GROUPED"]
+          },
+          "features": {},
+          "attachments": {}
+        }
+      },
+      "PATTERN": {
+        "labelKey": "bg_pattern",
+        "output": "PATTERN",
+        "defaults": {"assembly": true, "inputs": ["", ""]},
+        "legacyDefaults": {"inputs": ["", ""]},
+        "ports": [
+          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "max": 16, "min": 2, "expand": false}
+        ],
+        "fields": {
+          "patternAxis": {
+            "labelKey": "bg_pattern_axis",
+            "choices": ["horizontal", "vertical", "depth", "transform"]
+          },
+          "role": {
+            "labelKey": "role"
+          },
+          "materialMode": {
+            "labelKey": "material_mode",
+            "choices": ["SEPARATED", "GROUPED"]
+          },
+          "transforms": {},
+          "features": {}
+        }
+      },
+      "ROOM_GEOMETRY": {
+        "labelKey": "bg_room_geometry",
+        "output": "ROOM_GEOMETRY",
+        "defaults": {"coordinates": [{"x": 0, "y": 0, "z": 0}, {"x": 1, "y": 0, "z": 0}, {"x": 2, "y": 0, "z": 0}, {"x": 0, "y": 0, "z": 1}, {"x": 1, "y": 0, "z": 1}, {"x": 2, "y": 0, "z": 1}, {"x": 0, "y": 0, "z": 2}, {"x": 1, "y": 0, "z": 2}, {"x": 2, "y": 0, "z": 2}]},
+        "alwaysExplicit": true,
+        "ports": [
+          {"key": "geometry", "path": ["geometry"], "accepts": ["AREA"], "labelKey": "bg_area"}
+        ],
+        "fields": {
+          "coordinates": {},
+          "height": {
+            "labelKey": "height",
+            "min": 1,
+            "max": 128
+          }
+        }
+      },
+      "FLOOR": {
+        "labelKey": "bg_floor",
+        "output": "FLOOR",
+        "defaults": {},
+        "legacyOnly": true,
+        "ports": [
+          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "max": 16, "expand": true}
+        ],
+        "fields": {
+          "form": {},
+          "thickness": {
+            "labelKey": "bg_thickness",
+            "min": 1,
+            "max": 4
+          },
+          "occupied": {},
+          "finish": {},
+          "role": {
+            "labelKey": "role"
+          }
+        }
+      },
+      "CEILING": {
+        "labelKey": "bg_ceiling",
+        "output": "CEILING",
+        "defaults": {},
+        "legacyOnly": true,
+        "ports": [
+          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "max": 16, "expand": true}
+        ],
+        "fields": {
+          "form": {},
+          "thickness": {
+            "labelKey": "bg_thickness",
+            "min": 1,
+            "max": 4
+          },
+          "occupied": {},
+          "role": {
+            "labelKey": "role"
+          },
+          "attachments": {}
+        }
+      },
+      "ROOM": {
+        "labelKey": "bg_room",
+        "output": "ROOM",
+        "defaults": {"assembly": true},
+        "ports": [
+          {"key": "layout", "path": ["layout"], "accepts": ["ROOM_LAYOUT"], "when": {"roomConfig.mode": "SEGMENTS"}, "labelKey": "bg_room_layout"},
+          {"key": "floor", "path": ["floor"], "accepts": ["FLOOR", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"roomConfig.mode": "SEGMENTS"}, "labelKey": "bg_floor"},
+          {"key": "ceiling", "path": ["ceiling"], "accepts": ["CEILING", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"roomConfig.mode": "SEGMENTS"}, "labelKey": "bg_ceiling"},
+          {"key": "geometry", "path": ["geometry"], "accepts": ["ROOM_GEOMETRY"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}, "assembly": true}, "labelKey": "bg_room_geometry"},
+          {"key": "wall:*", "path": ["walls", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}}, "defaultSource": "empty_wall", "dynamic": "wallRuns"},
+          {"key": "floor", "path": ["floor"], "accepts": ["FLOOR", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}, "assembly": true}, "labelKey": "bg_floor"},
+          {"key": "floor", "path": ["floor"], "accepts": ["FLOOR"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}, "assembly": {"not": true}}, "labelKey": "bg_floor"},
+          {"key": "ceiling", "path": ["ceiling"], "accepts": ["CEILING", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}, "assembly": true}, "labelKey": "bg_ceiling"},
+          {"key": "ceiling", "path": ["ceiling"], "accepts": ["CEILING"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}, "assembly": {"not": true}}, "labelKey": "bg_ceiling"},
+          {"key": "corner", "path": ["corner"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}}, "labelKey": "bg_corner_copycat"},
+          {"key": "edge:*", "path": ["verticalEdges", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}}, "dynamic": "roomEdges"}
+        ],
+        "fields": {
+          "height": {
+            "labelKey": "height",
+            "min": 1,
+            "max": 128
+          },
+          "rectangles": {},
+          "roomConfig": {},
+          "roomConfig.mode": {"choices": ["FOOTPRINT", "SEGMENTS"]},
+          "joinWallEnds": {}
+        }
+      },
+      "STOREY": {
+        "labelKey": "bg_storey",
+        "output": "STOREY",
+        "defaults": {"inputs": [""]},
+        "legacyDefaults": {"inputs": [""]},
+        "ports": [
+          {"key": "wall:*", "path": ["walls", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"storeyMode": "walls"}, "defaultSource": "empty_wall", "dynamic": "wallRuns"},
+          {"key": "floor", "path": ["floor"], "accepts": ["FLOOR", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"storeyMode": "walls", "assembly": true}, "labelKey": "bg_floor"},
+          {"key": "floor", "path": ["floor"], "accepts": ["FLOOR"], "when": {"storeyMode": "walls", "assembly": {"not": true}}, "labelKey": "bg_floor"},
+          {"key": "ceiling", "path": ["ceiling"], "accepts": ["CEILING", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"storeyMode": "walls", "assembly": true}, "labelKey": "bg_ceiling"},
+          {"key": "ceiling", "path": ["ceiling"], "accepts": ["CEILING"], "when": {"storeyMode": "walls", "assembly": {"not": true}}, "labelKey": "bg_ceiling"},
+          {"key": "corner", "path": ["corner"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "when": {"storeyMode": "walls"}, "labelKey": "bg_corner_copycat"},
+          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["ROOM"], "when": {"storeyMode": {"not": "walls"}}, "max": 16, "min": 1, "expand": true}
+        ],
+        "fields": {
+          "storeyMode": {
+            "labelKey": "bg_storey_mode",
+            "choices": ["rooms", "walls"]
+          },
+          "height": {
+            "labelKey": "height",
+            "min": 1,
+            "max": 128
+          },
+          "rectangles": {},
+          "offsets": {},
+          "facade": {}
+        }
+      },
+      "ROOF_LEVEL": {
+        "labelKey": "bg_roof_level",
+        "output": "ROOF_LEVEL",
+        "defaults": {"role": "roof", "roofLevel": {"storey": "", "area": "", "form": "GABLE", "axis": 0, "mode": "ANGLE", "slope": {"p": 1, "q": 1}, "upperSlope": {"p": 1, "q": 2}, "height16": 64, "knee16": 0, "overhang16": 16, "breakRatio": {"p": 1, "q": 3}, "family": ""}},
+        "ports": [
+          {"key": "area", "path": ["roofLevel", "area"], "accepts": ["AREA"], "labelKey": "bg_area"}
+        ],
+        "fields": {
+          "roofLevel": {},
+          "roofLevel.form": {
+            "choices": ["FLAT", "PENT", "GABLE", "HIP", "MANSARD", "CROSS"]
+          },
+          "roofLevel.mode": {
+            "choices": ["HEIGHT", "ANGLE"]
+          }
+        }
+      },
+      "ROOF_LAYOUT": {
+        "labelKey": "bg_roof_layout",
+        "output": "ROOF_LAYOUT",
+        "defaults": {"role": "roof"},
+        "alwaysExplicit": true,
+        "ports": [
+          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["ROOF_LEVEL"], "max": 16, "expand": true}
+        ],
+        "fields": {}
+      },
+      "ROOF": {
+        "labelKey": "bg_roof",
+        "output": "ROOF",
+        "defaults": {"assembly": true, "role": "roof"},
+        "legacyDefaults": {"role": "roof"},
+        "ports": [
+          {"key": "layout", "path": ["layout"], "accepts": ["ROOF_LAYOUT"], "when": {"assembly": true}, "labelKey": "bg_roof_layout"},
+          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"assembly": true}, "max": 6, "expand": true},
+          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "when": {"assembly": {"not": true}}, "max": 16, "expand": true},
+          {"key": "wall:*", "path": ["walls", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"assembly": {"not": true}}, "dynamic": "roofWalls"}
+        ],
+        "fields": {
+          "role": {
+            "labelKey": "role"
+          },
+          "roofType": {
+            "labelKey": "roof",
+            "choices": ["flat", "gable"]
+          },
+          "ridge": {
+            "min": 0,
+            "max": 1
+          },
+          "overhang": {
+            "min": 0,
+            "max": 2
+          },
+          "roofConfig": {}
+        }
+      },
+      "STAIRWELL": {
+        "labelKey": "bg_stairwell",
+        "output": "STAIRWELL",
+        "defaults": {"stairwell": {"layout": "U", "width": 2, "landingDepth": 2, "headroom": 2, "clockwise": true, "enclosed": true, "tread": "", "landing": "", "enclosure": ""}},
+        "ports": [
+          {"key": "tread", "path": ["stairwell", "tread"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]},
+          {"key": "landing", "path": ["stairwell", "landing"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]},
+          {"key": "enclosure", "path": ["stairwell", "enclosure"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]}
+        ],
+        "fields": {
+          "stairwell": {},
+          "stairwell.layout": {
+            "choices": ["STRAIGHT", "L", "U"]
+          }
+        }
+      },
+      "ELEVATOR_SHAFT": {
+        "labelKey": "bg_elevator_shaft",
+        "output": "ELEVATOR_SHAFT",
+        "defaults": {"elevatorShaft": {"width": 2, "depth": 2, "headroom": 2, "enclosed": true, "enclosure": ""}},
+        "ports": [
+          {"key": "enclosure", "path": ["elevatorShaft", "enclosure"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]}
+        ],
+        "fields": {
+          "elevatorShaft": {}
+        }
+      },
+      "SERVICE_SHAFT": {
+        "labelKey": "bg_service_shaft",
+        "output": "SERVICE_SHAFT",
+        "defaults": {"serviceShaft": {"width": 1, "depth": 1, "enclosed": true, "enclosure": ""}},
+        "ports": [
+          {"key": "enclosure", "path": ["serviceShaft", "enclosure"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]}
+        ],
+        "fields": {
+          "serviceShaft": {}
+        }
+      },
+      "BUILDING": {
+        "labelKey": "bg_building",
+        "output": null,
+        "defaults": {},
+        "ports": [
+          {"key": "roof", "path": ["roof"], "accepts": ["ROOF"], "labelKey": "bg_roof"},
+          {"key": "access:*", "path": ["accessInstances", "*", "source"], "accepts": ["STAIRWELL", "ELEVATOR_SHAFT", "SERVICE_SHAFT"], "max": 16, "dynamic": "accessInstances"},
+          {"key": "level:*", "path": ["levels", "*"], "accepts": ["STOREY"], "min": -8, "max": 8, "dynamic": "storeyLevels"},
+          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["GARDEN", "PATH"], "max": 16, "expand": true}
+        ],
+        "fields": {
+          "offsets": {},
+          "buildingOffset": {},
+          "sitePaths": {},
+          "accessInstances": {}
+        }
+      },
+      "GARDEN": {
+        "labelKey": "bg_garden",
+        "output": "GARDEN",
+        "defaults": {"block": "minecraft:grass_block", "coordinates": [{"x": 0, "y": 0, "z": 0}, {"x": 1, "y": 0, "z": 0}, {"x": 2, "y": 0, "z": 0}, {"x": 3, "y": 0, "z": 0}, {"x": 4, "y": 0, "z": 0}, {"x": 0, "y": 0, "z": 1}, {"x": 1, "y": 0, "z": 1}, {"x": 2, "y": 0, "z": 1}, {"x": 3, "y": 0, "z": 1}, {"x": 4, "y": 0, "z": 1}, {"x": 0, "y": 0, "z": 2}, {"x": 1, "y": 0, "z": 2}, {"x": 2, "y": 0, "z": 2}, {"x": 3, "y": 0, "z": 2}, {"x": 4, "y": 0, "z": 2}, {"x": 0, "y": 0, "z": 3}, {"x": 1, "y": 0, "z": 3}, {"x": 2, "y": 0, "z": 3}, {"x": 3, "y": 0, "z": 3}, {"x": 4, "y": 0, "z": 3}, {"x": 0, "y": 0, "z": 4}, {"x": 1, "y": 0, "z": 4}, {"x": 2, "y": 0, "z": 4}, {"x": 3, "y": 0, "z": 4}, {"x": 4, "y": 0, "z": 4}]},
+        "alwaysExplicit": true,
+        "ports": [
+          {"key": "geometry", "path": ["geometry"], "accepts": ["AREA"], "labelKey": "bg_area"},
+          {"key": "floor", "path": ["floor"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "labelKey": "bg_floor"}
+        ],
+        "fields": {
+          "block": {
+            "labelKey": "native_block"
+          },
+          "coordinates": {},
+          "fenced": {},
+          "fenceBlock": {},
+          "fenceHeight": {
+            "min": 1,
+            "max": 4
+          },
+          "role": {
+            "labelKey": "role"
+          }
+        }
+      },
+      "PATH": {
+        "labelKey": "bg_path",
+        "output": "PATH",
+        "defaults": {"block": "minecraft:gravel", "coordinates": [{"x": 0, "y": 0, "z": 0}, {"x": 0, "y": 0, "z": 4}]},
+        "alwaysExplicit": true,
+        "ports": [
+          {"key": "floor", "path": ["floor"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "labelKey": "bg_floor"}
+        ],
+        "fields": {
+          "block": {
+            "labelKey": "native_block"
+          },
+          "coordinates": {},
+          "pathWidth": {},
+          "groundBlock": {},
+          "groundDepth": {},
+          "clearance": {},
+          "role": {
+            "labelKey": "role"
+          }
+        }
+      },
+      "SEGMENT_MIRROR": {
+        "labelKey": "bg_segment_mirror",
+        "output": "SEGMENT_MIRROR",
+        "defaults": {"inputs": [""], "rotationAxis": "X"},
+        "alwaysExplicit": true,
+        "ports": [
+          {"key": "in:0", "path": ["inputs", "0"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"]}
+        ],
+        "fields": {
+          "rotationAxis": {
+            "labelKey": "rotation_axis",
+            "choices": ["X", "Y", "Z"]
+          },
+          "mirrorPositionsOnly": {},
+          "materialMode": {
+            "labelKey": "material_mode",
+            "choices": ["SEPARATED", "GROUPED"]
+          },
+          "role": {
+            "labelKey": "role"
+          },
+          "features": {}
+        }
+      },
+      "COPYCAT_MIRROR": {
+        "labelKey": "bg_copycat_mirror",
+        "output": "COPYCAT_MIRROR",
+        "defaults": {"inputs": [""], "mirror": {"plane": "X"}},
+        "alwaysExplicit": true,
+        "ports": [
+          {"key": "in:0", "path": ["inputs", "0"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]}
+        ],
+        "fields": {
+          "mirror.plane": {
+            "labelKey": "mirror_plane",
+            "choices": ["X", "Y", "Z", "XY", "XY_NEGATIVE", "XZ", "XZ_NEGATIVE", "YZ", "YZ_NEGATIVE", "BODY_PPP", "BODY_PPN", "BODY_PNP", "BODY_PNN"]
+          }
+        }
+      },
+      "SEGMENT_ROTATE": {
+        "labelKey": "bg_segment_rotate",
+        "output": "SEGMENT_ROTATE",
+        "defaults": {"inputs": [""], "quarterTurns": 1},
+        "alwaysExplicit": true,
+        "ports": [
+          {"key": "in:0", "path": ["inputs", "0"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"]}
+        ],
+        "fields": {
+          "rotationAxis": {
+            "labelKey": "rotation_axis",
+            "choices": ["X", "Y", "Z"]
+          },
+          "quarterTurns": {
+            "labelKey": "rotation_angle",
+            "min": 0,
+            "max": 3
+          },
+          "features": {}
+        }
+      },
+      "COPYCAT_ROTATE": {
+        "labelKey": "bg_copycat_rotate",
+        "output": "COPYCAT_ROTATE",
+        "defaults": {"inputs": [""], "quarterTurns": 1},
+        "alwaysExplicit": true,
+        "ports": [
+          {"key": "in:0", "path": ["inputs", "0"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]}
+        ],
+        "fields": {
+          "rotationAxis": {
+            "labelKey": "rotation_axis",
+            "choices": ["X", "Y", "Z"]
+          },
+          "quarterTurns": {
+            "labelKey": "rotation_angle",
+            "min": 0,
+            "max": 3
+          }
+        }
+      },
+      "ROOM_LAYOUT": {
+        "labelKey": "bg_room_layout",
+        "output": "ROOM_LAYOUT",
+        "defaults": {},
+        "alwaysExplicit": true,
+        "ports": [
+          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "max": 16, "expand": true}
+        ],
+        "fields": {
+          "roomLayout": {}
+        }
+      }
+    }
+  }
+}

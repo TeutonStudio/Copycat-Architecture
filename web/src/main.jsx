@@ -8,6 +8,7 @@ import { DocumentFields, Field, names, NodeFields, portName } from './Inspector.
 import './style.css'
 import { SplitHandle } from './SplitHandle.jsx'
 import { Workspace, useWorkspace } from './Workspace.jsx'
+import { loadBuildingCopycat, loadFormCopycat } from './copycat-library.js'
 import { insertNodeGroup, mergeLibraries, saveNodeGroup } from './node-groups.js'
 import baseLibrary from '../../examples/library.json'
 import formExample from '../../examples/nodegraph-form.json'
@@ -110,6 +111,7 @@ function Studio({ mode, active }) {
   const [previewMode, setPreviewMode] = useState('graph')
   const graphInput = useRef(null)
   const libraryInput = useRef(null)
+  const copycatInput = useRef(null)
   const canvas = useRef(null)
   const entries = useMemo(() => inspect(mode, document), [mode, document])
   const wires = useMemo(() => connections(entries), [entries])
@@ -215,11 +217,20 @@ function Studio({ mode, active }) {
     }
   }
 
+  const loadCopycat = (entry, nodeId = visibleNode.node.kind === 'COPYCAT' || visibleNode.node.kind === 'SAVED' ? visibleNode.node.id : undefined) => {
+    if (mode === 'building') {
+      const result = loadBuildingCopycat(document, library, entry, nodeId)
+      commit(result.document); setLibrary(result.library); setSelected(result.nodeId)
+    } else {
+      commit(loadFormCopycat(document, entry, nodeId))
+    }
+  }
+  const savedForms = savedData.graphs.filter(entry => entry.mode === 'form')
   const count = entries.length
   const maxNodes = mode === 'form' ? model.formNodes : model.buildingNodes
   const portLimits = mode === 'form' ? model.form.find(type => type.kind === visibleNode.node.kind)
-    : visibleNode.node.kind === 'PATTERN' ? { min: 2, max: model.sockets } : null
-  const isFormSourceLimit = kind === 'INPUT' && entries.filter(({ node }) => node.kind === 'INPUT').length >= model.formSources
+    : visibleNode.node.kind === 'PATTERN' || visibleNode.node.kind.startsWith('SEGMENT_') ? { min: 2, max: visibleNode.node.kind === 'SEGMENT_DIFFERENCE' ? 2 : model.sockets } : null
+  const isFormSourceLimit = ['INPUT', 'SAVED'].includes(kind) && entries.filter(({ node }) => ['INPUT', 'SAVED'].includes(node.kind)).length >= model.formSources
   const previewSelected = current?.node.id ?? ''
   const exportFile = () => transact(() => downloadJson(writeGraph(mode, document), mode))
   const copyJson = async () => {
@@ -254,6 +265,15 @@ function Studio({ mode, active }) {
       <button type="button" onClick={() => graphInput.current.click()}>JSON öffnen</button>
       <input hidden ref={graphInput} type="file" accept=".json,application/json" onChange={event => importFile(event, false)} />
       {mode === 'building' && <>
+        <button type="button" onClick={() => copycatInput.current.click()}>Copycat laden</button>
+        <input hidden ref={copycatInput} type="file" accept=".json,application/json" onChange={async event => {
+          const file = event.target.files?.[0]; event.target.value = ''; if (!file) return
+          try {
+            if (file.size > 4_000_000) throw new Error('Die Copycat-Datei ist größer als 4 MB.')
+            const source = readGraph(JSON.parse(await file.text()), 'form')
+            transact(() => loadCopycat({ id: crypto.randomUUID(), name: source.name, document: source }))
+          } catch(error) { setMessage({ text: error.message, error: true }) }
+        }} />
         <button type="button" onClick={() => libraryInput.current.click()}>Bibliothek öffnen</button>
         <input hidden ref={libraryInput} type="file" accept=".json,application/json" onChange={event => importFile(event, true)} />
       </>}
@@ -354,7 +374,8 @@ function Studio({ mode, active }) {
                   })}>Letzten Eingang entfernen</button>
               </div>}
             </details>}
-            <NodeFields {...{ mode, node: visibleNode.node, document, edit: patchNode, library }} />
+            <NodeFields {...{ mode, node: visibleNode.node, document, edit: patchNode, library, savedForms }}
+              onLoadCopycat={id => transact(() => loadCopycat(savedForms.find(entry => entry.id === id)))} />
             {(selectedWire || current && !protectedNode(current.node)) &&
               <button className="danger" type="button" onClick={removeSelection}>{selectedWire ? 'Verbindung trennen' : 'Knoten löschen'}</button>}
             <DocumentFields {...{ mode, document, library, materials, setMaterials }} edit={next => transact(() => commit(next))} />

@@ -782,5 +782,9 @@
   "gui.copycat_architect.semantic_boundary_rules_help": "Virtual sections may inherit walls from the storey or remain intentionally open.",
   "gui.copycat_architect.semantic_opening_inset_depth": "Glass / frame insert depth",
   "gui.copycat_architect.semantic_plan_summary": "%s interior cells · %s segments",
-  "gui.copycat_architect.semantic_floorplan_help": "Click the room area to open its segment grid · Middle mouse: pan"
+  "gui.copycat_architect.semantic_floorplan_help": "Click the room area to open its segment grid · Middle mouse: pan",
+  "gui.copycat_architect.segment_union": "Segment Union",
+  "gui.copycat_architect.segment_intersection": "Segment Intersection",
+  "gui.copycat_architect.segment_difference": "Segment Difference",
+  "gui.copycat_architect.segment_symmetric_difference": "Segment Symmetric Difference"
 }

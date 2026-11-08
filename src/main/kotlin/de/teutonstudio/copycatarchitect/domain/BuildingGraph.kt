@@ -2,7 +2,7 @@ package de.teutonstudio.copycatarchitect.domain
 
 import java.util.concurrent.ConcurrentHashMap
 
-enum class BuildingKind { AREA, COPYCAT, SEGMENT_LAYOUT, SEGMENT, PATTERN, ROOM_GEOMETRY, FLOOR, CEILING, ROOM, STOREY, ROOF_LEVEL, ROOF_LAYOUT, ROOF, STAIRWELL, ELEVATOR_SHAFT, SERVICE_SHAFT, BUILDING, GARDEN, PATH, SEGMENT_MIRROR, COPYCAT_MIRROR, SEGMENT_ROTATE, COPYCAT_ROTATE, ROOM_LAYOUT }
+enum class BuildingKind { AREA, COPYCAT, SEGMENT_LAYOUT, SEGMENT, PATTERN, ROOM_GEOMETRY, FLOOR, CEILING, ROOM, STOREY, ROOF_LEVEL, ROOF_LAYOUT, ROOF, STAIRWELL, ELEVATOR_SHAFT, SERVICE_SHAFT, BUILDING, GARDEN, PATH, SEGMENT_MIRROR, COPYCAT_MIRROR, SEGMENT_ROTATE, COPYCAT_ROTATE, ROOM_LAYOUT, SEGMENT_UNION, SEGMENT_INTERSECTION, SEGMENT_DIFFERENCE, SEGMENT_SYMMETRIC_DIFFERENCE }
 data class SegmentLayoutCell(val x:Int=0,val y:Int=0,val sourceIndex:Int=0,val turn:Int=0)
 data class BuildingNode(
     val id:String="",val kind:BuildingKind=BuildingKind.SEGMENT,val name:String="",val x:Int=0,val y:Int=0,
@@ -243,7 +243,7 @@ object BuildingPorts {
         BuildingKind.GARDEN -> listOf(port(n,"geometry",n.geometry),port(n,"floor",n.floor))
         BuildingKind.PATH -> listOf(port(n,"floor",n.floor))
         BuildingKind.SEGMENT_LAYOUT,BuildingKind.ROOM_GEOMETRY -> listOf(port(n,"geometry",n.geometry))
-        BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.PATTERN,BuildingKind.ROOM_LAYOUT,BuildingKind.ROOF_LAYOUT -> inputs(n,expanding)
+        BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.PATTERN,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.ROOM_LAYOUT,BuildingKind.ROOF_LAYOUT -> inputs(n,expanding)
         BuildingKind.ROOM -> if(n.roomConfig?.mode==RoomMode.SEGMENTS) listOf(port(n,"layout",n.layout),port(n,"floor",n.floor),port(n,"ceiling",n.ceiling))
             else (if(n.assembly) listOf(port(n,"geometry",n.geometry)) else emptyList())+enclosure(n)
         BuildingKind.STOREY -> if(n.storeyMode=="walls") enclosure(n) else inputs(n,expanding)
@@ -299,7 +299,7 @@ object BuildingGraphCompiler {
             require(n.roomLayout==null || n.kind==BuildingKind.ROOM_LAYOUT) { "Room arrangements belong to a room layout" }
             require(n.roomConfig==null || n.kind==BuildingKind.ROOM) { "Room settings belong to a room" }
             require(n.facade==null || n.kind==BuildingKind.STOREY) { "Facade settings belong to a storey" }
-            require(n.features==null || n.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR)) { "Bauteilregeln benötigen ein Segment" }
+            require(n.features==null || n.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)) { "Bauteilregeln benötigen ein Segment" }
             require(n.attachments.isNullOrEmpty() || n.kind in setOf(BuildingKind.CEILING,BuildingKind.SEGMENT)) { "Wandanschlüsse benötigen eine Deckenplatte oder ein Segment" }
             require(n.preview in listOf("all","walls","floor","ceiling","roof")) { "Invalid building preview filter" }
             require(n.name.length<=64 && n.x in -8192..8192 && n.y in -8192..8192 && n.materialMode in MaterialMode.entries) { "Invalid building node" }
@@ -331,6 +331,7 @@ object BuildingGraphCompiler {
                 require(n.layoutCells.size<=16384 && n.layoutCells.map { it.x to it.y }.distinct().size==n.layoutCells.size) { "Segment arrangement cells must be unique" }
                 require(n.layoutCells.all { it.x in 0 until resolved.length && it.y in 0 until resolved.height && it.sourceIndex in 0..15 && it.turn in 0..3 }) { "Invalid segment arrangement cell" }
             }
+            if(n.kind in SegmentBooleans.kinds) require(n.inputs.size in 2..if(n.kind==BuildingKind.SEGMENT_DIFFERENCE) 2 else 16) { "A segment operation needs 2–16 inputs (difference exactly two)" }
             if(n.kind==BuildingKind.PATTERN) {
                 require(n.inputs.size in 2..16) { "A pattern needs 2–16 ordered segment inputs" }
                 require(n.patternAxis in listOf("horizontal","vertical","depth","transform")) { "Invalid wall pattern axis" }
@@ -360,7 +361,7 @@ object BuildingGraphCompiler {
             if(n.roofConfig!=null) {
                 val refs=n.roofConfig.variants.values+n.roofConfig.families.flatMap { it.variants.values }
                 refs.filter(String::isNotEmpty).forEach { require(nodes[it]?.kind in setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE)) { "Roof templates require a connected Copycat source" } }
-                if(n.roofConfig.wall.isNotEmpty()) require(nodes[n.roofConfig.wall]?.kind in setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)) { "Roof walls require a Copycat or wall segment source" }
+                if(n.roofConfig.wall.isNotEmpty()) require(nodes[n.roofConfig.wall]?.kind in setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)) { "Roof walls require a Copycat or wall segment source" }
             }
             if(n.kind==BuildingKind.ROOF_LEVEL) Roofs.validate(n.roofLevel ?: RoofLevelConfig())
             require(n.levelIds.isEmpty() || n.kind==BuildingKind.BUILDING && n.levelIds.keys.all { it in n.levels } && n.levelIds.values.distinct().size==n.levelIds.size) { "Invalid storey instance identities" }
@@ -422,7 +423,8 @@ object BuildingGraphCompiler {
         require(parts.size<=32) { "Shared walls exceed 32 source parts in one block" }
         return first.copy(parts=Geometry.normalized(parts,groups),groups=groups,surfaces=surfaces)
     }
-    class Evaluation(val graph:BuildingGraph,val palette:Map<String,String>,val forms:Map<String,Form>,val modules:Map<String,Module>) {
+    class Evaluation(val graph:BuildingGraph,val palette:Map<String,String>,forms:Map<String,Form>,val modules:Map<String,Module>) {
+        val forms:MutableMap<String,Form> = forms.toMutableMap()
         private val nodes=graph.nodes.associateBy { it.id }
         private var activeAccess:AccessCompilation?=null
         private var activeStoreyId=""
@@ -477,7 +479,11 @@ object BuildingGraphCompiler {
         private fun sourceIsAir(source:BuildingNode)=sourceCell(P(),source).empty
         fun segment(id:String):FixedSegment=segments.getOrPut(id) { val n=node(id);BuildingSemantics.annotate(segmentRecipe(id),id,n.features,if(n.materialMode==MaterialMode.GROUPED) n.role else "") }
         private fun segmentRecipe(id:String):FixedSegment=run {
-            val n=node(id);require(n.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE))
+            val n=node(id);require(n.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE))
+            if(n.kind in SegmentBooleans.kinds) {
+                require(n.inputs.all(String::isNotEmpty)) { "Connect every segment operation input" }
+                return@run SegmentBooleans.evaluate(n,n.inputs.map(::segment),forms,palette)
+            }
             if(n.kind==BuildingKind.SEGMENT_ROTATE) {
                 require(n.inputs.single().isNotEmpty()) { "Connect the segment to rotate" }
                 return@run SegmentGeometry.rotated(segment(n.inputs.single()),n.rotationAxis,n.quarterTurns).let { value ->
@@ -614,7 +620,7 @@ object BuildingGraphCompiler {
                     val r=Resolver();addPlateLayers(r,n,copies,n.kind==BuildingKind.FLOOR,0,sample,sample,n.thickness)
                     r.plan(emptyList())
                 }
-                BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE -> {
+                BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE -> {
                     val value=segment(id);val r=Resolver()
                     if(value.air) for(x in 0 until value.length) for(y in 0 until value.height) for(z in 0 until value.depth) r.clear(P(x,y,z))
                     else for(entries in value.cells.groupBy { it.cell.pos }.values) {
@@ -714,7 +720,7 @@ object BuildingGraphCompiler {
             val shell=topology.shell;val footprint=topology.interior
             fun plate(id:String,isFloor:Boolean) {
                 if(id.isEmpty()) return
-                val layer=node(id);val isSegment=layer.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR)
+                val layer=node(id);val isSegment=layer.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)
                 val value=if(isSegment) segment(id) else null
                 val thickness=value?.depth ?: layer.thickness
                 val occupied=!isSegment && layer.occupied
@@ -825,8 +831,8 @@ object BuildingGraphCompiler {
             }
             val n=graph.resolvedNode(original)
             val floor=node(n.floor);val ceiling=node(n.ceiling)
-            val floorSegment=floor.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)
-            val ceilingSegment=ceiling.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)
+            val floorSegment=floor.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)
+            val ceilingSegment=ceiling.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)
             require(floor.kind==BuildingKind.FLOOR || n.assembly && floorSegment) { "Connect a floor definition or horizontal segment" }
             require(ceiling.kind==BuildingKind.CEILING || n.assembly && ceilingSegment) { "Connect a ceiling definition or horizontal segment" }
             val floorCopies=if(floorSegment) emptyList() else copycats(floor);val ceilingCopies=if(ceilingSegment) emptyList() else copycats(ceiling)

@@ -346,14 +346,14 @@
       "attachments": null
     },
     "semanticPorts": [
-      {"key": "semantic:room:filler", "path": ["roomLayout", "filler"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"]},
-      {"key": "semantic:room:interior", "path": ["roomConfig", "interiorSource"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"]},
-      {"key": "semantic:room:partition", "path": ["roomConfig", "defaultPartition"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"]},
-      {"key": "semantic:facade:source", "path": ["facade", "source"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"]},
-      {"key": "semantic:facade:filler", "path": ["facade", "filler"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"]},
+      {"key": "semantic:room:filler", "path": ["roomLayout", "filler"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"]},
+      {"key": "semantic:room:interior", "path": ["roomConfig", "interiorSource"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"]},
+      {"key": "semantic:room:partition", "path": ["roomConfig", "defaultPartition"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"]},
+      {"key": "semantic:facade:source", "path": ["facade", "source"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"]},
+      {"key": "semantic:facade:filler", "path": ["facade", "filler"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"]},
       {"key": "semantic:opening:*:mask", "path": ["features", "openings", "*", "maskSource"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]},
       {"key": "semantic:opening:*:inset", "path": ["features", "openings", "*", "insetSource"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]},
-      {"key": "semantic:column:*:profile", "path": ["features", "extensions", "*", "profileSource"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"]}
+      {"key": "semantic:column:*:profile", "path": ["features", "extensions", "*", "profileSource"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"]}
     ],
     "nodes": {
       "AREA": {
@@ -452,7 +452,7 @@
         "defaults": {"assembly": true, "inputs": ["", ""]},
         "legacyDefaults": {"inputs": ["", ""]},
         "ports": [
-          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "max": 16, "min": 2, "expand": false}
+          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"], "max": 16, "min": 2, "expand": false}
         ],
         "fields": {
           "patternAxis": {
@@ -537,16 +537,16 @@
         "defaults": {"assembly": true},
         "ports": [
           {"key": "layout", "path": ["layout"], "accepts": ["ROOM_LAYOUT"], "when": {"roomConfig.mode": "SEGMENTS"}, "labelKey": "bg_room_layout"},
-          {"key": "floor", "path": ["floor"], "accepts": ["FLOOR", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"roomConfig.mode": "SEGMENTS"}, "labelKey": "bg_floor"},
-          {"key": "ceiling", "path": ["ceiling"], "accepts": ["CEILING", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"roomConfig.mode": "SEGMENTS"}, "labelKey": "bg_ceiling"},
+          {"key": "floor", "path": ["floor"], "accepts": ["FLOOR", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"], "when": {"roomConfig.mode": "SEGMENTS"}, "labelKey": "bg_floor"},
+          {"key": "ceiling", "path": ["ceiling"], "accepts": ["CEILING", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"], "when": {"roomConfig.mode": "SEGMENTS"}, "labelKey": "bg_ceiling"},
           {"key": "geometry", "path": ["geometry"], "accepts": ["ROOM_GEOMETRY"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}, "assembly": true}, "labelKey": "bg_room_geometry"},
-          {"key": "wall:*", "path": ["walls", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}}, "defaultSource": "empty_wall", "dynamic": "wallRuns"},
-          {"key": "floor", "path": ["floor"], "accepts": ["FLOOR", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}, "assembly": true}, "labelKey": "bg_floor"},
+          {"key": "wall:*", "path": ["walls", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}}, "defaultSource": "empty_wall", "dynamic": "wallRuns"},
+          {"key": "floor", "path": ["floor"], "accepts": ["FLOOR", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}, "assembly": true}, "labelKey": "bg_floor"},
           {"key": "floor", "path": ["floor"], "accepts": ["FLOOR"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}, "assembly": {"not": true}}, "labelKey": "bg_floor"},
-          {"key": "ceiling", "path": ["ceiling"], "accepts": ["CEILING", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}, "assembly": true}, "labelKey": "bg_ceiling"},
+          {"key": "ceiling", "path": ["ceiling"], "accepts": ["CEILING", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}, "assembly": true}, "labelKey": "bg_ceiling"},
           {"key": "ceiling", "path": ["ceiling"], "accepts": ["CEILING"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}, "assembly": {"not": true}}, "labelKey": "bg_ceiling"},
           {"key": "corner", "path": ["corner"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}}, "labelKey": "bg_corner_copycat"},
-          {"key": "edge:*", "path": ["verticalEdges", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}}, "dynamic": "roomEdges"}
+          {"key": "edge:*", "path": ["verticalEdges", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}}, "dynamic": "roomEdges"}
         ],
         "fields": {
           "height": {
@@ -566,10 +566,10 @@
         "defaults": {"inputs": [""]},
         "legacyDefaults": {"inputs": [""]},
         "ports": [
-          {"key": "wall:*", "path": ["walls", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"storeyMode": "walls"}, "defaultSource": "empty_wall", "dynamic": "wallRuns"},
-          {"key": "floor", "path": ["floor"], "accepts": ["FLOOR", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"storeyMode": "walls", "assembly": true}, "labelKey": "bg_floor"},
+          {"key": "wall:*", "path": ["walls", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"], "when": {"storeyMode": "walls"}, "defaultSource": "empty_wall", "dynamic": "wallRuns"},
+          {"key": "floor", "path": ["floor"], "accepts": ["FLOOR", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"], "when": {"storeyMode": "walls", "assembly": true}, "labelKey": "bg_floor"},
           {"key": "floor", "path": ["floor"], "accepts": ["FLOOR"], "when": {"storeyMode": "walls", "assembly": {"not": true}}, "labelKey": "bg_floor"},
-          {"key": "ceiling", "path": ["ceiling"], "accepts": ["CEILING", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"storeyMode": "walls", "assembly": true}, "labelKey": "bg_ceiling"},
+          {"key": "ceiling", "path": ["ceiling"], "accepts": ["CEILING", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"], "when": {"storeyMode": "walls", "assembly": true}, "labelKey": "bg_ceiling"},
           {"key": "ceiling", "path": ["ceiling"], "accepts": ["CEILING"], "when": {"storeyMode": "walls", "assembly": {"not": true}}, "labelKey": "bg_ceiling"},
           {"key": "corner", "path": ["corner"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "when": {"storeyMode": "walls"}, "labelKey": "bg_corner_copycat"},
           {"key": "in:*", "path": ["inputs", "*"], "accepts": ["ROOM"], "when": {"storeyMode": {"not": "walls"}}, "max": 16, "min": 1, "expand": true}
@@ -623,9 +623,9 @@
         "legacyDefaults": {"role": "roof"},
         "ports": [
           {"key": "layout", "path": ["layout"], "accepts": ["ROOF_LAYOUT"], "when": {"assembly": true}, "labelKey": "bg_roof_layout"},
-          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"assembly": true}, "max": 6, "expand": true},
+          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"], "when": {"assembly": true}, "max": 6, "expand": true},
           {"key": "in:*", "path": ["inputs", "*"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "when": {"assembly": {"not": true}}, "max": 16, "expand": true},
-          {"key": "wall:*", "path": ["walls", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "when": {"assembly": {"not": true}}, "dynamic": "roofWalls"}
+          {"key": "wall:*", "path": ["walls", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"], "when": {"assembly": {"not": true}}, "dynamic": "roofWalls"}
         ],
         "fields": {
           "role": {
@@ -754,7 +754,7 @@
         "defaults": {"inputs": [""], "rotationAxis": "X"},
         "alwaysExplicit": true,
         "ports": [
-          {"key": "in:0", "path": ["inputs", "0"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"]}
+          {"key": "in:0", "path": ["inputs", "0"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"]}
         ],
         "fields": {
           "rotationAxis": {
@@ -793,7 +793,7 @@
         "defaults": {"inputs": [""], "quarterTurns": 1},
         "alwaysExplicit": true,
         "ports": [
-          {"key": "in:0", "path": ["inputs", "0"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"]}
+          {"key": "in:0", "path": ["inputs", "0"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"]}
         ],
         "fields": {
           "rotationAxis": {
@@ -834,10 +834,182 @@
         "defaults": {},
         "alwaysExplicit": true,
         "ports": [
-          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE"], "max": 16, "expand": true}
+          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"], "max": 16, "expand": true}
         ],
         "fields": {
           "roomLayout": {}
+        }
+      },
+      "SEGMENT_UNION": {
+        "labelKey": "segment_union",
+        "output": "SEGMENT_UNION",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "ports": [
+          {
+            "key": "in:*",
+            "path": [
+              "inputs",
+              "*"
+            ],
+            "accepts": [
+              "SEGMENT",
+              "PATTERN",
+              "SEGMENT_MIRROR",
+              "SEGMENT_ROTATE",
+              "SEGMENT_UNION",
+              "SEGMENT_INTERSECTION",
+              "SEGMENT_DIFFERENCE",
+              "SEGMENT_SYMMETRIC_DIFFERENCE"
+            ],
+            "min": 2,
+            "max": 16
+          }
+        ],
+        "fields": {
+          "materialMode": {
+            "labelKey": "material_mode",
+            "choices": [
+              "SEPARATED",
+              "GROUPED"
+            ]
+          },
+          "role": {
+            "labelKey": "role"
+          }
+        }
+      },
+      "SEGMENT_INTERSECTION": {
+        "labelKey": "segment_intersection",
+        "output": "SEGMENT_INTERSECTION",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "ports": [
+          {
+            "key": "in:*",
+            "path": [
+              "inputs",
+              "*"
+            ],
+            "accepts": [
+              "SEGMENT",
+              "PATTERN",
+              "SEGMENT_MIRROR",
+              "SEGMENT_ROTATE",
+              "SEGMENT_UNION",
+              "SEGMENT_INTERSECTION",
+              "SEGMENT_DIFFERENCE",
+              "SEGMENT_SYMMETRIC_DIFFERENCE"
+            ],
+            "min": 2,
+            "max": 16
+          }
+        ],
+        "fields": {
+          "materialMode": {
+            "labelKey": "material_mode",
+            "choices": [
+              "SEPARATED",
+              "GROUPED"
+            ]
+          },
+          "role": {
+            "labelKey": "role"
+          }
+        }
+      },
+      "SEGMENT_DIFFERENCE": {
+        "labelKey": "segment_difference",
+        "output": "SEGMENT_DIFFERENCE",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "ports": [
+          {
+            "key": "in:*",
+            "path": [
+              "inputs",
+              "*"
+            ],
+            "accepts": [
+              "SEGMENT",
+              "PATTERN",
+              "SEGMENT_MIRROR",
+              "SEGMENT_ROTATE",
+              "SEGMENT_UNION",
+              "SEGMENT_INTERSECTION",
+              "SEGMENT_DIFFERENCE",
+              "SEGMENT_SYMMETRIC_DIFFERENCE"
+            ],
+            "min": 2,
+            "max": 2
+          }
+        ],
+        "fields": {
+          "materialMode": {
+            "labelKey": "material_mode",
+            "choices": [
+              "SEPARATED",
+              "GROUPED"
+            ]
+          },
+          "role": {
+            "labelKey": "role"
+          }
+        }
+      },
+      "SEGMENT_SYMMETRIC_DIFFERENCE": {
+        "labelKey": "segment_symmetric_difference",
+        "output": "SEGMENT_SYMMETRIC_DIFFERENCE",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "ports": [
+          {
+            "key": "in:*",
+            "path": [
+              "inputs",
+              "*"
+            ],
+            "accepts": [
+              "SEGMENT",
+              "PATTERN",
+              "SEGMENT_MIRROR",
+              "SEGMENT_ROTATE",
+              "SEGMENT_UNION",
+              "SEGMENT_INTERSECTION",
+              "SEGMENT_DIFFERENCE",
+              "SEGMENT_SYMMETRIC_DIFFERENCE"
+            ],
+            "min": 2,
+            "max": 16
+          }
+        ],
+        "fields": {
+          "materialMode": {
+            "labelKey": "material_mode",
+            "choices": [
+              "SEPARATED",
+              "GROUPED"
+            ]
+          },
+          "role": {
+            "labelKey": "role"
+          }
         }
       }
     }

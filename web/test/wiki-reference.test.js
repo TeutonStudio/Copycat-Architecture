@@ -19,14 +19,14 @@ for (const [category, file] of [['copycat', 'Knoten-Formgraph.md'], ['building',
   })
 }
 
-test('semantic inspector references and planned operators have explicit documentation', () => {
+test('semantic inspector references and segment operators have explicit documentation', () => {
   const text = read('Knoten-Eigenschaften.md')
   for (const port of contract.building.semanticPorts) assert.ok(text.includes('`' + port.key + '`'), port.key)
   const planned = read('Geplante-Segmentoperatoren.md')
-  assert.match(planned, /geplant, noch nicht implementiert/)
+  assert.match(planned, /Status: implementiert/)
   for (const id of ['SEGMENT_UNION', 'SEGMENT_INTERSECTION', 'SEGMENT_DIFFERENCE', 'SEGMENT_SYMMETRIC_DIFFERENCE']) {
     assert.ok(planned.includes(`## ${id}`))
-    assert.equal(contract.building.nodes[id], undefined)
+    assert.ok(contract.building.nodes[id])
   }
 })
 

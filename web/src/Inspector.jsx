@@ -6,13 +6,17 @@ import { MaterialField } from './Workspace.jsx'
 export const names = {
   INPUT: 'Grundform', UNION: 'Vereinigung', INTERSECTION: 'Schnitt', DIFFERENCE: 'Differenz',
   SYMMETRIC_DIFFERENCE: 'Symmetrische Differenz', ROTATE: 'Copycat rotieren', ROTATION: 'Rotation', OUTPUT: 'Ergebnis',
+  SAVED: 'Gespeicherter Copycat', MIRROR: 'Copycat spiegeln',
+  COPYCAT_MIRROR: 'Copycat spiegeln', COPYCAT_ROTATE: 'Copycat rotieren',
+  SEGMENT_UNION: 'Segment-Vereinigung', SEGMENT_INTERSECTION: 'Segment-Schnitt', SEGMENT_DIFFERENCE: 'Segment-Differenz', SEGMENT_SYMMETRIC_DIFFERENCE: 'Symmetrische Segment-Differenz',
   COPYCAT: 'Copycat-Referenz', SEGMENT: 'Wandsegment', PATTERN: 'Wandmuster', FLOOR: 'Boden', CEILING: 'Decke',
   ROOM: 'Raum', STOREY: 'Geschoss', ROOF: 'Dach', BUILDING: 'Gebäude'
 }
 
 export function portName(port, node) {
   const [kind, key] = port.id.split(':')
-  if (kind === 'in') return `${node.kind === 'PATTERN' ? 'Segment' : node.kind === 'STOREY' ? 'Raum' : 'Copycat'} ${Number(key) + 1}`
+  if (node.kind === 'SEGMENT_DIFFERENCE' && kind === 'in') return key === '0' ? 'A · Grundsegment' : 'B · Abzug'
+  if (kind === 'in') return `${(node.kind === 'PATTERN' || node.kind.startsWith('SEGMENT_')) ? 'Segment' : node.kind === 'STOREY' ? 'Raum' : 'Copycat'} ${Number(key) + 1}`
   if (kind === 'wall') return `Wand ${port.id.slice(5)}${port.length ? ` · ${port.length} B` : ''}`
   if (kind === 'level') return Number(key) === 0 ? 'Erdgeschoss' : `Geschoss ${Number(key) > 0 ? '+' : ''}${key}`
   if (kind === 'floor') return 'Boden'
@@ -66,11 +70,12 @@ function NumberGrid({ entries, keys, ranges, update, prefix, scale = 1, unit = '
   </div>)
 }
 
-export function NodeFields({ mode, node, document, edit, library }) {
+export function NodeFields({ mode, node, document, edit, library, savedForms = [], onLoadCopycat }) {
   const field = (key, label, options, type, min, max) =>
     <Field key={key} label={label} value={node[key]} onChange={value => edit({ [key]: value })} {...{ options, type, min, max }} />
   const number = (key, label, min, max) => field(key, label, undefined, 'number', min, max)
   const groups = formGroups(document)
+  const savedPicker = <Field label="Gespeicherten Copycat laden" value="" options={[["", "Copycat auswählen …"], ...savedForms.map(entry => [entry.id, entry.name])]} onChange={onLoadCopycat} />
   if (mode === 'form') {
     const part = node.part
     const partField = (key, label, options, type, min, max) =>
@@ -79,6 +84,8 @@ export function NodeFields({ mode, node, document, edit, library }) {
     const adapter = model.shapes.find(shape => shape.id === part.source)
     const groupFields = ['UNION', 'SYMMETRIC_DIFFERENCE'].includes(node.kind)
     return <>
+      {node.kind === 'SAVED' && <>{savedPicker}<p className="hint">{node.savedCopycat?.name || 'Copycat auswählen'}</p></>}
+      {node.kind === 'MIRROR' && <Field label="Spiegelebene" value={node.mirror?.plane || 'X'} options={['X', 'Y', 'Z']} onChange={plane => edit({ mirror: { plane } })} />}
       {node.kind === 'INPUT' && <>
         <Field label="Copycat-Grundform" value={part.source} options={model.shapes.map(shape => [shape.id, shapeNames[shape.name] ?? shape.name])}
           onChange={source => edit({ part: { ...part, source, size: 1, tilt: 0, discCut: 0, offset: { x: 0, y: 0, z: 0 } } })} />
@@ -117,6 +124,10 @@ export function NodeFields({ mode, node, document, edit, library }) {
     <datalist id="library-forms">{references('forms').map(id => <option key={id} value={id} />)}</datalist>
     <datalist id="library-modules">{references('modules').map(id => <option key={id} value={id} />)}</datalist>
     {field('name', 'Knotenname')}
+    {node.kind === 'COPYCAT' && savedPicker}
+    {node.kind === 'COPYCAT_MIRROR' && <Field label="Spiegelebene" value={node.mirror?.plane || 'X'} options={['X', 'Y', 'Z']} onChange={plane => edit({ mirror: { plane } })} />}
+    {node.kind === 'COPYCAT_ROTATE' && <>{field('rotationAxis', 'Drehachse', ['X', 'Y', 'Z'])}{number('quarterTurns', 'Vierteldrehungen', 0, 3)}</>}
+    {node.kind === 'SEGMENT_DIFFERENCE' && <button onClick={() => edit({ inputs: [...node.inputs].reverse() })}>A / B tauschen</button>}
     {field('role', 'Materialrolle')}
     {field('materialMode', 'Materialmodus', materialModes)}
     {node.kind === 'STOREY' && field('storeyMode', 'Zusammensetzung', [['rooms', 'Aus Räumen'], ['walls', 'Aus Wänden']])}

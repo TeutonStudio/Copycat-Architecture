@@ -17,6 +17,8 @@ npm run dev
 `npm run build` erzeugt die statische Website in `web/dist`. Der Kotlin-Compiler
 und dessen Laufzeit werden in der gepinnten Version aus Maven Central geholt.
 Die generierten Dateien gehören zum Build.
+Der Build legt die Projektlizenz, die npm-Lizenzen sowie Lizenz und Herkunft
+der eingebundenen Kotlin-Standardbibliothek im Ausgabeverzeichnis ab.
 
 Der Workflow prüft außerdem mit `./gradlew test` die Minecraft-Seite der
 gemeinsamen Domänenlogik. Graphstudio 0.1 entspricht dem öffentlichen

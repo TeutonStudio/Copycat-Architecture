@@ -1,12 +1,8 @@
 package de.teutonstudio.copycatarchitect.domain
 
-import java.util.BitSet
-import java.util.Base64
-import java.util.concurrent.ConcurrentHashMap
-
 data class P(val x: Int = 0, val y: Int = 0, val z: Int = 0) {
     operator fun plus(p: P) = P(x+p.x,y+p.y,z+p.z)
-    fun turn(q: Int): P = when (Math.floorMod(q,4)) { 1 -> P(-z,y,x); 2 -> P(-x,y,-z); 3 -> P(z,y,-x); else -> this }
+    fun turn(q: Int): P = when ((q).mod(4)) { 1 -> P(-z,y,x); 2 -> P(-x,y,-z); 3 -> P(z,y,-x); else -> this }
 }
 data class Part(val source: String = "copycats:copycat_slice", val turn: Int = 0, val top: Boolean = false,
                 val size: Int = 1, val offset: P = P(), val tilt: Int = 0, val group: String = "body", val cutMask: String = "", val recipeSource:String="",
@@ -21,7 +17,7 @@ data class Part(val source: String = "copycats:copycat_slice", val turn: Int = 0
         return p
     }
     fun sourceProperties():Map<String,String> {
-        val horizontalTurn=Math.floorMod(turn+spin,4)
+        val horizontalTurn=(turn+spin).mod(4)
         val horizontal=listOf("south","west","north","east")[horizontalTurn]
         val normal=oriented(P(0,1,0),true)
         val facing=directionName(normal)
@@ -102,13 +98,13 @@ object Adapters {
     ).associateBy { it.source }
     fun get(id:String) = all[id] ?: error("Unsupported base shape: $id")
 }
-class Solid private constructor(private val bits: BitSet) {
-    constructor():this(BitSet(4096))
+class Solid private constructor(private val bits: GraphBits) {
+    constructor():this(GraphBits(4096))
     fun has(x:Int,y:Int,z:Int) = x in 0..15 && y in 0..15 && z in 0..15 && bits[x+16*z+256*y]
     fun count() = bits.cardinality()
-    fun union(other:Solid) = Solid((bits.clone() as BitSet).apply { or(other.bits) })
-    fun intersect(other:Solid) = Solid((bits.clone() as BitSet).apply { and(other.bits) })
-    fun mask():String = Base64.getEncoder().encodeToString(bits.toByteArray())
+    fun union(other:Solid) = Solid((bits.clone() as GraphBits).apply { or(other.bits) })
+    fun intersect(other:Solid) = Solid((bits.clone() as GraphBits).apply { and(other.bits) })
+    fun mask():String = encodeMask(bits.toByteArray())
     fun rotate(q:Int):Solid = rotate(RotationAxis.Y,q)
     fun rotate(axis:RotationAxis,q:Int):Solid {
         require(axis!=RotationAxis.NORMAL) { "A solid rotation needs a world axis" }
@@ -116,11 +112,11 @@ class Solid private constructor(private val bits: BitSet) {
         voxels { x,y,z -> val p=rotatePoint(P(x,y,z),axis,q);result.bits.set(p.x+16*p.z+256*p.y) }
         return result
     }
-    fun minus(other:Solid) = Solid((bits.clone() as BitSet).apply { andNot(other.bits) })
-    fun contains(other:Solid) = (other.bits.clone() as BitSet).apply { andNot(bits) }.isEmpty
+    fun minus(other:Solid) = Solid((bits.clone() as GraphBits).apply { andNot(other.bits) })
+    fun contains(other:Solid) = (other.bits.clone() as GraphBits).apply { andNot(bits) }.isEmpty
     fun key() = bits.toLongArray().joinToString(",")
     fun boxes():List<Box> { // Greedy disjoint cuboids; exact render/collision source.
-        val todo = bits.clone() as BitSet
+        val todo = bits.clone() as GraphBits
         val out = mutableListOf<Box>()
         fun has(x:Int,y:Int,z:Int) = x<16 && y<16 && z<16 && todo[x+16*z+256*y]
         while (!todo.isEmpty) {
@@ -137,9 +133,9 @@ class Solid private constructor(private val bits: BitSet) {
     companion object {
         fun fromMask(mask:String):Solid {
             require(mask.length in 1..684) { "Invalid cut mask" }
-            val bytes=Base64.getDecoder().decode(mask)
+            val bytes=decodeMask(mask)
             require(bytes.size<=512) { "Cut mask exceeds block" }
-            return Solid(BitSet.valueOf(bytes))
+            return Solid(GraphBits.valueOf(bytes))
         }
         fun part(p:Part):Solid {
             val a=Adapters.get(p.source)
@@ -166,9 +162,9 @@ class Solid private constructor(private val bits: BitSet) {
     }
 }
 object Geometry {
-    private val cache=ConcurrentHashMap<List<Part>,Solid>()
+    private val cache=GraphCache<List<Part>,Solid>()
     private data class ResolvedKey(val parts:List<Part>,val groups:List<MaterialGroup>)
-    private val resolvedCache=ConcurrentHashMap<ResolvedKey,ResolvedGeometry>()
+    private val resolvedCache=GraphCache<ResolvedKey,ResolvedGeometry>()
     fun validateGroups(groups:List<MaterialGroup>,parts:List<Part>) {
         require(groups.size in 1..8 && groups.map { it.id }.distinct().size==groups.size) { "A form needs 1–8 uniquely named material groups" }
         require(groups.map { it.priority }.distinct().size==groups.size) { "Material groups need distinct foreground priorities" }
@@ -235,7 +231,7 @@ object Geometry {
             if(visible.count()==0) null else if(visible.contains(source)) p else p.copy(cutMask=visible.mask())
         }
     }
-    fun rotate(parts:List<Part>,q:Int) = parts.map { p -> p.copy(turn=Math.floorMod(p.turn+q,4),offset=p.offset.turn(q),cutMask=if(p.cutMask.isEmpty()) "" else Solid.fromMask(p.cutMask).rotate(q).mask()) }
+    fun rotate(parts:List<Part>,q:Int) = parts.map { p -> p.copy(turn=(p.turn+q).mod(4),offset=p.offset.turn(q),cutMask=if(p.cutMask.isEmpty()) "" else Solid.fromMask(p.cutMask).rotate(q).mask()) }
 }
 class ResolvedGeometry(val solid:Solid,val owned:Map<String,Solid>) {
     private val owners=Array<String?>(4096) { null }.apply { owned.forEach { (id,s) -> s.voxels { x,y,z -> this[x+16*z+256*y]=id } } }
@@ -245,7 +241,7 @@ class ResolvedGeometry(val solid:Solid,val owned:Map<String,Solid>) {
         owned.forEach { (id,s) -> val material=surfaces[id] ?: base;result[material]=(result[material] ?: Solid()).union(s) }
         return result
     }
-    fun visualKey(base:String,surfaces:Map<String,String>)=materialSolids(base,surfaces).toSortedMap().entries.joinToString(";") { it.key+":"+it.value.key() }
+    fun visualKey(base:String,surfaces:Map<String,String>)=materialSolids(base,surfaces).entries.sortedBy { it.key }.joinToString(";") { it.key+":"+it.value.key() }
 }
 // Integer extrusion units: 1 zinc ingot = 256; never round fractional ingots away.
 // Costs mirror the pinned source cutting output, not visible volume.

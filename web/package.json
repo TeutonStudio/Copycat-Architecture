@@ -1,0 +1,21 @@
+{
+  "name": "copycat-architect-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "engine": "bash build-engine.sh",
+    "dev": "npm run engine && vite",
+    "test": "npm run engine && node --test",
+    "build": "npm run engine && vite build && cp ../LICENSE dist/LICENSE"
+  },
+  "dependencies": {
+    "@xyflow/react": "12.10.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "vite": "7.3.7"
+  }
+}

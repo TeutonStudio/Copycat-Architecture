@@ -197,6 +197,15 @@ function Studio({ mode, active }) {
   const isFormSourceLimit = kind === 'INPUT' && entries.filter(({ node }) => node.kind === 'INPUT').length >= model.formSources
   const previewSelected = current && ['ROOM', 'STOREY', 'BUILDING'].includes(current.node.kind) ? current.node.id : ''
   const exportFile = () => transact(() => downloadJson(writeGraph(mode, document), mode))
+  const copyJson = async () => {
+    try {
+      const json = JSON.stringify(writeGraph(mode, document))
+      await navigator.clipboard.writeText(json)
+      setMessage({ text: 'Minecraft-JSON kopiert. Im passenden Editor im Spiel importieren.' })
+    } catch (error) {
+      setMessage({ error: true, text: `JSON konnte nicht kopiert werden: ${error.message || String(error)}. Nutze alternativ JSON exportieren.` })
+    }
+  }
   const keydown = event => {
     if (event.target.closest('input, textarea, select, [contenteditable=true]')) return
     if ((event.ctrlKey || event.metaKey) && ['z', 'y'].includes(event.key.toLowerCase())) {
@@ -224,6 +233,7 @@ function Studio({ mode, active }) {
         <input hidden ref={libraryInput} type="file" accept=".json,application/json" onChange={event => importFile(event, true)} />
       </>}
       <button type="button" className="primary" onClick={exportFile}>JSON exportieren</button>
+      <button type="button" onClick={copyJson}>Minecraft-JSON kopieren</button>
       <span className="toolbar-spacer" />
       <button type="button" aria-label="Rückgängig" title="Rückgängig" disabled={!history.past.length} onClick={history.undo}>↶</button>
       <button type="button" aria-label="Wiederholen" title="Wiederholen" disabled={!history.future.length} onClick={history.redo}>↷</button>

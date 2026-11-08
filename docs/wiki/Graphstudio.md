@@ -10,7 +10,7 @@ Die Links öffnen den interaktiven Editor als eigene Webseite. Formen und Gebäu
 2. Wähle einen Knotentyp und füge ihn ein. Ziehe die Anschlüsse aufeinander oder wähle die Quelle im Inspektor.
 3. Bei eigenen Formen und Wandmodulen lade die zugehörige JSON-Bibliothek über **Bibliothek öffnen**. Der Editor löst die gespeicherten Referenzen gegen diese Bibliothek auf.
 4. Prüfe das Ergebnis in der drehbaren 3D-Vorschau. Sie zeigt Geometrie, Materialfarben und den berechneten Bedarf.
-5. Über **JSON exportieren** erhältst du ein Dokument für den Formeditor oder den Bauplantisch. Für einen Gebäudeentwurf müssen alle benötigten Formen und Module im Spiel verfügbar sein.
+5. Über **JSON exportieren** erhältst du ein Dokument für den Formeditor oder den Bauplantisch. Mit **Minecraft-JSON kopieren** kannst du den vollständigen JSON-Text direkt in den Zwischenablageimport im Spiel übernehmen. Für einen Gebäudeentwurf müssen alle benötigten Formen und Module im Spiel verfügbar sein.
 
 Die 3D-Vorschau benötigt WebGL 2. Ihre Materialfarben stehen stellvertretend für Minecraft-Texturen und modabhängige Blockmodelle.
 

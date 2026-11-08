@@ -16,16 +16,87 @@ function color(id) {
 }
 
 function dispose(group) {
+  const geometries = new Set()
+  const materials = new Set()
   group.traverse(item => {
-    if (item.isMesh) {
-      item.geometry.dispose()
-      item.material.dispose()
-      item.dispose?.()
-    }
+    if (item.geometry) geometries.add(item.geometry)
+    for (const material of Array.isArray(item.material) ? item.material : item.material ? [item.material] : []) materials.add(material)
+    if (item.isInstancedMesh) item.dispose()
   })
+  for (const geometry of geometries) geometry.dispose()
+  for (const material of materials) { material.map?.dispose(); material.dispose() }
 }
 
-function Viewer({ plan }) {
+function referenceFrame(group, mode, geometryBounds) {
+  const bounds = mode === 'form' ? new THREE.Box3(new THREE.Vector3(), new THREE.Vector3(1, 1, 1))
+    : geometryBounds.isEmpty() ? new THREE.Box3(new THREE.Vector3(), new THREE.Vector3(1, 1, 1))
+      : new THREE.Box3(geometryBounds.min.clone().floor(), geometryBounds.max.clone().ceil())
+  const size = bounds.getSize(new THREE.Vector3()).max(new THREE.Vector3(1, 1, 1))
+  bounds.max.copy(bounds.min).add(size)
+  const geometry = new THREE.CylinderGeometry(1, 1, 1, 8)
+  const material = (color, opacity) => new THREE.MeshBasicMaterial({ color, opacity, transparent: true, depthTest: false, depthWrite: false, toneMapped: false })
+  const front = material('#f5f6f2', 0.95)
+  const back = material('#87919d', 0.42)
+  const markFront = material('#ff8b2d', 0.98)
+  const markBack = material('#ff8b2d', 0.38)
+  const cylinder = (position, direction, length, surface) => {
+    const mesh = new THREE.Mesh(geometry, surface)
+    mesh.position.copy(position)
+    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction)
+    mesh.scale.set(0.004, length, 0.004)
+    mesh.renderOrder = 3
+    group.add(mesh)
+    return mesh
+  }
+  const edges = []
+  for (let axis = 0; axis < 3; axis++) {
+    const others = [0, 1, 2].filter(value => value !== axis)
+    const direction = new THREE.Vector3().setComponent(axis, 1)
+    for (const first of [0, 1]) for (const second of [0, 1]) {
+      const start = bounds.min.clone()
+      start.setComponent(others[0], first ? bounds.max.getComponent(others[0]) : bounds.min.getComponent(others[0]))
+      start.setComponent(others[1], second ? bounds.max.getComponent(others[1]) : bounds.min.getComponent(others[1]))
+      const center = start.clone().addScaledVector(direction, size.getComponent(axis) / 2)
+      const mesh = cylinder(center, direction, size.getComponent(axis), front)
+      const marks = [0.25, 0.5, 0.75].map(fraction => {
+        const position = start.clone().addScaledVector(direction, size.getComponent(axis) * fraction)
+        return { mesh: cylinder(position, new THREE.Vector3(0, 1, 0), 0.05, markFront), major: fraction === 0.5 }
+      })
+      edges.push({ mesh, marks, direction, faces: [{ axis: others[0], sign: first ? 1 : -1 }, { axis: others[1], sign: second ? 1 : -1 }] })
+    }
+  }
+  group.userData.reference = { edges, front, back, markFront, markBack }
+  return bounds
+}
+
+function updateReferenceFrame(group, camera, height) {
+  const reference = group.userData.reference
+  if (!reference) return
+  const unitsPerPixel = point => 2 * camera.position.distanceTo(point) * Math.tan(camera.fov * Math.PI / 360) / Math.max(height, 1)
+  const up = new THREE.Vector3(0, 1, 0)
+  for (const edge of reference.edges) {
+    const visible = edge.faces.some(face => face.sign * (camera.position.getComponent(face.axis) - edge.mesh.position.getComponent(face.axis)) > 0)
+    edge.mesh.material = visible ? reference.front : reference.back
+    edge.mesh.renderOrder = visible ? 3 : 2
+    const radius = unitsPerPixel(edge.mesh.position) * (visible ? 0.9 : 0.55)
+    edge.mesh.scale.x = radius
+    edge.mesh.scale.z = radius
+    for (const mark of edge.marks) {
+      const direction = edge.direction.clone().cross(camera.position.clone().sub(mark.mesh.position))
+      if (direction.lengthSq() < 0.00001) direction.copy(edge.direction).cross(camera.up)
+      if (direction.lengthSq() < 0.00001) direction.set(1, 0, 0)
+      direction.normalize()
+      const scale = unitsPerPixel(mark.mesh.position)
+      const width = scale * (mark.major ? 1.4 : 0.65)
+      mark.mesh.scale.set(width, scale * (mark.major ? 17 : 8), width)
+      mark.mesh.quaternion.setFromUnitVectors(up, direction)
+      mark.mesh.material = visible ? reference.markFront : reference.markBack
+      mark.mesh.renderOrder = visible ? 5 : 4
+    }
+  }
+}
+
+function Viewer({ plan, mode }) {
   const container = useRef(null)
   const viewer = useRef(null)
   const [error, setError] = useState('')
@@ -46,7 +117,10 @@ function Viewer({ plan }) {
     const camera = new THREE.PerspectiveCamera(42, 1, 0.01, 4096)
     camera.position.set(4, 3, 5)
     const controls = new OrbitControls(camera, renderer.domElement)
-    const render = () => renderer.render(scene, camera)
+    const render = () => {
+      updateReferenceFrame(guides, camera, element.clientHeight)
+      renderer.render(scene, camera)
+    }
     controls.addEventListener('change', render)
     scene.add(new THREE.HemisphereLight('#e8f5ff', '#525764', 2.35))
     const sun = new THREE.DirectionalLight('#fff2d8', 2.1)
@@ -54,6 +128,8 @@ function Viewer({ plan }) {
     scene.add(sun)
     const model = new THREE.Group()
     scene.add(model)
+    const guides = new THREE.Group()
+    scene.add(guides)
     const resize = new ResizeObserver(() => {
       const { clientWidth: width, clientHeight: height } = element
       if (!width || !height) return
@@ -63,11 +139,12 @@ function Viewer({ plan }) {
       render()
     })
     resize.observe(element)
-    viewer.current = { model, camera, controls, render, bounds: null }
+    viewer.current = { model, guides, camera, controls, render, bounds: null }
     return () => {
       resize.disconnect()
       controls.dispose()
       dispose(model)
+      dispose(guides)
       renderer.dispose()
       renderer.domElement.remove()
       viewer.current = null
@@ -81,7 +158,7 @@ function Viewer({ plan }) {
     const radius = Math.max(view.bounds.getSize(new THREE.Vector3()).length() / 2, 0.75)
     const angle = Math.min(Math.tan(view.camera.fov * Math.PI / 360), Math.tan(view.camera.fov * Math.PI / 360) * view.camera.aspect)
     view.controls.target.copy(center)
-    view.camera.position.copy(center).addScaledVector(new THREE.Vector3(1, 0.72, 1.1).normalize(), radius / angle * 1.14)
+    view.camera.position.copy(center).addScaledVector(new THREE.Vector3(1, 0.72, 1.1).normalize(), radius / angle * 1.08)
     view.controls.update()
     view.render()
   }
@@ -122,10 +199,12 @@ function Viewer({ plan }) {
       view.model.add(draw)
     }
     const first = !view.bounds || view.bounds.isEmpty()
-    view.bounds = bounds
+    dispose(view.guides)
+    view.guides.clear()
+    view.bounds = referenceFrame(view.guides, mode, bounds)
     if (first) fit()
     view.render()
-  }, [plan])
+  }, [plan, mode])
 
   return <div className="viewer" ref={container}>
     <button type="button" className="fit3d" onClick={fit}>3D einpassen</button>
@@ -133,14 +212,17 @@ function Viewer({ plan }) {
   </div>
 }
 
-export default function Preview({ mode, document, library, selected }) {
+export default function Preview({ mode, document, library, selected, previewMode, onMode, collapsed, onToggle }) {
   const worker = useRef(null)
   const sequence = useRef(0)
   const running = useRef(false)
   const queued = useRef(null)
   const [result, setResult] = useState({})
+  const target = previewMode === 'selected' ? selected : ''
+  const missingSelection = previewMode === 'selected' && !selected
   const latest = useRef(document)
   latest.current = document
+  useEffect(() => { setResult({}) }, [mode, target, previewMode])
   const content = useMemo(() => JSON.stringify({
     ...document, graph: { ...document.graph, nodes: document.graph.nodes.map(({ x, y, ...node }) => node) }
   }), [document])
@@ -170,26 +252,42 @@ export default function Preview({ mode, document, library, selected }) {
   useEffect(() => {
     const id = ++sequence.current
     queued.current = null
+    if (missingSelection) {
+      setResult({ error: 'Wähle einen Knoten im Graphen aus.', pending: false })
+      return
+    }
     const timer = setTimeout(() => {
       setResult(previous => ({ ...previous, pending: true, error: '' }))
-      queued.current = { id, mode, document: latest.current, library, selected }
+      queued.current = { id, mode, document: latest.current, library, selected: target }
       send()
     }, 130)
     return () => clearTimeout(timer)
-  }, [mode, content, library, selected])
+  }, [mode, content, library, target, missingSelection])
+
 
   const noun = mode === 'building' ? 'Platzierungen' : 'Rasterzellen'
   return <section className="preview-panel" aria-label="Gebäude- und Formvorschau">
-    <div className="panel-heading"><span>3D-Vorschau</span><small>LIVE · KOTLIN</small></div>
-    <Viewer plan={result.plan} />
+    <div className="panel-heading"><span>3D-Vorschau</span><div className="button-row">
+      <select aria-label="Vorschauziel" value={previewMode} onChange={event => onMode(event.target.value)}>
+        <option value="graph">Graph</option><option value="selected">Selektiert</option>
+      </select>
+      <button type="button" aria-expanded={!collapsed} aria-controls={`${mode}-preview`} aria-label={collapsed ? '3D-Vorschau ausklappen' : '3D-Vorschau einklappen'} onClick={onToggle}>{collapsed ? '▸' : '▾'}</button>
+    </div></div>
+    <div id={`${mode}-preview`} className="preview-body" hidden={collapsed}>
+    <Viewer key={`${mode}:${previewMode}:${target}`} plan={result.plan} mode={mode} />
     <div className="preview-meta" role="status">
       {result.error ? <><strong>{result.plan ? 'Letzter gültiger Stand' : 'Vorschau wartet auf einen gültigen Graphen'}</strong><br />{result.error}</>
         : result.pending ? 'Vorschau wird berechnet …'
           : result.plan ? <>{result.plan.count.toLocaleString('de-DE')} {noun} · {result.plan.raw.toLocaleString('de-DE')} Zinkeinheiten</>
             : 'Vorschau wird geladen …'}
     </div>
+    {result.plan?.value && <p className="preview-meta">{result.plan.value}</p>}
+    {result.plan?.warnings?.map((warning, index) => <p className="preview-meta" key={index}>{warning}</p>)}
+    <p className="axis-legend"><span>X</span> Ost/West · <span>Y</span> Höhe · <span>Z</span> Süd/Nord<br />
+      {mode === 'form' ? 'Rahmen: 16 hB · lange Marke: 8 hB · kurze Marken: 4 / 12 hB' : 'Gebäudehülle · Marken bei ¼ / ½ / ¾ der Kantenlänge'}</p>
     {result.plan?.materials && <details className="materials"><summary>Materialbedarf</summary>
       {Object.entries(result.plan.materials).map(([id, count]) => <div key={id}><code>{id}</code><span>{count}</span></div>)}
     </details>}
+    </div>
   </section>
 }

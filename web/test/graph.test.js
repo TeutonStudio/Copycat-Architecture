@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
-import { newNode, previewGraph, starterBuilding } from '../src/generated/engine.mjs'
+import { newNode, previewGraph, starterBuilding, mountSource, sourceMounting } from '../src/generated/engine.mjs'
 import { applyWires, connections, inspect, readGraph, replaceNodes, writeGraph } from '../src/model.js'
 
 const fixture = name => JSON.parse(readFileSync(new URL(`../../examples/${name}.json`, import.meta.url)))
@@ -68,4 +68,99 @@ test('unsupported graph schemas fail instead of silently changing the file', () 
   const document = fixture('nodegraph-form')
   const altered = { ...replaceNodes(document, document.graph.nodes), graph: { ...document.graph, schema: 55 } }
   assert.throws(() => readGraph(altered, 'form'), /schema/)
+})
+
+
+test('selected Copycat branch is independent of the final output connection', () => {
+  const original = fixture('nodegraph-form')
+  const source = original.graph.nodes.find(node => node.kind === 'INPUT')
+  const graph = replaceNodes(original, original.graph.nodes.map(node => node.kind === 'OUTPUT' ? { ...node, inputs: [''] } : node))
+  const selected = previewGraph(false, graph, library, source.id)
+  assert.ok(selected.count > 0)
+  assert.throws(() => previewGraph(false, graph, library, ''), /Connect every input/)
+})
+
+test('all building node kinds show their own result, including empty wall and contextual plates', () => {
+  const kinds = new Set()
+  for (const name of buildings) {
+    const graph = fixture(name)
+    for (const node of graph.graph.nodes) {
+      const result = previewGraph(true, graph, library, node.id)
+      kinds.add(node.kind)
+      assert.ok(Array.isArray(result.meshes), `${name}/${node.id}`)
+      if (node.id === 'empty_wall') assert.equal(result.count, 0)
+      if (node.kind === 'COPYCAT') assert.equal(result.count, 1)
+    }
+  }
+  assert.equal(kinds.size, 9)
+})
+
+test('selected missing Copycat reference reports its error instead of showing the final building', () => {
+  const original = fixture('building-graph-assembly')
+  const node = { ...newNode(true, 'COPYCAT', 'missing', 0, 0), form: 'does-not-exist@1' }
+  const graph = replaceNodes(original, [...original.graph.nodes, node])
+  assert.throws(() => previewGraph(true, graph, library, node.id), /Missing form/)
+})
+
+test('a rotation node previews its typed value rather than unrelated geometry', () => {
+  const graph = fixture('nodegraph-rotation-xor')
+  const node = graph.graph.nodes.find(node => node.kind === 'ROTATION')
+  const result = previewGraph(false, graph, library, node.id)
+  assert.equal(result.count, 0)
+  assert.equal(result.meshes.length, 0)
+  assert.match(result.value, /90°/)
+})
+
+test('six world-axis mountings preserve source shape volume, offset and JSON compatibility', () => {
+  for (const source of ['copycats:copycat_slab', 'create:copycat_panel', 'copycats:copycat_beam']) {
+    const part = { ...newNode(false, 'INPUT', 'source', 0, 0).part, source, offset: { x: 1, y: 0, z: -1 } }
+    for (const normal of ['up', 'down', 'east', 'west', 'south', 'north']) {
+      const mounted = mountSource(part, normal)
+      assert.equal(sourceMounting(mounted), normal)
+      assert.deepEqual(mounted.offset, part.offset)
+      assert.equal(mounted.source, source)
+      assert.equal(mounted.cutMask, '')
+      const document = { schema: 3, name: 'Mounting', graph: { schema: 2, nodes: [
+        { ...newNode(false, 'INPUT', 'source', 0, 0), part: { ...mounted, offset: { x: 0, y: 0, z: 0 } } },
+        { ...newNode(false, 'OUTPUT', 'out', 0, 0), inputs: ['source'] }
+      ] } }
+      assert.ok(writeGraph('form', document).parts.length > 0)
+      const expected = { 'copycats:copycat_slab': 2048, 'create:copycat_panel': 768, 'copycats:copycat_beam': 1024 }[source]
+      assert.equal(previewGraph(false, document, library, 'source').count, expected)
+    }
+  }
+})
+
+
+test('mounting rejects unsupported native orientations rather than changing the source geometry', () => {
+  const part = { ...newNode(false, 'INPUT', 'source', 0, 0).part, source: 'copycats:copycat_stairs' }
+  assert.throws(() => mountSource(part, 'east'), /no supported native orientation/)
+  assert.equal(sourceMounting(mountSource(part, 'down')), 'down')
+})
+
+
+test('a selected plate needs only its own branch and its contextual footprint', () => {
+  const original = fixture('building-graph')
+  const room = original.graph.nodes.find(node => node.kind === 'ROOM')
+  const graph = replaceNodes(original, original.graph.nodes.map(node => node.id === room.id ? { ...node, ceiling: '' } : node))
+  assert.ok(previewGraph(true, graph, library, room.floor).count > 0)
+  assert.throws(() => previewGraph(true, graph, library, ''), /missing input/)
+})
+
+
+test('selected preview and file import retain document metadata validation', () => {
+  for (const [mode, name] of [['form', 'nodegraph-form'], ['building', 'building-graph']]) {
+    const document = { ...fixture(name), schema: 999 }
+    assert.throws(() => readGraph(document, mode), /Invalid .* schema/)
+    assert.throws(() => previewGraph(mode === 'building', document, library, document.graph.nodes[0].id), /Invalid .* schema/)
+  }
+})
+
+test('empty intermediate geometry is inspectable but the empty final form cannot be exported', () => {
+  const original = fixture('nodegraph-form')
+  const difference = original.graph.nodes.find(node => node.kind === 'DIFFERENCE')
+  const graph = replaceNodes(original, original.graph.nodes.map(node => node.id === difference.id ? { ...node, inputs: [node.inputs[0], node.inputs[0]] } : node))
+  assert.equal(previewGraph(false, graph, library, difference.id).count, 0)
+  assert.throws(() => previewGraph(false, graph, library, ''), /Result is empty/)
+  assert.throws(() => writeGraph('form', graph), /Result is empty/)
 })

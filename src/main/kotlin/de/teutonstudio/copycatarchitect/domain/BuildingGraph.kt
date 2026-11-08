@@ -212,17 +212,61 @@ object BuildingGraphCompiler {
             val f=Geometry.validate(forms[form] ?: error("Missing form $form"));val material=palette[forced.ifEmpty { role }] ?: error("Missing material role $role")
             return Placement(pos,Geometry.rotate(f.parts,turn),material,component=type,groups=f.groups,surfaces=f.groups.associate { it.id to if(forced.isNotEmpty()) material else palette[if(it.role=="surface") role else it.role].orEmpty().ifEmpty { error("Missing material role ${it.role}") } })
         }
+        /** Standalone sources and context-dependent plates use the same placements as the building. */
+        fun preview(id:String):Plan {
+            val n=node(id)
+            val r=Resolver()
+            when(n.kind) {
+                BuildingKind.BUILDING -> return building().plan
+                BuildingKind.ROOM -> return room(id).plan
+                BuildingKind.STOREY -> return storey(id).plan
+                BuildingKind.COPYCAT -> r.add(placement(P(),n.form,n.role,"copycat"))
+                BuildingKind.SEGMENT,BuildingKind.PATTERN -> for(entry in segment(id).cells) {
+                    val c=entry.cell
+                    if(!c.empty && c.block!="minecraft:air") r.add(if(c.block.isNotEmpty()) Placement(c.pos,block=c.block,material="",component="wall")
+                        else placement(c.pos,c.form,c.role,"wall",c.turn,entry.overrideRole),true)
+                }
+                BuildingKind.FLOOR,BuildingKind.CEILING -> {
+                    val floor=n.kind==BuildingKind.FLOOR
+                    val context=graph.nodes.firstOrNull { (it.kind==BuildingKind.ROOM || it.kind==BuildingKind.STOREY && it.storeyMode=="walls") && (if(floor) it.floor==id else it.ceiling==id) }
+                        ?: error("Connect this plate to a room or wall-based storey to provide its footprint")
+                    val plan=plate(n,floor,context.height,RoomGeometry.cells(context.rectangles),RoomGeometry.shell(context.rectangles))
+                    return plan.copy(warnings=listOf("Grundriss: "+context.name.ifEmpty { context.id }))
+                }
+                BuildingKind.ROOF -> {
+                    val root=graph.nodes.single { it.kind==BuildingKind.BUILDING }
+                    val plan=Evaluation(graph.replace(root.copy(roof=id)),palette,forms,modules).building().plan
+                    plan.placements.filter { it.component in setOf("roof","gable") }.forEach { r.add(it,true) }
+                    return r.plan(listOf("Dach im Kontext des obersten Geschosses"))
+                }
+            }
+            return r.plan(emptyList())
+        }
+        private fun plate(layer:BuildingNode,isFloor:Boolean,height:Int,footprint:Set<P>,shell:Set<P>):Plan {
+            val copies=copycats(layer).ifEmpty { listOf(layer) }
+            if(isFloor && layer.finish.isNotEmpty()) for(source in copies) {
+                val support=Geometry.solid(Geometry.validate(forms[source.form] ?: error("Missing floor form ${source.form}")).parts)
+                require((0..15).all { x -> (0..15).all { z -> support.has(x,15,z) } }) { "Carpet finish needs a floor with a complete top face" }
+            }
+            val r=Resolver()
+            val first=if(isFloor) (if(layer.occupied) 1 else 0)-layer.thickness else height-(if(layer.occupied) 1 else 0)
+            for(t in 0 until layer.thickness) {
+                val y=first+t;val area=if(y in 0 until height) footprint else shell
+                for((index,p) in area.sortedWith(compareBy({it.z},{it.x})).withIndex()) {
+                    val target=p+P(0,y,0)
+                    if(isFloor && layer.finish.isNotEmpty() && t==layer.thickness-1) r.add(Placement(target,block=layer.finish,material="",component="floor"))
+                    else {
+                        val source=copies[(t*area.size+index)%copies.size]
+                        r.add(placement(target,source.form,source.role,if(isFloor) "floor" else "ceiling",forced=if(layer.materialMode==MaterialMode.GROUPED) layer.role else ""))
+                    }
+                }
+            }
+            return r.plan(emptyList())
+        }
         fun room(id:String):CompiledRoom=rooms.getOrPut(id) { enclosure(node(id,BuildingKind.ROOM)) }
         private fun enclosure(n:BuildingNode):CompiledRoom {
             val floor=node(n.floor,BuildingKind.FLOOR);val ceiling=node(n.ceiling,BuildingKind.CEILING)
-            val floorCopies=copycats(floor);val ceilingCopies=copycats(ceiling)
             val usable=n.height-(if(floor.occupied) 1 else 0)-(if(ceiling.occupied) 1 else 0);require(usable>0) { "Room has no buildable height after floor/ceiling layers" }
-            if(floor.finish.isNotEmpty()) {
-                for(source in floorCopies.ifEmpty { listOf(floor) }) {
-                    val support=Geometry.solid(Geometry.validate(forms[source.form] ?: error("Missing floor form ${source.form}")).parts)
-                    require((0..15).all { x -> (0..15).all { z -> support.has(x,15,z) } }) { "Carpet finish needs a floor with a complete top face" }
-                }
-            }
             val footprint=RoomGeometry.cells(n.rectangles);val shell=RoomGeometry.shell(n.rectangles);val r=Resolver();val wallPlacements=linkedMapOf<P,Placement>()
             for(edge in RoomGeometry.edges(n.rectangles)) {
                 val source=n.walls[edge.id].orEmpty().ifEmpty { "empty_wall" };val s=segment(source)
@@ -257,22 +301,8 @@ object BuildingGraphCompiler {
             }
             val minimum=(if(floor.occupied) 1 else 0)-floor.thickness
             val ceilingStart=n.height-(if(ceiling.occupied) 1 else 0);val maximum=ceilingStart+ceiling.thickness
-            fun layer(layer:BuildingNode,isFloor:Boolean) {
-                val copies=(if(isFloor) floorCopies else ceilingCopies).ifEmpty { listOf(layer) }
-                val first=if(isFloor) minimum else ceilingStart
-                for(t in 0 until layer.thickness) {
-                    val y=first+t;val area=if(y in 0 until n.height) footprint else shell
-                    for((index,p) in area.sortedWith(compareBy({it.z},{it.x})).withIndex()) {
-                        val target=p+P(0,y,0)
-                        if(isFloor && layer.finish.isNotEmpty() && t==layer.thickness-1) r.add(Placement(target,block=layer.finish,material="",component="floor"))
-                        else {
-                            val source=copies[(t*area.size+index)%copies.size]
-                            r.add(placement(target,source.form,source.role,if(isFloor) "floor" else "ceiling",forced=if(layer.materialMode==MaterialMode.GROUPED) layer.role else ""))
-                        }
-                    }
-                }
-            }
-            layer(floor,true);layer(ceiling,false)
+            plate(floor,true,n.height,footprint,shell).placements.forEach { r.add(it) }
+            plate(ceiling,false,n.height,footprint,shell).placements.forEach { r.add(it) }
             for(p in footprint) for(y in (if(floor.occupied) 1 else 0) until n.height-(if(ceiling.occupied) 1 else 0)) r.clear(p+P(0,y,0))
             return CompiledRoom(override(r.plan(emptyList()),n,palette),footprint,shell,minimum,maximum,(floor.thickness-if(floor.occupied || floor.finish.isNotEmpty()) 1 else 0).coerceAtLeast(0),(ceiling.thickness-if(ceiling.occupied) 1 else 0).coerceAtLeast(0),usable)
         }
@@ -356,8 +386,11 @@ object BuildingGraphCompiler {
             return CompiledBuilding(override(r.plan(emptyList()),n,palette),positions)
         }
     }
+    fun validateMetadata(b:Building) {
+        require(b.name.length in 1..64 && b.palette.size<=16 && b.schema in 1..2) { "Invalid building schema/name/palette" }
+    }
     fun compile(b:Building,forms:Map<String,Form>,modules:Map<String,Module>):CompiledBuilding {
-        require(b.name.length in 1..64 && b.palette.size<=16 && b.schema in 1..2)
+        validateMetadata(b)
         return Evaluation(b.graph ?: error("Missing building graph"),b.palette,forms,modules).building()
     }
 }

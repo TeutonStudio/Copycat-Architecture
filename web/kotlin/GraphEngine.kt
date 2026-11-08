@@ -134,6 +134,7 @@ fun graphModels(): Json = json(
 @JsExport
 fun inspectGraph(isBuilding: Boolean, document: dynamic): Array<Json> {
     if (isBuilding) {
+        BuildingGraphCompiler.validateMetadata(building(document))
         val graph = buildingGraph(document.graph)
         BuildingGraphCompiler.structure(graph)
         return graph.nodes.map { n ->
@@ -143,6 +144,7 @@ fun inspectGraph(isBuilding: Boolean, document: dynamic): Array<Json> {
             }.toTypedArray())
         }.toTypedArray()
     }
+    Geometry.validateMetadata(form(document))
     val graph = formGraph(document.graph)
     GraphCompiler.structure(graph, groups(document))
     return graph.nodes.map { n ->
@@ -208,22 +210,30 @@ private fun fullBlock(key: MeshKey, positions: List<P>) = json(
 @JsExport
 fun previewGraph(isBuilding: Boolean, document: dynamic, library: dynamic, selected: String): Json {
     if (!isBuilding) {
-        val f = Geometry.validate(form(document))
-        val filter = f.graph?.nodes?.firstOrNull { it.kind == NodeKind.OUTPUT }?.previewGroup.orEmpty()
-        val owned = Geometry.resolve(f.parts, f.groups).owned
-        val meshes = owned.filterKeys { filter.isEmpty() || it == filter }.map { (id, solid) -> solidMesh(id, solid, listOf(P()), "form") }
-        return json("count" to owned.values.sumOf { it.count() }, "raw" to Extrusion.cost(f.parts, f.groups),
+        val original = form(document)
+        Geometry.validateMetadata(original)
+        val graph = requireNotNull(original.graph) { "Missing form graph" }
+        val n = if(selected.isEmpty()) graph.nodes.single { it.kind==NodeKind.OUTPUT }
+            else graph.nodes.firstOrNull { it.id==selected } ?: error("Select an existing node")
+        if(n.kind==NodeKind.ROTATION) {
+            GraphCompiler.structure(graph,original.groups)
+            return json("count" to 0, "raw" to 0, "meshes" to emptyArray<Json>(),
+            "value" to "${n.rotationAxis.name}: ${n.quarterTurns*90}°", "warnings" to arrayOf("Rotationswert, keine Geometrie"))
+        }
+        val parts = if(selected.isEmpty()) GraphCompiler.compile(graph,original.groups) else GraphCompiler.intermediate(graph,n.id,original.groups)
+        val filter = if(n.kind==NodeKind.OUTPUT) n.previewGroup else ""
+        val owned = if(parts.isEmpty()) emptyMap() else Geometry.resolve(parts,original.groups).owned
+        val meshes = owned.filterKeys { filter.isEmpty() || it==filter }.map { (id,solid) -> solidMesh(id,solid,listOf(P()),"form") }
+        return json("count" to owned.values.sumOf { it.count() }, "raw" to if(parts.isEmpty()) 0 else Extrusion.cost(parts,original.groups),
             "meshes" to meshes.toTypedArray())
     }
     val b = building(document)
+    BuildingGraphCompiler.validateMetadata(b)
     val forms = map(library.forms) { obj, key -> form(obj[key]) }
     val modules = map(library.modules) { obj, key -> module(obj[key]) }
     val graph = requireNotNull(b.graph)
-    val plan = when (graph.nodes.firstOrNull { it.id == selected }?.kind) {
-        BuildingKind.ROOM -> BuildingGraphCompiler.Evaluation(graph, b.palette, forms, modules).room(selected).plan
-        BuildingKind.STOREY -> BuildingGraphCompiler.Evaluation(graph, b.palette, forms, modules).storey(selected).plan
-        else -> BuildingGraphCompiler.compile(b, forms, modules).plan
-    }
+    val plan = if(selected.isEmpty()) BuildingGraphCompiler.compile(b,forms,modules).plan
+        else BuildingGraphCompiler.Evaluation(graph,b.palette,forms,modules).preview(selected)
     val filter = graph.nodes.firstOrNull { it.id == selected }?.preview
         ?: graph.nodes.single { it.kind == BuildingKind.BUILDING }.preview
     val grouped = plan.placements.filter { filter == "all" || it.component == filter ||
@@ -241,3 +251,21 @@ fun previewGraph(isBuilding: Boolean, document: dynamic, library: dynamic, selec
 @JsExport
 fun starterBuilding(): Json = json("name" to "Neues Gebäude", "schema" to 2, "palette" to Building().palette.asJson(),
     "graph" to json("schema" to 1, "nodes" to BuildingGraph.assembledStarter().nodes.map { it.jsNode() }.toTypedArray()))
+
+@JsExport
+fun sourceMounting(value:dynamic):String = directionName(PartRotations.normal(part(value)))
+
+@JsExport
+fun mountSource(value:dynamic,normal:String):Json {
+    val source=part(value)
+    val target=when(normal) {
+        "up"->P(0,1,0);"down"->P(0,-1,0);"east"->P(1,0,0);"west"->P(-1,0,0)
+        "south"->P(0,0,1);"north"->P(0,0,-1);else->error("Invalid mounting")
+    }
+    if(PartRotations.normal(source)==target) return source.jsPart()
+    for(q in listOf(1,3,2)) for(axis in listOf(RotationAxis.X,RotationAxis.Z,RotationAxis.Y)) {
+        val result=PartRotations.rotate(source.copy(offset=P()),axis,q)?.copy(offset=source.offset) ?: continue
+        if(PartRotations.normal(result)==target) return result.jsPart()
+    }
+    error("This source has no supported native orientation for the selected mounting")
+}

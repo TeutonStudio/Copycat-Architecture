@@ -6,6 +6,7 @@ import { adaptRectangles, newNode, starterBuilding } from './generated/engine.mj
 import { applyWires, connections, formGroups, inspect, model, position, protectedNode, readGraph, replaceNodes, validateLibrary, writeGraph } from './model.js'
 import { DocumentFields, Field, names, NodeFields, portName } from './Inspector.jsx'
 import './style.css'
+import { SplitHandle } from './SplitHandle.jsx'
 import baseLibrary from '../../examples/library.json'
 import formExample from '../../examples/nodegraph-form.json'
 import formRotation from '../../examples/nodegraph-rotation-xor.json'
@@ -84,6 +85,11 @@ function Studio({ mode, active }) {
   const [flow, setFlow] = useState(null)
   const [kind, setKind] = useState('')
   const [workspace, setWorkspace] = useState(0)
+  const [graphShare, setGraphShare] = useState(68)
+  const [previewShare, setPreviewShare] = useState(45)
+  const [previewCollapsed, setPreviewCollapsed] = useState(false)
+  const [inspectorCollapsed, setInspectorCollapsed] = useState(false)
+  const [previewMode, setPreviewMode] = useState('graph')
   const graphInput = useRef(null)
   const libraryInput = useRef(null)
   const canvas = useRef(null)
@@ -195,7 +201,7 @@ function Studio({ mode, active }) {
   const portLimits = mode === 'form' ? model.form.find(type => type.kind === visibleNode.node.kind)
     : visibleNode.node.kind === 'PATTERN' ? { min: 2, max: model.sockets } : null
   const isFormSourceLimit = kind === 'INPUT' && entries.filter(({ node }) => node.kind === 'INPUT').length >= model.formSources
-  const previewSelected = current && ['ROOM', 'STOREY', 'BUILDING'].includes(current.node.kind) ? current.node.id : ''
+  const previewSelected = current?.node.id ?? ''
   const exportFile = () => transact(() => downloadJson(writeGraph(mode, document), mode))
   const copyJson = async () => {
     try {
@@ -239,7 +245,7 @@ function Studio({ mode, active }) {
       <button type="button" aria-label="Wiederholen" title="Wiederholen" disabled={!history.future.length} onClick={history.redo}>↷</button>
     </div>
 
-    <div className="workbench">
+    <div className="workbench" style={{ '--graph-share': `${graphShare}fr`, '--side-share': `${100 - graphShare}fr` }}>
       <section className="canvas-panel" aria-label="Graph bearbeiten">
         <div className="panel-heading graph-heading">
           <div><span>{document.name || 'Entwurf'}</span><small>{count} / {maxNodes} Knoten</small></div>
@@ -270,13 +276,20 @@ function Studio({ mode, active }) {
           {message?.text ?? 'Knoten ziehen · Anschlüsse verbinden · Entf löscht die Auswahl'}
         </div>
       </section>
-      <div className="side">
+      <SplitHandle axis="x" value={graphShare} onChange={setGraphShare} label="Breite von Graph und Seitenleiste" />
+      <div className={`side${previewCollapsed && inspectorCollapsed ? ' both-collapsed' : ''}`}
+        style={{ gridTemplateRows: previewCollapsed && inspectorCollapsed ? 'auto auto' : previewCollapsed ? 'auto minmax(0, 1fr)' : inspectorCollapsed ? 'minmax(0, 1fr) auto' : `minmax(0, ${previewShare}fr) 10px minmax(0, ${100-previewShare}fr)` }}>
         {active && <Suspense fallback={<section className="preview-panel"><div className="preview-meta">3D-Vorschau wird geladen …</div></section>}>
-          <Preview mode={mode} document={document} library={library} selected={previewSelected} />
+          <Preview mode={mode} document={document} library={library} selected={previewSelected}
+            previewMode={previewMode} onMode={setPreviewMode} collapsed={previewCollapsed} onToggle={() => setPreviewCollapsed(value => !value)} />
         </Suspense>}
-        <section className="inspector" aria-label="Knoteninspektor">
-          <div className="panel-heading"><span>Inspektor</span><small>{current ? 'AUSWAHL' : 'ERGEBNIS'}</small></div>
-          <div className="inspector-body" key={visibleNode.node.id}>
+        {!previewCollapsed && !inspectorCollapsed && <SplitHandle axis="y" value={previewShare} onChange={setPreviewShare} label="Höhenverhältnis von 3D-Vorschau und Inspektor" />}
+        <section className={`inspector${inspectorCollapsed ? ' is-collapsed' : ''}`} aria-label="Knoteninspektor">
+          <div className="panel-heading"><span>Inspektor</span><div className="button-row"><small>{current ? 'AUSWAHL' : 'ERGEBNIS'}</small>
+            <button type="button" aria-expanded={!inspectorCollapsed} aria-controls={`${mode}-inspector`} aria-label={inspectorCollapsed ? 'Inspektor ausklappen' : 'Inspektor einklappen'} onClick={() => setInspectorCollapsed(value => !value)}>{inspectorCollapsed ? '▸' : '▾'}</button>
+          </div></div>
+          <div id={`${mode}-inspector`} className="inspector-body" hidden={inspectorCollapsed} key={visibleNode.node.id}>
+            <a className="reference-link" href={`${wiki}/Knoten-${mode === 'form' ? 'Formgraph' : 'Gebaeudegraph'}#${visibleNode.node.kind.toLowerCase()}`}>Knotenreferenz ↗</a>
             <h2>{visibleNode.node.name || names[visibleNode.node.kind]}</h2>
             <div className="node-id">{visibleNode.node.id}</div>
             {visibleNode.ports.length > 0 && <details open><summary>Verbindungen</summary>

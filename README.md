@@ -8,6 +8,8 @@ Version **0.5.0** für Minecraft **1.21.1**, **NeoForge 21.1.251**, **Java 21**.
 
 Knoten verbinden und bearbeiten, das Ergebnis in 3D prüfen und JSON mit Minecraft austauschen. Die Berechnung verwendet dieselben Kotlin-Quellen wie dieser Spielstand. Minecraft-Texturen und modabhängige Blockmodelle werden in der Browser-Vorschau durch Materialfarben dargestellt. Entwicklung und Build: [web/README.md](web/README.md).
 
+[Knotenreferenz](docs/wiki/Knotenreferenz.md) · [Entwicklungsstand und Browserkompatibilität](docs/wiki/Entwicklungsstand.md) · [Geplante Segmentoperatoren](docs/wiki/Geplante-Segmentoperatoren.md)
+
 ## Bauen und installieren
 
 ```sh

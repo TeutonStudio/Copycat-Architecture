@@ -1,6 +1,6 @@
 # Knotenreferenz
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.2** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
 
 Diese Referenz beschreibt **Anschlüsse**, **Ausgangstypen**, **Inspektoreigenschaften**, **Einheiten** und **Verfügbarkeit**. Sie ist nach Form- und Gebäudegraph getrennt, weil gleichnamige Rotations- oder Spiegelknoten unterschiedliche Porttypen besitzen.
 
@@ -15,7 +15,7 @@ Diese Referenz beschreibt **Anschlüsse**, **Ausgangstypen**, **Inspektoreigensc
 
 ## Formknoten
 
-| Knoten | ID | Ausgang | Graphstudio 0.2 |
+| Knoten | ID | Ausgang | Graphstudio 0.3 |
 | --- | --- | --- | --- |
 | [Standard-Copycat](Knoten-Formgraph.md#input) | `INPUT` | `shape` | Älterer Aufbau vorhanden |
 | [Vereinigung](Knoten-Formgraph.md#union) | `UNION` | `shape` | Älterer Aufbau vorhanden |
@@ -30,7 +30,7 @@ Diese Referenz beschreibt **Anschlüsse**, **Ausgangstypen**, **Inspektoreigensc
 
 ## Gebäudeknoten
 
-| Knoten | ID | Ausgang | Graphstudio 0.2 |
+| Knoten | ID | Ausgang | Graphstudio 0.3 |
 | --- | --- | --- | --- |
 | [Flächengebiet](Knoten-Gebaeudegraph.md#area) | `AREA` | `AREA` | Noch nicht vorhanden |
 | [Copycat](Knoten-Gebaeudegraph.md#copycat) | `COPYCAT` | `COPYCAT` | Älterer Aufbau vorhanden |

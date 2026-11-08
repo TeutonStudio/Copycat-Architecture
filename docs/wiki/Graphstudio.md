@@ -1,10 +1,10 @@
 # Graphstudio
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.2** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
 
 [**Gebäudegraph öffnen**](https://teutonstudio.github.io/copycat-architect/?editor=building) · [**Formgraph öffnen**](https://teutonstudio.github.io/copycat-architect/?editor=form)
 
-Graphstudio **0.2** ist der Browsereditor für den älteren öffentlichen Graphstand. Die Links öffnen eine eigene interaktive Webseite. In der [Knotenreferenz](Knotenreferenz.md) steht für jeden Typ, ob er im Browser vorhanden ist. Die neuesten lokalen Modknoten werden noch nicht vollständig abgebildet.
+Graphstudio **0.3** ist der Browsereditor für den älteren öffentlichen Graphstand. Die Links öffnen eine eigene interaktive Webseite. In der [Knotenreferenz](Knotenreferenz.md) steht für jeden Typ, ob er im Browser vorhanden ist. Die neuesten lokalen Modknoten werden noch nicht vollständig abgebildet.
 
 ## Einen Entwurf bearbeiten
 
@@ -46,3 +46,7 @@ Beide Bereiche sind einzeln einklappbar. Ein offener Bereich übernimmt den frei
 ## Kompatibilität
 
 Unterstützt: **Formgraph-Schema 1–2**, **Gebäudegraph-Schema 1** und die ausdrücklich als Browserknoten markierten Typen. Zusätzliche Knoten und neuere Schemata werden nicht automatisch herunterkonvertiert. Referenzen, Kostenmodell und Minecraft-Texturen unterscheiden sich vom neuesten lokalen Modstand; siehe [Entwicklungsstand](Entwicklungsstand.md).
+
+## Materialien und eigene Bibliotheken
+
+Die [Materialbibliothek](Materialbibliothek.md) stellt Minecraft- und Mod-Materialien für die Vorschau bereit. **Meine Bibliotheken** verwaltet verlinkte Mod-Repositories und Sicherungen. Graphen und Knotengruppen können über die Leiste oberhalb des Editors gespeichert und wiederverwendet werden; der letzte Entwurf wird automatisch im Browser aufbewahrt.

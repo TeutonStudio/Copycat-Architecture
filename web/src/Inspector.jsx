@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { sourceMounting, mountSource } from './generated/engine.mjs'
 import { formGroups, model } from './model.js'
+import { MaterialField } from './Workspace.jsx'
 
 export const names = {
   INPUT: 'Grundform', UNION: 'Vereinigung', INTERSECTION: 'Schnitt', DIFFERENCE: 'Differenz',
@@ -154,7 +155,7 @@ export function NodeFields({ mode, node, document, edit, library }) {
   </>
 }
 
-export function DocumentFields({ mode, document, edit, library }) {
+export function DocumentFields({ mode, document, edit, library, materials, setMaterials }) {
   const groups = formGroups(document)
   const usedGroups = new Set(document.graph.nodes.flatMap(node => [
     node.kind === 'INPUT' ? node.part?.group : null, node.materialGroup, node.previewGroup, ...(node.inputGroups ?? [])
@@ -176,6 +177,7 @@ export function DocumentFields({ mode, document, edit, library }) {
       {groups.map(group => <fieldset key={group.id}><legend>{group.id}</legend>
         <Field label="Name" value={group.name} maxLength={32} onChange={name => updateGroup(group.id, { name })} />
         <Field label="Materialrolle" value={group.role} onChange={role => updateGroup(group.id, { role })} />
+        <MaterialField label={`Material ${group.name}`} value={materials[group.id] || ''} onChange={value => setMaterials(previous => ({ ...previous, [group.id]: value }))} />
         <Field label="Vordergrund" value={group.priority} type="number" min={-32} max={32}
           onChange={priority => updateGroup(group.id, { priority })} />
         <button type="button" disabled={groups.length <= 1 || usedGroups.has(group.id)}
@@ -184,7 +186,7 @@ export function DocumentFields({ mode, document, edit, library }) {
       <button type="button" disabled={groups.length >= 8} onClick={addGroup}>+ Materialgruppe</button>
     </> : <>
       {Object.entries(palette).map(([id, material]) => <div key={id} className="palette-row">
-        <Field label={id} value={material} onChange={value => edit({ ...document, palette: { ...palette, [id]: value } })} />
+        <MaterialField label={id} value={material} blockOnly onChange={value => edit({ ...document, palette: { ...palette, [id]: value } })} />
         <button type="button" aria-label={`Rolle ${id} entfernen`} onClick={() => edit({
           ...document, palette: Object.fromEntries(Object.entries(palette).filter(([key]) => key !== id))
         })}>×</button>

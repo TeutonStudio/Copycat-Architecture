@@ -1,6 +1,6 @@
 # Gepinnte Versionsmatrix
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.2** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
 
 Stand: 08.11.2026, Entwicklungsstand 0.5.1. Java-Ziel: 21; Eclipse Temurin 21.0.7 ist als Java-21-Toolchain vorhanden. Gradle-Wrapper: 9.8.0, ModDevGradle: 2.0.143. Kotlin-Compiler: 2.2.20. Kein Serialization-Plugin, kein geschattetes Kotlin, keine zweite eingebettete Standardbibliothek. Die tatsächlichen Prüfungen stehen in [VALIDATION.md](Entwicklungsstand.md).
 

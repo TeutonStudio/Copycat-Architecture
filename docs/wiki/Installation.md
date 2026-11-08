@@ -1,6 +1,6 @@
 # Installation und Rezepte
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.2** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
 
 Diese Anleitung gilt für den Entwicklungsstand **Copycat Architect 0.5.1**, **Minecraft 1.21.1**, **NeoForge 21.1.251** und **Java 21**. Alle beteiligten Mods müssen für Minecraft 1.21.1 und den passenden Loader bestimmt sein.
 

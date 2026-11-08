@@ -7,6 +7,8 @@ import { applyWires, connections, formGroups, inspect, model, position, protecte
 import { DocumentFields, Field, names, NodeFields, portName } from './Inspector.jsx'
 import './style.css'
 import { SplitHandle } from './SplitHandle.jsx'
+import { Workspace, useWorkspace } from './Workspace.jsx'
+import { insertNodeGroup, mergeLibraries, saveNodeGroup } from './node-groups.js'
 import baseLibrary from '../../examples/library.json'
 import formExample from '../../examples/nodegraph-form.json'
 import formRotation from '../../examples/nodegraph-rotation-xor.json'
@@ -75,9 +77,25 @@ function downloadJson(document, mode) {
 }
 
 function Studio({ mode, active }) {
-  const history = useHistory(examples[mode][0][1])
+  const { data: savedData, update: updateWorkspace } = useWorkspace()
+  const draft = savedData.drafts[mode]
+  const history = useHistory(draft?.document ?? examples[mode][0][1])
   const document = history.current
-  const [library, setLibrary] = useState(baseLibrary)
+  const [library, setLibrary] = useState(draft?.library ?? baseLibrary)
+  const [materials, setMaterials] = useState(draft?.materials ?? {})
+  const [selectedIds, setSelectedIds] = useState([])
+  const onSelectionChange = useCallback(({ nodes }) => setSelectedIds(previous => {
+    const next = nodes.map(node => node.id)
+    return next.length === previous.length && next.every(id => previous.includes(id)) ? previous : next
+  }), [])
+  const [saveName, setSaveName] = useState('')
+  useEffect(() => {
+    updateWorkspace(data => {
+      const previous = data.drafts[mode]
+      return previous?.document === document && previous?.library === library && previous?.materials === materials ? data
+        : { ...data, drafts: { ...data.drafts, [mode]: { mode, document, library, materials } } }
+    })
+  }, [mode, document, library, materials])
   const [selected, setSelected] = useState(null)
   const [selectedWire, setSelectedWire] = useState(null)
   const [dragging, setDragging] = useState(null)
@@ -103,7 +121,7 @@ function Studio({ mode, active }) {
   const nodes = entries.map(data => ({
     id: data.node.id, type: 'architect', data,
     position: dragging?.id === data.node.id ? dragging.position : { x: data.node.x, y: data.node.y },
-    selected: data.node.id === selected
+    selected: selectedIds.includes(data.node.id)
   }))
   const edges = useMemo(() => wires.map(wire => ({
     id: edgeId(wire), source: wire.source, sourceHandle: 'out', target: wire.target, targetHandle: wire.port,
@@ -154,6 +172,7 @@ function Studio({ mode, active }) {
     commit(readGraph(raw, mode))
     setSelected(null)
     setSelectedWire(null)
+    setSelectedIds([])
     setWorkspace(key => key + 1)
   }
   const add = () => transact(() => {
@@ -245,6 +264,34 @@ function Studio({ mode, active }) {
       <button type="button" aria-label="Wiederholen" title="Wiederholen" disabled={!history.future.length} onClick={history.redo}>↷</button>
     </div>
 
+    <div className="personal-library-bar">
+      <label>Name für Bibliothek<input aria-label="Name für Bibliothek" placeholder={document.name || 'Mein Entwurf'} maxLength={64} value={saveName} onChange={event => setSaveName(event.target.value)} /></label>
+      <button onClick={() => transact(() => {
+        const name = saveName.trim() || document.name || 'Graph'
+        const existing = savedData.graphs.find(entry => entry.mode === mode && entry.name === name)
+        if (!existing && savedData.graphs.length >= 500) throw new Error('Höchstens 500 Graphen speichern. Zuerst nicht mehr benötigte Einträge entfernen.')
+        const entry = { id: existing?.id || crypto.randomUUID(), name, mode, document, library, materials }
+        updateWorkspace(data => ({ ...data, graphs: [...data.graphs.filter(item => item.id !== entry.id), entry] }))
+        setMessage({ text: 'Graph in deiner Browserbibliothek gespeichert.' })
+      })}>Graph speichern</button>
+      <select aria-label="Gespeicherten Graph öffnen" value="" onChange={event => transact(() => {
+        const entry = savedData.graphs.find(entry => entry.id === event.target.value)
+        open(entry.document); setLibrary(entry.library || baseLibrary); setMaterials(entry.materials || {})
+      })}><option value="" disabled>Gespeicherte Graphen</option>{savedData.graphs.filter(entry => entry.mode === mode).map(entry => <option key={entry.id} value={entry.id}>{entry.name}</option>)}</select>
+      <button title="Mit Umschalt mehrere Knoten auswählen" disabled={!selectedIds.length && !current} onClick={() => transact(() => {
+        const entry = saveNodeGroup(mode, document, selectedIds.length ? selectedIds : [selected], saveName, materials, library)
+        const existing = savedData.nodeGroups.find(item => item.mode === mode && item.name === entry.name)
+        if (!existing && savedData.nodeGroups.length >= 500) throw new Error('Höchstens 500 Knotengruppen speichern.')
+        if (existing) entry.id = existing.id
+        updateWorkspace(data => ({ ...data, nodeGroups: [...data.nodeGroups.filter(item => item.id !== entry.id), entry] }))
+      })}>Knotengruppe speichern</button>
+      <select aria-label="Knotengruppe einfügen" value="" onChange={event => transact(() => {
+        const entry = savedData.nodeGroups.find(entry => entry.id === event.target.value)
+        const nextLibrary = mergeLibraries(library, entry.library)
+        const inserted = insertNodeGroup(document, entry); commit(inserted.document); setLibrary(nextLibrary); setMaterials(current => ({ ...current, ...inserted.materials })); setWorkspace(key => key + 1)
+      })}><option value="" disabled>Knotengruppe einfügen</option>{savedData.nodeGroups.filter(entry => entry.mode === mode).map(entry => <option key={entry.id} value={entry.id}>{entry.name}</option>)}</select>
+    </div>
+
     <div className="workbench" style={{ '--graph-share': `${graphShare}fr`, '--side-share': `${100 - graphShare}fr` }}>
       <section className="canvas-panel" aria-label="Graph bearbeiten">
         <div className="panel-heading graph-heading">
@@ -261,11 +308,11 @@ function Studio({ mode, active }) {
           {active && <ReactFlow key={workspace} nodes={nodes} edges={edges} nodeTypes={nodeTypes} onInit={setFlow}
             fitView fitViewOptions={{ padding: 0.15, maxZoom: 1.1 }} minZoom={0.13} maxZoom={2}
             onNodeDrag={onDrag} onNodeDragStop={onDragStop} deleteKeyCode={null} nodesConnectable
-            onNodeClick={(_, node) => { setSelected(node.id); setSelectedWire(null) }}
+            onNodeClick={(event, node) => { setSelected(node.id); setSelectedWire(null); setSelectedIds(ids => event.shiftKey ? ids.includes(node.id) ? ids.filter(id => id !== node.id) : [...ids, node.id] : [node.id]) }}
             onEdgeClick={(_, edge) => { setSelectedWire(edge.id); setSelected(edge.target) }}
-            onPaneClick={() => { setSelected(null); setSelectedWire(null) }}
+            onPaneClick={() => { setSelected(null); setSelectedWire(null); setSelectedIds([]) }}
             isValidConnection={compatible} onConnect={wire => setWire(wire.target, wire.targetHandle, wire.source)}
-            selectionKeyCode={null} multiSelectionKeyCode={null} onlyRenderVisibleElements
+            selectionKeyCode="Shift" multiSelectionKeyCode="Shift" onSelectionChange={onSelectionChange} onlyRenderVisibleElements
             colorMode="dark" aria-label="React-Flow-Graph">
             <Background gap={22} size={1} color="#46606d" />
             <Controls showInteractive={false} />
@@ -280,7 +327,7 @@ function Studio({ mode, active }) {
       <div className={`side${previewCollapsed && inspectorCollapsed ? ' both-collapsed' : ''}`}
         style={{ gridTemplateRows: previewCollapsed && inspectorCollapsed ? 'auto auto' : previewCollapsed ? 'auto minmax(0, 1fr)' : inspectorCollapsed ? 'minmax(0, 1fr) auto' : `minmax(0, ${previewShare}fr) 10px minmax(0, ${100-previewShare}fr)` }}>
         {active && <Suspense fallback={<section className="preview-panel"><div className="preview-meta">3D-Vorschau wird geladen …</div></section>}>
-          <Preview mode={mode} document={document} library={library} selected={previewSelected}
+          <Preview mode={mode} document={document} library={library} selected={previewSelected} materials={materials}
             previewMode={previewMode} onMode={setPreviewMode} collapsed={previewCollapsed} onToggle={() => setPreviewCollapsed(value => !value)} />
         </Suspense>}
         {!previewCollapsed && !inspectorCollapsed && <SplitHandle axis="y" value={previewShare} onChange={setPreviewShare} label="Höhenverhältnis von 3D-Vorschau und Inspektor" />}
@@ -310,7 +357,7 @@ function Studio({ mode, active }) {
             <NodeFields {...{ mode, node: visibleNode.node, document, edit: patchNode, library }} />
             {(selectedWire || current && !protectedNode(current.node)) &&
               <button className="danger" type="button" onClick={removeSelection}>{selectedWire ? 'Verbindung trennen' : 'Knoten löschen'}</button>}
-            <DocumentFields {...{ mode, document, library }} edit={next => transact(() => commit(next))} />
+            <DocumentFields {...{ mode, document, library, materials, setMaterials }} edit={next => transact(() => commit(next))} />
           </div>
         </section>
       </div>
@@ -319,6 +366,7 @@ function Studio({ mode, active }) {
 }
 
 function App() {
+  const { openPanel } = useWorkspace()
   const [mode, setMode] = useState(initialMode)
   useEffect(() => {
     const url = new URL(window.location.href)
@@ -334,6 +382,7 @@ function App() {
         <button type="button" aria-pressed={mode === 'form'} onClick={() => setMode('form')}>Formgraph</button>
         <button type="button" aria-pressed={mode === 'building'} onClick={() => setMode('building')}>Gebäudegraph</button>
       </nav>
+      <button type="button" onClick={() => openPanel('materials')}>Meine Bibliotheken</button>
       <a href={wiki}>Zum Wiki ↗</a>
     </header>
     <main>
@@ -343,4 +392,4 @@ function App() {
   </>
 }
 
-createRoot(document.getElementById('root')).render(<App />)
+createRoot(document.getElementById('root')).render(<Workspace><App /></Workspace>)

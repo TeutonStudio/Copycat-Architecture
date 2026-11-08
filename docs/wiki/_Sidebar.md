@@ -8,6 +8,7 @@
 - [Kartuschen und Materialien](Kartuschen-und-Materialien.md)
 - [Gebäudeplanung](Gebaeudeplanung.md)
 - [Raumaufbau und Fassaden](Raumaufbau-und-Fassaden.md)
+- [Materialbibliothek und gespeicherte Inhalte](Materialbibliothek.md)
 - [Graphstudio im Browser](Graphstudio.md)
 - [Turtle-Bau](Turtle-Bau.md)
 - [Beispiele und Import](Beispiele-und-Import.md)
@@ -25,4 +26,4 @@
 - [Lua-API](Lua-API.md)
 - [Versionsmatrix](Versionsmatrix.md)
 
-Stand **08.11.2026** · lokale Mod **0.5.1** · Graphstudio **0.2**
+Stand **08.11.2026** · lokale Mod **0.5.1** · Graphstudio **0.3**

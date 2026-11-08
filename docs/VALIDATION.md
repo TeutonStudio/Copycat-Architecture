@@ -6,12 +6,17 @@ Der lokale Mod-Stand wurde in einer getrennten Arbeitskopie mit GitHub-Master
 `b5a03f425b50e7cece7d128539b77ace43d30750` zusammengeführt. Die fünf Konflikte
 im Fachkern wurden unter Erhalt der nativen Erweiterungen und der bereits
 integrierten Graphstudio-Funktionen aufgelöst. Version und Modmetadaten lauten
-übereinstimmend **0.6.0**.
+übereinstimmend **0.6.0**. Anschließend wurde der parallel veröffentlichte
+Master `9d6359b65f4d950c6a48a21168817ad10f8331e5` (PR #6) integriert,
+einschließlich seiner unveränderten Wiki-Dateien und Browserbibliotheken.
+Der native Quellstand blieb bei diesem zweiten Abgleich unverändert.
 
 Der Java-21-Build und die JUnit-Prüfung bestehen: **508 erfolgreiche Tests,
 keine Fehler; zwei optionale Snapshot-Tests ohne externe Weltdateien übersprungen**.
-Die Browserprüfung besteht mit **22 Graph-/Integrationsprüfungen und vier
-Referenzprüfungen**; der Vite-Produktionsbuild ist erfolgreich. Neue Regressionen
+Alle **62 verpflichtenden NeoForge-Spieltests** bestehen, einschließlich
+eines vollständigen Turtle-Baus mit 1.115 Blöcken. Die Browserprüfung besteht
+nach zusätzlicher Integration von PR #6 mit **38 Graph-, Bibliotheks-, Material-
+und Referenzprüfungen**; der Vite-Produktionsbuild ist erfolgreich. Neue Regressionen
 prüfen sechs Treppenmontagen mit unverändertem Volumen, kontextabhängige
 Plattenvorschauen sowie die ausdrückliche Ablehnung nicht verlustfrei
 unterstützter nativer Graphen vor Browserimport und -export.

@@ -1,6 +1,6 @@
 # Knotenreferenz: Gebäudegraph
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.2** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
 
 [Übersicht](Knotenreferenz.md) · [Gemeinsame und verschachtelte Eigenschaften](Knoten-Eigenschaften.md) · [Einheiten](Einheiten-und-Ausrichtung.md)
 
@@ -10,7 +10,7 @@ Die Anschlusskennungen sind die gespeicherten API-Schlüssel. Ein `*` bezeichnet
 
 **Flächengebiet.** Wiederverwendbare zweidimensionale Rasterfläche. Anders als ein Raum darf sie auch Löcher oder getrennte Teile enthalten.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: nicht vorhanden.
 
 **Ausgang:** `AREA`.
 
@@ -28,7 +28,7 @@ Keine direkten Graph-Eingänge.
 
 **Copycat.** Referenziert eine konkrete gespeicherte Formversion und ihre Materialrollen.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: vorhanden, mit älterem Funktionsumfang.
 
 **Ausgang:** `COPYCAT`.
 
@@ -48,7 +48,7 @@ Keine direkten Graph-Eingänge.
 
 **Segmentgeometrie.** Beschreibt räumliche Belegung und Regionen eines Bauteils; die XY-Fläche kann von AREA stammen, die Tiefe verläuft in Z.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: nicht vorhanden.
 
 **Ausgang:** `SEGMENT_LAYOUT`.
 
@@ -71,7 +71,7 @@ Keine direkten Graph-Eingänge.
 
 **Segment.** Füllt eine Anordnung mit Copycat-Quellen und Regionszuordnungen. Der geschützte Sonderknoten empty_wall bleibt eine freie Wandquelle.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: vorhanden, mit älterem Funktionsumfang.
 
 **Ausgang:** `SEGMENT`.
 
@@ -103,7 +103,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Segmente vereinigen.** Ordnet mehrere Segmente in Eingangsreihenfolge aneinander oder transformiert sie frei. Dies ist keine boolesche Vereinigung; überlappende Bauteile unterliegen den vorhandenen Zusammenführungsregeln.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: vorhanden, mit älterem Funktionsumfang.
 
 **Ausgang:** `PATTERN`.
 
@@ -131,7 +131,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Raumgeometrie.** Definiert Innenfläche und Höhe eines grundrissbasierten Raums; kann eine gemeinsame AREA-Quelle verwenden.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: nicht vorhanden.
 
 **Ausgang:** `ROOM_GEOMETRY`.
 
@@ -152,7 +152,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Boden.** Älterer Bodenplattenknoten. Neue Entwürfe verwenden normalerweise SEGMENT als Boden.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: vorhanden, mit älterem Funktionsumfang. **Älterer Plattenknoten**, nicht der bevorzugte neue Aufbau.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: vorhanden, mit älterem Funktionsumfang. **Älterer Plattenknoten**, nicht der bevorzugte neue Aufbau.
 
 **Ausgang:** `FLOOR`.
 
@@ -176,7 +176,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Decke.** Älterer Deckenplattenknoten. Neue Entwürfe verwenden normalerweise SEGMENT als Decke.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: vorhanden, mit älterem Funktionsumfang. **Älterer Plattenknoten**, nicht der bevorzugte neue Aufbau.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: vorhanden, mit älterem Funktionsumfang. **Älterer Plattenknoten**, nicht der bevorzugte neue Aufbau.
 
 **Ausgang:** `CEILING`.
 
@@ -202,7 +202,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Raum.** Verbindet Grundriss oder räumlich platzierte Segmente mit Boden, Decke und Wandsemantik. Im Segmentmodus darf der Umriss offen sein; dann entstehen ohne logische Flächenschließung keine vollständigen Platten.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: vorhanden, mit älterem Funktionsumfang.
 
 **Ausgang:** `ROOM`.
 
@@ -238,7 +238,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Stockwerk.** Platziert Raumquellen und löst gemeinsame Wände sowie Fassaden auf. Alternativ bleibt der ältere Direkt-Wandmodus verfügbar.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: vorhanden, mit älterem Funktionsumfang.
 
 **Ausgang:** `STOREY`.
 
@@ -270,7 +270,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Dachebene.** Definiert eine konkrete Dachfläche mit Bezugsgeschoss, Form, Steigung, Höhe und Überhang.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: nicht vorhanden.
 
 **Ausgang:** `ROOF_LEVEL`.
 
@@ -294,7 +294,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Dachanordnung.** Sammelt bis zu 16 Dachebenen zu einer Dachanordnung. Eine leere Anordnung ist noch kein auswertbares Dach.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: nicht vorhanden.
 
 **Ausgang:** `ROOF_LAYOUT`.
 
@@ -312,7 +312,7 @@ Keine zusätzlichen typspezifischen Eingabefelder im Knotenvertrag. Verbindungen
 
 **Dach.** Verknüpft Dachanordnung und Deckungs-/Füllvorlagen. Im alten Aufbau sind direkte Flach-/Satteldächer weiterhin möglich.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: vorhanden, mit älterem Funktionsumfang.
 
 **Ausgang:** `ROOF`.
 
@@ -341,7 +341,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Treppenhaus.** Wiederverwendbare Treppenhausdefinition; die tatsächlichen Geschosshöhen kommen von der Gebäudeinstanz.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: nicht vorhanden.
 
 **Ausgang:** `STAIRWELL`.
 
@@ -364,7 +364,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Aufzugsvorbereitung.** Definiert einen Schacht mit Haltestellenöffnungen. Ein beweglicher Aufzug wird nicht erzeugt.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: nicht vorhanden.
 
 **Ausgang:** `ELEVATOR_SHAFT`.
 
@@ -384,7 +384,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Versorgungsschacht.** Definiert einen Versorgungsschacht und seine Hülle.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: nicht vorhanden.
 
 **Ausgang:** `SERVICE_SHAFT`.
 
@@ -404,7 +404,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Gebäude.** Einziger Gebäude-Ergebnisknoten. Ordnet Stockwerksinstanzen, Dach, vertikale Erschließungen und Außenanlagen zum Bauplan.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: vorhanden, mit älterem Funktionsumfang.
 
 **Ausgang:** kein weiterführender Ausgang; dies ist das Ergebnis..
 
@@ -430,7 +430,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Garten.** Erzeugt Oberfläche und Bodenaufbau einer Gartenfläche; optional mit Zaun an Außen- und Lochrändern.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: nicht vorhanden.
 
 **Ausgang:** `GARDEN`.
 
@@ -458,7 +458,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Weg.** Erzeugt einen Weg entlang einer geordneten X/Y/Z-Punktfolge; maximal eine Blockstufe pro Rasterabschnitt.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: nicht vorhanden.
 
 **Ausgang:** `PATH`.
 
@@ -486,7 +486,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Segment spiegeln.** Spiegelt ein vollständiges Segment oder Muster, wahlweise nur dessen Zellpositionen.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: nicht vorhanden.
 
 **Ausgang:** `SEGMENT_MIRROR`.
 
@@ -512,7 +512,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Copycat spiegeln.** Spiegelt die Quelle innerhalb ihrer Blockzelle; resultiert wieder in einem Copycat-Anschluss.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: nicht vorhanden.
 
 **Ausgang:** `COPYCAT_MIRROR`.
 
@@ -532,7 +532,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Segment rotieren.** Dreht Segmentpositionen und enthaltene Copycats gemeinsam um eine Weltachse.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: nicht vorhanden.
 
 **Ausgang:** `SEGMENT_ROTATE`.
 
@@ -556,7 +556,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Copycat rotieren.** Dreht eine Copycat-Quelle um ihre Blockmitte.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: nicht vorhanden.
 
 **Ausgang:** `COPYCAT_ROTATE`.
 
@@ -577,7 +577,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Raumanordnung.** Platziert Segmentinstanzen mit Position, Drehung und Raumbeitrag; beschreibt darüber hinaus virtuelle Raumgrenzen und Füllvorlagen.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.2: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: nicht vorhanden.
 
 **Ausgang:** `ROOM_LAYOUT`.
 

@@ -5,7 +5,6 @@ import de.teutonstudio.copycatarchitect.server.Json
 import net.minecraft.client.Minecraft
 import net.minecraft.client.Screenshot
 import net.minecraft.client.gui.components.Button
-import net.minecraft.client.gui.components.EditBox
 import net.minecraft.client.gui.screens.Screen
 import kotlin.math.roundToInt
 
@@ -20,11 +19,20 @@ internal object AssemblyGraphSmoke {
     private var wireBefore=""
     private var wireAfter=""
 
+    /** Keep acceptance coverage for saved documents using the earlier direct-wall storey mode. */
+    private fun legacyGraph():BuildingGraph {
+        val graph=BuildingGraph.assembledStarter();val room=graph.nodes.single { it.id=="room" }
+        return graph.copy(nodes=graph.nodes.filter { it.id!=room.id }.map { node ->
+            if(node.id!="storey") node else node.copy(storeyMode="walls",inputs=emptyList(),offsets=emptyList(),
+                rectangles=room.rectangles,walls=room.walls,height=room.height,floor=room.floor,ceiling=room.ceiling,corner=room.corner)
+        })
+    }
+
     fun begin(mc:Minecraft,original:ShapeScreen) {
         previous=original;previousJson=Json.encode(original.form);previousScale=mc.options.guiScale().get()
         mc.options.guiScale().set(1);mc.resizeDisplay()
         building=BuildingScreen().apply {
-            building=Building(schema=2,id="assembly_smoke",name="Copycat assembly",graph=BuildingGraph.assembledStarter())
+            building=Building(schema=2,id="assembly_smoke",name="Copycat assembly",graph=legacyGraph())
             graphMode=true;graphInspector=false
             selectBuildingNode("storey")
         }
@@ -128,7 +136,7 @@ internal object AssemblyGraphSmoke {
         val width=canvas.nodeWidth(selected);val scale=minOf(1.0,(panel-28.0)/width).coerceAtLeast(0.2)
         return canvas.x+(panel-width*scale)/2+localX*scale to canvas.y+42-building.buildingGraphView.inspectorScroll+localY*scale
     }
-    private fun body(id:String)=45+BuildingPorts.of(node(id),true).size*19+if(node(id).kind==BuildingKind.STOREY) 22 else 0
+    private fun body(id:String)=if(node(id).kind==BuildingKind.STOREY) 51 else 45+BuildingPorts.of(node(id),true).size*19
     private fun reveal(localY:Double) {
         val canvas=checkNotNull(building.buildingGraphCanvas);val point=inspectorPoint(60.0,localY)
         val target=point.second.coerceIn(canvas.y+47.0,canvas.y+canvas.height-12.0)
@@ -138,20 +146,23 @@ internal object AssemblyGraphSmoke {
     }
     private fun sameFloorConnection() {
         restored();val canvas=checkNotNull(building.buildingGraphCanvas)
-        val localY=36.0+slot("storey","floor")*19
-        reveal(localY);click(building,inspectorPoint(150.0,localY))
+        val point=canvas.inputPoint("storey","floor")
+        val target=point.second.coerceIn(canvas.y+47.0,canvas.y+canvas.height-12.0)
+        if(target!=point.second) check(canvas.mouseScrolled(canvas.x+canvas.width/2.0,canvas.y+canvas.height-8.0,0.0,(target-point.second)/25.0))
+        click(building,canvas.inputPoint("storey","floor"))
         check(canvas.hasOpenMenu()) { "The direct storey floor must expose its real typed connection chooser" }
         check(building.keyPressed(268,0,0));check(building.keyPressed(264,0,0));check(building.keyPressed(257,0,0))
-        check(!canvas.hasOpenMenu());restored()
+        check(!canvas.hasOpenMenu());restored();building.buildingGraphView.inspectorScroll=0.0
     }
-    private fun rectangleWidth(mc:Minecraft) {
-        restored();val localY=body("storey")+52.0
-        reveal(localY);click(building,inspectorPoint(60.0,localY))
-        val prompt=checkNotNull(mc.screen);check(prompt!==building) { "Direct wall-storey width must open the numeric editor" }
-        check(prompt.children().filterIsInstance<EditBox>().single().value=="3")
-        check(prompt.charTyped('4',0));check(prompt.keyPressed(257,0,0));check(mc.screen===building)
-        check(node("storey").rectangles.single().width==4 && node("storey").storeyMode=="walls") {
-            "The actual width control must edit the direct storey's footprint"
+    private fun legacyGridCell() {
+        restored();val canvas=checkNotNull(building.buildingGraphCanvas)
+        val before=RoomGeometry.cells(node("storey").rectangles)
+        val point=canvas.gridPoint("storey",3.5,0.5)
+        val target=point.second.coerceIn(canvas.y+47.0,canvas.y+canvas.height-12.0)
+        if(target!=point.second) check(canvas.mouseScrolled(canvas.x+canvas.width/2.0,canvas.y+canvas.height-8.0,0.0,(target-point.second)/25.0))
+        click(building,canvas.gridPoint("storey",3.5,0.5))
+        check(RoomGeometry.cells(node("storey").rectangles)==before+P(3,0,0) && node("storey").storeyMode=="walls") {
+            "The actual cell grid must also edit a saved direct-wall storey's footprint"
         }
         press("undo");restored()
     }
@@ -163,13 +174,14 @@ internal object AssemblyGraphSmoke {
             15 -> screenshot(mc,"assembly-building-native")
             20 -> openInsertionMenu()
             25 -> { val native=editor();val branch=checkNotNull(native.menuItemPoint(ui("add_node")));native.mouseMoved(branch.first,branch.second) }
+            27 -> { val native=editor();val branch=checkNotNull(native.menuItemPoint(ui("node_category_segments")));native.mouseMoved(branch.first,branch.second) }
             30 -> insertSegment()
             35 -> editor().fit()
             40 -> wireSegment()
             45 -> disconnectSegment()
             50 -> { press("undo");restored();building.selectBuildingNode("storey");building.openBuildingGraph(true) }
             55 -> sameFloorConnection()
-            60 -> rectangleWidth(mc)
+            60 -> legacyGridCell()
             65 -> screenshot(mc,"assembly-storey-controls")
             70 -> { building.selectBuildingNode("roof");building.openBuildingGraph(true) }
             75 -> screenshot(mc,"assembly-roof-controls")
@@ -188,7 +200,7 @@ internal object AssemblyGraphSmoke {
             145 -> {
                 restored();mc.options.guiScale().set(previousScale);mc.resizeDisplay();mc.setScreen(previous)
                 check(Json.encode(previous.form)==previousJson) { "Independent assembly acceptance changed the original shape document" }
-                println("ARCHITECT ASSEMBLY GRAPH: explicit Copycat template, semantic native port types, native segment insertion, typed wiring/rejection, cable removal with trimmed optional inputs, atomic Undo/Redo, direct wall-storey connection and width controls, normal/compact building and roof inspectors verified")
+                println("ARCHITECT ASSEMBLY GRAPH: legacy direct-wall storey, semantic native port types, native segment insertion, typed wiring/rejection, cable removal with trimmed optional inputs, atomic Undo/Redo, direct wall-storey connection and cell grid, normal/compact building and roof inspectors verified")
                 return true
             }
         }

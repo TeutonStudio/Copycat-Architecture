@@ -1,0 +1,6 @@
+{
+  "parent": "copycat_architect:block/cartridge_stack_1",
+  "textures": {
+    "cap": "minecraft:block/iron_block"
+  }
+}

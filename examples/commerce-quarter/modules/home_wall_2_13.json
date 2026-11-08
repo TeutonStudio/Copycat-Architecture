@@ -1,0 +1,923 @@
+{
+  "schema": 1,
+  "id": "home_wall_2_13",
+  "version": 1,
+  "name": "Handelshof/home_wall_2_13",
+  "width": 13,
+  "height": 5,
+  "depth": 1,
+  "cells": [
+    {
+      "pos": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "form": "cq_base@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 1,
+        "y": 0,
+        "z": 0
+      },
+      "form": "cq_base@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 2,
+        "y": 0,
+        "z": 0
+      },
+      "form": "cq_base@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 3,
+        "y": 0,
+        "z": 0
+      },
+      "form": "cq_base@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 4,
+        "y": 0,
+        "z": 0
+      },
+      "form": "cq_base@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 5,
+        "y": 0,
+        "z": 0
+      },
+      "form": "cq_base@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 6,
+        "y": 0,
+        "z": 0
+      },
+      "form": "cq_base@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 7,
+        "y": 0,
+        "z": 0
+      },
+      "form": "cq_base@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 8,
+        "y": 0,
+        "z": 0
+      },
+      "form": "cq_base@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 9,
+        "y": 0,
+        "z": 0
+      },
+      "form": "cq_base@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 10,
+        "y": 0,
+        "z": 0
+      },
+      "form": "cq_base@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 11,
+        "y": 0,
+        "z": 0
+      },
+      "form": "cq_base@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 12,
+        "y": 0,
+        "z": 0
+      },
+      "form": "cq_base@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 0,
+        "y": 1,
+        "z": 0
+      },
+      "form": "cq_pier@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 1,
+        "y": 1,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 2,
+        "y": 1,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 3,
+        "y": 1,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 4,
+        "y": 1,
+        "z": 0
+      },
+      "form": "cq_pier@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 5,
+        "y": 1,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 6,
+        "y": 1,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 7,
+        "y": 1,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 8,
+        "y": 1,
+        "z": 0
+      },
+      "form": "cq_pier@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 9,
+        "y": 1,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 10,
+        "y": 1,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 11,
+        "y": 1,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 12,
+        "y": 1,
+        "z": 0
+      },
+      "form": "cq_pier@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 0,
+        "y": 2,
+        "z": 0
+      },
+      "form": "cq_pier@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 1,
+        "y": 2,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 2,
+        "y": 2,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 3,
+        "y": 2,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 4,
+        "y": 2,
+        "z": 0
+      },
+      "form": "cq_pier@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 5,
+        "y": 2,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 6,
+        "y": 2,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 7,
+        "y": 2,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 8,
+        "y": 2,
+        "z": 0
+      },
+      "form": "cq_pier@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 9,
+        "y": 2,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 10,
+        "y": 2,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 11,
+        "y": 2,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 12,
+        "y": 2,
+        "z": 0
+      },
+      "form": "cq_pier@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 0,
+        "y": 3,
+        "z": 0
+      },
+      "form": "cq_pier@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 1,
+        "y": 3,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 2,
+        "y": 3,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 3,
+        "y": 3,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 4,
+        "y": 3,
+        "z": 0
+      },
+      "form": "cq_pier@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 5,
+        "y": 3,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 6,
+        "y": 3,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 7,
+        "y": 3,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 8,
+        "y": 3,
+        "z": 0
+      },
+      "form": "cq_pier@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 9,
+        "y": 3,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 10,
+        "y": 3,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 11,
+        "y": 3,
+        "z": 0
+      },
+      "form": "cq_window@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 12,
+        "y": 3,
+        "z": 0
+      },
+      "form": "cq_pier@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 0,
+        "y": 4,
+        "z": 0
+      },
+      "form": "cq_cornice@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 1,
+        "y": 4,
+        "z": 0
+      },
+      "form": "cq_cornice@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 2,
+        "y": 4,
+        "z": 0
+      },
+      "form": "cq_cornice@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 3,
+        "y": 4,
+        "z": 0
+      },
+      "form": "cq_cornice@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 4,
+        "y": 4,
+        "z": 0
+      },
+      "form": "cq_cornice@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 5,
+        "y": 4,
+        "z": 0
+      },
+      "form": "cq_cornice@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 6,
+        "y": 4,
+        "z": 0
+      },
+      "form": "cq_cornice@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 7,
+        "y": 4,
+        "z": 0
+      },
+      "form": "cq_cornice@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 8,
+        "y": 4,
+        "z": 0
+      },
+      "form": "cq_cornice@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 9,
+        "y": 4,
+        "z": 0
+      },
+      "form": "cq_cornice@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 10,
+        "y": 4,
+        "z": 0
+      },
+      "form": "cq_cornice@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 11,
+        "y": 4,
+        "z": 0
+      },
+      "form": "cq_cornice@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    },
+    {
+      "pos": {
+        "x": 12,
+        "y": 4,
+        "z": 0
+      },
+      "form": "cq_cornice@1",
+      "block": "",
+      "role": "plaster",
+      "turn": 0,
+      "empty": false,
+      "flexible": false,
+      "rotations": []
+    }
+  ],
+  "minWidth": 13,
+  "maxWidth": 13
+}

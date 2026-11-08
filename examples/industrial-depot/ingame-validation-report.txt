@@ -1,0 +1,13 @@
+CREATE: build/industrial-depot-client-create.log
+ARCHITECT INDUSTRIAL DEPOT SITE READY: origin=P(x=256, y=74, z=256) table=P(x=310, y=74, z=268); no depot blocks placed yet
+ARCHITECT INDUSTRIAL DEPOT FORMS NETWORK SAVED: 14 authoritative forms
+ARCHITECT INDUSTRIAL DEPOT GRAPH NETWORK SAVED: industrial_depot_lichtwerk@1, 69 nodes
+ARCHITECT INDUSTRIAL DEPOT SERVER VERIFIED: 6662 actual blocks, 15416 air cells; table=27710889-cb38-43e6-a196-cc7fc6320add, 6662 owned tokens; library=173615/180000 characters
+ARCHITECT INDUSTRIAL DEPOT SERVER VERIFIED: 6662 actual blocks, 15416 air cells; table=27710889-cb38-43e6-a196-cc7fc6320add, 6662 owned tokens; library=173615/180000 characters
+ARCHITECT INDUSTRIAL DEPOT CLIENT PASSED: genuine table/network form+graph saves, UI Creative Build, 6662 real world blocks, complete table ownership, five world views and table graph/build/floorplan screenshots
+BUILD SUCCESSFUL in 3m 50s
+
+RELOAD: build/industrial-depot-client-verify.log
+ARCHITECT INDUSTRIAL DEPOT SERVER VERIFIED: 6662 actual blocks, 15416 air cells; table=27710889-cb38-43e6-a196-cc7fc6320add, 6662 owned tokens; library=173631/180000 characters
+ARCHITECT INDUSTRIAL DEPOT RELOAD PASSED: exact world geometry/materials, clear interiors, saved graph/form library and complete real architect-table ownership ledger survived fresh load
+BUILD SUCCESSFUL in 2m 26s

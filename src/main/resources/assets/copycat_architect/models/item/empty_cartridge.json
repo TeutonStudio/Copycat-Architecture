@@ -1,7 +1,6 @@
 {
-  "parent": "minecraft:item/generated",
+  "parent": "copycat_architect:item/cartridge",
   "textures": {
-    "layer0": "copycat_architect:item/cartridge",
-    "layer1": "minecraft:item/iron_nugget"
+    "cap": "minecraft:block/iron_block"
   }
 }

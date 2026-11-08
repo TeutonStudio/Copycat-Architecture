@@ -1,0 +1,54 @@
+// Run the real Quartier client in its own copied world and game directory.
+// Prepare first: python3 tools/prepare_quartier_world.py
+// Run: ./gradlew -I tools/quartier-validation.init.gradle runClient --offline --console=plain
+// Reload verification: add -PquartierVerify to that command.
+// Open the finished world for normal play: add -PquartierExplore.
+
+// Keep this client's loaded classes independent of concurrent development builds.
+gradle.beforeProject { project ->
+    if (project == project.rootProject) {
+        project.layout.buildDirectory.set(project.file('build/quartier-build'))
+    }
+}
+
+gradle.projectsEvaluated {
+    rootProject.tasks.named('compileKotlin') {
+        outputs.upToDateWhen { false }
+    }
+    def frozenDir = rootProject.file('build/quartier-frozen-mod')
+    def freezeTask = rootProject.tasks.register('freezeQuartierMod', Sync) {
+        dependsOn(rootProject.tasks.named('classes'))
+        from(rootProject.sourceSets.main.output)
+        into(frozenDir)
+        doLast {
+            ['META-INF/neoforge.mods.toml',
+             'de/teutonstudio/copycatarchitect/domain/CompiledBuilding.class',
+             'de/teutonstudio/copycatarchitect/server/Network$TableBinding.class',
+             'de/teutonstudio/copycatarchitect/client/FloorPlanCanvas.class',
+             'de/teutonstudio/copycatarchitect/client/EditorDropdown.class',
+             'de/teutonstudio/copycatarchitect/client/Meshes$cache$1.class',
+             'de/teutonstudio/copycatarchitect/client/mixin/CreativeCatalogTabAccessor.class',
+             'de/teutonstudio/copycatarchitect/client/QuartierClientSmoke.class'].each { entry ->
+                if (!new File(frozenDir, entry).isFile()) throw new GradleException('Incomplete frozen Quartier mod: ' + entry)
+            }
+        }
+    }
+    rootProject.tasks.named('runClient').configure { task ->
+        dependsOn(freezeTask)
+        environmentProperty.put('MOD_CLASSES', 'copycat_architect%%' + frozenDir.absolutePath)
+        doFirst { println('Quartier frozen mod: ' + environmentProperty.get().get('MOD_CLASSES')) }
+    }
+    rootProject.extensions.getByName('neoForge').runs.configureEach {
+        if (name == 'client') {
+            gameDirectory.set(rootProject.file('build/quartier-client'))
+            jvmArgument('-Xmx6G')
+            systemProperty('architect.quartierSmoke', rootProject.hasProperty('quartierExplore') ? 'false' : 'true')
+            systemProperty('architect.quartierSource', rootProject.file('examples/quartier-horloge').absolutePath)
+            if (rootProject.hasProperty('quartierVerify')) {
+                systemProperty('architect.quartierVerify', 'true')
+            }
+            programArguments.addAll('--quickPlaySingleplayer', 'Quartier de l Horloge',
+                '--width', '1600', '--height', '1000')
+        }
+    }
+}

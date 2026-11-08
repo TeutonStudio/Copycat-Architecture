@@ -55,6 +55,28 @@ internal object CopycatSelectionSmoke {
             "Escape from the native source picker changed the document or its history"
         }
 
+        val filtered=inspectorPicker(mc,shape,node.id)
+        click(filtered,checkNotNull(filtered.categoryPoint(1)))
+        check(filtered.visibleShapes().map { it.name }.toSet()==setOf("full","slab","stairs"))
+        click(filtered,checkNotNull(filtered.categoryPoint(3)))
+        check(filtered.visibleShapes().isNotEmpty() && filtered.visibleShapes().all { "half_layer" in it.source })
+        click(filtered,checkNotNull(filtered.categoryPoint(0)))
+        click(filtered,filtered.searchPoint())
+        val target=BaseShapes.find("copycats:copycat_slab")
+        target.source.forEach { check(filtered.charTyped(it,0)) }
+        check(filtered.visibleShapes()==listOf(target)) { "Catalog search must filter real registry IDs" }
+        filtered.resize(mc,mc.window.guiScaledWidth,mc.window.guiScaledHeight)
+        check(filtered.visibleShapes()==listOf(target)) { "Catalog search must survive resize" }
+        val resizedSearch=filtered.children().filterIsInstance<net.minecraft.client.gui.components.EditBox>().single()
+        resizedSearch.value="no_such_copycat_fixture"
+        check(filtered.visibleShapes().isEmpty() && filtered.slotPoint(target)==null)
+        resizedSearch.value=""
+        check(filtered.visibleShapes()==BaseShapes.all)
+        check(filtered.keyPressed(256,0,0))
+        check(mc.screen===shape && Json.encode(shape.form)==originalJson && history(shape)==initialHistory) {
+            "Searching and filtering the catalog must not mutate the document"
+        }
+
         select(inspectorPicker(mc,shape,node.id),BaseShapes.find(node.part.source,node.part.discCut))
         check(mc.screen===shape && Json.encode(shape.form)==originalJson && history(shape)==initialHistory) {
             "Selecting the existing Copycat must not create an edit"
@@ -120,6 +142,6 @@ internal object CopycatSelectionSmoke {
         keyboardSelection(sources.last(),269,verifyCurrentFocus=true) // End
         shape.selectShapeNode(node.id);shape.openGraph(true)
         check(Json.encode(shape.form)==originalJson)
-        println("ARCHITECT COPYCAT PICKER: native and inspector buttons, all ${sources.size} real item slots and source resets, Escape, unchanged selection, atomic Undo/Redo, keyboard rows, last-entry focus and resize verified")
+        println("ARCHITECT COPYCAT PICKER: native and inspector buttons, all ${sources.size} real item slots and source resets, Escape, unchanged selection, atomic Undo/Redo, keyboard rows, last-entry focus, search, category filters, empty results and resize verified")
     }
 }

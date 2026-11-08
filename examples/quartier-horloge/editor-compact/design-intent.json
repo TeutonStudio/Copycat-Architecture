@@ -1,0 +1,33 @@
+{
+  "reference": "https://createmod.com/de/schematics/quartier-de-lhorloge",
+  "variant": "Separate editor compact variant; rectangular windows and one-block native DISC clocks",
+  "hallInterior": [
+    15,
+    23
+  ],
+  "galleryVoid": [
+    5,
+    17
+  ],
+  "towerInterior": [
+    7,
+    7
+  ],
+  "towerStoreys": 5,
+  "houseInteriors": [
+    [
+      9,
+      11
+    ],
+    [
+      9,
+      11
+    ]
+  ],
+  "houseStoreys": 2,
+  "stairs": 4,
+  "roofs": 4,
+  "graphNodes": 65,
+  "forms": 6,
+  "modules": 6
+}

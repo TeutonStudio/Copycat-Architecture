@@ -1,0 +1,101 @@
+{
+  "schema": 3,
+  "id": "t_corner",
+  "version": 1,
+  "name": "T-Haus/Fassade/Senkrechte Quarzecke",
+  "parts": [
+    {
+      "source": "copycats:copycat_vertical_slice",
+      "turn": 0,
+      "top": false,
+      "size": 2,
+      "offset": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "tilt": 0,
+      "group": "body",
+      "cutMask": "",
+      "recipeSource": "",
+      "spin": 0,
+      "discCut": 0
+    }
+  ],
+  "groups": [
+    {
+      "id": "body",
+      "name": "Body",
+      "role": "surface",
+      "priority": 0
+    }
+  ],
+  "graph": {
+    "schema": 2,
+    "nodes": [
+      {
+        "id": "source0",
+        "kind": "INPUT",
+        "inputs": [],
+        "part": {
+          "source": "copycats:copycat_vertical_slice",
+          "turn": 0,
+          "top": false,
+          "size": 2,
+          "offset": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "tilt": 0,
+          "group": "body",
+          "cutMask": "",
+          "recipeSource": "",
+          "spin": 0,
+          "discCut": 0
+        },
+        "x": 20,
+        "y": 20,
+        "materialMode": "SEPARATED",
+        "materialGroup": "",
+        "previewGroup": "",
+        "inputGroups": [],
+        "rotationAxis": "NORMAL",
+        "quarterTurns": 0
+      },
+      {
+        "id": "result",
+        "kind": "OUTPUT",
+        "inputs": [
+          "source0"
+        ],
+        "part": {
+          "source": "copycats:copycat_slice",
+          "turn": 0,
+          "top": false,
+          "size": 1,
+          "offset": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "tilt": 0,
+          "group": "body",
+          "cutMask": "",
+          "recipeSource": "",
+          "spin": 0,
+          "discCut": 0
+        },
+        "x": 280,
+        "y": 65,
+        "materialMode": "SEPARATED",
+        "materialGroup": "",
+        "previewGroup": "",
+        "inputGroups": [],
+        "rotationAxis": "NORMAL",
+        "quarterTurns": 0
+      }
+    ],
+    "nodeGroups": []
+  }
+}

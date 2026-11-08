@@ -1,0 +1,187 @@
+{
+  "schema": 3,
+  "id": "t_pier",
+  "version": 1,
+  "name": "T-Haus/Fassade/Senkrechter Pilaster",
+  "parts": [
+    {
+      "source": "create:copycat_panel",
+      "turn": 0,
+      "top": false,
+      "size": 1,
+      "offset": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "tilt": 3,
+      "group": "body",
+      "cutMask": "",
+      "recipeSource": "",
+      "spin": 0,
+      "discCut": 0
+    },
+    {
+      "source": "copycats:copycat_vertical_slice",
+      "turn": 0,
+      "top": false,
+      "size": 2,
+      "offset": {
+        "x": -6,
+        "y": 0,
+        "z": -2
+      },
+      "tilt": 0,
+      "group": "ornament",
+      "cutMask": "",
+      "recipeSource": "",
+      "spin": 0,
+      "discCut": 0
+    }
+  ],
+  "groups": [
+    {
+      "id": "body",
+      "name": "Body",
+      "role": "surface",
+      "priority": 0
+    },
+    {
+      "id": "ornament",
+      "name": "Quarzrelief",
+      "role": "trim",
+      "priority": 1
+    }
+  ],
+  "graph": {
+    "schema": 2,
+    "nodes": [
+      {
+        "id": "source0",
+        "kind": "INPUT",
+        "inputs": [],
+        "part": {
+          "source": "create:copycat_panel",
+          "turn": 0,
+          "top": false,
+          "size": 1,
+          "offset": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "tilt": 3,
+          "group": "body",
+          "cutMask": "",
+          "recipeSource": "",
+          "spin": 0,
+          "discCut": 0
+        },
+        "x": 20,
+        "y": 20,
+        "materialMode": "SEPARATED",
+        "materialGroup": "",
+        "previewGroup": "",
+        "inputGroups": [],
+        "rotationAxis": "NORMAL",
+        "quarterTurns": 0
+      },
+      {
+        "id": "source1",
+        "kind": "INPUT",
+        "inputs": [],
+        "part": {
+          "source": "copycats:copycat_vertical_slice",
+          "turn": 0,
+          "top": false,
+          "size": 2,
+          "offset": {
+            "x": -6,
+            "y": 0,
+            "z": -2
+          },
+          "tilt": 0,
+          "group": "ornament",
+          "cutMask": "",
+          "recipeSource": "",
+          "spin": 0,
+          "discCut": 0
+        },
+        "x": 20,
+        "y": 240,
+        "materialMode": "SEPARATED",
+        "materialGroup": "",
+        "previewGroup": "",
+        "inputGroups": [],
+        "rotationAxis": "NORMAL",
+        "quarterTurns": 0
+      },
+      {
+        "id": "union0",
+        "kind": "UNION",
+        "inputs": [
+          "source0",
+          "source1"
+        ],
+        "part": {
+          "source": "copycats:copycat_slice",
+          "turn": 0,
+          "top": false,
+          "size": 1,
+          "offset": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "tilt": 0,
+          "group": "body",
+          "cutMask": "",
+          "recipeSource": "",
+          "spin": 0,
+          "discCut": 0
+        },
+        "x": 250,
+        "y": 40,
+        "materialMode": "SEPARATED",
+        "materialGroup": "",
+        "previewGroup": "",
+        "inputGroups": [],
+        "rotationAxis": "NORMAL",
+        "quarterTurns": 0
+      },
+      {
+        "id": "result",
+        "kind": "OUTPUT",
+        "inputs": [
+          "union0"
+        ],
+        "part": {
+          "source": "copycats:copycat_slice",
+          "turn": 0,
+          "top": false,
+          "size": 1,
+          "offset": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "tilt": 0,
+          "group": "body",
+          "cutMask": "",
+          "recipeSource": "",
+          "spin": 0,
+          "discCut": 0
+        },
+        "x": 480,
+        "y": 65,
+        "materialMode": "SEPARATED",
+        "materialGroup": "",
+        "previewGroup": "",
+        "inputGroups": [],
+        "rotationAxis": "NORMAL",
+        "quarterTurns": 0
+      }
+    ],
+    "nodeGroups": []
+  }
+}

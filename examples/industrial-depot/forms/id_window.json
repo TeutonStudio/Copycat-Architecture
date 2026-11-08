@@ -1,0 +1,273 @@
+{
+  "schema": 4,
+  "id": "id_window",
+  "version": 1,
+  "name": "Lichtwerk/Fenster/Feines Stahlsprossenfenster",
+  "parts": [
+    {
+      "source": "copycats:copycat_layer",
+      "size": 1,
+      "tilt": 3,
+      "group": "glass"
+    },
+    {
+      "source": "copycats:copycat_layer",
+      "size": 8,
+      "group": "frame",
+      "exact": {
+        "cells": [
+          {
+            "planes": [
+              {
+                "x": 1,
+                "y": 0,
+                "z": 0,
+                "d": 1
+              },
+              {
+                "x": -1,
+                "y": 0,
+                "z": 0,
+                "d": 0
+              },
+              {
+                "x": 0,
+                "y": 1,
+                "z": 0,
+                "d": 16
+              },
+              {
+                "x": 0,
+                "y": -1,
+                "z": 0,
+                "d": 0
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": 1,
+                "d": 16
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": -1,
+                "d": -11
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "source": "copycats:copycat_layer",
+      "size": 8,
+      "group": "frame",
+      "exact": {
+        "cells": [
+          {
+            "planes": [
+              {
+                "x": 1,
+                "y": 0,
+                "z": 0,
+                "d": 16
+              },
+              {
+                "x": -1,
+                "y": 0,
+                "z": 0,
+                "d": -15
+              },
+              {
+                "x": 0,
+                "y": 1,
+                "z": 0,
+                "d": 16
+              },
+              {
+                "x": 0,
+                "y": -1,
+                "z": 0,
+                "d": 0
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": 1,
+                "d": 16
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": -1,
+                "d": -11
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "source": "copycats:copycat_layer",
+      "size": 8,
+      "group": "frame",
+      "exact": {
+        "cells": [
+          {
+            "planes": [
+              {
+                "x": 1,
+                "y": 0,
+                "z": 0,
+                "d": 16
+              },
+              {
+                "x": -1,
+                "y": 0,
+                "z": 0,
+                "d": 0
+              },
+              {
+                "x": 0,
+                "y": 1,
+                "z": 0,
+                "d": 1
+              },
+              {
+                "x": 0,
+                "y": -1,
+                "z": 0,
+                "d": 0
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": 1,
+                "d": 16
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": -1,
+                "d": -11
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "source": "copycats:copycat_layer",
+      "size": 8,
+      "group": "frame",
+      "exact": {
+        "cells": [
+          {
+            "planes": [
+              {
+                "x": 1,
+                "y": 0,
+                "z": 0,
+                "d": 16
+              },
+              {
+                "x": -1,
+                "y": 0,
+                "z": 0,
+                "d": 0
+              },
+              {
+                "x": 0,
+                "y": 1,
+                "z": 0,
+                "d": 16
+              },
+              {
+                "x": 0,
+                "y": -1,
+                "z": 0,
+                "d": -15
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": 1,
+                "d": 16
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": -1,
+                "d": -11
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "source": "copycats:copycat_layer",
+      "size": 8,
+      "group": "frame",
+      "exact": {
+        "cells": [
+          {
+            "planes": [
+              {
+                "x": 1,
+                "y": 0,
+                "z": 0,
+                "d": 8
+              },
+              {
+                "x": -1,
+                "y": 0,
+                "z": 0,
+                "d": -7
+              },
+              {
+                "x": 0,
+                "y": 1,
+                "z": 0,
+                "d": 16
+              },
+              {
+                "x": 0,
+                "y": -1,
+                "z": 0,
+                "d": 0
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": 1,
+                "d": 16
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": -1,
+                "d": -11
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "groups": [
+    {
+      "id": "glass",
+      "name": "Glass",
+      "role": "glass",
+      "priority": 0
+    },
+    {
+      "id": "frame",
+      "name": "Frame",
+      "role": "frame",
+      "priority": 1
+    }
+  ]
+}

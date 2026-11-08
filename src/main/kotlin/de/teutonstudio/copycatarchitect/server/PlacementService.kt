@@ -20,6 +20,7 @@ import net.neoforged.neoforge.common.CommonHooks
 import net.neoforged.neoforge.common.util.BlockSnapshot
 
 object Economy {
+    const val MB_PER_ZINC_INGOT=144
     val palette=listOf("minecraft:stone","minecraft:stone_bricks","minecraft:cobblestone","minecraft:oak_planks","minecraft:oak_log","minecraft:glass","minecraft:deepslate_tiles","minecraft:bricks","minecraft:white_concrete","minecraft:spruce_planks")
     fun item(id:String):Item {
         val key=ResourceLocation.tryParse(id) ?: error("Invalid material ID")
@@ -30,7 +31,7 @@ object Economy {
         return CopycatMaterials.state(id)
     }
     fun nativeState(id:String):BlockState {
-        require(id in palette || id in BuildingGraphCompiler.CARPETS) { "Unsupported building block: $id" }
+        require(id in palette || id in BuildingGraphCompiler.CARPETS || id in LandscapeGeometry.nativeBlocks) { "Unsupported building block: $id" }
         return (item(id) as? BlockItem)?.block?.defaultBlockState() ?: error("Building item must be a block")
     }
     fun isCartridge(s:ItemStack)=s.item is CartridgeItem
@@ -78,11 +79,11 @@ object Economy {
         // Zinc ingots can be loaded into an empty cartridge in the same inventory.
         val zinc=item("create:zinc_ingot")
         for(s in stacks) if(needRaw>0 && s.`is`(zinc)) {
-            val take=minOf(s.count,(needRaw+255)/256);val provided=take*256
+            val take=minOf(s.count,(needRaw+MB_PER_ZINC_INGOT-1)/MB_PER_ZINC_INGOT);val provided=take*MB_PER_ZINC_INGOT
             val rest=(provided-needRaw).coerceAtLeast(0)
             if(rest>0) {
                 val empty=stacks.firstOrNull { it.isEmpty && it!==s } ?: if(s.count==take) s else null
-                require(empty!=null) { "No inventory slot for remaining extrusion units" }
+                require(empty!=null) { "No inventory slot for remaining zinc (mB)" }
                 s.shrink(take)
                 if(empty===s) { s.count=1; /* handled by replacement below */ }
                 val index=stacks.indexOfFirst { it===empty }
@@ -91,17 +92,20 @@ object Economy {
                 require(needRaw==0);return Debit(inv,mutable,raw)
             } else { s.shrink(take);needRaw-=provided }
         }
-        require(needRaw<=0) { "Missing extrusion material: $needRaw units" }
+        require(needRaw<=0) { "Missing zinc: $needRaw mB" }
         return Debit(inv,stacks,raw)
     }
 }
 object PlacementService {
     fun matches(level:ServerLevel,pos:BlockPos,p:Placement):Boolean {
-        if(p.block.isNotEmpty()) return level.getBlockState(pos)==Economy.nativeState(p.block)
+        if(p.block.isNotEmpty()) {
+            val actual=level.getBlockState(pos);val expected=Economy.nativeState(p.block)
+            return if(p.block in LandscapeGeometry.fenceBlocks) actual.`is`(expected.block) else actual==expected
+        }
         val be=level.getBlockEntity(pos) as? CompositeEntity ?: return false
-        return Geometry.resolve(be.parts,be.groups).visualKey(be.material,be.surfaces)==p.visualKey()
+        return Geometry.resolve(be.parts,be.groups).sameVisual(be.material,be.surfaces,Geometry.resolve(p.parts,p.groups),p.material,p.surfaces)
     }
-    fun place(level:ServerLevel,pos:BlockPos,p:Placement,inventory:Container,actor:Player,operation:String,creative:Boolean=false,rawCost:Int=if(p.block.isEmpty()) Extrusion.cost(p.parts,p.groups) else 0,replaceable:Block?=null):Boolean {
+    fun place(level:ServerLevel,pos:BlockPos,p:Placement,inventory:Container,actor:Player,operation:String,creative:Boolean=false,rawCost:Int=if(p.block.isEmpty()) Extrusion.cost(p.parts,p.groups) else 0,replaceable:Block?=null,updateFlags:Int=3):Boolean {
         require(level.hasChunkAt(pos) && level.isInWorldBounds(pos)) { "Target chunk is not loaded" }
         if(matches(level,pos,p)) return false // Idempotent before charging.
         require(level.getBlockState(pos).isAir || replaceable!=null && level.getBlockState(pos).`is`(replaceable)) { "Target blocked at $pos" }
@@ -110,11 +114,12 @@ object PlacementService {
         if(p.block.isEmpty()) { Geometry.normalized(p.parts,p.groups);require(p.surfaces.size<=8 && p.surfaces.keys.all { id -> p.groups.any { it.id==id } }) { "Unknown material group assignment" };p.surfaceItems().keys.forEach { Economy.state(it) } } else Economy.nativeState(p.block)
         val debit=if(creative) null else Economy.prepare(inventory,rawCost,p.surfaceItems())
         val snapshot=BlockSnapshot.create(level.dimension(),level,pos)
-        val state=if(p.block.isEmpty()) Architect.COMPOSITE.get().defaultBlockState() else Economy.nativeState(p.block)
+        val initial=if(p.block.isEmpty()) Architect.COMPOSITE.get().defaultBlockState() else Economy.nativeState(p.block)
+        val state=if(p.block in LandscapeGeometry.fenceBlocks) Block.updateFromNeighbourShapes(initial,level,pos) else initial
         require(state.canSurvive(level,pos)) { "Building block needs valid support at $pos" }
         try {
             // Protection hooks may reject placement or throw; either outcome restores the full device.
-            require(level.setBlock(pos,state,3)) { "World rejected placement" }
+            require(level.setBlock(pos,state,updateFlags)) { "World rejected placement" }
             check(!net.neoforged.neoforge.event.EventHooks.onBlockPlace(actor,snapshot,net.minecraft.core.Direction.UP)) { "Placement denied by protection" }
             if(p.block.isEmpty()) {
                 val be=level.getBlockEntity(pos) as? CompositeEntity ?: error("Composite unavailable")

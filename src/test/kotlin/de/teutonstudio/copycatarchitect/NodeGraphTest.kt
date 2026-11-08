@@ -33,7 +33,7 @@ class NodeGraphTest {
         val g=NodeGraph(nodes=listOf(GraphNode("a",part=full),GraphNode("b",part=slab),GraphNode("c",part=Part("copycats:copycat_vertical_slice",size=2)),
             GraphNode("subtract",NodeKind.DIFFERENCE,listOf("a","b")),GraphNode("join",NodeKind.UNION,listOf("subtract","c","subtract")),GraphNode("result",NodeKind.OUTPUT,listOf("join"))))
         val parts=GraphCompiler.compile(g)
-        assertEquals(2,parts.size);assertTrue(parts.none { it.source==slab.source });assertEquals(288,Extrusion.cost(parts))
+        assertEquals(2,parts.size);assertTrue(parts.none { it.source==slab.source });assertEquals(136,Extrusion.cost(parts))
         val solid=Geometry.solid(parts);assertFalse(solid.has(0,0,0));assertTrue(solid.has(15,0,15));assertTrue(solid.has(0,15,0))
     }
     @Test fun `difference and intersection inherit materials from their first geometry input`() {
@@ -52,7 +52,7 @@ class NodeGraphTest {
         val restored=Geometry.validate(Gson().fromJson(json,Form::class.java))
         assertEquals(form,restored);val solid=Geometry.solid(form.parts)
         for(q in 0..3) assertEquals(solid.rotate(q).key(),Geometry.solid(Geometry.rotate(restored.parts,q)).key())
-        assertEquals(form.parts,Geometry.normalized(form.parts));assertEquals(256,Extrusion.cost(form.parts))
+        assertEquals(form.parts,Geometry.normalized(form.parts));assertEquals(220,Extrusion.cost(form.parts))
     }
     @Test fun `server recomputes client snapshots and rejects forged masks without a graph`() {
         val g=graph(NodeKind.DIFFERENCE,listOf(full,slab))
@@ -98,7 +98,7 @@ class NodeGraphTest {
             assertEquals(separate,GraphCompiler.compile(grouped.replace(grouped.nodes.first { it.id=="op" }.copy(materialMode=MaterialMode.SEPARATED)),materialGroups))
         }
     }
-    @Test fun `shared source keeps distinct branch materials and one paid recipe`() {
+    @Test fun `shared source keeps distinct branch materials and the same physical volume`() {
         val graph=NodeGraph(nodes=listOf(GraphNode("source",part=full),GraphNode("mask",part=slab),
             GraphNode("bottom",NodeKind.INTERSECTION,listOf("source","mask"),materialMode=MaterialMode.GROUPED,materialGroup="cap"),
             GraphNode("top",NodeKind.DIFFERENCE,listOf("source","mask")),
@@ -107,7 +107,7 @@ class NodeGraphTest {
         val resolved=Geometry.resolve(parts,materialGroups)
         assertEquals(4096,resolved.solid.count());assertEquals(2048,resolved.owned.getValue("body").count());assertEquals(2048,resolved.owned.getValue("cap").count())
         assertEquals(256,Extrusion.cost(parts,materialGroups))
-        assertEquals(128,Extrusion.cost(parts,materialGroups,Extrusion.outputs+(full.source to 2)))
+        assertEquals(256,Extrusion.cost(parts,materialGroups,Extrusion.outputs+(full.source to 2)))
         assertEquals(mapOf("minecraft:stone" to 1,"minecraft:oak_planks" to 1),Placement(parts=parts,groups=materialGroups,surfaces=mapOf("cap" to "minecraft:oak_planks")).surfaceItems())
         for(q in 0..3) assertEquals(256,Extrusion.cost(Geometry.rotate(parts,q),materialGroups))
     }
@@ -196,7 +196,7 @@ class NodeGraphTest {
         val resolved=Geometry.resolve(parts,materialGroups)
         assertEquals(2048,resolved.solid.count());assertEquals(1024,resolved.owned.getValue("body").count());assertEquals(1024,resolved.owned.getValue("cap").count())
         assertEquals("body",resolved.owner(0,0,0));assertNull(resolved.owner(0,4,0));assertEquals("cap",resolved.owner(0,8,0))
-        assertEquals(256,Extrusion.cost(parts,materialGroups))
+        assertEquals(128,Extrusion.cost(parts,materialGroups))
         val uniform=assigned.copy(inputGroups=listOf("cap","cap"))
         assertTrue(GraphCompiler.uniformSeparatedGroups(g.replace(uniform),uniform,materialGroups))
         val grouped=assigned.copy(materialMode=MaterialMode.GROUPED,materialGroup="cap")
@@ -218,7 +218,7 @@ class NodeGraphTest {
                 GraphNode("rotate",NodeKind.ROTATE,listOf("op",""),rotationAxis=axis,quarterTurns=q)+base.nodes.last().copy(inputs=listOf("rotate")))
             val parts=GraphCompiler.compile(rotated)
             assertEquals(original.rotate(axis,q).key(),Geometry.solid(parts).key())
-            assertEquals(full.source,parts.single().source);assertEquals(256,Extrusion.cost(parts))
+            assertEquals(full.source,parts.single().source);assertEquals(220,Extrusion.cost(parts))
             val form=Geometry.validate(Form(graph=rotated))
             assertEquals(form,Geometry.validate(Gson().fromJson(Gson().toJson(form),Form::class.java)))
         }
@@ -248,7 +248,7 @@ class NodeGraphTest {
         assertEquals(2048,resolved.owned.getValue("body").count());assertEquals(256,Extrusion.cost(materials.parts,materials.groups))
         val rotated=load("nodegraph-rotation-xor")
         assertEquals(setOf(NodeKind.INPUT,NodeKind.ROTATION,NodeKind.ROTATE,NodeKind.SYMMETRIC_DIFFERENCE,NodeKind.OUTPUT),rotated.graph!!.nodes.map { it.kind }.toSet())
-        assertEquals(2048,Geometry.solid(rotated.parts).count());assertEquals(256,Extrusion.cost(rotated.parts,rotated.groups))
+        assertEquals(2048,Geometry.solid(rotated.parts).count());assertEquals(128,Extrusion.cost(rotated.parts,rotated.groups))
         val rotatedGroups=Geometry.resolve(rotated.parts,rotated.groups).owned
         assertEquals(1024,rotatedGroups.getValue("body").count());assertEquals(1024,rotatedGroups.getValue("cap").count())
         for(form in listOf(materials,rotated)) {

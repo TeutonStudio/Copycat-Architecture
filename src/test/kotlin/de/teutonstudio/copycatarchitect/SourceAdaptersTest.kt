@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 import kotlin.test.*
 
 class SourceAdaptersTest {
-    @Test fun `extended sources survive saved form round trips with their state and recipe`() {
+    @Test fun `extended sources survive saved form round trips with their state and volume`() {
         val gson=Gson()
         for(a in Adapters.all.values) {
             val p=Part(a.source,turn=3,top=true,size=a.max,tilt=if(a.tiltable) 1 else 0)
@@ -14,7 +14,7 @@ class SourceAdaptersTest {
             val restored=Geometry.validate(gson.fromJson(gson.toJson(form),Form::class.java))
             assertEquals(form,restored)
             assertEquals(p.sourceProperties(),restored.parts.single().sourceProperties())
-            assertEquals(256/a.output*(if(a.layered) a.max else 1),Extrusion.cost(restored.parts))
+            assertEquals((Solid.part(p).count()+15)/16,Extrusion.cost(restored.parts))
         }
     }
 
@@ -46,10 +46,10 @@ class SourceAdaptersTest {
         assertEquals("true",Part("copycats:copycat_byte",tilt=1).sourceProperties()["top_northwest"])
     }
 
-    @Test fun `four byte panels reconstruct the panel and charge the original cutting cost`() {
+    @Test fun `four byte panels reconstruct the panel and charge its occupied volume`() {
         val quadrants=(0..3).map { Part("copycats:copycat_byte_panel",turn=it) }
         assertEquals(Solid.part(Part("create:copycat_panel")).key(),Geometry.solid(quadrants).key())
-        assertEquals(64,Extrusion.cost(quadrants))
+        assertEquals(48,Extrusion.cost(quadrants))
         assertEquals(4,quadrants.map { p -> p.sourceProperties().filterValues { it=="true" }.keys.single() }.distinct().size)
         for(p in quadrants) for(top in listOf(false,true)) for(tilt in 0..3) {
             val q=p.copy(top=top,tilt=tilt)

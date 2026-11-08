@@ -1,0 +1,22 @@
+// Explicit opt-in only; isolate compiled classes too, since other chats may compile the shared checkout.
+def industrialDepotRun = gradle.startParameter.projectProperties.containsKey('industrialDepotSmoke') ||
+    gradle.startParameter.projectProperties.containsKey('industrialDepotVerify')
+gradle.beforeProject { project ->
+    if (industrialDepotRun && project.path == ':') {
+        project.layout.buildDirectory.set(project.file('build/industrial-depot-build'))
+    }
+}
+gradle.projectsEvaluated {
+    if (industrialDepotRun) {
+        rootProject.extensions.getByName('neoForge').runs.configureEach {
+            if (name == 'client') {
+                gameDirectory.set(rootProject.file('build/industrial-depot-client'))
+                systemProperty('architect.industrialDepotSmoke', 'true')
+                if (rootProject.hasProperty('industrialDepotVerify')) systemProperty('architect.industrialDepotVerify', 'true')
+                systemProperty('architect.industrialDepotPackage', rootProject.file('examples/industrial-depot').absolutePath)
+                programArguments.addAll('--quickPlaySingleplayer', 'Lichtwerk Industrie-Depot', '--width', '1920', '--height', '1080')
+                jvmArgument('-Xmx4G')
+            }
+        }
+    }
+}

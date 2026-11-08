@@ -1,0 +1,49 @@
+{
+  "positions": 6662,
+  "clearCells": 15416,
+  "zincMillibuckets": 942500,
+  "surfaceItems": {
+    "minecraft:bricks": 1830,
+    "minecraft:deepslate_tiles": 1730,
+    "minecraft:glass": 896,
+    "minecraft:polished_andesite": 1450,
+    "minecraft:polished_blackstone": 980,
+    "minecraft:smooth_stone": 2386
+  },
+  "buildingNodes": 69,
+  "forms": 14,
+  "uuidSeededLibraryCharacters": 175761,
+  "uuidSeededLibraryFreeCharacters": 4239,
+  "uuidBuildingCharacters": 153004,
+  "clipboardCharacters": 91056,
+  "saveCommandCharacters": 187244,
+  "compressedCommandCharacters": 17857,
+  "meshSha256": "d0610eaa1b0f8f10f2091c88c2643348758a3ef4348bfb3d10276bdeca5b333f",
+  "exactMeshFaces": 89786,
+  "bounds": {
+    "min": [
+      -1.0,
+      0.0,
+      -8.0
+    ],
+    "max": [
+      49.0,
+      16.875,
+      30.0
+    ]
+  },
+  "storeys": [
+    {
+      "level": 0,
+      "base": 1,
+      "minimum": 0,
+      "maximum": 7
+    },
+    {
+      "level": 1,
+      "base": 7,
+      "minimum": 6,
+      "maximum": 12
+    }
+  ]
+}

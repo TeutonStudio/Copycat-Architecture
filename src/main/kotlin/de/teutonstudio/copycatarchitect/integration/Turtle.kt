@@ -120,9 +120,10 @@ class ArchitectPeripheral(private val turtle:ITurtleAccess):IPeripheral {
     @LuaFunction fun printerPrint(direction:String,session:String):MethodResult=queue { t,level ->
         val be=printer(t,level,direction,session);val form=be.preview ?: error("No print definition");val lib=library(t,level)
         val slot=emptySlot(t.inventory);val palette=be.surfaces.toMap();val rotation=be.turn
+        val snapshot=PrinterService.prepareRecord(lib,form,palette,rotation)
         val device=PrinterService.printDirect(level,be,PaymentInventory(t.inventory,slot),actor(t,level),form,palette,rotation)
         t.inventory.setItem(slot,device);t.inventory.setChanged()
-        PrinterService.record(lib,form,palette,rotation);data(level).setDirty()
+        PrinterService.record(lib,snapshot);data(level).setDirty()
         mapOf("printed" to true,"position" to PlacementService.local(be.blockPos),"printerSlot" to slot+1,"historyId" to lib.history.firstOrNull()?.id.orEmpty())
     }
     @LuaFunction fun printerCancel(direction:String,session:String):MethodResult=queue { t,level ->
@@ -208,7 +209,8 @@ class ArchitectPeripheral(private val turtle:ITurtleAccess):IPeripheral {
         require(t.position.below()==target) { "Work position must be immediately above target" }
         val actor=FakePlayerFactory.get(l,t.owningPlayer ?: error("Missing owner"));actor.setPos(t.position.x+0.5,t.position.y.toDouble(),t.position.z+0.5)
         try {
-            PlacementService.place(l,target,p,t.inventory,actor,"${j.id}:$index",rawCost=if(p.block.isEmpty()) frozenCost(j,p) else 0)
+            if(PlacementService.place(l,target,p,t.inventory,actor,"${j.id}:$index",rawCost=if(p.block.isEmpty()) frozenCost(j,p) else 0))
+                TableBuildings.track(l,j.buildingId,target)
             j.index++;j.message="Built ${j.index}/${j.plan.placements.size}"
             if(j.index==j.plan.placements.size) j.state="complete"
             data(l).setDirty();mapOf("done" to true,"index" to j.index)

@@ -1,0 +1,8 @@
+Import gates: clipboard=91056/250000, UUID building=153004/180000, seeded UUID library=175761/180000 (4239 free), actual save Command=187244/250000, compressed wire=17857/30000 characters
+Actual creativeBuild Command: JSON=187245/250000, compressed wire=17861/30000 characters
+Actual createJob Command: JSON=187241/250000, compressed wire=17857/30000 characters
+Storage JSON characters: building=151608, forms=16573
+industrial_depot_lichtwerk@1: 14 forms, 69 nodes, 6662 placements, 15416 clear cells, 942500 mB zinc
+Exact mesh: 17 objects, 89786 faces; bounds [-1.0, 0.0, -8.0] .. [49.0, 16.875, 30.0]
+Mesh SHA-256: d0610eaa1b0f8f10f2091c88c2643348758a3ef4348bfb3d10276bdeca5b333f
+Accepted: actual server UUID-library budget including seed, clipboard/build command limits, actual save/creativeBuild/createJob Commands, CommandTransport roundtrips, JSON roundtrip, identical recompiled and UUID-rebound plans, unique positions, free hall, real stairs, gallery floor, glass roof, deterministic exact mesh export and surface count.

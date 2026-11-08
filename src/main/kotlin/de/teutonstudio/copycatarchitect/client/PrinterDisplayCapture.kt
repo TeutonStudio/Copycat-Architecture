@@ -27,11 +27,12 @@ object PrinterDisplayCapture {
     var serial=0L;private set
     val width get()=target?.width ?: 0
     val height get()=target?.height ?: 0
+    private fun currentEditor()=Minecraft.getInstance().screen.let { (it as? ShapeScreen) ?: (it as? PrinterStorageScreen)?.workspace }
 
     fun afterScreen(event:ScreenEvent.Render.Post) {
-        val mc=Minecraft.getInstance();val screen=event.screen as? ShapeScreen ?: return
+        val mc=Minecraft.getInstance();val screen=(event.screen as? ShapeScreen) ?: (event.screen as? PrinterStorageScreen)?.workspace ?: return
         val view=ClientState.snapshot.printer ?: return
-        if(mc.screen!==screen || !view.placed || view.session.isEmpty() || WorldPeek.active) return
+        if(currentEditor()!==screen || !view.placed || view.session.isEmpty() || WorldPeek.active) return
         val key=if(editor.get()===screen) session else screen.printerCommand("printerPreview").key
         if(key!=view.session) return
         event.guiGraphics.flush();RenderSystem.assertOnRenderThread()
@@ -74,7 +75,7 @@ object PrinterDisplayCapture {
         }
     }
     fun hasCapture(key:String)=target!=null && serial>0 && key.isNotEmpty() && session==key
-    fun isEditorActive(key:String)=hasCapture(key) && Minecraft.getInstance().screen===editor.get() &&
+    fun isEditorActive(key:String)=hasCapture(key) && currentEditor()===editor.get() &&
         ClientState.snapshot.printer?.let { it.placed && it.session==key }==true
 
     fun draw(key:String,pose:PoseStack,buffers:MultiBufferSource):Boolean =

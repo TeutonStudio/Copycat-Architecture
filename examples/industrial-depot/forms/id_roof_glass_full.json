@@ -1,0 +1,20 @@
+{
+  "schema": 4,
+  "id": "id_roof_glass_full",
+  "version": 1,
+  "name": "Lichtwerk/Dach/Glaslichtband-Quelle",
+  "parts": [
+    {
+      "source": "copycats:copycat_block",
+      "group": "glass"
+    }
+  ],
+  "groups": [
+    {
+      "id": "glass",
+      "name": "Glass",
+      "role": "glass",
+      "priority": 0
+    }
+  ]
+}

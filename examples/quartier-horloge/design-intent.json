@@ -1,0 +1,119 @@
+{
+  "reference": "https://createmod.com/de/schematics/quartier-de-lhorloge",
+  "units": "Minecraft blocks; exact geometry uses sixteenths",
+  "graphNodes": 89,
+  "hall": {
+    "interior": [
+      15,
+      23
+    ],
+    "storeyBases": [
+      1,
+      7
+    ],
+    "galleryVoid": {
+      "min": [
+        5,
+        6,
+        0
+      ],
+      "max": [
+        10,
+        7,
+        17
+      ]
+    }
+  },
+  "tower": {
+    "interior": [
+      7,
+      7
+    ],
+    "origin": [
+      18,
+      0,
+      0
+    ],
+    "storeyBases": [
+      1,
+      7,
+      13,
+      19,
+      25
+    ]
+  },
+  "houses": [
+    {
+      "origin": [
+        0,
+        0,
+        27
+      ],
+      "interior": [
+        9,
+        11
+      ]
+    },
+    {
+      "origin": [
+        18,
+        0,
+        27
+      ],
+      "interior": [
+        9,
+        11
+      ]
+    }
+  ],
+  "stairs": [
+    {
+      "id": "hall_stairs",
+      "source": "stairs",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 17
+      },
+      "fromStorey": "storey_0",
+      "toStorey": "storey_1",
+      "quarterTurns": 0
+    },
+    {
+      "id": "tower_stairs",
+      "source": "stairs",
+      "position": {
+        "x": 19,
+        "y": 0,
+        "z": 2
+      },
+      "fromStorey": "storey_0",
+      "toStorey": "storey_4",
+      "quarterTurns": 0
+    },
+    {
+      "id": "west_stairs",
+      "source": "stairs",
+      "position": {
+        "x": 1,
+        "y": 0,
+        "z": 30
+      },
+      "fromStorey": "storey_0",
+      "toStorey": "storey_1",
+      "quarterTurns": 0
+    },
+    {
+      "id": "east_stairs",
+      "source": "stairs",
+      "position": {
+        "x": 19,
+        "y": 0,
+        "z": 30
+      },
+      "fromStorey": "storey_0",
+      "toStorey": "storey_1",
+      "quarterTurns": 0
+    }
+  ]
+}

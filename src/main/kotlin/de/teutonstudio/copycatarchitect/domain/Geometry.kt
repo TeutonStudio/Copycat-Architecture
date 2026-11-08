@@ -1,12 +1,16 @@
 package de.teutonstudio.copycatarchitect.domain
 
+import java.util.BitSet
+import java.util.Base64
+import java.util.concurrent.ConcurrentHashMap
+
 data class P(val x: Int = 0, val y: Int = 0, val z: Int = 0) {
     operator fun plus(p: P) = P(x+p.x,y+p.y,z+p.z)
-    fun turn(q: Int): P = when ((q).mod(4)) { 1 -> P(-z,y,x); 2 -> P(-x,y,-z); 3 -> P(z,y,-x); else -> this }
+    fun turn(q: Int): P = when (Math.floorMod(q,4)) { 1 -> P(-z,y,x); 2 -> P(-x,y,-z); 3 -> P(z,y,-x); else -> this }
 }
 data class Part(val source: String = "copycats:copycat_slice", val turn: Int = 0, val top: Boolean = false,
                 val size: Int = 1, val offset: P = P(), val tilt: Int = 0, val group: String = "body", val cutMask: String = "", val recipeSource:String="",
-                val spin:Int=0, val discCut:Int=0) {
+                val spin:Int=0, val discCut:Int=0,val exact:ExactVolume?=null,val exactClip:ExactVolume?=null,val roof:RoofPartParameters?=null) {
     /** Source-local spin precedes mounting; turn retains its saved world-Y meaning. */
     internal fun oriented(point:P,vector:Boolean=false):P {
         val edge=if(vector) 0 else 15
@@ -17,13 +21,14 @@ data class Part(val source: String = "copycats:copycat_slice", val turn: Int = 0
         return p
     }
     fun sourceProperties():Map<String,String> {
-        val horizontalTurn=(turn+spin).mod(4)
+        val horizontalTurn=Math.floorMod(turn+spin,4)
         val horizontal=listOf("south","west","north","east")[horizontalTurn]
         val normal=oriented(P(0,1,0),true)
         val facing=directionName(normal)
         val axis=if(normal.x!=0) "x" else if(normal.y!=0) "y" else "z"
         val opposite=mapOf("up" to "down","down" to "up","east" to "west","west" to "east","south" to "north","north" to "south")
         return when(source) {
+            RoofPartParameters.SOURCE -> (roof ?: RoofPartParameters()).let { mapOf("rise" to it.rise.toString(),"run" to it.run.toString(),"phase" to it.phase.toString(),"slice" to it.slice.toString(),"variant" to it.variant,"thickness" to it.thickness.toString()) }
             "copycats:copycat_block" -> emptyMap()
             "copycats:copycat_slab" -> mapOf("axis" to axis,"type" to (if(normal.x+normal.y+normal.z>0) "bottom" else "top"))
             "copycats:copycat_beam", "copycats:copycat_flat_pane" -> mapOf("axis" to axis)
@@ -79,7 +84,7 @@ object Adapters {
     val all = listOf(
         Adapter("copycats:copycat_block", "full",1,1) { box(0,0,0,16,16,16) },
         Adapter("copycats:copycat_slab", "slab",1,2,tiltable=true) { box(0,0,0,16,8,16) },
-        Adapter("copycats:copycat_stairs", "stairs",1,1) { listOf(Box(0,0,0,16,8,16),Box(0,8,8,16,16,16)) },
+        Adapter(SourceDefinitions.STAIRS_SOURCE, "stairs",1,1,tiltable=true) { SourceDefinitions.boxes(SourceDefinitions.STAIRS_SOURCE) },
         Adapter("create:copycat_panel", "panel",1,4,tiltable=true) { box(0,0,0,16,3,16) },
         Adapter("copycats:copycat_slice", "slice",8,16,true) { box(0,0,16-it*2,16,it*2,16) },
         Adapter("copycats:copycat_vertical_slice", "vertical_slice",8,16,true) { box(16-it*2,0,16-it*2,16,16,16) },
@@ -95,16 +100,18 @@ object Adapters {
         Adapter("copycats:copycat_half_layer", "half_layer",8,16,true) { box(0,0,0,16,it*2,8) },
         Adapter("copycats:copycat_vertical_half_layer", "vertical_half_layer",8,16,true) { box(0,0,16-it*2,8,16,16) },
         Adapter("copycats:copycat_stacked_half_layer", "stacked_half_layer",8,16,true) { box(0,0,16-it*2,16,8,16) }
+        ,Adapter(RoofPartParameters.SOURCE,"roof_template",1,1,tiltable=true) { emptyList() }
     ).associateBy { it.source }
     fun get(id:String) = all[id] ?: error("Unsupported base shape: $id")
 }
-class Solid private constructor(private val bits: GraphBits) {
-    constructor():this(GraphBits(4096))
+class Solid private constructor(private val bits: BitSet) {
+    constructor():this(BitSet(4096))
+    internal fun set(x:Int,y:Int,z:Int) { bits.set(x+16*z+256*y) }
     fun has(x:Int,y:Int,z:Int) = x in 0..15 && y in 0..15 && z in 0..15 && bits[x+16*z+256*y]
     fun count() = bits.cardinality()
-    fun union(other:Solid) = Solid((bits.clone() as GraphBits).apply { or(other.bits) })
-    fun intersect(other:Solid) = Solid((bits.clone() as GraphBits).apply { and(other.bits) })
-    fun mask():String = encodeMask(bits.toByteArray())
+    fun union(other:Solid) = Solid((bits.clone() as BitSet).apply { or(other.bits) })
+    fun intersect(other:Solid) = Solid((bits.clone() as BitSet).apply { and(other.bits) })
+    fun mask():String = Base64.getEncoder().encodeToString(bits.toByteArray())
     fun rotate(q:Int):Solid = rotate(RotationAxis.Y,q)
     fun rotate(axis:RotationAxis,q:Int):Solid {
         require(axis!=RotationAxis.NORMAL) { "A solid rotation needs a world axis" }
@@ -112,11 +119,25 @@ class Solid private constructor(private val bits: GraphBits) {
         voxels { x,y,z -> val p=rotatePoint(P(x,y,z),axis,q);result.bits.set(p.x+16*p.z+256*p.y) }
         return result
     }
-    fun minus(other:Solid) = Solid((bits.clone() as GraphBits).apply { andNot(other.bits) })
-    fun contains(other:Solid) = (other.bits.clone() as GraphBits).apply { andNot(bits) }.isEmpty
+    fun reflected(axis:RotationAxis):Solid {
+        require(axis!=RotationAxis.NORMAL) { "A solid reflection needs a world axis" }
+        return reflected(CopycatMirrorPlane.fromAxis(axis))
+    }
+    fun reflected(plane:CopycatMirrorPlane):Solid {
+        if(plane.requiresExact) {
+            val volume=ExactVolume.fromSolid(this).reflected(plane)
+            requireCopycatMirrorBounds(volume,plane)
+            return volume.solid()
+        }
+        val result=Solid()
+        voxels { x,y,z -> val p=reflectPoint(P(x,y,z),plane);result.bits.set(p.x+16*p.z+256*p.y) }
+        return result
+    }
+    fun minus(other:Solid) = Solid((bits.clone() as BitSet).apply { andNot(other.bits) })
+    fun contains(other:Solid) = (other.bits.clone() as BitSet).apply { andNot(bits) }.isEmpty
     fun key() = bits.toLongArray().joinToString(",")
     fun boxes():List<Box> { // Greedy disjoint cuboids; exact render/collision source.
-        val todo = bits.clone() as GraphBits
+        val todo = bits.clone() as BitSet
         val out = mutableListOf<Box>()
         fun has(x:Int,y:Int,z:Int) = x<16 && y<16 && z<16 && todo[x+16*z+256*y]
         while (!todo.isEmpty) {
@@ -133,11 +154,12 @@ class Solid private constructor(private val bits: GraphBits) {
     companion object {
         fun fromMask(mask:String):Solid {
             require(mask.length in 1..684) { "Invalid cut mask" }
-            val bytes=decodeMask(mask)
+            val bytes=Base64.getDecoder().decode(mask)
             require(bytes.size<=512) { "Cut mask exceeds block" }
-            return Solid(GraphBits.valueOf(bytes))
+            return Solid(BitSet.valueOf(bytes))
         }
         fun part(p:Part):Solid {
+            if(ExactGeometry.usesExact(p)) return ExactGeometry.part(p).solid()
             val a=Adapters.get(p.source)
             require(p.size in 1..a.max && p.turn in 0..3 && p.tilt in 0..3 && p.spin in 0..3) { "Invalid shape size or rotation" }
             require(p.discCut in 0..2 && (p.discCut==0 || p.source==BaseShapes.DISC_SOURCE)) { "Disc fractions require a centered Copycat pane" }
@@ -162,9 +184,9 @@ class Solid private constructor(private val bits: GraphBits) {
     }
 }
 object Geometry {
-    private val cache=GraphCache<List<Part>,Solid>()
+    private val cache=ConcurrentHashMap<List<Part>,Solid>()
     private data class ResolvedKey(val parts:List<Part>,val groups:List<MaterialGroup>)
-    private val resolvedCache=GraphCache<ResolvedKey,ResolvedGeometry>()
+    private val resolvedCache=ConcurrentHashMap<ResolvedKey,ResolvedGeometry>()
     fun validateGroups(groups:List<MaterialGroup>,parts:List<Part>) {
         require(groups.size in 1..8 && groups.map { it.id }.distinct().size==groups.size) { "A form needs 1–8 uniquely named material groups" }
         require(groups.map { it.priority }.distinct().size==groups.size) { "Material groups need distinct foreground priorities" }
@@ -174,6 +196,7 @@ object Geometry {
     fun normalized(parts:List<Part>,groups:List<MaterialGroup> = DEFAULT_GROUPS):List<Part> {
         require(parts.size in 1..32) { "A form needs 1–32 parts" };validateGroups(groups,parts)
         require(parts.all { it.recipeSource.isEmpty() || it.recipeSource.matches(Regex("[a-zA-Z0-9_-]{1,36}")) }) { "Invalid source receipt reference" }
+        if(parts.any(ExactGeometry::usesExact)) return normalizedExact(parts,groups)
         val keep=mutableSetOf<Int>();var foreground=Solid()
         // Foreground owns every overlapping voxel. Hidden parts are removed; a
         // material-changing overlay is meaningful even inside a full base block.
@@ -201,6 +224,16 @@ object Geometry {
         validateGroups(groups,parts)
         if(resolvedCache.size>2048) resolvedCache.clear()
         return resolvedCache.computeIfAbsent(ResolvedKey(parts.toList(),groups.toList())) {
+            if(parts.any(ExactGeometry::usesExact)) {
+                var occupied=ExactVolume();val owned=linkedMapOf<String,ExactVolume>()
+                for(g in groups.sortedByDescending { it.priority }) {
+                    val whole=parts.filter { it.group==g.id }.fold(ExactVolume()) { r,p -> r.union(ExactGeometry.part(p)) }
+                    val clipped=whole.minus(occupied)
+                    if(!clipped.isEmpty()) owned[g.id]=clipped
+                    occupied=occupied.union(whole)
+                }
+                return@computeIfAbsent ResolvedGeometry(occupied.solid(),owned.mapValues { it.value.solid() },occupied,owned)
+            }
             var occupied=Solid();val owned=linkedMapOf<String,Solid>()
             for(g in groups.sortedByDescending { it.priority }) {
                 val whole=parts.filter { it.group==g.id }.fold(Solid()) { r,p -> r.union(Solid.part(p)) }
@@ -215,28 +248,57 @@ object Geometry {
         if(cache.size>2048) cache.clear()
         return cache.computeIfAbsent(parts.toList()) { it.fold(Solid()) { s,p -> s.union(Solid.part(p)) } }
     }
+    fun exact(parts:List<Part>):ExactVolume=parts.fold(ExactVolume()) { v,p -> v.union(ExactGeometry.part(p)) }
+    fun exact(part:Part):ExactVolume=ExactGeometry.part(part)
+    private fun normalizedExact(parts:List<Part>,groups:List<MaterialGroup>):List<Part> {
+        val keep=mutableSetOf<Int>();var foreground=ExactVolume()
+        for(g in groups.sortedByDescending { it.priority }) {
+            val candidates=parts.indices.filter { parts[it].group==g.id }
+            val clips=candidates.associateWith { ExactGeometry.part(parts[it]).minus(foreground) }
+            val selected=mutableListOf<Int>()
+            for(i in candidates) {
+                val volume=clips.getValue(i);if(volume.isEmpty()) continue
+                if(selected.fold(ExactVolume()) { r,k -> r.union(clips.getValue(k)) }.contains(volume)) continue
+                selected.removeAll { volume.contains(clips.getValue(it)) };selected+=i
+            }
+            keep+=selected
+            foreground=candidates.fold(foreground) { r,k -> r.union(ExactGeometry.part(parts[k])) }
+        }
+        return parts.filterIndexed { i,_ -> i in keep }
+    }
     fun validateMetadata(f:Form) {
-        require(f.schema in 1..3 && f.name.length in 1..64 && f.version>0) { "Invalid form schema/name/version" }
+        require(f.schema in GraphModels.copycat.documentSchemas && f.name.length in 1..64 && f.version>0) { "Invalid form schema/name/version" }
     }
     fun validate(f:Form):Form {
         validateMetadata(f)
-        if(f.graph!=null) return f.copy(schema=3,graph=f.graph.copy(schema=2),parts=GraphCompiler.compile(f.graph,f.groups))
-        require(f.parts.all { it.cutMask.isEmpty() && it.recipeSource.isEmpty() }) { "Clipped parts require their editable node graph" }
-        return f.copy(schema=3,parts=normalized(f.parts,f.groups))
+        if(f.graph!=null) {
+            val parts=GraphCompiler.compile(f.graph,f.groups)
+            val exact=parts.any(ExactGeometry::usesExact) || f.graph.nodes.any { GraphCompiler.sourceParts(it).any(ExactGeometry::usesExact) }
+            return f.copy(schema=if(exact) 4 else 3,graph=f.graph.copy(schema=if(exact) 3 else 2),parts=parts)
+        }
+        require(f.parts.all { it.cutMask.isEmpty() && it.exactClip==null && it.recipeSource.isEmpty() }) { "Clipped parts require their editable node graph" }
+        return f.copy(schema=if(f.parts.any(ExactGeometry::usesExact)) 4 else 3,parts=normalized(f.parts,f.groups))
     }
     /** Isolate the resolved ownership, rather than revealing hidden source overlap. View only. */
     fun previewParts(parts:List<Part>,groups:List<MaterialGroup>,group:String):List<Part> {
         if(group.isEmpty()) return parts
         require(groups.any { it.id==group }) { "Unknown preview material group" }
+        if(parts.any(ExactGeometry::usesExact)) {
+            val owned=resolve(parts,groups).exactOwned[group] ?: return emptyList()
+            return parts.filter { it.group==group }.mapNotNull { p ->
+                val source=ExactGeometry.part(p);val visible=source.intersect(owned)
+                if(visible.isEmpty()) null else if(visible.contains(source)) p else p.copy(exactClip=visible)
+            }
+        }
         val owned=resolve(parts,groups).owned[group] ?: return emptyList()
         return parts.filter { it.group==group }.mapNotNull { p ->
             val source=Solid.part(p);val visible=source.intersect(owned)
             if(visible.count()==0) null else if(visible.contains(source)) p else p.copy(cutMask=visible.mask())
         }
     }
-    fun rotate(parts:List<Part>,q:Int) = parts.map { p -> p.copy(turn=(p.turn+q).mod(4),offset=p.offset.turn(q),cutMask=if(p.cutMask.isEmpty()) "" else Solid.fromMask(p.cutMask).rotate(q).mask()) }
+    fun rotate(parts:List<Part>,q:Int) = parts.map { p -> p.copy(turn=Math.floorMod(p.turn+q,4),offset=p.offset.turn(q),cutMask=if(p.cutMask.isEmpty()) "" else Solid.fromMask(p.cutMask).rotate(q).mask(),exactClip=p.exactClip?.rotate(RotationAxis.Y,q)) }
 }
-class ResolvedGeometry(val solid:Solid,val owned:Map<String,Solid>) {
+class ResolvedGeometry(val solid:Solid,val owned:Map<String,Solid>,val exactSolid:ExactVolume?=null,val exactOwned:Map<String,ExactVolume> = emptyMap()) {
     private val owners=Array<String?>(4096) { null }.apply { owned.forEach { (id,s) -> s.voxels { x,y,z -> this[x+16*z+256*y]=id } } }
     fun owner(x:Int,y:Int,z:Int):String? = if(x in 0..15 && y in 0..15 && z in 0..15) owners[x+16*z+256*y] else null
     fun materialSolids(base:String,surfaces:Map<String,String>):Map<String,Solid> {
@@ -244,24 +306,48 @@ class ResolvedGeometry(val solid:Solid,val owned:Map<String,Solid>) {
         owned.forEach { (id,s) -> val material=surfaces[id] ?: base;result[material]=(result[material] ?: Solid()).union(s) }
         return result
     }
-    fun visualKey(base:String,surfaces:Map<String,String>)=materialSolids(base,surfaces).entries.sortedBy { it.key }.joinToString(";") { it.key+":"+it.value.key() }
+    fun visualKey(base:String,surfaces:Map<String,String>):String {
+        if(exactSolid==null) return materialSolids(base,surfaces).toSortedMap().entries.joinToString(";") { it.key+":"+it.value.key() }
+        return exactMaterials(base,surfaces).toSortedMap().entries.joinToString(";") { (material,volume) ->
+            material+":"+volume.cells.map { cell -> cell.planes.map { it.normalized() }.distinct().sortedWith(compareBy({it.x},{it.y},{it.z},{it.d})).joinToString(",") }.distinct().sorted().joinToString("|")
+        }
+    }
+    fun sameVisual(base:String,surfaces:Map<String,String>,other:ResolvedGeometry,otherBase:String,otherSurfaces:Map<String,String>):Boolean {
+        if(exactSolid==null && other.exactSolid==null) return visualKey(base,surfaces)==other.visualKey(otherBase,otherSurfaces)
+        val left=exactMaterials(base,surfaces);val right=other.exactMaterials(otherBase,otherSurfaces)
+        return left.keys==right.keys && left.all { (material,volume) -> volume.equivalent(right.getValue(material)) }
+    }
+    fun visibleSurfaces(transparent:Set<String> = emptySet(),neighbors:List<Pair<ResolvedGeometry,Set<String>>> = emptyList()):List<OwnedExactSurface> {
+        val regions=if(exactSolid!=null) exactOwned else owned.mapValues { ExactVolume.fromSolid(it.value) }
+        return regions.flatMap { (group,volume) ->
+            val ownOccluders=regions.filter { (other,_) -> other!=group && (group in transparent || other !in transparent) }.values
+            val neighborOccluders=neighbors.flatMap { (geometry,glass) ->
+                val adjacent=if(geometry.exactSolid!=null) geometry.exactOwned else geometry.owned.mapValues { ExactVolume.fromSolid(it.value) }
+                adjacent.filter { (other,_) -> group in transparent || other !in glass }.values
+            }
+            ExactGeometry.visibleSurfaces(volume,(ownOccluders+neighborOccluders).toList()).map { OwnedExactSurface(it,group) }
+        }
+    }
+    fun exactMaterials(base:String,surfaces:Map<String,String>):Map<String,ExactVolume> {
+        val source=if(exactSolid!=null) exactOwned else owned.mapValues { ExactVolume.fromSolid(it.value) }
+        val result=linkedMapOf<String,ExactVolume>()
+        source.forEach { (id,v) -> val material=surfaces[id] ?: base;result[material]=(result[material] ?: ExactVolume()).union(v) }
+        return result
+    }
 }
-// Integer extrusion units: 1 zinc ingot = 256; never round fractional ingots away.
-// Costs mirror the pinned source cutting output, not visible volume.
+// The final occupied 16³ grid sets the zinc volume: a full block needs 256 mB.
 object Extrusion {
+    const val MB_PER_BLOCK=256
+    private const val VOXELS_PER_MB=16
+    // Legacy source-recipe metadata remains readable in snapshots and saved jobs.
+    // It no longer changes the physical volume of a printed shape.
     var outputs:Map<String,Int> = Adapters.all.mapValues { it.value.output }
+    @Suppress("UNUSED_PARAMETER")
     fun cost(parts:List<Part>,groups:List<MaterialGroup> = DEFAULT_GROUPS,recipes:Map<String,Int> = outputs):Int {
         val normalized=Geometry.normalized(parts,groups)
-        // A shared source split into material regions is still one paid source recipe.
-        return normalized.withIndex().distinctBy { (index,p) ->
-            if(p.recipeSource.isEmpty()) index else p.recipeSource to p.copy(group="",cutMask="",recipeSource="")
-        }.sumOf { (_,p) ->
-            val a=Adapters.get(p.source)
-            val output=recipes[p.source] ?: error("Missing extrusion recipe")
-            require(output>0) { "Invalid extrusion recipe output" }
-            val divisor=output.toLong()*(1 shl p.discCut)
-            require(p.discCut==0 || 256L%divisor==0L) { "Disc fraction requires an integral extrusion cost" }
-            (256L/divisor).toInt() * if(a.layered) p.size else 1
-        }
+        // Solid.part enumerates all occupied grid cells, including cut masks. Union
+        // before rounding counts overlaps and material regions once per printed block.
+        val occupied=Geometry.solid(normalized).count()
+        return (occupied+VOXELS_PER_MB-1)/VOXELS_PER_MB
     }
 }

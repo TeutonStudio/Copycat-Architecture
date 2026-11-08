@@ -58,8 +58,10 @@ object KilaGraphSmoke {
             groups=listOf(MaterialGroup(),MaterialGroup("cap","Custom timber","custom_role",4)))
     }
     private fun buildingFixture():Building {
-        val initial=BuildingGraph.starter()
-        val graph=initial.copy(nodes=initial.nodes+BuildingNode("draft",BuildingKind.PATTERN,"Unused draft",20,720,inputs=listOf("","")))
+        val initial=BuildingGraph.assembledStarter()
+        // The generic roof-overhang edit must remain independent of fixed gable lengths.
+        val graph=initial.copy(nodes=initial.nodes.map { node -> if(node.id=="roof") node.copy(roofType="flat",walls=emptyMap()) else node }+
+            BuildingNode("draft",BuildingKind.PATTERN,"Unused draft",20,720,inputs=listOf("","")))
         return Building(schema=2,id="kila_building",version=8,name="Native KilaGraph building",graph=graph,
             palette=Building().palette+("custom_role" to "minecraft:oak_planks"))
     }
@@ -499,7 +501,11 @@ object KilaGraphSmoke {
                 }
                 2 -> if(AssemblyGraphSmoke.tick(mc,ticks-extraStart)) {
                     check(mc.screen===shape && Json.encode(shape.form)==shapeBefore)
-                    println("ARCHITECT KILAGRAPH SMOKE PASSED: native semantic ports, explicit rotations, Union input groups and warnings, Copycat building assembly, compact inspectors, cable edits, source inventory and document undo/redo accepted")
+                    extraStage=3;extraStart=ticks;RoomLayoutGraphSmoke.begin(mc,shape)
+                }
+                3 -> if(RoomLayoutGraphSmoke.tick(mc,ticks-extraStart)) {
+                    check(mc.screen===shape && Json.encode(shape.form)==shapeBefore)
+                    println("ARCHITECT KILAGRAPH SMOKE PASSED: native semantic ports, explicit rotations, Union input groups and warnings, Copycat building assembly, room-cell grid, multi-room storey placement, compact inspectors, cable edits, source inventory and document undo/redo accepted")
                     mc.stop()
                 }
                 }

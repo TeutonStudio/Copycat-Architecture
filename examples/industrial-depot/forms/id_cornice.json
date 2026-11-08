@@ -1,0 +1,126 @@
+{
+  "schema": 4,
+  "id": "id_cornice",
+  "version": 1,
+  "name": "Lichtwerk/Fassade/Gestuftes Kranzgesims",
+  "parts": [
+    {
+      "source": "copycats:copycat_layer",
+      "size": 3,
+      "tilt": 3,
+      "group": "body"
+    },
+    {
+      "source": "copycats:copycat_layer",
+      "size": 8,
+      "group": "trim",
+      "exact": {
+        "cells": [
+          {
+            "planes": [
+              {
+                "x": 1,
+                "y": 0,
+                "z": 0,
+                "d": 16
+              },
+              {
+                "x": -1,
+                "y": 0,
+                "z": 0,
+                "d": 0
+              },
+              {
+                "x": 0,
+                "y": 1,
+                "z": 0,
+                "d": 5
+              },
+              {
+                "x": 0,
+                "y": -1,
+                "z": 0,
+                "d": -1
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": 1,
+                "d": 16
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": -1,
+                "d": -5
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "source": "copycats:copycat_layer",
+      "size": 8,
+      "group": "trim",
+      "exact": {
+        "cells": [
+          {
+            "planes": [
+              {
+                "x": 1,
+                "y": 0,
+                "z": 0,
+                "d": 16
+              },
+              {
+                "x": -1,
+                "y": 0,
+                "z": 0,
+                "d": 0
+              },
+              {
+                "x": 0,
+                "y": 1,
+                "z": 0,
+                "d": 16
+              },
+              {
+                "x": 0,
+                "y": -1,
+                "z": 0,
+                "d": -12
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": 1,
+                "d": 16
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": -1,
+                "d": -2
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "groups": [
+    {
+      "id": "body",
+      "name": "Body",
+      "role": "surface",
+      "priority": 0
+    },
+    {
+      "id": "trim",
+      "name": "Trim",
+      "role": "trim",
+      "priority": 1
+    }
+  ]
+}

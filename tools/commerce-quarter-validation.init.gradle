@@ -1,0 +1,25 @@
+// Isolate in-game Commerce Quarter validation from normal development saves.
+// Use with: ./gradlew -I tools/commerce-quarter-validation.init.gradle runClient -PcommerceQuarterSmoke
+// World preparation is explicit: python3 tools/prepare_commerce_quarter_world.py
+
+gradle.projectsEvaluated {
+    def availableKiB = null
+    def meminfo = new File('/proc/meminfo')
+    if (meminfo.isFile()) {
+        def match = meminfo.text =~ /(?m)^MemAvailable:\s+(\d+)\s+kB$/
+        if (match.find()) availableKiB = Long.parseLong(match.group(1))
+    }
+    // Leave room for Gradle, the desktop and native graphics allocations.
+    // The authoring machine has about 20 GiB available; its client uses 4 GiB.
+    def heap = availableKiB == null || availableKiB >= 8L * 1024L * 1024L ? '4G' : '2G'
+    rootProject.logger.lifecycle("Commerce Quarter validation: isolated game directory, client heap ${heap}")
+    rootProject.extensions.getByName('neoForge').runs.configureEach {
+        if (name == 'client') {
+            gameDirectory.set(rootProject.file('build/commerce-quarter-client'))
+            jvmArgument("-Xmx${heap}")
+        }
+        if (name == 'gameTestServer') {
+            gameDirectory.set(rootProject.file('build/commerce-quarter-server'))
+        }
+    }
+}

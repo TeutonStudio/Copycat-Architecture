@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "copycat_architect:cartridge",
+    "copycat_architect:empty_cartridge",
+    "copycat_architect:creative_cartridge"
+  ]
+}

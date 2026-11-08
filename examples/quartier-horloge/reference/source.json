@@ -1,0 +1,11 @@
+{
+  "title": "Quartier de L'horloge",
+  "author": "Kfc_dilleur",
+  "page": "https://createmod.com/de/schematics/quartier-de-lhorloge",
+  "image": "https://createmod.com/api/files/schematics/54e02bcb6c3e066/Gemini_Generated_Image_ikzgmhikzgmhikzg.webp",
+  "accessed": "2026-11-06",
+  "pageDescription": "Frühindustrielles Quartier mit Restaurant, einer Create-Uhr und zwei Häusern.",
+  "sourceDimensionsBlocks": [44, 48, 49],
+  "sourceBlockCount": 9062,
+  "use": "Visuelle Ausgangsreferenz für einen eigenständigen Gebäudegraph-Entwurf. Kein Import und keine Vermessung der ursprünglichen Schematic."
+}

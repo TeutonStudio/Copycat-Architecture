@@ -3,7 +3,7 @@ loaderVersion="[5.10,6)"
 license="MIT"
 [[mods]]
 modId="copycat_architect"
-version="0.5.1"
+version="0.6.0"
 displayName="Create: Copycat Architect"
 authors="TeutonStudio"
 description='''Composite copycat shapes, building plans and survival turtle construction.'''
@@ -31,6 +31,13 @@ side="BOTH"
 modId="create"
 type="required"
 versionRange="[6.0.10,6.0.11)"
+side="BOTH"
+[[dependencies.copycat_architect]]
+modId="molten_metals"
+type="required"
+# The 1.0.1 release still declares internal mod version 1.0.0.
+versionRange="[1.0.0,1.1)"
+ordering="AFTER"
 side="BOTH"
 [[dependencies.copycat_architect]]
 modId="copycats"

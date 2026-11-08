@@ -1,0 +1,116 @@
+{
+  "source": "examples/commerce-quarter/scene.json",
+  "coordinate_mapping": "Minecraft [X,Y,Z] -> Blender [X,-Z,Y]",
+  "geometry_policy": "Architecture, openings, roofs, furnishings imported unchanged from compiled graph. Section view is a clipped copy.",
+  "texture_source": "locally cached Minecraft 1.21.1 client JAR; original pixel textures",
+  "renderer": "Blender 5.2.2 LTS",
+  "engine": "cycles",
+  "samples": 40,
+  "resolution": [
+    1800,
+    1125
+  ],
+  "views": [
+    {
+      "file": "exterior-street.png",
+      "camera_minecraft": {
+        "name": "exterior-street",
+        "position": [
+          48,
+          19,
+          -50
+        ],
+        "target": [
+          16,
+          7.5,
+          10
+        ],
+        "lens": 43
+      },
+      "geometry": "scene.json",
+      "sectioned": false,
+      "staging": "external site and lighting only"
+    },
+    {
+      "file": "exterior-courtyard.png",
+      "camera_minecraft": {
+        "name": "exterior-courtyard",
+        "position": [
+          -28,
+          23,
+          50
+        ],
+        "target": [
+          15,
+          7.5,
+          12
+        ],
+        "lens": 40
+      },
+      "geometry": "scene.json",
+      "sectioned": false,
+      "staging": "external site and lighting only"
+    },
+    {
+      "file": "interior-inn.png",
+      "camera_minecraft": {
+        "name": "interior-inn",
+        "position": [
+          2.0,
+          3.2,
+          11.0
+        ],
+        "target": [
+          9.0,
+          2.6,
+          4.0
+        ],
+        "lens": 22
+      },
+      "geometry": "scene.json",
+      "sectioned": false,
+      "staging": "external site and lighting only"
+    },
+    {
+      "file": "interior-atelier.png",
+      "camera_minecraft": {
+        "name": "interior-atelier",
+        "position": [
+          20.5,
+          9.2,
+          3.0
+        ],
+        "target": [
+          28.0,
+          8.5,
+          17.0
+        ],
+        "lens": 22
+      },
+      "geometry": "scene.json",
+      "sectioned": false,
+      "staging": "external site and lighting only"
+    },
+    {
+      "file": "section-axon.png",
+      "camera_minecraft": {
+        "name": "section-axon",
+        "position": [
+          48,
+          43,
+          -42
+        ],
+        "target": [
+          16.5,
+          3,
+          11
+        ],
+        "ortho": 48,
+        "lens": 45
+      },
+      "geometry": "scene.json",
+      "sectioned": true,
+      "staging": "external site and lighting only"
+    }
+  ]
+}

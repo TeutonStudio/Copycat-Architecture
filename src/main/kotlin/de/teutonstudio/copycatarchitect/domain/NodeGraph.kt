@@ -1,16 +1,22 @@
 package de.teutonstudio.copycatarchitect.domain
 
 /** Edges point to source node IDs. Empty strings are unconnected editor sockets. */
+enum class NodeKind { INPUT, UNION, INTERSECTION, DIFFERENCE, SYMMETRIC_DIFFERENCE, ROTATE, ROTATION, OUTPUT, MIRROR, SAVED }
+enum class MaterialMode { SEPARATED, GROUPED }
 data class GraphNode(val id:String="",val kind:NodeKind=NodeKind.INPUT,val inputs:List<String> = emptyList(),
                      val part:Part=Part(),val x:Int=0,val y:Int=0,
                      val materialMode:MaterialMode=MaterialMode.SEPARATED,val materialGroup:String="",val previewGroup:String="",
-                     val inputGroups:List<String> = emptyList(),val rotationAxis:RotationAxis=RotationAxis.NORMAL,val quarterTurns:Int=0)
-data class NodeGraph(val schema:Int=2,val nodes:List<GraphNode> = listOf(GraphNode("result",NodeKind.OUTPUT,listOf(""),x=520,y=70))) {
-    fun replace(node:GraphNode)=copy(nodes=nodes.map { if(it.id==node.id) node else it })
-    fun remove(id:String)=copy(nodes=nodes.filter { it.id!=id }.map { it.copy(inputs=it.inputs.map { input -> if(input==id) "" else input }) })
+                     val inputGroups:List<String> = emptyList(),val rotationAxis:RotationAxis=RotationAxis.NORMAL,val quarterTurns:Int=0,
+                     val mirror:CopycatMirror?=null,val savedCopycat:SavedCopycat?=null)
+data class NodeGraph(val schema:Int=GraphModels.copycat.defaultSchema,val nodes:List<GraphNode> = listOf(GraphNode("result",NodeKind.OUTPUT,listOf(""),x=520,y=70)),
+                     val nodeGroups:List<GraphGroup> = emptyList()) {
+    fun replace(node:GraphNode)=GraphGroups.synchronize(this,copy(nodes=nodes.map { if(it.id==node.id) node else it }))
+    fun remove(id:String)=GraphGroups.synchronize(this,removeLocal(id))
+    internal fun removeLocal(id:String)=copy(nodes=nodes.filter { it.id!=id }.map { it.copy(inputs=it.inputs.map { input -> if(input==id) "" else input }) },
+        nodeGroups=GraphGroups.prune(nodeGroups,nodes.map { it.id }.toSet()-id))
     companion object {
         fun fromParts(parts:List<Part>):NodeGraph {
-            val nodes=parts.mapIndexed { i,p -> GraphNode("source$i",part=p,x=20+(i/4)*185,y=20+(i%4)*152) }.toMutableList()
+            val nodes=parts.mapIndexed { i,p -> GraphNode("source$i",part=p,x=20+(i/4)*185,y=20+(i%4)*220) }.toMutableList()
             var level=nodes.map { it.id };var count=0;var x=250
             while(level.size>1) {
                 level=level.chunked(16).mapIndexed { i,ids ->
@@ -27,8 +33,8 @@ data class NodeGraph(val schema:Int=2,val nodes:List<GraphNode> = listOf(GraphNo
 
 /** Boolean operations preserve leaf provenance, so materials and paid recipes follow the surviving solids. */
 object GraphCompiler {
-    private data class Key(val graph:NodeGraph,val groups:List<MaterialGroup>,val nodeId:String)
-    private val cache=GraphCache<Key,List<Part>>()
+    private data class Key(val graph:NodeGraph,val groups:List<MaterialGroup>,val node:String)
+    private val cache=java.util.concurrent.ConcurrentHashMap<Key,List<Part>>()
     private fun supportsInputGroups(kind:NodeKind)=kind==NodeKind.UNION || kind==NodeKind.SYMMETRIC_DIFFERENCE
     /** Empty saved assignments inherit the connected branch, including legacy source materials. */
     fun inputMaterialGroups(graph:NodeGraph,node:GraphNode,slot:Int,groups:List<MaterialGroup> = DEFAULT_GROUPS):Set<String> {
@@ -45,9 +51,9 @@ object GraphCompiler {
             val n=nodes[id]
             if(n==null || !active.add(id)) emptySet() else {
                 val result=when(n.kind) {
-                    NodeKind.INPUT->setOf(n.part.group)
+                    NodeKind.INPUT,NodeKind.SAVED->sourceParts(n).map { it.group }.toSet()
                     NodeKind.ROTATION->emptySet()
-                    NodeKind.OUTPUT,NodeKind.ROTATE->input(n,0)
+                    NodeKind.OUTPUT,NodeKind.ROTATE,NodeKind.MIRROR->input(n,0)
                     else->if(n.materialMode==MaterialMode.GROUPED) setOf(assigned(n)) else when(n.kind) {
                         NodeKind.INTERSECTION,NodeKind.DIFFERENCE->input(n,0)
                         else->n.inputs.indices.flatMap { input(n,it) }.toSet()
@@ -63,26 +69,37 @@ object GraphCompiler {
             node.inputs.indices.map { inputMaterialGroups(graph,node,it,groups) }.let { values -> values.all { it.size==1 } && values.distinct().size==1 }
 
     fun structure(graph:NodeGraph,groups:List<MaterialGroup>) {
-        require(graph.schema in GraphModels.formSchemas && graph.nodes.size in 1..GraphModels.FORM_NODES) { "Node graph needs 1–64 nodes (schema 1–2)" }
+        require(graph.schema in GraphModels.copycat.graphSchemas && graph.nodes.size in 1..GraphModels.copycat.maxNodes) { "Node graph needs 1–64 nodes (schema 1–3)" }
         val nodes=graph.nodes.associateBy { it.id }
         require(nodes.size==graph.nodes.size && nodes.keys.all { it.matches(Regex("[a-zA-Z0-9_-]{1,36}")) }) { "Node IDs must be unique" }
+        GraphGroups.validate(graph)
         require(graph.nodes.count { it.kind==NodeKind.OUTPUT }==1) { "Node graph needs exactly one result node" }
-        val leaves=graph.nodes.filter { it.kind==NodeKind.INPUT }
-        require(leaves.size<=GraphModels.FORM_SOURCES) { "At most 32 source nodes" };Geometry.validateGroups(groups,leaves.map { it.part })
+        val leaves=graph.nodes.filter { it.kind==NodeKind.INPUT || it.kind==NodeKind.SAVED }
+        require(leaves.size<=GraphModels.copycat.maxSources) { "At most 32 source nodes" };Geometry.validateGroups(groups,leaves.flatMap(::sourceParts))
         graph.nodes.forEach { n ->
             require(n.materialMode in MaterialMode.entries) { "Invalid node material mode" }
             require(n.materialGroup.isEmpty() || groups.any { it.id==n.materialGroup }) { "Unknown node material group" }
             require(n.previewGroup.isEmpty() || groups.any { it.id==n.previewGroup }) { "Unknown preview material group" }
             require(n.inputGroups.size<=n.inputs.size && n.inputGroups.all { id -> id.isEmpty() || groups.any { it.id==id } }) { "Unknown input material group" }
             require(n.rotationAxis in RotationAxis.entries && n.quarterTurns in 0..3) { "Invalid node rotation" }
-            require(n.x in GraphModels.coordinates && n.y in GraphModels.coordinates) { "Node position exceeds graph bounds" }
-            require(n.inputs.size in GraphModels.inputs(n.kind)) { "Invalid socket count on ${n.id}" }
+            require(n.mirror==null || n.kind==NodeKind.MIRROR) { "Mirror settings belong to a mirror node" }
+            require(n.savedCopycat==null || n.kind==NodeKind.SAVED) { "Saved Copycats belong to a saved source node" }
+            if(n.kind==NodeKind.MIRROR) require((n.mirror ?: CopycatMirror()).plane in CopycatMirrorPlane.entries) { "Invalid Copycat mirror plane" }
+            require(n.x in -8192..8192 && n.y in -8192..8192) { "Node position exceeds graph bounds" }
+            val sockets=checkNotNull(GraphModels.shape(n.kind).inputs)
+            require(n.inputs.size in sockets.min..sockets.max) { "Invalid socket count on ${n.id}" }
             if(n.kind==NodeKind.INPUT) {
-                require(n.part.cutMask.isEmpty() && n.part.recipeSource.isEmpty()) { "Source nodes must use standard Copycat shapes" };Solid.part(n.part)
+                require(n.part.cutMask.isEmpty() && n.part.exactClip==null && n.part.recipeSource.isEmpty()) { "Source nodes must use standard Copycat shapes" };Solid.part(n.part)
+            }
+            if(n.kind==NodeKind.SAVED) {
+                val saved=requireNotNull(n.savedCopycat) { "Choose a saved Copycat" }
+                require(saved.name.length in 1..64 && saved.version>0 && saved.id.length<=128) { "Invalid saved Copycat identity" }
+                Geometry.normalized(saved.parts,groups)
             }
             n.inputs.forEachIndexed { slot,input -> if(input.isNotEmpty()) {
-                require(nodes[input]!=null && nodes[input]?.kind!=NodeKind.OUTPUT) { "Unknown or invalid source at ${n.id}" }
-                require(GraphModels.accepts(n.kind,slot,nodes.getValue(input).kind)) { "Incompatible socket types at ${n.id}" }
+                val source=nodes[input]?.let { GraphModels.shape(it.kind).output }
+                require(source!=null) { "Unknown or invalid source at ${n.id}" }
+                require(source==sockets.type(slot)) { "Incompatible socket types at ${n.id}" }
             } }
         }
         val active=mutableSetOf<String>();val done=mutableSetOf<String>()
@@ -94,31 +111,51 @@ object GraphCompiler {
         }
         nodes.keys.forEach { visit(it) }
     }
-    fun compile(graph:NodeGraph,groups:List<MaterialGroup> = DEFAULT_GROUPS):List<Part> {
-        val result=intermediate(graph,graph.nodes.single { it.kind==NodeKind.OUTPUT }.id,groups)
-        require(result.isNotEmpty()) { "Result is empty; change the connected shapes" }
-        return result
-    }
-    /** Evaluate a selected branch without requiring the final output to be connected. */
+    fun compile(graph:NodeGraph,groups:List<MaterialGroup> = DEFAULT_GROUPS):List<Part> =
+        intermediate(graph,graph.nodes.single { it.kind==NodeKind.OUTPUT }.id,groups).also {
+            require(it.isNotEmpty()) { "Result is empty; change the connected shapes" }
+        }
+
+    /** Evaluate this node's ancestors only. Empty geometry is a valid intermediate preview. */
     fun intermediate(graph:NodeGraph,nodeId:String,groups:List<MaterialGroup> = DEFAULT_GROUPS):List<Part> {
         val key=Key(graph,groups.toList(),nodeId)
         cache[key]?.let { return it }
         structure(graph,groups)
         val nodes=graph.nodes.associateBy { it.id }
+        require(nodes[nodeId]!=null) { "Unknown preview node: $nodeId" }
+        require(nodes.getValue(nodeId).kind!=NodeKind.ROTATION) { "A rotation value has no geometry" }
+        val exactAncestors=mutableMapOf<String,Boolean>()
+        fun needsExact(id:String):Boolean=exactAncestors.getOrPut(id) {
+            val n=nodes.getValue(id)
+            if(n.kind==NodeKind.INPUT || n.kind==NodeKind.SAVED) sourceParts(n).any(ExactGeometry::usesExact)
+            else n.kind==NodeKind.MIRROR && (n.mirror ?: CopycatMirror()).plane.requiresExact || n.inputs.filter(String::isNotEmpty).any(::needsExact)
+        }
+        if(needsExact(nodeId)) {
+            return ExactGraphCompiler.intermediate(graph,nodeId,groups).also { cache[key]=it }
+        }
         data class Contribution(val leaf:String,val group:String,val part:Part)
         val memo=mutableMapOf<String,Map<Contribution,Solid>>()
         fun total(value:Map<Contribution,Solid>)=value.values.fold(Solid()) { a,b -> a.union(b) }
         fun evaluate(id:String):Map<Contribution,Solid> = memo.getOrPut(id) {
             val n=nodes.getValue(id)
-            if(n.kind==NodeKind.INPUT) mapOf(Contribution(id,n.part.group,n.part) to Solid.part(n.part)) else {
+            if(n.kind==NodeKind.INPUT || n.kind==NodeKind.SAVED) {
+                val contributions=linkedMapOf<Contribution,Solid>()
+                sources(n).forEach { (leaf,source) ->
+                    val part=PartRotations.rotate(source,n.rotationAxis,n.quarterTurns)
+                        ?: error("Copycat ${source.source} cannot rotate around ${n.rotationAxis}")
+                    val key=Contribution(leaf,part.group,part.copy(cutMask="",exactClip=null))
+                    contributions[key]=(contributions[key] ?: Solid()).union(Solid.part(part))
+                };contributions
+            } else {
                 require(n.inputs.withIndex().all { (slot,input) -> input.isNotEmpty() || (n.kind==NodeKind.ROTATE && slot==1) }) { "Connect every input of ${n.kind.name.lowercase()} node (${n.id.take(8)})" }
-                if(n.kind==NodeKind.ROTATE) {
-                    val rotation=n.inputs[1].takeIf { it.isNotEmpty() }?.let(nodes::getValue) ?: n
+                if(n.kind==NodeKind.ROTATE || n.kind==NodeKind.MIRROR) {
+                    val rotation=if(n.kind==NodeKind.ROTATE) n.inputs[1].takeIf { it.isNotEmpty() }?.let(nodes::getValue) ?: n else n
                     val contributions=linkedMapOf<Contribution,Solid>()
                     evaluate(n.inputs[0]).forEach { (source,solid) ->
                         val clipped=source.part.copy(cutMask=if(solid.contains(Solid.part(source.part))) "" else solid.mask())
-                        val rotated=PartRotations.rotate(clipped,rotation.rotationAxis,rotation.quarterTurns)
-                            ?: error("Copycat ${source.part.source} cannot rotate around ${rotation.rotationAxis}")
+                        val rotated=if(n.kind==NodeKind.MIRROR) PartRotations.mirror(clipped,(n.mirror ?: CopycatMirror()).plane)
+                            else PartRotations.rotate(clipped,rotation.rotationAxis,rotation.quarterTurns)
+                                ?: error("Copycat ${source.part.source} cannot rotate around ${rotation.rotationAxis}")
                         val key=source.copy(part=rotated.copy(cutMask=""))
                         contributions[key]=(contributions[key] ?: Solid()).union(Solid.part(rotated))
                     }
@@ -149,7 +186,6 @@ object GraphCompiler {
                 }
             }
         }
-        require(nodes[nodeId]!=null) { "Select an existing node" }
         val result=evaluate(nodeId)
         val splitLeaves=result.keys.groupingBy { it.leaf }.eachCount().filterValues { it>1 }.keys
         // Keep an already shared source ahead of a redundant cutter contribution.
@@ -162,5 +198,18 @@ object GraphCompiler {
         if(cache.size>512) cache.clear()
         cache[key]=normalized
         return normalized
+    }
+
+    fun sourceParts(node:GraphNode):List<Part> = when(node.kind) {
+        NodeKind.INPUT->listOf(node.part)
+        NodeKind.SAVED->node.savedCopycat?.parts.orEmpty()
+        else->emptyList()
+    }
+
+    /** Namespace each embedded receipt per source instance; material splits still share one payment. */
+    internal fun sources(node:GraphNode):List<Pair<String,Part>> = sourceParts(node).mapIndexed { index,part ->
+        val leaf=if(node.kind==NodeKind.INPUT) node.id else java.util.UUID.nameUUIDFromBytes(
+            "${node.id}/${if(part.recipeSource.isEmpty()) "part:$index" else "receipt:${part.recipeSource}"}".toByteArray(Charsets.UTF_8)).toString()
+        leaf to part.copy(recipeSource="")
     }
 }

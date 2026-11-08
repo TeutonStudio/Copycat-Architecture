@@ -41,7 +41,7 @@ for jar in sys.argv[1:]:
                 continue
             recipes[result['id']].append((inputs, result.get('count', 1)))
 
-known = {'create:zinc_ingot': Fraction(256), 'create:zinc_nugget': Fraction(256, 9), 'create:zinc_block': Fraction(2304)}
+known = {'create:zinc_ingot': Fraction(144), 'create:zinc_nugget': Fraction(16), 'create:zinc_block': Fraction(1296)}
 
 def members(tag, seen=frozenset()):
     if tag in seen:
@@ -60,7 +60,7 @@ def ingredient_cost(value, active):
         return cost(value['item'], active)
     tag = value.get('tag', '')
     if tag == 'c:ingots/zinc':
-        return Fraction(256)
+        return Fraction(144)
     choices = members(tag)
     if not choices:
         return None if tag.startswith('copycats:') else Fraction(0)
@@ -104,12 +104,12 @@ for item in sorted(item for item in recipes if 'copycat' in item):
     data = {
         'type': 'create:mixing',
         'ingredients': [{'item': item}] * batch,
-        'results': [{'id': 'copycat_architect:molten_zinc', 'amount': value.numerator}],
+        'results': [{'id': 'molten_metals:molten_zinc', 'amount': value.numerator}],
         'heat_requirement': 'heated',
     }
     filename = item.replace(':', '_') + '.json'
     (out / filename).write_text(json.dumps(data, indent=2) + '\n')
-    records[item] = {'items': batch, 'units': value.numerator}
+    records[item] = {'items': batch, 'millibuckets': value.numerator}
 metadata = root / 'src/main/resources/data/copycat_architect/zinc_recycling.json'
 metadata.write_text(json.dumps(records, indent=2) + '\n')
-print(f'Generated {len(records)} additive Copycat recycling recipes; 256 mB per zinc ingot.')
+print(f'Generated {len(records)} additive Copycat recycling recipes; 144 mB per zinc ingot.')

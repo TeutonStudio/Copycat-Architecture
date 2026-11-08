@@ -1,7 +1,8 @@
 package de.teutonstudio.copycatarchitect.domain
 
 data class Cell(val pos:P=P(), val form:String="full@1", val block:String="", val role:String="wall", val turn:Int=0,
-                val empty:Boolean=false, val flexible:Boolean=false)
+                val empty:Boolean=false, val flexible:Boolean=false, val rotations:List<SegmentRotation> = emptyList(),
+                val surfaces:Map<String,String>?=null)
 data class Module(val schema:Int=1,val id:String="",val version:Int=1,val name:String="Module",val width:Int=3,
                   val height:Int=4,val depth:Int=1,val cells:List<Cell> = emptyList(),val minWidth:Int=width,val maxWidth:Int=width) {
     val key get() = "$id@$version"
@@ -82,6 +83,8 @@ data class Building(val schema:Int=1,val id:String="",val version:Int=1,val name
 data class Placement(val pos:P=P(),val parts:List<Part> = emptyList(),val material:String="minecraft:stone",val block:String="",val component:String="wall",val groups:List<MaterialGroup> = DEFAULT_GROUPS,val surfaces:Map<String,String> = emptyMap()) {
     fun surfaceItems():Map<String,Int> = if(block.isNotEmpty()) mapOf(block to 1) else Geometry.resolve(parts,groups).materialSolids(material,surfaces).keys.filter { it.isNotEmpty() }.associateWith { 1 }
     fun visualKey():String = if(block.isNotEmpty()) "block:$block" else Geometry.resolve(parts,groups).visualKey(material,surfaces)
+    fun sameVisual(other:Placement):Boolean = if(block.isNotEmpty() || other.block.isNotEmpty()) block==other.block
+        else Geometry.resolve(parts,groups).sameVisual(material,surfaces,Geometry.resolve(other.parts,other.groups),other.material,other.surfaces)
 }
 data class Plan(val placements:List<Placement>,val clear:List<P>,val warnings:List<String>,val raw:Int,val materials:Map<String,Int>)
 class Resolver {
@@ -91,7 +94,12 @@ class Resolver {
         require(p.pos !in air) { "Required opening obstructed at ${p.pos}" }
         val old=cells[p.pos]
         if(old==null) { cells[p.pos]=p;return }
-        if(old.visualKey()==p.visualKey()) return
+        if(old.sameVisual(p)) return
+        if(merge && old.block.isEmpty() && p.block.isEmpty() && (old.parts+p.parts).any(ExactGeometry::usesExact)
+            && Geometry.exact(old.parts).intersect(Geometry.exact(p.parts)).isEmpty()) {
+            cells[p.pos]=ExactPlacementUnion.merge(listOf(old,p)).copy(component=if(old.component=="roof" || p.component=="roof") "roof" else old.component)
+            return
+        }
         if(merge && old.block.isEmpty() && p.block.isEmpty() && old.material==p.material && old.groups==p.groups && old.surfaces==p.surfaces) {
             cells[p.pos]=old.copy(parts=Geometry.normalized(old.parts+p.parts,old.groups));return
         }

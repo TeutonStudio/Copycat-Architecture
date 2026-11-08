@@ -1,0 +1,7 @@
+Bildtypen in diesem Ordner
+
+concept-*.png: KI-generierte Architekturstudien mit dem eingebauten Imagegen-Werkzeug. Sie zeigen die beabsichtigte Gestaltung und Materialwirkung, einschließlich gestalterischer Details und Einrichtung. Sie sind keine Minecraft-Screenshots und kein geometrischer Nachweis des Gebäudegraphen.
+
+Die vom Blender-Skript erzeugten Planansichten stammen aus der durch den Gebäudecompiler aufgelösten Geometrie. Farben, Glasdarstellung, Beleuchtung und Umgebung dienen der Lesbarkeit. Geometrie und Treppen gehören zum gespeicherten Bauplan. Diese Bilder sind ebenfalls keine Minecraft-Screenshots.
+
+Die vollständigen Imagegen-Prompts liegen in concept-prompts.json.

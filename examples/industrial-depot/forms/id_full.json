@@ -1,0 +1,20 @@
+{
+  "schema": 4,
+  "id": "id_full",
+  "version": 1,
+  "name": "Lichtwerk/Bauteile/Vollblock",
+  "parts": [
+    {
+      "source": "copycats:copycat_block",
+      "group": "body"
+    }
+  ],
+  "groups": [
+    {
+      "id": "body",
+      "name": "Body",
+      "role": "surface",
+      "priority": 0
+    }
+  ]
+}

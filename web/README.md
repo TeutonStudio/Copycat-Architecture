@@ -61,3 +61,15 @@ Im Formmodus bleibt der Referenzrahmen eine volle Blockzelle, mit 16 hB je Achse
 Ausrichtungs-Enums übersetzen weiterhin in das vorhandene Quellformat. Nicht unterstützte native Neigungen bleiben deaktiviert; importierte Werte werden beim bloßen Anzeigen nicht umgeschrieben. Raumversätze werden als hB im bisherigen Ganzblockraster angezeigt und beim Export zurückgerechnet. Die neuen Bedienelemente erweitern nicht still den unterstützten Knoten-/Schemabereich.
 
 Die vollständige deutsche [Knotenreferenz](../docs/wiki/Knotenreferenz.md) dokumentiert außerdem den neueren lokalen Modstand; jede Knotenbeschreibung kennzeichnet ihre Browserverfügbarkeit.
+
+## Integration mit dem nativen Mod ab 0.6.0
+
+Der Browser kompiliert den vollständigen aktuellen Fachkern. Der Knoten- und
+Anschlussvertrag wird aus derselben `graph-models.json` wie im Mod geladen;
+Browseradapter ersetzen JVM-Caches, Bitsets und Ganzzahlarithmetik.
+
+Die Browseroberfläche unterstützt weiterhin die bisherigen acht Form- und neun
+Gebäudeknotentypen. Erweiterte native Graphen, Gruppen, exakte Geometrien und
+nicht unterstützte Knoteneinstellungen werden beim Import und vor dem Export
+mit einem Hinweis auf den nativen Editor abgewiesen. Dadurch können sie nicht
+unbemerkt vereinfacht oder mit fehlenden Einstellungen gespeichert werden.

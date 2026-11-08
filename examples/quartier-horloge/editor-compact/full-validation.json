@@ -1,0 +1,68 @@
+{
+  "validation": "passed: actual complete BuildingGraphCompiler including all four GABLE/GABLE/GABLE/HIP roofs; unique positions; unobstructed required air; 5 x 17 open gallery; both gallery rails; four staircases; five storeys",
+  "graphNodes": 65,
+  "forms": 6,
+  "modules": 6,
+  "positions": 7727,
+  "roofPlacements": 2202,
+  "requiredClearCells": 6625,
+  "zincMillibuckets": 857153,
+  "surfaceItems": {
+    "minecraft:stone": 93,
+    "minecraft:spruce_planks": 2420,
+    "minecraft:bricks": 2142,
+    "minecraft:stone_bricks": 75,
+    "minecraft:smooth_sandstone": 980,
+    "minecraft:white_terracotta": 412,
+    "minecraft:dark_oak_planks": 1186,
+    "minecraft:glass": 534,
+    "minecraft:gold_block": 43,
+    "minecraft:deepslate_tiles": 2050,
+    "minecraft:quartz_block": 4
+  },
+  "storeys": [
+    {
+      "level": 0,
+      "base": 1,
+      "minimum": 0,
+      "maximum": 7
+    },
+    {
+      "level": 1,
+      "base": 7,
+      "minimum": 6,
+      "maximum": 13
+    },
+    {
+      "level": 2,
+      "base": 13,
+      "minimum": 12,
+      "maximum": 19
+    },
+    {
+      "level": 3,
+      "base": 19,
+      "minimum": 18,
+      "maximum": 25
+    },
+    {
+      "level": 4,
+      "base": 25,
+      "minimum": 24,
+      "maximum": 31
+    }
+  ],
+  "accessInstances": 4,
+  "blockBounds": {
+    "maxExclusive": [
+      29,
+      41,
+      40
+    ],
+    "min": [
+      -2,
+      0,
+      -5
+    ]
+  }
+}

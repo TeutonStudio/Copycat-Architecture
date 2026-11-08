@@ -2,7 +2,6 @@ package de.teutonstudio.copycatarchitect.client
 
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.gui.components.EditBox
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.network.chat.Component
 
@@ -39,13 +38,17 @@ object EditorValueInput {
         private val hint:Component?,parse:(String)->T?,private val apply:(T)->Unit):Screen(title) {
         private val draft=EditorValueDraft(current,parse)
         private var error=""
+        private val panelWidth get()=minOf(344,(width-32).coerceAtLeast(128))
+        private val panelHeight get()=164
+        private val left get()=(width-panelWidth)/2
+        private val top get()=(height-panelHeight)/2
         override fun init() {
-            val w=minOf(320,(width-32).coerceAtLeast(80));val left=(width-w)/2;val top=height/2-26
-            val input=addRenderableWidget(EditBox(font,left,top,w,20,title).apply {
+            val input=addRenderableWidget(EditorTextField(font,left+12,top+48,panelWidth-24,22,title).apply {
                 setMaxLength(maxLength);value=draft.value
             })
-            addRenderableWidget(EditorButton(left,top+52,(w-8)/2,tr("cancel")) { onClose() })
-            val save=addRenderableWidget(EditorButton(left+(w+8)/2,top+52,(w-8)/2,tr("save")) { accept() })
+            val buttonWidth=(panelWidth-30)/2
+            addRenderableWidget(EditorButton(left+12,top+panelHeight-30,buttonWidth,tr("cancel")) { onClose() })
+            val save=addRenderableWidget(EditorButton(left+18+buttonWidth,top+panelHeight-30,buttonWidth,tr("save")) { accept() }.apply { primary=true })
             save.active=draft.valid
             input.setResponder { draft.value=it;error="";save.active=draft.valid }
             setInitialFocus(input)
@@ -63,11 +66,20 @@ object EditorValueInput {
             return super.keyPressed(key,scan,mods)
         }
         override fun render(g:GuiGraphics,mx:Int,my:Int,delta:Float) {
-            g.fill(0,0,width,height,0xff15212a.toInt())
-            val w=minOf(320,(width-32).coerceAtLeast(80));val left=(width-w)/2;val top=height/2-26
-            g.drawString(font,title,left,top-20,0xffffc66d.toInt(),false)
-            hint?.let { g.drawString(font,it,left,top+29,0xffa7bec7.toInt(),false) }
-            if(error.isNotEmpty()) g.drawString(font,font.plainSubstrByWidth(error,w),left,top+87,0xffffb295.toInt(),false)
+            ArchitectTheme.background(g,width,height)
+            ArchitectTheme.header(g,width,title.string,width-16)
+            ArchitectTheme.panel(g,left,top,panelWidth,panelHeight,title.string)
+            g.drawString(font,tr("value_field"),left+12,top+34,ArchitectTheme.muted,false)
+            val count="${draft.value.length} / $maxLength"
+            g.drawString(font,count,left+panelWidth-12-font.width(count),top+34,ArchitectTheme.muted,false)
+            hint?.let { g.drawString(font,font.plainSubstrByWidth(it.string,panelWidth-24),left+12,top+79,ArchitectTheme.muted,false) }
+            val valid=draft.valid && error.isEmpty()
+            ArchitectTheme.inset(g,left+12,top+99,panelWidth-24,24)
+            g.fill(left+19,top+108,left+23,top+112,if(valid) ArchitectTheme.green else ArchitectTheme.danger)
+            val status=error.ifEmpty { ui(if(valid) "value_ready" else "value_invalid") }
+            g.drawString(font,font.plainSubstrByWidth(status,panelWidth-48),left+29,top+107,
+                if(valid) ArchitectTheme.green else ArchitectTheme.danger,false)
+            ArchitectTheme.footer(g,width,height,"Enter · ${ui("save")}    Esc · ${ui("cancel")}")
             super.render(g,mx,my,delta)
         }
         override fun renderBackground(g:GuiGraphics,mx:Int,my:Int,delta:Float) {}

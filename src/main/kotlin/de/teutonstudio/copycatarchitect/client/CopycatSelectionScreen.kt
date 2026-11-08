@@ -6,13 +6,14 @@ import net.minecraft.ChatFormatting
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.components.Button
+import net.minecraft.client.gui.components.Tooltip
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.ItemStack
 
-/** An inventory-shaped catalog; choosing an icon never moves a player's items. */
+/** A machine-parts catalog; choosing an icon never moves a player's items. */
 class CopycatSelectionScreen private constructor(
     private val parent:Screen?,
     private val current:BaseShape,
@@ -21,38 +22,81 @@ class CopycatSelectionScreen private constructor(
     private val entries=BaseShapes.all
     private val stacks=entries.map { ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.parse(it.source))) }
     private val slots=mutableListOf<SlotButton>()
+    private val tabs=mutableListOf<EditorButton>()
+    private val categoryKeys=listOf("all_components","copycat_group_basic","catalog_trim","copycat_group_half_layers")
+    private var visibleIndices=entries.indices.toList()
+    private var category=0
+    private var query=""
     private var index=entries.indexOfFirst { it.id==current.id }.coerceAtLeast(0)
     private var keyboardSelection=false
     private var finished=false
-    private val rowCount=((entries.size+COLUMNS-1)/COLUMNS).coerceAtLeast(1)
-    private val inventoryHeight=17+rowCount*SLOT_SIZE
-    private val detailOffset=(rowCount-1)*SLOT_SIZE
-    private val panelHeight=142+detailOffset
-    private val left get()=(width-PANEL_WIDTH)/2
+    private lateinit var search:EditorTextField
+    private val panelWidth get()=minOf(440,(width-16).coerceAtLeast(220))
+    private val panelHeight get()=minOf(270,(height-52).coerceAtLeast(180))
+    private val left get()=(width-panelWidth)/2
     private val top get()=(height-panelHeight)/2
+    private val columns get()=minOf(COLUMNS,((panelWidth-84)/SLOT_SIZE).coerceAtLeast(1))
+    private val gridLeft get()=left+10
+    private val gridTop get()=top+77
+    private val gridWidth get()=columns*SLOT_SIZE+8
+    private val gridHeight get()=panelHeight-113
+    private val infoLeft get()=gridLeft+gridWidth+8
+    private val infoWidth get()=left+panelWidth-10-infoLeft
 
     override fun init() {
-        slots.clear()
-        entries.forEachIndexed { i,adapter ->
-            slots+=addRenderableWidget(SlotButton(left+7+i%COLUMNS*SLOT_SIZE,top+17+i/COLUMNS*SLOT_SIZE,i,adapter,stacks[i]))
+        slots.clear();tabs.clear()
+        search=addRenderableWidget(EditorTextField(font,left+10,top+28,panelWidth-20,22,tr("catalog_search")).apply {
+            setMaxLength(80);value=query;setHint(tr("catalog_search"))
+        })
+        val available=panelWidth-20
+        categoryKeys.forEachIndexed { i,key ->
+            val x=left+10+i*available/categoryKeys.size
+            val next=left+10+(i+1)*available/categoryKeys.size
+            tabs+=addRenderableWidget(EditorButton(x,top+53,next-x-3,tr(key)) {
+                category=i;refreshEntries()
+            }.apply { selected=category==i;setTooltip(Tooltip.create(tr(key))) })
         }
-        addRenderableWidget(Button.builder(tr("cancel")) { onClose() }
-            .bounds(left+8,top+114+detailOffset,PANEL_WIDTH-16,20).build())
+        refreshEntries()
+        search.setResponder { query=it;refreshEntries() }
+        addRenderableWidget(EditorButton(left+10,top+panelHeight-28,panelWidth-20,tr("cancel")) { onClose() })
     }
 
-    override fun setInitialFocus() { slots.getOrNull(index)?.let { setInitialFocus(it) } }
+    private fun categoryOf(shape:BaseShape)=when {
+        shape.source.contains("half_layer")->3
+        shape.name in setOf("full","slab","stairs","roof_template")->1
+        else->2
+    }
+
+    private fun refreshEntries() {
+        slots.forEach { removeWidget(it) };slots.clear()
+        val needle=query.trim()
+        visibleIndices=entries.indices.filter { i ->
+            (category==0 || categoryOf(entries[i])==category) &&
+                (needle.isEmpty() || listOf(ui(entries[i].name),stacks[i].hoverName.string,entries[i].source).any { it.contains(needle,true) })
+        }
+        if(index !in visibleIndices) index=visibleIndices.firstOrNull() ?: -1
+        tabs.forEachIndexed { i,tab -> tab.selected=category==i }
+        visibleIndices.forEachIndexed { position,i ->
+            slots+=addRenderableWidget(SlotButton(gridLeft+4+position%columns*SLOT_SIZE,
+                gridTop+4+position/columns*SLOT_SIZE,i,entries[i],stacks[i]))
+        }
+    }
+
+    override fun setInitialFocus() { slots.firstOrNull { it.entryIndex==index }?.let { setInitialFocus(it) } }
 
     override fun repositionElements() {
-        slots.indexOfFirst { it.isFocused }.takeIf { it>=0 }?.let { index=it }
+        slots.firstOrNull { it.isFocused }?.let { index=it.entryIndex }
         super.repositionElements()
     }
 
     /** Stable screen-space targets for the native client smoke. */
     internal fun slotPoint(source:String,discCut:Int=0):Pair<Double,Double>?=slotPoint(BaseShapes.find(source,discCut))
-    internal fun slotPoint(shape:BaseShape):Pair<Double,Double>? {
-        val i=entries.indexOfFirst { it.id==shape.id }
-        return if(i<0) null else Pair(left+16.0+i%COLUMNS*SLOT_SIZE,top+26.0+i/COLUMNS*SLOT_SIZE)
-    }
+    internal fun slotPoint(shape:BaseShape):Pair<Double,Double>? =
+        slots.firstOrNull { entries[it.entryIndex].id==shape.id }?.let { it.x+it.width/2.0 to it.y+it.height/2.0 }
+    internal fun searchPoint():Pair<Double,Double> = search.x+search.width/2.0 to search.y+search.height/2.0
+    internal fun categoryPoint(categoryIndex:Int):Pair<Double,Double>? =
+        tabs.getOrNull(categoryIndex)?.let { it.x+it.width/2.0 to it.y+it.height/2.0 }
+    internal fun visibleShapes():List<BaseShape> = visibleIndices.map { entries[it] }
 
     private fun choose(i:Int) {
         if(finished) return
@@ -71,27 +115,37 @@ class CopycatSelectionScreen private constructor(
     }
 
     override fun keyPressed(key:Int,scan:Int,mods:Int):Boolean {
-        val focusedIndex=slots.indexOfFirst { it.isFocused }
-        if(focusedIndex>=0) index=focusedIndex
+        if(key==70 && hasControlDown()) { setFocused(search);return true }
+        if(search.isFocused) {
+            if(key==264 && slots.isNotEmpty()) {
+                index=visibleIndices.first();keyboardSelection=true;setFocused(slots.first());return true
+            }
+            return super.keyPressed(key,scan,mods)
+        }
+        val focused=slots.firstOrNull { it.isFocused }
+        if(focused!=null) index=focused.entryIndex
+        val position=visibleIndices.indexOf(index).coerceAtLeast(0)
         val next=when(key) {
-            263->(index-1).coerceAtLeast(0)
-            262->(index+1).coerceAtMost(entries.lastIndex)
-            265->verticalIndex(-1)
-            264->verticalIndex(1)
+            263->position-1
+            262->position+1
+            265->verticalIndex(position,-1)
+            264->verticalIndex(position,1)
             268->0
-            269->entries.lastIndex
+            269->visibleIndices.lastIndex
             else->null
         }
-        if(next!=null) {
-            index=next;keyboardSelection=true;setInitialFocus(slots[index]);return true
+        if(next!=null && visibleIndices.isNotEmpty()) {
+            index=visibleIndices[next.coerceIn(0,visibleIndices.lastIndex)]
+            keyboardSelection=true;setFocused(slots.first { it.entryIndex==index });return true
         }
-        if((key==257 || key==335) && focusedIndex>=0) { choose(index);return true }
+        if((key==257 || key==335) && focused!=null) { choose(index);return true }
         return super.keyPressed(key,scan,mods)
     }
 
-    private fun verticalIndex(direction:Int):Int {
-        val row=(index/COLUMNS+direction).coerceIn(0,rowCount-1)
-        return (row*COLUMNS+index%COLUMNS).coerceAtMost(entries.lastIndex)
+    private fun verticalIndex(position:Int,direction:Int):Int {
+        val rows=((visibleIndices.size+columns-1)/columns).coerceAtLeast(1)
+        val row=(position/columns+direction).coerceIn(0,rows-1)
+        return (row*columns+position%columns).coerceAtMost(visibleIndices.lastIndex)
     }
 
     override fun mouseMoved(mx:Double,my:Double) {
@@ -100,64 +154,83 @@ class CopycatSelectionScreen private constructor(
     }
 
     override fun render(g:GuiGraphics,mx:Int,my:Int,delta:Float) {
-        g.fill(0,0,width,height,0xc0101820.toInt())
-        // Use the vanilla chest's title and repeat its slot row, extend its plain side rails,
-        // then close with the original bottom bevel. Resource packs remain valid.
-        g.blit(FRAME,left,top,0,0,PANEL_WIDTH,17)
-        repeat(rowCount) { row ->
-            g.blit(FRAME,left,top+17+row*SLOT_SIZE,0,17,PANEL_WIDTH,SLOT_SIZE)
+        ArchitectTheme.background(g,width,height)
+        ArchitectTheme.header(g,width,title.string,width-16)
+        ArchitectTheme.panel(g,left,top,panelWidth,panelHeight,ui("catalog_title"))
+        val count="${visibleIndices.size} / ${entries.size}"
+        g.drawString(font,count,left+panelWidth-12-font.width(count),top+10,ArchitectTheme.muted,false)
+        ArchitectTheme.inset(g,left+10,top+28,panelWidth-20,22)
+        ArchitectTheme.viewport(g,gridLeft,gridTop,gridWidth,gridHeight)
+        ArchitectTheme.inset(g,infoLeft,gridTop,infoWidth,gridHeight)
+        val hovered=slots.firstOrNull { it.isMouseOver(mx.toDouble(),my.toDouble()) }
+        val focused=slots.firstOrNull { it.isFocused }
+        val detailIndex=hovered?.entryIndex ?: focused?.entryIndex ?: index
+        renderDetail(g,detailIndex)
+        if(visibleIndices.isEmpty()) {
+            font.split(tr("catalog_empty"),gridWidth-20).take(3).forEachIndexed { i,line ->
+                g.drawString(font,line,gridLeft+10,gridTop+12+i*11,ArchitectTheme.muted,false)
+            }
         }
-        g.blit(FRAME,left,top+inventoryHeight,PANEL_WIDTH,panelHeight-inventoryHeight-7,0f,8f,PANEL_WIDTH,1,256,256)
-        g.blit(FRAME,left,top+panelHeight-7,0,215,PANEL_WIDTH,7)
-        g.drawString(font,title,left+8,top+6,0xff404040.toInt(),false)
-        entries.indexOfFirst { it.id==current.id }.takeIf { it>=0 }?.let { i ->
-            g.drawString(font,tr("copycat_current"),left+8,top+45+detailOffset,0xff404040.toInt(),false)
-            g.renderItem(stacks[i],left+8,top+59+detailOffset)
-            g.drawString(font,font.plainSubstrByWidth(ui(entries[i].name),PANEL_WIDTH-40),left+30,top+60+detailOffset,0xff303030.toInt(),false)
-            g.drawString(font,font.plainSubstrByWidth(stacks[i].hoverName.string,PANEL_WIDTH-40),left+30,top+70+detailOffset,0xff606060.toInt(),false)
-        }
-        font.split(tr("copycat_choose_hint"),PANEL_WIDTH-16).take(2).forEachIndexed { i,line ->
-            g.drawString(font,line,left+8,top+88+detailOffset+i*10,0xff606060.toInt(),false)
-        }
+        ArchitectTheme.footer(g,width,height,ui("copycat_choose_hint").replace('\n',' '))
         super.render(g,mx,my,delta)
-        val hovered=slots.indexOfFirst { it.isMouseOver(mx.toDouble(),my.toDouble()) }
-        val tooltipIndex=if(hovered>=0) hovered else if(keyboardSelection) slots.indexOfFirst { it.isFocused } else -1
-        if(tooltipIndex>=0) {
-            val adapter=entries[tooltipIndex]
-            val lines=mutableListOf<Component>(tr(adapter.name),stacks[tooltipIndex].hoverName,
+        val tooltipSlot=hovered ?: if(keyboardSelection) focused else null
+        if(tooltipSlot!=null) {
+            val i=tooltipSlot.entryIndex
+            val adapter=entries[i]
+            val lines=mutableListOf<Component>(tr(adapter.name),stacks[i].hoverName,
                 Component.literal(adapter.source).withStyle(ChatFormatting.DARK_GRAY))
             if(adapter.id==current.id) lines+=tr("copycat_selected").copy().withStyle(ChatFormatting.GOLD)
             val point=slotPoint(adapter)!!
-            g.renderComponentTooltip(font,lines,if(hovered>=0) mx else point.first.toInt(),if(hovered>=0) my else point.second.toInt())
+            g.renderComponentTooltip(font,lines,if(hovered!=null) mx else point.first.toInt(),if(hovered!=null) my else point.second.toInt())
+        }
+    }
+
+    private fun renderDetail(g:GuiGraphics,i:Int) {
+        val shape=entries.getOrNull(i) ?: return
+        val selected=shape.id==current.id
+        val label=ui(if(selected) "copycat_current" else "selected_part")
+        g.drawString(font,font.plainSubstrByWidth(label,infoWidth-10),infoLeft+5,gridTop+7,ArchitectTheme.muted,false)
+        val scale=if(gridHeight>=100) 2f else 1.5f
+        val itemSize=(16*scale).toInt()
+        g.pose().pushPose()
+        g.pose().translate((infoLeft+(infoWidth-itemSize)/2).toFloat(),(gridTop+22).toFloat(),0f)
+        g.pose().scale(scale,scale,1f);g.renderItem(stacks[i],0,0);g.pose().popPose()
+        val nameY=gridTop+27+itemSize
+        font.split(tr(shape.name),(infoWidth-12).coerceAtLeast(1)).take(if(gridHeight>=100) 2 else 1).forEachIndexed { lineIndex,line ->
+            g.drawString(font,line,infoLeft+6,nameY+lineIndex*10,if(selected) ArchitectTheme.brass else ArchitectTheme.text,false)
+        }
+        if(gridHeight>=115) {
+            val source=shape.source.substringBefore(':')
+            g.drawString(font,font.plainSubstrByWidth(source,infoWidth-12),infoLeft+6,gridTop+gridHeight-19,ArchitectTheme.muted,false)
+            g.fill(infoLeft+6,gridTop+gridHeight-8,infoLeft+infoWidth-6,gridTop+gridHeight-7,ArchitectTheme.brassDark)
+            g.fill(infoLeft+6,gridTop+gridHeight-8,infoLeft+10,gridTop+gridHeight-7,ArchitectTheme.green)
         }
     }
 
     override fun renderBackground(g:GuiGraphics,mx:Int,my:Int,delta:Float) {}
     override fun isPauseScreen()=false
 
-    private inner class SlotButton(x:Int,y:Int,private val slotIndex:Int,private val adapter:BaseShape,private val stack:ItemStack):
-        Button(x,y,18,18,tr(adapter.name).copy().append(" · ").append(stack.hoverName).append(" · ").append(adapter.source),
-            { choose(slotIndex) },DEFAULT_NARRATION) {
+    private inner class SlotButton(x:Int,y:Int,val entryIndex:Int,private val adapter:BaseShape,private val stack:ItemStack):
+        Button(x,y,SLOT_SIZE,SLOT_SIZE,tr(adapter.name).copy().append(" · ").append(stack.hoverName).append(" · ").append(adapter.source),
+            { choose(entryIndex) },DEFAULT_NARRATION) {
         private val selected=adapter.id==current.id
         override fun renderWidget(g:GuiGraphics,mx:Int,my:Int,delta:Float) {
-            if(isHoveredOrFocused) g.fill(x+1,y+1,x+17,y+17,0x50ffffff)
-            if(selected) g.renderOutline(x,y,18,18,0xffb68a32.toInt())
-            if(isFocused) g.renderOutline(x+1,y+1,16,16,0xfff7f1d7.toInt())
-            g.renderItem(stack,x+1,y+1)
+            ArchitectTheme.slot(g,x,y,width,height,isHoveredOrFocused,selected)
+            if(isFocused) g.renderOutline(x+1,y+1,width-2,height-2,ArchitectTheme.text)
+            g.renderItem(stack,x+(width-16)/2,y+(height-16)/2)
+            if(selected) g.fill(x+width-5,y+2,x+width-2,y+5,ArchitectTheme.green)
             if(adapter.discCut>0) {
                 val fraction=if(adapter.discCut==1) "½" else "¼"
                 val badgeWidth=font.width(fraction)+2
-                g.fill(x+18-badgeWidth,y+10,x+18,y+18,0xd0253541.toInt())
-                g.drawString(font,fraction,x+19-badgeWidth,y+10,0xffffd883.toInt(),false)
+                g.fill(x+width-badgeWidth-1,y+height-10,x+width-1,y+height-1,ArchitectTheme.well)
+                g.drawString(font,fraction,x+width-badgeWidth,y+height-10,ArchitectTheme.brass,false)
             }
         }
     }
 
     companion object {
-        private const val PANEL_WIDTH=176
         private const val COLUMNS=9
-        private const val SLOT_SIZE=18
-        private val FRAME=ResourceLocation.withDefaultNamespace("textures/gui/container/generic_54.png")
+        private const val SLOT_SIZE=22
         fun open(current:BaseShape,apply:(BaseShape)->Unit) {
             val minecraft=Minecraft.getInstance()
             minecraft.setScreen(CopycatSelectionScreen(minecraft.screen,current,apply))

@@ -1,0 +1,213 @@
+{
+  "schema": 1,
+  "id": "house_bay",
+  "version": 1,
+  "name": "Horloge kompakt/house_bay",
+  "width": 4,
+  "height": 5,
+  "depth": 1,
+  "minWidth": 4,
+  "maxWidth": 4,
+  "cells": [
+    {
+      "pos": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "form": "hc_trim@1",
+      "role": "plaster",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 1,
+        "y": 0,
+        "z": 0
+      },
+      "form": "hc_trim@1",
+      "role": "plaster",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 2,
+        "y": 0,
+        "z": 0
+      },
+      "form": "hc_trim@1",
+      "role": "plaster",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 3,
+        "y": 0,
+        "z": 0
+      },
+      "form": "hc_trim@1",
+      "role": "plaster",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 0,
+        "y": 1,
+        "z": 0
+      },
+      "form": "hc_wall@1",
+      "role": "wood",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 1,
+        "y": 1,
+        "z": 0
+      },
+      "form": "hc_window@1",
+      "role": "glass",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 2,
+        "y": 1,
+        "z": 0
+      },
+      "form": "hc_window@1",
+      "role": "glass",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 3,
+        "y": 1,
+        "z": 0
+      },
+      "form": "hc_wall@1",
+      "role": "plaster",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 0,
+        "y": 2,
+        "z": 0
+      },
+      "form": "hc_wall@1",
+      "role": "wood",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 1,
+        "y": 2,
+        "z": 0
+      },
+      "form": "hc_window@1",
+      "role": "glass",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 2,
+        "y": 2,
+        "z": 0
+      },
+      "form": "hc_window@1",
+      "role": "glass",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 3,
+        "y": 2,
+        "z": 0
+      },
+      "form": "hc_wall@1",
+      "role": "plaster",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 0,
+        "y": 3,
+        "z": 0
+      },
+      "form": "hc_wall@1",
+      "role": "wood",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 1,
+        "y": 3,
+        "z": 0
+      },
+      "form": "hc_window@1",
+      "role": "glass",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 2,
+        "y": 3,
+        "z": 0
+      },
+      "form": "hc_window@1",
+      "role": "glass",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 3,
+        "y": 3,
+        "z": 0
+      },
+      "form": "hc_wall@1",
+      "role": "plaster",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 0,
+        "y": 4,
+        "z": 0
+      },
+      "form": "hc_trim@1",
+      "role": "plaster",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 1,
+        "y": 4,
+        "z": 0
+      },
+      "form": "hc_trim@1",
+      "role": "plaster",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 2,
+        "y": 4,
+        "z": 0
+      },
+      "form": "hc_trim@1",
+      "role": "plaster",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 3,
+        "y": 4,
+        "z": 0
+      },
+      "form": "hc_trim@1",
+      "role": "plaster",
+      "empty": false
+    }
+  ]
+}

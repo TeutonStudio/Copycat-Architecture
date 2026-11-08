@@ -2,7 +2,7 @@ plugins {
     kotlin("jvm") version "2.2.20"
     id("net.neoforged.moddev") version "2.0.143"
 }
-version = "0.5.1"
+version = "0.6.0"
 group = "de.teutonstudio.copycatarchitect"
 base { archivesName.set("copycat_architect") }
 java { toolchain.languageVersion.set(JavaLanguageVersion.of(21)) }
@@ -26,8 +26,109 @@ neoForge {
         create("client") {
             client()
             sourceSet = clientSourceSet
+            if(project.hasProperty("roomMountingSmoke")) {
+                systemProperty("architect.roomMountingSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("segmentArrangementSmoke")) {
+                systemProperty("architect.segmentArrangementSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("commerceQuarterSmoke") || project.hasProperty("commerceQuarterVerify") || project.hasProperty("commerceQuarterOpen")) {
+                if(!project.hasProperty("commerceQuarterOpen")) systemProperty("architect.commerceQuarterSmoke", "true")
+                if(project.hasProperty("commerceQuarterVerify")) systemProperty("architect.commerceQuarterVerify", "true")
+                programArguments.addAll("--quickPlaySingleplayer", "Handelshof Gruene Gasse", "--width", "1600", "--height", "900")
+            }
+            if(project.hasProperty("commerceQuarterGraphProfile")) {
+                systemProperty("architect.commerceQuarterGraphProfile", "true")
+                programArguments.addAll("--width", "1600", "--height", "900")
+            }
+            if(project.hasProperty("tBuildingSmoke") || project.hasProperty("tBuildingVerify")) {
+                systemProperty("architect.tBuildingSmoke", "true")
+                if(project.hasProperty("tBuildingVerify")) systemProperty("architect.tBuildingVerify", "true")
+                programArguments.addAll("--quickPlaySingleplayer", "Architekt T-Testhaus", "--width", "1600", "--height", "900")
+            }
+            if(project.hasProperty("cartridgeSmoke")) {
+                systemProperty("architect.cartridgeSmoke", "true")
+                programArguments.addAll("--quickPlaySingleplayer", "Architect Cartridge Smoke", "--width", "1600", "--height", "900")
+            }
+            if(project.hasProperty("landscapeSmoke")) {
+                systemProperty("architect.buildingPanelSmoke", "true")
+                systemProperty("architect.landscapeOnlySmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("graphNodePreviewSmoke")) {
+                systemProperty("architect.graphNodePreviewSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("graphGroupSmoke")) {
+                systemProperty("architect.graphGroupSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("graphSelectionSmoke")) {
+                systemProperty("architect.graphSelectionSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("inspectorWorkflowSmoke")) {
+                systemProperty("architect.inspectorWorkflowSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("inspectorSectionsSmoke")) {
+                systemProperty("architect.inspectorSectionsSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("savedCopycatSmoke")) {
+                systemProperty("architect.savedCopycatSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("connectedTextureSmoke")) {
+                systemProperty("architect.connectedTextureSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("materialSelectionSmoke")) {
+                systemProperty("architect.materialSelectionSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("workshopSmoke")) systemProperty("architect.workshopSmoke", "true")
+            if(project.hasProperty("floorPlanSmoke")) {
+                systemProperty("architect.floorPlanSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("buildingPanelSmoke")) {
+                systemProperty("architect.buildingPanelSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("buildingWorkspaceSmoke")) {
+                systemProperty("architect.buildingWorkspaceSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
             if(project.hasProperty("printerSmoke")) systemProperty("architect.printerSmoke", "true")
             if(project.hasProperty("panelBuildingSmoke")) systemProperty("architect.panelBuildingSmoke", "true")
+            if(project.hasProperty("stairsSmoke")) {
+                systemProperty("architect.stairsSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("structuralSmoke")) {
+                systemProperty("architect.structuralSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("explicitAssemblySmoke")) {
+                systemProperty("architect.explicitAssemblySmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("buildingRotationSmoke")) {
+                systemProperty("architect.copycatMirrorSmoke", "true")
+                systemProperty("architect.buildingRotationSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("copycatMirrorSmoke")) {
+                systemProperty("architect.copycatMirrorSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("buildingPreviewSmoke")) {
+                systemProperty("architect.buildingPreviewSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
             if(project.hasProperty("clientSmoke") || project.hasProperty("graphSmoke") || project.hasProperty("buildingGraphSmoke") || project.hasProperty("kilaGraphSmoke")) systemProperty("architect.smoke", "true")
             if(project.hasProperty("buildingGraphSmoke")) systemProperty("architect.buildingGraphSmoke", "true")
             if(project.hasProperty("graphSmoke")) systemProperty("architect.graphSmoke", "true")
@@ -52,6 +153,7 @@ dependencies {
     implementation("thedarkcolour:kotlinforforge-neoforge:5.10.0")
     implementation("cc.tweaked:cc-tweaked-1.21.1-forge:1.120.0")
     runtimeOnly("maven.modrinth:create:6.0.10+mc1.21.1") { isTransitive = false }
+    runtimeOnly("maven.modrinth:LDuJMNS2:dCzZU1My") { isTransitive = false } // Molten Metals - Neoforged 1.0.1
     runtimeOnly("maven.modrinth:copycats:3.0.9+mc.1.21.1-neoforge") { isTransitive = false }
     // Development helpers for runClient only; pin the NeoForge files by version ID.
     add(clientSourceSet.runtimeOnlyConfigurationName, "maven.modrinth:jei:iv3KiVkE") { isTransitive = false } // 19.64.0.455

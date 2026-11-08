@@ -27,10 +27,8 @@ function dispose(group) {
   for (const material of materials) { material.map?.dispose(); material.dispose() }
 }
 
-function referenceFrame(group, mode, geometryBounds) {
-  const bounds = mode === 'form' ? new THREE.Box3(new THREE.Vector3(), new THREE.Vector3(1, 1, 1))
-    : geometryBounds.isEmpty() ? new THREE.Box3(new THREE.Vector3(), new THREE.Vector3(1, 1, 1))
-      : new THREE.Box3(geometryBounds.min.clone().floor(), geometryBounds.max.clone().ceil())
+function referenceFrame(group) {
+  const bounds = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3(1, 1, 1))
   const size = bounds.getSize(new THREE.Vector3()).max(new THREE.Vector3(1, 1, 1))
   bounds.max.copy(bounds.min).add(size)
   const geometry = new THREE.CylinderGeometry(1, 1, 1, 8)
@@ -201,7 +199,7 @@ function Viewer({ plan, mode }) {
     const first = !view.bounds || view.bounds.isEmpty()
     dispose(view.guides)
     view.guides.clear()
-    view.bounds = referenceFrame(view.guides, mode, bounds)
+    view.bounds = mode === 'form' ? referenceFrame(view.guides) : bounds
     if (first) fit()
     view.render()
   }, [plan, mode])
@@ -283,8 +281,8 @@ export default function Preview({ mode, document, library, selected, previewMode
     </div>
     {result.plan?.value && <p className="preview-meta">{result.plan.value}</p>}
     {result.plan?.warnings?.map((warning, index) => <p className="preview-meta" key={index}>{warning}</p>)}
-    <p className="axis-legend"><span>X</span> Ost/West · <span>Y</span> Höhe · <span>Z</span> Süd/Nord<br />
-      {mode === 'form' ? 'Rahmen: 16 hB · lange Marke: 8 hB · kurze Marken: 4 / 12 hB' : 'Gebäudehülle · Marken bei ¼ / ½ / ¾ der Kantenlänge'}</p>
+    <p className="axis-legend"><span>X</span> Ost/West · <span>Y</span> Höhe · <span>Z</span> Süd/Nord
+      {mode === 'form' && <><br />Rahmen: 16 hB · lange Marke: 8 hB · kurze Marken: 4 / 12 hB</>}</p>
     {result.plan?.materials && <details className="materials"><summary>Materialbedarf</summary>
       {Object.entries(result.plan.materials).map(([id, count]) => <div key={id}><code>{id}</code><span>{count}</span></div>)}
     </details>}

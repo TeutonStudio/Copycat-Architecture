@@ -1,16 +1,16 @@
 # Graphstudio
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.4** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
 
 [**Gebäudegraph öffnen**](https://teutonstudio.github.io/copycat-architect/?editor=building) · [**Formgraph öffnen**](https://teutonstudio.github.io/copycat-architect/?editor=form)
 
-Graphstudio **0.3** ist der Browsereditor für den älteren öffentlichen Graphstand. Die Links öffnen eine eigene interaktive Webseite. In der [Knotenreferenz](Knotenreferenz.md) steht für jeden Typ, ob er im Browser vorhanden ist. Die neuesten lokalen Modknoten werden noch nicht vollständig abgebildet.
+Graphstudio **0.4** ist der Browsereditor für den älteren öffentlichen Graphstand. Die Links öffnen eine eigene interaktive Webseite. In der [Knotenreferenz](Knotenreferenz.md) steht für jeden Typ, ob er im Browser vorhanden ist. Die neuesten lokalen Modknoten werden noch nicht vollständig abgebildet.
 
 ## Einen Entwurf bearbeiten
 
 1. Unter **Beispiel öffnen** einen Entwurf auswählen oder über **JSON öffnen** eine unterstützte Form- oder Gebäudedatei laden.
 2. Einen **Knotentyp** auswählen und mit **+ Knoten** einfügen. Knoten verschieben, Anschlüsse verbinden oder die Quelle im Inspektor auswählen. Falsche Porttypen und Zyklen werden abgewiesen.
-3. Beim Gebäude bei Bedarf **Bibliothek öffnen** verwenden. Diese Browserfunktion liest ein Referenzpaket mit `forms` und/oder `modules`. Sie ersetzt nicht den Einzelentwurfsimport im Spiel.
+3. Gespeicherte Formen über den Copycat-Knoten (**Gespeicherten Copycat laden**) auswählen oder eine einzelne Form mit **Copycat laden** importieren. Im Formgraphen stehen **Gespeicherter Copycat** und **Copycat spiegeln** bereit; im Gebäudegraphen auch Copycat-Spiegelung/-Rotation und die vier [booleschen Segmentoperatoren](Geplante-Segmentoperatoren.md). Beim Gebäude bei Bedarf **Bibliothek öffnen** verwenden. Diese Browserfunktion liest ein Referenzpaket mit `forms` und/oder `modules`. Sie ersetzt nicht den Einzelentwurfsimport im Spiel.
 4. Änderungen mit **Rückgängig/Wiederholen** beziehungsweise **Strg+Z / Strg+Umschalt+Z** prüfen. **Entf** entfernt die Auswahl. Die Ergebnis- und Standard-Leerwandknoten bleiben erhalten.
 5. Über **JSON exportieren** eine Datei sichern oder über **Minecraft-JSON kopieren** den vollständigen Text in den passenden Spielimport übernehmen.
 

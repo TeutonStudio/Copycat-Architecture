@@ -1,12 +1,12 @@
-# Geplante boolesche Segmentoperatoren
+# Boolesche Segmentoperatoren
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.4** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
 
-**Status: geplant, noch nicht implementiert.** Diese Seite legt einen umsetzbaren Vertrag fest. Die Namen und IDs sind Vorschläge; aktuelle Mod- und Browserimporte akzeptieren sie noch nicht. Sie werden in der Knotenreferenz deshalb nicht als vorhandene Operationen geführt.
+**Status: implementiert im aktuellen Graphstudio-Quellstand und im gemeinsamen Fachkern.** Die vier Knotentypen sind im Gebäudegraphen auswählbar und ihre Ergebnisse lassen sich mit weiteren Segmentknoten verbinden. Die veröffentlichte Mod 0.6.0 kennt diese neuen IDs noch nicht; für den Spielimport ist ein Mod-Build mit dieser Erweiterung nötig.
 
 ## Gemeinsamer Vertrag
 
-Die Knoten nehmen vollständige Segmentergebnisse an: `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` und später auch die vier Operatorergebnisse. Ihr Ausgang ist ein weiterverwendbarer **Segmentwert**, keine Liste voneinander unabhängiger Copycat-Ausgänge.
+Die Knoten nehmen vollständige Segmentergebnisse an: `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` sowie die vier Operatorergebnisse. Ihr Ausgang ist ein weiterverwendbarer **Segmentwert**, keine Liste voneinander unabhängiger Copycat-Ausgänge.
 
 Die Eingänge liegen im selben lokalen Blockkoordinatensystem. Es gibt keine automatische Skalierung und keine automatische Verschiebung zum kleinsten belegten Punkt. Eine fehlende Zelle bedeutet leere Geometrie. Die boolesche Operation wird **positionsweise auf die Copycat-Geometrien innerhalb der jeweiligen Blockzelle** abgebildet. Ein bloßer Vergleich ganzer belegter Zellen wäre bei Teilformen falsch.
 
@@ -16,7 +16,7 @@ Normale Vollblöcke müssen für die Geometrieauswertung als volle Zellen behand
 
 **Segment-Vereinigung.** Mindestens 2, höchstens 16 geordnete Segmenteingänge. Belegte Teilvolumen werden vereinigt; doppelte Belegung erzeugt keine doppelte Geometrie. Pro Zelle entspricht das dem Copycat-Operator UNION.
 
-**Anschlüsse:** `in:0` bis `in:15`, ausschließlich Segmentwerte. **Inspektor:** Eingangszahl, Materialmodus (Separiert/Gruppiert), gemeinsame Materialrolle und optionale Rollenüberschreibungen je Eingang; allgemeiner Knotenname. **Ausdehnung:** gemeinsame umschließende Eingabeausdehnung bei unverändertem lokalen Ursprung.
+**Anschlüsse:** `in:0` bis `in:15`, ausschließlich Segmentwerte. **Inspektor:** Eingangszahl, Materialmodus (Separiert/Gruppiert), gemeinsame Materialrolle ; allgemeiner Knotenname. **Ausdehnung:** gemeinsame umschließende Eingabeausdehnung bei unverändertem lokalen Ursprung.
 
 ## SEGMENT_INTERSECTION
 
@@ -34,21 +34,12 @@ Normale Vollblöcke müssen für die Geometrieauswertung als volle Zellen behand
 
 **Symmetrische Segment-Differenz.** Mindestens 2, höchstens 16 Segmenteingänge. Pro Teilvolumen bleiben ungerade Überdeckungszahlen erhalten. Bei drei identischen Eingängen bleibt die Geometrie bestehen; sie darf nicht wie bei „alles Überlappende entfernen“ verschwinden. Entspricht iteriertem Copycat-XOR.
 
-**Anschlüsse:** `in:0` bis `in:15`. **Inspektor:** Eingangszahl, Separiert/Gruppiert, gemeinsame Rolle und optionale Eingangsrollen. **Ausdehnung:** gemeinsame umschließende Eingabeausdehnung ohne Verschieben des Ursprungs.
+**Anschlüsse:** `in:0` bis `in:15`. **Inspektor:** Eingangszahl, Separiert/Gruppiert, gemeinsame Rolle . **Ausdehnung:** gemeinsame umschließende Eingabeausdehnung ohne Verschieben des Ursprungs.
 
-## Effiziente Auswertung bei gleichem Ergebnis
+## Auswertung und Grenzen
 
-Die semantische Referenz ist die Abbildung auf die bestehenden Copycat-Operatoren. Die Implementierung muss dafür keine riesigen ausgeschriebenen Knotengraphen erzeugen. Bevorzugt wird:
+Die Auswertung besucht nur relevante belegte Blockpositionen und verwendet je Zelle den bestehenden Copycat-Compiler einschließlich exakter Schnittgeometrie, Materialgruppen und Quellenbelegen. Gleiche Zellkombinationen werden innerhalb einer Operation zwischengespeichert. Leere Zwischenergebnisse dürfen weiter verbunden werden. Materialien bleiben separiert erhalten; Gruppiert setzt die gemeinsame Gebäuderolle. Die üblichen Grenzen von acht Materialgruppen und 32 Formteilen pro Zelle gelten weiter.
 
-1. Segmente einmal auswerten und als spärliche Zuordnung **Blockposition → Teilgeometrie und Herkunft** halten.
-2. Nur relevante Positionen besuchen: Schlüsselvereinigung für UNION/XOR, Schlüsselschnitt für INTERSECTION, A-Schlüssel für DIFFERENCE.
-3. Exakt gleiche Eingänge und leere Geometrien früh erkennen. Innerhalb einer Zelle einen passenden Bitmengen- beziehungsweise exakten Volumenalgorithmus verwenden und gleiche Teilgeometrien zwischenspeichern.
-4. Normierung und teure Netz-/Vorschaubildung erst am Ergebnis durchführen. Die Laufzeit soll nicht von einer kartesischen Paarung aller Copycat-Quellen abhängen.
+Unveränderte normale Vollblöcke behalten ihre Block- und Itemherkunft. Eine Operation, die einen normalen Vollblock teilweise ausschneiden oder mit Copycat-Materialien überlagern müsste, wird ausdrücklich abgewiesen. Als ausschneidbare Quelle einen gespeicherten vollen Copycat verwenden. So wird ein normaler Baublock nicht still in eine anders abgerechnete Copycat-Form umgewandelt.
 
-Eine schnellere Auswertung hat Vorrang, **wenn Geometrie, Materialien, Vordergrundauflösung, Quellenherkunft und Abrechnung gleich bleiben**. Bloß gleiche äußere Maschen reichen dafür nicht. Rationale Schnittgeometrie darf nicht auf ein gröberes Raster gerundet werden.
-
-## Metadaten und Abnahme
-
-Öffnungen, Säulenprofile, bewusste Freiräume und Wandanschlüsse müssen ihren ursprünglichen Quell- und Instanzbezug behalten. Die boolesche Formänderung darf weder Fensteraufträge verlieren noch entfernte Wandbereiche versehentlich als erforderliche Luft mit noch vorhandener Geometrie kollidieren lassen. Konflikte werden ausdrücklich gemeldet.
-
-Vor einer Registrierung sind Vergleichstests gegen die positionsweise Referenzauswertung nötig: leere/disjunkte/identische Eingänge, Teilüberlappungen innerhalb einer Zelle, drei- und mehrfache XOR-Überdeckung, unterschiedliche Ausdehnungen, gedrehte/gespiegelte Quellen, Materialien und Prioritäten, Metadaten, leere Ergebnisse, JSON-Rundlauf und Mengengrenzen. Anschließend folgen Zeit-/Speichervergleiche für große, spärlich belegte Segmente. Erst mit korrektem Vertrag und Prüfungen wechselt der Status zu implementiert.
+Segmente mit semantischen Öffnungen, Säulenprofilen oder Wandanschlüssen werden vor boolescher Auswertung ausdrücklich abgewiesen, bis deren Topologie konsistent mitgeschnitten werden kann. Es werden keine Metadaten still entfernt.

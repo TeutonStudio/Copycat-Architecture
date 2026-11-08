@@ -10,10 +10,10 @@ import kotlin.js.json
 
 // These are the lossless browser authoring capabilities; native-only fields must
 // be rejected before a preview or export can silently discard them.
-private val browserFormKinds=listOf(NodeKind.INPUT,NodeKind.UNION,NodeKind.INTERSECTION,NodeKind.DIFFERENCE,NodeKind.SYMMETRIC_DIFFERENCE,NodeKind.ROTATE,NodeKind.ROTATION,NodeKind.OUTPUT)
-private val browserBuildingKinds=listOf(BuildingKind.COPYCAT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.ROOM,BuildingKind.STOREY,BuildingKind.ROOF,BuildingKind.BUILDING)
-private val browserFormFields=setOf("id","kind","inputs","part","x","y","materialMode","materialGroup","previewGroup","inputGroups","rotationAxis","quarterTurns")
-private val browserBuildingFields=setOf("id","kind","name","x","y","inputs","module","block","length","height","rectangles","walls","floor","ceiling","offsets","form","thickness","occupied","finish","levels","roof","roofType","ridge","overhang","materialMode","role","preview","storeyMode","corner")
+private val browserFormKinds=listOf(NodeKind.INPUT,NodeKind.UNION,NodeKind.INTERSECTION,NodeKind.DIFFERENCE,NodeKind.SYMMETRIC_DIFFERENCE,NodeKind.ROTATE,NodeKind.ROTATION,NodeKind.OUTPUT,NodeKind.SAVED,NodeKind.MIRROR)
+private val browserBuildingKinds=listOf(BuildingKind.COPYCAT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.ROOM,BuildingKind.STOREY,BuildingKind.ROOF,BuildingKind.BUILDING,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)
+private val browserFormFields=setOf("id","kind","inputs","part","x","y","materialMode","materialGroup","previewGroup","inputGroups","rotationAxis","quarterTurns","savedCopycat","mirror")
+private val browserBuildingFields=setOf("id","kind","name","x","y","inputs","module","block","length","height","rectangles","walls","floor","ceiling","offsets","form","thickness","occupied","finish","levels","roof","roofType","ridge","overhang","materialMode","role","preview","storeyMode","corner","surfaces","rotationAxis","quarterTurns","mirror")
 private fun browserNode(value:dynamic,isBuilding:Boolean):dynamic {
     val kind=string(value,"kind",if(isBuilding) "SEGMENT" else "INPUT")
     require(if(isBuilding) browserBuildingKinds.any { it.name==kind } else browserFormKinds.any { it.name==kind }) { "$kind requires the native editor" }
@@ -84,20 +84,28 @@ private fun strings(v: dynamic, key: String): List<String> = array(v, key)?.map 
     require(jsTypeOf(it) == "string") { "$key must contain strings" }
     it.unsafeCast<String>()
 }.orEmpty()
+private fun mirror(v:dynamic):CopycatMirror? {
+    if(v==null) return null
+    val plane=CopycatMirrorPlane.valueOf(string(v,"plane","X"))
+    require(plane in setOf(CopycatMirrorPlane.X,CopycatMirrorPlane.Y,CopycatMirrorPlane.Z)) { "This mirror plane requires the native editor" }
+    return CopycatMirror(plane)
+}
+private fun saved(v:dynamic):SavedCopycat? = if(v==null) null else SavedCopycat(string(v,"id"),int(v,"version",1),string(v,"name","Copycat"),array(v,"parts")?.map(::part).orEmpty())
 private fun formNode(raw: dynamic): GraphNode {
     val v=browserNode(raw,false)
     return GraphNode(
     string(v, "id"), NodeKind.valueOf(string(v, "kind", "INPUT")), strings(v, "inputs"), part(v.part),
     int(v, "x", 0), int(v, "y", 0), MaterialMode.valueOf(string(v, "materialMode", "SEPARATED")),
     string(v, "materialGroup"), string(v, "previewGroup"), strings(v, "inputGroups"),
-    RotationAxis.valueOf(string(v, "rotationAxis", "NORMAL")), int(v, "quarterTurns", 0)
+    RotationAxis.valueOf(string(v, "rotationAxis", "NORMAL")), int(v, "quarterTurns", 0), mirror(v.mirror), saved(v.savedCopycat)
 )
 }
 private fun GraphNode.jsNode() = json(
     "id" to id, "kind" to kind.name, "inputs" to inputs.toTypedArray(), "part" to part.jsPart(),
     "x" to x, "y" to y, "materialMode" to materialMode.name, "materialGroup" to materialGroup,
     "previewGroup" to previewGroup, "inputGroups" to inputGroups.toTypedArray(),
-    "rotationAxis" to rotationAxis.name, "quarterTurns" to quarterTurns
+    "rotationAxis" to rotationAxis.name, "quarterTurns" to quarterTurns, "mirror" to mirror?.let { json("plane" to it.plane.name) },
+    "savedCopycat" to savedCopycat?.let { json("id" to it.id,"version" to it.version,"name" to it.name,"parts" to it.parts.map { p -> p.jsPart() }.toTypedArray()) }
 )
 private fun formGraph(raw: dynamic): NodeGraph { val v=browserGraph(raw,false);return NodeGraph(int(v,"schema",2),array(v,"nodes")?.map(::formNode).orEmpty()) }
 private fun form(v: dynamic): Form = Form(
@@ -118,7 +126,8 @@ private fun buildingNode(raw: dynamic): BuildingNode {
     roof = string(v, "roof"), roofType = string(v, "roofType", "flat"), ridge = int(v, "ridge", 0),
     overhang = int(v, "overhang", 0), materialMode = MaterialMode.valueOf(string(v, "materialMode", "SEPARATED")),
     role = string(v, "role", "wall"), preview = string(v, "preview", "all"), storeyMode = string(v, "storeyMode", "rooms"),
-    corner = string(v, "corner")
+    corner = string(v, "corner"), surfaces = if(v.surfaces==null) null else map(v.surfaces) { obj,key -> string(obj,key) },
+    rotationAxis=RotationAxis.valueOf(string(v,"rotationAxis","Y")),quarterTurns=int(v,"quarterTurns",0),mirror=mirror(v.mirror)
 )
 }
 private fun BuildingNode.jsNode() = json(
@@ -129,7 +138,8 @@ private fun BuildingNode.jsNode() = json(
     "thickness" to thickness, "occupied" to occupied, "finish" to finish,
     "levels" to levels.mapKeys { it.key.toString() }.asJson(), "roof" to roof, "roofType" to roofType,
     "ridge" to ridge, "overhang" to overhang, "materialMode" to materialMode.name, "role" to role, "preview" to preview,
-    "storeyMode" to storeyMode, "corner" to corner
+    "storeyMode" to storeyMode, "corner" to corner, "surfaces" to surfaces?.asJson(),
+    "rotationAxis" to rotationAxis.name,"quarterTurns" to quarterTurns,"mirror" to mirror?.let { json("plane" to it.plane.name) }
 )
 private fun buildingGraph(raw:dynamic):BuildingGraph { val v=browserGraph(raw,true);return BuildingGraph(int(v,"schema",1),array(v,"nodes")?.map(::buildingNode).orEmpty()) }
 private fun building(v: dynamic) = Building(
@@ -204,7 +214,8 @@ fun newNode(isBuilding: Boolean, kind: String, id: String, x: Int, y: Int): Json
     }
     val type = NodeKind.valueOf(kind)
     require(type in browserFormKinds) { "Use the native editor for $kind" }
-    return GraphNode(id, type, List(GraphModels.inputs(type).first) { "" }, x = x, y = y).jsNode()
+    return GraphNode(id, type, List(GraphModels.inputs(type).first) { "" }, x = x, y = y,
+        savedCopycat=if(type==NodeKind.SAVED) SavedCopycat(parts=listOf(Part())) else null).jsNode()
 }
 
 @JsExport
@@ -301,4 +312,12 @@ fun mountSource(value:dynamic,normal:String):Json {
         if(PartRotations.normal(result)==target) return result.jsPart()
     }
     error("This source has no supported native orientation for the selected mounting")
+}
+
+@JsExport
+fun insertSavedCopycat(document:dynamic,source:dynamic,nodeId:String):Json {
+    val target=form(document)
+    val inserted=SavedCopycats.insert(target,form(source),replaceId=nodeId).form
+    return json("groups" to inserted.groups.map { json("id" to it.id,"name" to it.name,"role" to it.role,"priority" to it.priority) }.toTypedArray(),
+        "nodes" to inserted.graph!!.nodes.map { it.jsNode() }.toTypedArray())
 }

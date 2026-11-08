@@ -782,5 +782,9 @@
   "gui.copycat_architect.semantic_boundary_rules_help": "Virtuelle Abschnitte können vom Stockwerk ergänzt werden oder bewusst offen bleiben.",
   "gui.copycat_architect.semantic_opening_inset_depth": "Einsetztiefe für Glas / Rahmen",
   "gui.copycat_architect.semantic_plan_summary": "%s Innenzellen · %s Segmente",
-  "gui.copycat_architect.semantic_floorplan_help": "Klick in die Raumfläche: Segmentraster öffnen · Mittlere Maustaste: Ansicht verschieben"
+  "gui.copycat_architect.semantic_floorplan_help": "Klick in die Raumfläche: Segmentraster öffnen · Mittlere Maustaste: Ansicht verschieben",
+  "gui.copycat_architect.segment_union": "Segment-Vereinigung",
+  "gui.copycat_architect.segment_intersection": "Segment-Schnitt",
+  "gui.copycat_architect.segment_difference": "Segment-Differenz",
+  "gui.copycat_architect.segment_symmetric_difference": "Symmetrische Segment-Differenz"
 }

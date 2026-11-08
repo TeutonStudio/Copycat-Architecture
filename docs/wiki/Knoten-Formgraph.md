@@ -1,6 +1,6 @@
 # Knotenreferenz: Formgraph
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.4** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
 
 [Übersicht](Knotenreferenz.md) · [Gemeinsame und verschachtelte Eigenschaften](Knoten-Eigenschaften.md) · [Einheiten](Einheiten-und-Ausrichtung.md)
 
@@ -10,7 +10,7 @@ Die Anschlusskennungen sind die gespeicherten API-Schlüssel. Ein `*` bezeichnet
 
 **Standard-Copycat.** Eine geometrische Standard-Copycat-Quelle innerhalb einer Blockzelle.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
 
 **Ausgang:** `shape`.
 
@@ -40,7 +40,7 @@ Keine Eingänge.
 
 **Vereinigung.** Vereinigt die belegten Bereiche aller Eingänge; Überlappung wird einmal belegt.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
 
 **Ausgang:** `shape`.
 
@@ -64,7 +64,7 @@ Keine Eingänge.
 
 **Schnitt.** Behält nur die gemeinsame Geometrie aller Eingänge. Die eingehende Materialherkunft stammt bei separierter Auswertung vom ersten Eingang.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
 
 **Ausgang:** `shape`.
 
@@ -84,7 +84,7 @@ Keine zusätzlichen typspezifischen Eingabefelder im Knotenvertrag. Verbindungen
 
 **Differenz A − B.** Berechnet A minus B. Ein Tausch der beiden Eingänge ändert das Ergebnis.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
 
 **Ausgang:** `shape`.
 
@@ -105,7 +105,7 @@ Keine zusätzlichen typspezifischen Eingabefelder im Knotenvertrag. Verbindungen
 
 **Symmetrische Differenz.** Behält Bereiche mit ungerader Überdeckungszahl. Bei zwei Eingängen verschwindet die gemeinsame Überlappung.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
 
 **Ausgang:** `shape`.
 
@@ -129,7 +129,7 @@ Keine zusätzlichen typspezifischen Eingabefelder im Knotenvertrag. Verbindungen
 
 **Copycat rotieren.** Dreht den verbundenen Copycat-Zweig. Eine angeschlossene Rotation übersteuert den lokalen Achsen-/Winkelwert.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
 
 **Ausgang:** `shape`.
 
@@ -151,7 +151,7 @@ Keine zusätzlichen typspezifischen Eingabefelder im Knotenvertrag. Verbindungen
 
 **Rotation.** Ein typisierter Wert aus Achse und Winkel; liefert keine Geometrie.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
 
 **Ausgang:** `rotation`.
 
@@ -170,7 +170,7 @@ Keine Eingänge.
 
 **Ergebnis-Copycat.** Einziger Form-Ergebnisknoten. Ein leeres oder unverbundenes Ergebnis ist nicht druckbar.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
 
 **Ausgang:** kein weiterführender Ausgang; dies ist das Ergebnis..
 
@@ -190,7 +190,7 @@ Keine Eingänge.
 
 **Copycat spiegeln.** Spiegelt Geometrie an einer ausgewählten Ebene durch die Blockmitte; diagonale Körpernormalen verwenden die exakte Geometrieauswertung.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden (Spiegelebenen X/Y/Z im Browser).
 
 **Ausgang:** `shape`.
 
@@ -210,7 +210,7 @@ Keine Eingänge.
 
 **Gespeicherter Copycat.** Eine unabhängige Kopie einer gespeicherten Formversion als neue Quelle.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.3: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden.
 
 **Ausgang:** `shape`.
 

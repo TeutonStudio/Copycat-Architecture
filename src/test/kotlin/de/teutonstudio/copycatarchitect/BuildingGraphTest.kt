@@ -234,7 +234,7 @@ class BuildingGraphTest {
         assertEquals(p.placements.size,p.placements.map { it.pos }.distinct().size)
         val roof=g.nodes.first { it.id=="roof" }
         assertEquals(setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE),BuildingPorts.of(roof).first { it.key=="in:0" }.accepts)
-        assertEquals(setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE),BuildingPorts.of(roof).first { it.key=="wall:0" }.accepts)
+        assertEquals((setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds),BuildingPorts.of(roof).first { it.key=="wall:0" }.accepts)
         val wrong=g.nodes.first { it.id=="gable_wall" }.copy(length=4)
         assertFails { plan(g.replace(wrong)) }
         val grouped=roof.copy(materialMode=MaterialMode.GROUPED)

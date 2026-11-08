@@ -2,6 +2,12 @@
 
 Version **0.5.0** für Minecraft **1.21.1**, **NeoForge 21.1.251**, **Java 21**. Kotlin-Mod mit einem platzierbaren Blockdrucker für geometrische Copycat-Kompositformen, versionierten Gebäudemodulen und echtem Turtle-Bau mit Rohmaterial und Oberflächenpalette.
 
+## Graphstudio im Browser
+
+[**Gebäudegraph öffnen**](https://teutonstudio.github.io/copycat-architect/?editor=building) · [**Formgraph öffnen**](https://teutonstudio.github.io/copycat-architect/?editor=form) · [**Anleitung im Wiki**](https://github.com/TeutonStudio/copycat-architect/wiki/Graphstudio)
+
+Knoten verbinden und bearbeiten, das Ergebnis in 3D prüfen und JSON mit Minecraft austauschen. Die Berechnung verwendet dieselben Kotlin-Quellen wie dieser Spielstand. Minecraft-Texturen und modabhängige Blockmodelle werden in der Browser-Vorschau durch Materialfarben dargestellt. Entwicklung und Build: [web/README.md](web/README.md).
+
 ## Bauen und installieren
 
 ```sh

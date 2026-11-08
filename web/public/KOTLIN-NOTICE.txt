@@ -1,0 +1,6 @@
+Kotlin standard library 2.2.20
+Copyright JetBrains s.r.o. and Kotlin Programming Language contributors.
+
+This website includes compiled Kotlin standard library code.
+Source: https://github.com/JetBrains/kotlin/tree/v2.2.20
+License: Apache License 2.0 (see KOTLIN-LICENSE.txt).

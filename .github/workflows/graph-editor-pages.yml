@@ -1,0 +1,67 @@
+name: Graphstudio
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'web/**'
+      - 'examples/**'
+      - 'src/main/kotlin/de/teutonstudio/copycatarchitect/domain/**'
+      - '.github/workflows/graph-editor-pages.yml'
+  pull_request:
+    paths:
+      - 'web/**'
+      - 'examples/**'
+      - 'src/main/kotlin/de/teutonstudio/copycatarchitect/domain/**'
+      - '.github/workflows/graph-editor-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: graphstudio-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: ./gradlew test
+        working-directory: .
+      - run: npm test
+      - run: npm run build
+      - if: github.ref == 'refs/heads/master'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: web/dist
+  deploy:
+    if: github.ref == 'refs/heads/master'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish Graphstudio
+        id: deployment
+        uses: actions/deploy-pages@v4

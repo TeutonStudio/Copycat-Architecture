@@ -1,8 +1,6 @@
 package de.teutonstudio.copycatarchitect.domain
 
 /** Edges point to source node IDs. Empty strings are unconnected editor sockets. */
-enum class NodeKind { INPUT, UNION, INTERSECTION, DIFFERENCE, SYMMETRIC_DIFFERENCE, ROTATE, ROTATION, OUTPUT }
-enum class MaterialMode { SEPARATED, GROUPED }
 data class GraphNode(val id:String="",val kind:NodeKind=NodeKind.INPUT,val inputs:List<String> = emptyList(),
                      val part:Part=Part(),val x:Int=0,val y:Int=0,
                      val materialMode:MaterialMode=MaterialMode.SEPARATED,val materialGroup:String="",val previewGroup:String="",
@@ -30,7 +28,7 @@ data class NodeGraph(val schema:Int=2,val nodes:List<GraphNode> = listOf(GraphNo
 /** Boolean operations preserve leaf provenance, so materials and paid recipes follow the surviving solids. */
 object GraphCompiler {
     private data class Key(val graph:NodeGraph,val groups:List<MaterialGroup>)
-    private val cache=java.util.concurrent.ConcurrentHashMap<Key,List<Part>>()
+    private val cache=GraphCache<Key,List<Part>>()
     private fun supportsInputGroups(kind:NodeKind)=kind==NodeKind.UNION || kind==NodeKind.SYMMETRIC_DIFFERENCE
     /** Empty saved assignments inherit the connected branch, including legacy source materials. */
     fun inputMaterialGroups(graph:NodeGraph,node:GraphNode,slot:Int,groups:List<MaterialGroup> = DEFAULT_GROUPS):Set<String> {
@@ -65,32 +63,26 @@ object GraphCompiler {
             node.inputs.indices.map { inputMaterialGroups(graph,node,it,groups) }.let { values -> values.all { it.size==1 } && values.distinct().size==1 }
 
     fun structure(graph:NodeGraph,groups:List<MaterialGroup>) {
-        require(graph.schema in 1..2 && graph.nodes.size in 1..64) { "Node graph needs 1–64 nodes (schema 1–2)" }
+        require(graph.schema in GraphModels.formSchemas && graph.nodes.size in 1..GraphModels.FORM_NODES) { "Node graph needs 1–64 nodes (schema 1–2)" }
         val nodes=graph.nodes.associateBy { it.id }
         require(nodes.size==graph.nodes.size && nodes.keys.all { it.matches(Regex("[a-zA-Z0-9_-]{1,36}")) }) { "Node IDs must be unique" }
         require(graph.nodes.count { it.kind==NodeKind.OUTPUT }==1) { "Node graph needs exactly one result node" }
         val leaves=graph.nodes.filter { it.kind==NodeKind.INPUT }
-        require(leaves.size<=32) { "At most 32 source nodes" };Geometry.validateGroups(groups,leaves.map { it.part })
+        require(leaves.size<=GraphModels.FORM_SOURCES) { "At most 32 source nodes" };Geometry.validateGroups(groups,leaves.map { it.part })
         graph.nodes.forEach { n ->
             require(n.materialMode in MaterialMode.entries) { "Invalid node material mode" }
             require(n.materialGroup.isEmpty() || groups.any { it.id==n.materialGroup }) { "Unknown node material group" }
             require(n.previewGroup.isEmpty() || groups.any { it.id==n.previewGroup }) { "Unknown preview material group" }
             require(n.inputGroups.size<=n.inputs.size && n.inputGroups.all { id -> id.isEmpty() || groups.any { it.id==id } }) { "Unknown input material group" }
             require(n.rotationAxis in RotationAxis.entries && n.quarterTurns in 0..3) { "Invalid node rotation" }
-            require(n.x in -8192..8192 && n.y in -8192..8192) { "Node position exceeds graph bounds" }
-            require(when(n.kind) {
-                NodeKind.INPUT,NodeKind.ROTATION -> n.inputs.isEmpty()
-                NodeKind.OUTPUT -> n.inputs.size==1
-                NodeKind.DIFFERENCE,NodeKind.ROTATE -> n.inputs.size==2
-                NodeKind.UNION,NodeKind.INTERSECTION,NodeKind.SYMMETRIC_DIFFERENCE -> n.inputs.size in 2..16
-            }) { "Invalid socket count on ${n.id}" }
+            require(n.x in GraphModels.coordinates && n.y in GraphModels.coordinates) { "Node position exceeds graph bounds" }
+            require(n.inputs.size in GraphModels.inputs(n.kind)) { "Invalid socket count on ${n.id}" }
             if(n.kind==NodeKind.INPUT) {
                 require(n.part.cutMask.isEmpty() && n.part.recipeSource.isEmpty()) { "Source nodes must use standard Copycat shapes" };Solid.part(n.part)
             }
             n.inputs.forEachIndexed { slot,input -> if(input.isNotEmpty()) {
                 require(nodes[input]!=null && nodes[input]?.kind!=NodeKind.OUTPUT) { "Unknown or invalid source at ${n.id}" }
-                val rotationSocket=n.kind==NodeKind.ROTATE && slot==1
-                require((nodes.getValue(input).kind==NodeKind.ROTATION)==rotationSocket) { "Incompatible socket types at ${n.id}" }
+                require(GraphModels.accepts(n.kind,slot,nodes.getValue(input).kind)) { "Incompatible socket types at ${n.id}" }
             } }
         }
         val active=mutableSetOf<String>();val done=mutableSetOf<String>()

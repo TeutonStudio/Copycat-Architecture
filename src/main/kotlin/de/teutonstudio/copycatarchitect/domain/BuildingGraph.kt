@@ -1,8 +1,5 @@
 package de.teutonstudio.copycatarchitect.domain
 
-import java.util.concurrent.ConcurrentHashMap
-
-enum class BuildingKind { COPYCAT, SEGMENT, PATTERN, FLOOR, CEILING, ROOM, STOREY, ROOF, BUILDING }
 data class BuildingNode(
     val id:String="",val kind:BuildingKind=BuildingKind.SEGMENT,val name:String="",val x:Int=0,val y:Int=0,
     val inputs:List<String> = emptyList(),val module:String="window@1",val block:String="",val length:Int=3,val height:Int=4,
@@ -14,7 +11,7 @@ data class BuildingNode(
 )
 /** Optional Copycat sequences grow through spare ports, so an unused tail is not a required input. */
 internal fun BuildingNode.trimCopycatInputs():BuildingNode {
-    if(kind !in setOf(BuildingKind.SEGMENT,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.ROOF)) return this
+    if(kind !in GraphModels.expandableBuildingInputs) return this
     val trimmed=inputs.dropLastWhile(String::isEmpty)
     return if(trimmed.size==inputs.size) this else copy(inputs=trimmed,offsets=offsets.take(trimmed.size))
 }
@@ -40,11 +37,11 @@ data class BuildingGraph(val schema:Int=1,val nodes:List<BuildingNode> = emptyLi
                 n.copy(walls=if(n.kind==BuildingKind.ROOF && source.isEmpty()) n.walls-edge else n.walls+(edge to source.ifEmpty { "empty_wall" }))
             }
             key.startsWith("level:") -> {
-                val level=key.removePrefix("level:").toInt();require(level in -8..8)
+                val level=key.removePrefix("level:").toInt();require(level in -GraphModels.LEVELS..GraphModels.LEVELS)
                 n.copy(levels=compactLevels(if(source.isEmpty()) n.levels-level else n.levels+(level to source)))
             }
             key.startsWith("in:") -> {
-                val i=key.removePrefix("in:").toInt();require(i in 0 until 16 && i<=n.inputs.size)
+                val i=key.removePrefix("in:").toInt();require(i in 0 until GraphModels.SOCKETS && i<=n.inputs.size)
                 val inputs=n.inputs.toMutableList();if(i==inputs.size) inputs+="";inputs[i]=source
                 n.copy(inputs=inputs,offsets=List(inputs.size) { n.offsets.getOrNull(it) ?: P() })
             }
@@ -55,8 +52,8 @@ data class BuildingGraph(val schema:Int=1,val nodes:List<BuildingNode> = emptyLi
     companion object {
         fun compactLevels(levels:Map<Int,String>):Map<Int,String> = buildMap {
             levels[0]?.takeIf { it.isNotEmpty() }?.let { put(0,it) }
-            levels.filter { it.key>0 && it.value.isNotEmpty() }.toSortedMap().values.forEachIndexed { i,s -> put(i+1,s) }
-            levels.filter { it.key<0 && it.value.isNotEmpty() }.toSortedMap(reverseOrder()).values.forEachIndexed { i,s -> put(-i-1,s) }
+            levels.filter { it.key>0 && it.value.isNotEmpty() }.entries.sortedBy { it.key }.forEachIndexed { i,e -> put(i+1,e.value) }
+            levels.filter { it.key<0 && it.value.isNotEmpty() }.entries.sortedByDescending { it.key }.forEachIndexed { i,e -> put(-i-1,e.value) }
         }
         fun starter()=BuildingGraph(nodes=listOf(
             BuildingNode("empty_wall",BuildingKind.SEGMENT,"Empty wall",20,20,block="minecraft:air",length=1),
@@ -87,7 +84,7 @@ data class WallRun(val id:String,val direction:Int,val cells:List<P>) { val leng
 object RoomGeometry {
     val directions=listOf(P(0,0,-1),P(1,0,0),P(0,0,1),P(-1,0,0))
     private data class Shape(val cells:Set<P>,val edges:List<WallRun>,val corners:Map<P,Pair<P,P>>)
-    private val cache=ConcurrentHashMap<List<Rect>,Shape>()
+    private val cache=GraphCache<List<Rect>,Shape>()
     private fun shape(rectangles:List<Rect>):Shape=cache.getOrPut(rectangles.toList()) {
         require(rectangles.size in 1..16) { "A room needs 1–16 rectangles" }
         rectangles.forEach { require(it.width in 1..32 && it.length in 1..32 && it.x in -32..32 && it.z in -32..32) { "Room rectangle exceeds grid bounds" } }
@@ -131,28 +128,6 @@ object RoomGeometry {
         return node.copy(rectangles=rects,walls=walls)
     }
 }
-data class BuildingPort(val key:String,val source:String,val accepts:Set<BuildingKind>,val number:Int=0,val length:Int=0,val height:Int=0)
-object BuildingPorts {
-    private val segments=setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN)
-    private fun copies(n:BuildingNode,expanding:Boolean)=inputs(n,setOf(BuildingKind.COPYCAT),expanding)
-    private fun inputs(n:BuildingNode,kinds:Set<BuildingKind>,expanding:Boolean)=
-        (n.inputs+if(expanding && n.inputs.size<16 && n.inputs.none { it.isEmpty() }) listOf("") else emptyList()).mapIndexed { i,s -> BuildingPort("in:$i",s,kinds,i) }
-    private fun enclosure(n:BuildingNode)=RoomGeometry.edges(n.rectangles).mapIndexed { i,e -> BuildingPort("wall:${e.id}",n.walls[e.id].orEmpty().ifEmpty { "empty_wall" },segments,i,e.length,n.height) }+
-        listOf(BuildingPort("floor",n.floor,setOf(BuildingKind.FLOOR)),BuildingPort("ceiling",n.ceiling,setOf(BuildingKind.CEILING)),BuildingPort("corner",n.corner,setOf(BuildingKind.COPYCAT)))
-    fun of(n:BuildingNode,expanding:Boolean=false):List<BuildingPort> = when(n.kind) {
-        BuildingKind.SEGMENT -> if(n.id=="empty_wall") emptyList() else copies(n,expanding)
-        BuildingKind.FLOOR,BuildingKind.CEILING -> copies(n,expanding)
-        BuildingKind.PATTERN -> n.inputs.mapIndexed { i,s -> BuildingPort("in:$i",s,segments,i) }
-        BuildingKind.ROOM -> enclosure(n)
-        BuildingKind.STOREY -> if(n.storeyMode=="walls") enclosure(n) else inputs(n,setOf(BuildingKind.ROOM),expanding)
-        BuildingKind.ROOF -> copies(n,expanding)+(0..3).map { BuildingPort("wall:$it",n.walls[it.toString()].orEmpty(),segments,it) }
-        BuildingKind.BUILDING -> {
-            val levels=n.levels.keys+0+(if(expanding) setOf((n.levels.keys.maxOrNull() ?: 0)+1,(n.levels.keys.minOrNull() ?: 0)-1) else emptySet())
-            listOf(BuildingPort("roof",n.roof,setOf(BuildingKind.ROOF)))+levels.filter { it in -8..8 }.sortedDescending().map { i -> BuildingPort("level:$i",n.levels[i].orEmpty(),setOf(BuildingKind.STOREY),i) }
-        }
-        else -> emptyList()
-    }
-}
 data class SegmentCell(val cell:Cell,val overrideRole:String="")
 data class FixedSegment(val length:Int,val height:Int,val cells:List<SegmentCell>,val air:Boolean=false)
 data class CompiledRoom(val plan:Plan,val footprint:Set<P>,val shell:Set<P>,val minimum:Int,val maximum:Int,val bottomThickness:Int,val topThickness:Int,val usableHeight:Int)
@@ -161,24 +136,24 @@ data class StoreyPosition(val level:Int,val base:Int,val minimum:Int,val maximum
 data class CompiledBuilding(val plan:Plan,val storeys:List<StoreyPosition>)
 object BuildingGraphCompiler {
     fun structure(graph:BuildingGraph) {
-        require(graph.schema==1 && graph.nodes.size in 1..96) { "Building graph needs 1–96 nodes" }
+        require(graph.schema in GraphModels.buildingSchemas && graph.nodes.size in 1..GraphModels.BUILDING_NODES) { "Building graph needs 1–96 nodes" }
         val nodes=graph.nodes.associateBy { it.id }
         require(nodes.size==graph.nodes.size && nodes.keys.all { it.matches(Regex("[a-zA-Z0-9_-]{1,36}")) }) { "Building node IDs must be unique" }
         require(graph.nodes.count { it.kind==BuildingKind.BUILDING }==1) { "Keep exactly one building result" }
         require(nodes["empty_wall"]?.let { it.kind==BuildingKind.SEGMENT && it.block=="minecraft:air" && it.inputs.isEmpty() }==true) { "Keep the standard Empty wall source" }
         for(n in graph.nodes) {
             require(n.preview in listOf("all","walls","floor","ceiling","roof")) { "Invalid building preview filter" }
-            require(n.name.length<=64 && n.x in -8192..8192 && n.y in -8192..8192 && n.materialMode in MaterialMode.entries) { "Invalid building node" }
+            require(n.name.length<=64 && n.x in GraphModels.coordinates && n.y in GraphModels.coordinates && n.materialMode in MaterialMode.entries) { "Invalid building node" }
             require(n.role.matches(Regex("[a-zA-Z0-9_-]{1,32}"))) { "Invalid node material role" }
-            require(n.length in 1..128 && n.height in 1..16 && n.thickness in 1..4 && n.offsets.size<=16 && n.inputs.size<=16) { "Invalid fixed dimensions" }
+            require(n.length in 1..128 && n.height in 1..16 && n.thickness in 1..4 && n.offsets.size<=GraphModels.SOCKETS && n.inputs.size<=GraphModels.SOCKETS) { "Invalid fixed dimensions" }
             require(n.offsets.all { it.y==0 && it.x in -64..64 && it.z in -64..64 }) { "Room offset exceeds storey bounds" }
-            if(n.kind==BuildingKind.PATTERN) require(n.inputs.size in 2..16) { "A pattern needs 2–16 ordered segment inputs" }
+            if(n.kind==BuildingKind.PATTERN) require(n.inputs.size >= GraphModels.requiredBuildingInputs(n.kind,n.storeyMode)) { "A pattern needs 2–16 ordered segment inputs" }
             if(n.kind==BuildingKind.STOREY) {
                 require(n.storeyMode in listOf("rooms","walls")) { "Invalid storey assembly mode" }
-                if(n.storeyMode=="rooms") require(n.inputs.size in 1..16) { "A storey needs 1–16 room inputs" }
+                if(n.storeyMode=="rooms") require(n.inputs.size >= GraphModels.requiredBuildingInputs(n.kind,n.storeyMode)) { "A storey needs 1–16 room inputs" }
             }
             if(n.kind==BuildingKind.ROOM || n.kind==BuildingKind.STOREY && n.storeyMode=="walls") { RoomGeometry.cells(n.rectangles);require(n.walls.size<=64) }
-            if(n.kind==BuildingKind.BUILDING) require(n.levels.size<=17 && n.levels.keys.all { it in -8..8 }) { "At most eight upper and eight lower storeys" }
+            if(n.kind==BuildingKind.BUILDING) require(n.levels.size<=17 && n.levels.keys.all { it in -GraphModels.LEVELS..GraphModels.LEVELS }) { "At most eight upper and eight lower storeys" }
             if(n.kind==BuildingKind.ROOF) require(n.roofType in listOf("flat","gable") && n.ridge in 0..1 && n.overhang in 0..2 && n.walls.keys.all { it in setOf("0","1","2","3") })
             require(n.finish.isEmpty() || n.kind==BuildingKind.FLOOR && n.finish in CARPETS && n.thickness>=2) { "Carpet floors need a structural layer below the carpet" }
             for(p in BuildingPorts.of(n)) if(p.source.isNotEmpty()) {
@@ -322,7 +297,7 @@ object BuildingGraphCompiler {
             val n=graph.nodes.single { it.kind==BuildingKind.BUILDING };require(n.levels[0]?.isNotEmpty()==true) { "Connect the ground floor" };require(n.levels.values.all { it.isNotEmpty() })
             val roof=node(n.roof,BuildingKind.ROOF);val r=Resolver();val positions=mutableListOf<StoreyPosition>();var previous:CompiledStorey?=null;var previousBase=0
             var last:CompiledStorey?=null;var roofBase=0
-            for((level,source) in n.levels.toSortedMap()) {
+            for((level,source) in n.levels.entries.sortedBy { it.key }) {
                 val story=storey(source)
                 val base=previous?.let { previousBase+it.maximum-story.minimum-minOf(it.topThickness,story.bottomThickness) } ?: -story.minimum
                 story.plan.placements.forEach { r.add(it.copy(pos=it.pos+P(0,base,0)),true) };story.plan.clear.forEach { r.clear(it+P(0,base,0)) }

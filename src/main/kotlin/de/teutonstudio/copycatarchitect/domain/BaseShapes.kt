@@ -24,7 +24,7 @@ internal fun rotatePoint(point:P,axis:RotationAxis,quarterTurns:Int,vector:Boole
     require(axis!=RotationAxis.NORMAL) { "A point rotation needs a world axis" }
     val edge=if(vector) 0 else 15
     var p=point
-    repeat(Math.floorMod(quarterTurns,4)) {
+    repeat((quarterTurns).mod(4)) {
         p=when(axis) {
             RotationAxis.X->P(p.x,edge-p.z,p.y)
             RotationAxis.Y->P(edge-p.z,p.y,p.x)
@@ -40,18 +40,18 @@ object PartRotations {
     private val basis=listOf(P(1,0,0),P(0,1,0),P(0,0,1))
     private data class Key(val part:Part,val axis:RotationAxis,val quarterTurns:Int)
     private data class Cached(val part:Part?)
-    private val cache=java.util.concurrent.ConcurrentHashMap<Key,Cached>()
+    private val cache=GraphCache<Key,Cached>()
     fun normal(part:Part):P = part.oriented(P(0,1,0),true)
 
     fun rotate(part:Part,axis:RotationAxis,quarterTurns:Int):Part? {
         if(cache.size>2048) cache.clear()
-        val key=Key(part,axis,Math.floorMod(quarterTurns,4))
+        val key=Key(part,axis,(quarterTurns).mod(4))
         return cache.computeIfAbsent(key) { Cached(rotateUncached(it.part,it.axis,it.quarterTurns)) }.part
     }
 
     private fun rotateUncached(part:Part,axis:RotationAxis,quarterTurns:Int):Part? = runCatching {
         Solid.part(part)
-        val q=Math.floorMod(quarterTurns,4)
+        val q=(quarterTurns).mod(4)
         if(q==0) return@runCatching part
         val normal=normal(part)
         val worldAxis=if(axis!=RotationAxis.NORMAL) axis else when {
@@ -84,5 +84,5 @@ object PartRotations {
         result
     }.getOrNull()
 
-    private fun distance(a:Int,b:Int):Int = minOf(Math.floorMod(a-b,4),Math.floorMod(b-a,4))
+    private fun distance(a:Int,b:Int):Int = minOf((a-b).mod(4),(b-a).mod(4))
 }

@@ -74,3 +74,10 @@ test('saved source receipts use the same UUID v3 identity as Java', async()=>{
     graph:{schema:2,nodes:[saved,{...newNode(false,'OUTPUT','out',0,0),inputs:['saved']}]}}
   assert.deepEqual([...new Set(compileForm(d).map(p=>p.recipeSource))],[expected])
 })
+
+test('plain forms without explicit groups and preview block states can be loaded',()=>{
+  const result=loadBuildingCopycat(base(),library,{...entry,document:{schema:3,name:'Plain',parts:[{source:'copycats:copycat_slab'}]},materials:{body:'minecraft:oak_log[axis=x]'}})
+  const node=result.document.graph.nodes.find(n=>n.id===result.nodeId)
+  assert.equal(node.surfaces.body,'minecraft:oak_log')
+  assert.equal(volume(previewGraph(true,result.document,result.library,node.id)),2048)
+})

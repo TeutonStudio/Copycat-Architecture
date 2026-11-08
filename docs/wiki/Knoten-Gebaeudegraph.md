@@ -28,7 +28,7 @@ Keine direkten Graph-Eingänge.
 
 **Copycat.** Referenziert eine konkrete gespeicherte Formversion und ihre Materialrollen.
 
-Im Browser im Formgraphen **Graph speichern** verwenden. Danach im Gebäudegraphen einen **Copycat-Referenz**-Knoten wählen und im Inspektor **Gespeicherten Copycat laden** auswählen. **Copycat laden** in der Werkzeugleiste importiert alternativ eine einzelne Form-JSON und erzeugt bei Bedarf einen Quellknoten. Materialzuordnungen und Formversion werden im Gebäudeentwurf festgehalten; spätere Änderungen des gespeicherten Graphen ändern bestehende Quellen nicht.
+Im Browser im Formgraphen **Graph speichern** verwenden. Danach im Gebäudegraphen einen **Copycat-Referenz**-Knoten wählen und im Inspektor **Gespeicherten Copycat laden** auswählen. **Copycat laden** in der Werkzeugleiste importiert alternativ eine einzelne Form-JSON und erzeugt bei Bedarf einen Quellknoten. Materialzuordnungen (Block-IDs ohne Vorschauzustände) und Formversion werden im Gebäudeentwurf festgehalten; spätere Änderungen des gespeicherten Graphen ändern bestehende Quellen nicht.
 
 **Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
 

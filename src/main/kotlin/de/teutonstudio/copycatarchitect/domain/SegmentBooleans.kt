@@ -68,7 +68,7 @@ object SegmentBooleans {
         val survivingBlocks=blockGroups.filterKeys { visible.exactOwned[it]?.isEmpty()==false || (visible.owned[it]?.count() ?: 0)>0 }
         if(survivingBlocks.isNotEmpty()) {
             val entry=survivingBlocks.values.first()
-            require(visible.solid.count()==4096 && parts.all { it.group in survivingBlocks }) {
+            require(Geometry.exact(parts).contains(Geometry.exact(Part(source="copycats:copycat_block"))) && parts.all { it.group in survivingBlocks }) {
                 "A partial normal block cannot become a Copycat without changing its item and zinc cost; use a saved full Copycat as the source"
             }
             return listOf(entry)

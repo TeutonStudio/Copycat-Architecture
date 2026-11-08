@@ -1,4 +1,4 @@
-# Copycat Architect Graphstudio 0.3
+# Copycat Architect Graphstudio 0.4
 
 Browsereditor für Form- und Gebäudegraphen. Die Beispieldateien stammen aus
 [`examples/`](../examples). Die beiden Editoren verwalten getrennte Entwürfe.
@@ -68,7 +68,7 @@ Der Browser kompiliert den vollständigen aktuellen Fachkern. Der Knoten- und
 Anschlussvertrag wird aus derselben `graph-models.json` wie im Mod geladen;
 Browseradapter ersetzen JVM-Caches, Bitsets und Ganzzahlarithmetik.
 
-Die Browseroberfläche unterstützt weiterhin die bisherigen acht Form- und neun
+Die Browseroberfläche unterstützt weiterhin die zehn Form- und fünfzehn
 Gebäudeknotentypen. Erweiterte native Graphen, Gruppen, exakte Geometrien und
 nicht unterstützte Knoteneinstellungen werden beim Import und vor dem Export
 mit einem Hinweis auf den nativen Editor abgewiesen. Dadurch können sie nicht
@@ -83,3 +83,17 @@ Public GitHub mod repositories can be linked with a branch/tag/commit and option
 IndexedDB holds current drafts, named graphs (including loaded copycat libraries and preview assignments), reusable selected-node templates and pinned mod links. Resources are cached separately. Saves are ordered, failures are visible, and optimistic revisions prevent older tabs from overwriting newer changes. Backup JSON exports/imports workspaces without changing the native Minecraft JSON schema. Group material/state assignments are browser-preview metadata; native form exports retain their existing role-based material contract, and building palettes export block IDs.
 
 [German usage guide](../docs/wiki/Materialbibliothek.md).
+
+## Copycat-Quellen und Segmentoperationen
+
+Im Formgraphen **Graph speichern**, anschließend im Gebäudegraphen den
+Copycat-Quellknoten wählen und **Gespeicherten Copycat laden** verwenden.
+**Copycat laden** importiert alternativ eine einzelne Form-JSON. Die Formversion
+bleibt als Schnappschuss in der Referenzbibliothek des Gebäudeentwurfs erhalten.
+Materialzuordnungen übernehmen wie die Gebäudepalette die reine Block-ID.
+
+Vereinigung, Schnitt, Differenz und symmetrische Differenz sind eigenständige
+Segmentknoten. Die gemeinsame Auswertung schneidet Copycat-Teilformen je
+Blockposition. Teilumwandlungen normaler Vollblöcke und semantische
+Segmentmetadaten werden ausdrücklich abgewiesen. Für die neuen Operator-IDs
+ist beim Spielimport ein aktualisierter Mod-Build erforderlich.

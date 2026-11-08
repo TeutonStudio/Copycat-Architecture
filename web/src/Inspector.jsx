@@ -75,7 +75,7 @@ export function NodeFields({ mode, node, document, edit, library, savedForms = [
     <Field key={key} label={label} value={node[key]} onChange={value => edit({ [key]: value })} {...{ options, type, min, max }} />
   const number = (key, label, min, max) => field(key, label, undefined, 'number', min, max)
   const groups = formGroups(document)
-  const savedPicker = <Field label="Gespeicherten Copycat laden" value="" options={[["", "Copycat auswählen …"], ...savedForms.map(entry => [entry.id, entry.name])]} onChange={onLoadCopycat} />
+  const savedPicker = <Field label="Gespeicherten Copycat laden" value="" options={[["", "Copycat auswählen …", true], ...savedForms.map(entry => [entry.id, entry.name])]} onChange={onLoadCopycat} />
   if (mode === 'form') {
     const part = node.part
     const partField = (key, label, options, type, min, max) =>

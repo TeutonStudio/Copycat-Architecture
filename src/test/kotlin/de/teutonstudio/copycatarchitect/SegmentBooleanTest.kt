@@ -48,4 +48,15 @@ class SegmentBooleanTest {
         assertFails { BuildingGraphCompiler.structure(graph(BuildingKind.SEGMENT_UNION,listOf("a","op"))) }
         assertFails { BuildingGraphCompiler.structure(graph(BuildingKind.SEGMENT_DIFFERENCE,listOf("a","b","a"))) }
     }
+    @Test fun `rational cuts match the exact Copycat operation without raster rounding`() {
+        val reflected=PartRotations.mirror(Part("copycats:copycat_byte",offset=P(4,4,4)),CopycatMirrorPlane.BODY_PPP)
+        val saved=GraphNode("saved",NodeKind.SAVED,savedCopycat=SavedCopycat(parts=listOf(reflected)))
+        val exactForm=Form(graph=NodeGraph(nodes=listOf(saved,GraphNode("result",NodeKind.OUTPUT,listOf("saved")))))
+        val g=graph(BuildingKind.SEGMENT_DIFFERENCE).let { it.copy(nodes=it.nodes.map { n -> if(n.id=="b") n.copy(form="exact@1") else n }) }
+        val e=BuildingGraphCompiler.Evaluation(g,Building().palette,sources+("exact@1" to exactForm),emptyMap())
+        val actual=Geometry.exact(e.preview("op").placements.single().parts)
+        val expected=Geometry.exact(Part("copycats:copycat_block")).minus(Geometry.exact(reflected))
+        assertTrue(actual.contains(expected));assertTrue(expected.contains(actual))
+    }
+
 }

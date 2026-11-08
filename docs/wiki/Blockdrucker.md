@@ -1,6 +1,6 @@
 # Blockdrucker
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.2** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
 
 Der Blockdrucker erzeugt einen eigenen Copycat-Kompositblock **genau an seiner aufgestellten Position**. Entwurf, Materialzuordnung, Ausgabedrehung und sieben Kartuschenplätze reisen im Drucker mit. Nach dem Druck erhältst du das Gerät zurück.
 

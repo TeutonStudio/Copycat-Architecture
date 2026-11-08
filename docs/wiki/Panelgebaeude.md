@@ -1,6 +1,6 @@
 # Panelgebäude mit Schichtfenstern
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.2** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
 
 Dieses konkrete Prüfgebäude verwendet **Create-Copycat-Panels mit 3/16 Dicke als Wände**, **Copycat-Schichten mit 2/16 Dicke als Fenster** und **Leisten mit 2 × 2/16 Querschnitt**. Die Schichten liegen an der Blockkante und bündig zur inneren Paneloberfläche; sie verwenden keine mittige Scheibe. Hinter dem Glas bleibt kein opakes Panel stehen. Die Fenster erhalten vier Leisten als Holzrahmen. Zusätzlich laufen Leisten an den vier senkrechten Gebäudeecken sowie an den oberen und unteren Fassadenkanten.
 

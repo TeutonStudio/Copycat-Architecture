@@ -33,3 +33,5 @@ Die [Standübersicht](wiki/Entwicklungsstand.md) trennt lokale Mod, Graphstudio 
 - [Prüfergebnisse](VALIDATION.md)
 
 Die redaktionellen Wiki-Seiten liegen unter `docs/wiki/`; Bilder verwenden die vorhandenen Dateien aus `docs/images/`. Die GitHub-Fassung enthält ihre Bilder und Beispieldateien im separaten Wiki-Repository.
+
+- [Materialbibliothek und persönliche Bibliotheken](wiki/Materialbibliothek.md)

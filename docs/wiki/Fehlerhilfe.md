@@ -1,6 +1,6 @@
 # Fehlerhilfe
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.2** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
 
 Lies zuerst die Meldung im Editor oder Turtle-Terminal. Sie nennt häufig die betroffene Position oder das fehlende Material. Bei einem unterbrochenen Bau bleiben fertige Blöcke erhalten. Behebe die Ursache, wähle am Architektentisch **Weiter** und starte `architect AUFTRAGS-ID` erneut. Der vollständige Ablauf steht unter [Turtle-Bau](Turtle-Bau.md).
 

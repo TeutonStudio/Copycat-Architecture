@@ -5,12 +5,12 @@ Abgleich vom **8. November 2026**. Drei Stände sind auseinanderzuhalten:
 | Stand | Vorhanden | Grenzen |
 | --- | --- | --- |
 | Lokale Mod **0.5.1**, aktuelle Arbeitskopie | 10 Formknotentypen, 24 Gebäudeknotentypen, gespeicherte Quellen, Spiegelungen, räumliche Segmentanordnungen, semantische Räume, Fassaden, Dachebenen, Schächte und Außenanlagen | Nicht alle lokalen Änderungen sind im öffentlichen Repository enthalten. Die Versionsnummer allein identifiziert diesen Stand nicht. |
-| Veröffentlichtes **Graphstudio 0.2** und sein gemeinsamer öffentlicher Spielcode | 8 Formknotentypen und 9 ältere Gebäudeknotentypen; Graph-/Selektionsvorschau, Blockrahmen und hB-Achsen, Inspektor, JSON-Austausch | Noch keine Spiegel-, gespeicherten Form-, Segmentlayout-, Raumlayout-, Schacht- oder Garten-/Wegknoten des lokalen Standes. Minecraft-Texturen erscheinen als Materialfarben. |
+| Veröffentlichtes **Graphstudio 0.3** und sein gemeinsamer öffentlicher Spielcode | 8 Formknotentypen und 9 ältere Gebäudeknotentypen; Graph-/Selektionsvorschau, Blockrahmen und hB-Achsen, Inspektor, JSON-Austausch, persönliche Browserbibliotheken | Noch keine Spiegel-, gespeicherten Form-, Segmentlayout-, Raumlayout-, Schacht- oder Garten-/Wegknoten des lokalen Standes. Materialbibliothek mit Faithful-Texturen und verlinkbaren Mod-Ressourcen; eigene Modell-Loader werden nicht ausgeführt. |
 | Geplante Segmentoperatoren | [Vereinigung, Schnitt, Differenz und symmetrische Differenz für Segmente](Geplante-Segmentoperatoren.md) sind als Vertrag beschrieben | Noch keine registrierten, ausführbaren Knoten. Die vorgeschlagenen IDs sind keine gültigen Importwerte. |
 
 ## Dateiformate
 
-| Bereich | Aktuelle lokale Mod | Graphstudio 0.2 |
+| Bereich | Aktuelle lokale Mod | Graphstudio 0.3 |
 | --- | --- | --- |
 | Formdokument | Schema 1–4 | Älteres Format, Export als Schema 3 |
 | Formgraph | Schema 1–3 | Schema 1–2 |

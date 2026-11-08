@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { useWorkspace } from './Workspace.jsx'
 
 const colors = {
   body: '#8ba4a2', cap: '#d29763', 'minecraft:stone_bricks': '#979999',
@@ -94,10 +95,11 @@ function updateReferenceFrame(group, camera, height) {
   }
 }
 
-function Viewer({ plan, blockFrame }) {
+function Viewer({ plan, blockFrame, catalog }) {
   const container = useRef(null)
   const viewer = useRef(null)
   const [error, setError] = useState('')
+  const [textureWarning, setTextureWarning] = useState('')
   useEffect(() => {
     const element = container.current
     let renderer
@@ -164,6 +166,8 @@ function Viewer({ plan, blockFrame }) {
   useEffect(() => {
     const view = viewer.current
     if (!view) return
+    let live = true
+    setTextureWarning('')
     dispose(view.model)
     view.model.clear()
     const batches = new Map()
@@ -180,13 +184,37 @@ function Viewer({ plan, blockFrame }) {
     for (const [material, meshes] of batches) {
       const count = meshes.reduce((sum, mesh) => sum + mesh.boxes.length * mesh.positions.length, 0)
       if (!count) continue
-      const draw = new THREE.InstancedMesh(new THREE.BoxGeometry(), new THREE.MeshLambertMaterial({ color: color(material) }), count)
+      const surfaceMaterials = Array.from({ length: 6 }, () => {
+        const surface = new THREE.MeshLambertMaterial({ color: color(material), alphaTest: 0.1 })
+        surface.onBeforeCompile = shader => {
+          shader.vertexShader = 'attribute vec3 blockCenter;\nattribute vec3 blockSize;\n' + shader.vertexShader
+          shader.vertexShader = shader.vertexShader.replace('#include <uv_vertex>', `#include <uv_vertex>
+            #ifdef USE_MAP
+              vec3 pointInBlock = position * blockSize + blockCenter;
+              vec2 blockUv = normal.x > 0.5 ? vec2(1.0-pointInBlock.z, pointInBlock.y)
+                : normal.x < -0.5 ? vec2(pointInBlock.z, pointInBlock.y)
+                : normal.y > 0.5 ? vec2(pointInBlock.x, 1.0-pointInBlock.z)
+                : normal.y < -0.5 ? vec2(pointInBlock.x, pointInBlock.z)
+                : normal.z > 0.5 ? vec2(pointInBlock.x, pointInBlock.y) : vec2(1.0-pointInBlock.x, pointInBlock.y);
+              vMapUv = (mapTransform * vec3(blockUv, 1.0)).xy;
+            #endif`)
+        }
+        surface.customProgramCacheKey = () => 'copycat-block-uv-v1'
+        return surface
+      })
+      const geometry = new THREE.BoxGeometry()
+      const blockCenters = new Float32Array(count * 3), blockSizes = new Float32Array(count * 3)
+      geometry.setAttribute('blockCenter', new THREE.InstancedBufferAttribute(blockCenters, 3))
+      geometry.setAttribute('blockSize', new THREE.InstancedBufferAttribute(blockSizes, 3))
+      const draw = new THREE.InstancedMesh(geometry, surfaceMaterials, count)
       let index = 0
       for (const mesh of meshes) for (const [px, py, pz] of mesh.positions) {
         for (const [x, y, z, maxX, maxY, maxZ] of mesh.boxes) {
           scale.set((maxX - x) / 16, (maxY - y) / 16, (maxZ - z) / 16)
           translation.set(px + (x + maxX) / 32, py + (y + maxY) / 32, pz + (z + maxZ) / 32)
           matrix.makeScale(scale.x, scale.y, scale.z).setPosition(translation)
+          blockCenters.set([(x + maxX) / 32, (y + maxY) / 32, (z + maxZ) / 32], index * 3)
+          blockSizes.set([scale.x, scale.y, scale.z], index * 3)
           draw.setMatrixAt(index++, matrix)
           bounds.expandByPoint(corner.set(px + x / 16, py + y / 16, pz + z / 16))
           bounds.expandByPoint(corner.set(px + maxX / 16, py + maxY / 16, pz + maxZ / 16))
@@ -195,6 +223,34 @@ function Viewer({ plan, blockFrame }) {
       draw.instanceMatrix.needsUpdate = true
       draw.computeBoundingSphere()
       view.model.add(draw)
+      if (catalog.ids.includes(material.split('[')[0])) catalog.resolve(material).then(resolved => {
+        if (!live) return
+        if (resolved.missing.length || resolved.warning) setTextureWarning(resolved.warning || `Fehlende Texturen: ${resolved.missing.join(', ')}`)
+        const textureByUrl = new Map()
+        resolved.faces.forEach((url, face) => {
+          if (!url) return
+          const surface = surfaceMaterials[face]
+          let texture = textureByUrl.get(url)
+          if (!texture) {
+            texture = new THREE.TextureLoader().load(url, loaded => {
+              if (!live) { loaded.dispose(); return }
+              loaded.colorSpace = THREE.SRGBColorSpace
+              loaded.magFilter = THREE.NearestFilter
+              loaded.minFilter = THREE.NearestMipmapNearestFilter
+              const fraction = Math.min(1, loaded.image.width / loaded.image.height)
+              loaded.repeat.y = fraction; loaded.offset.y = 1 - fraction
+              loaded.needsUpdate = true
+              view.render()
+            }, undefined, () => { if (live) {
+              for (const surface of surfaceMaterials) if (surface.map === texture) { surface.map = null; surface.color.set(color(material)); surface.needsUpdate = true }
+              setTextureWarning('Eine Textur konnte nicht geladen werden; ihre Materialfarbe bleibt sichtbar.'); view.render()
+            } })
+            textureByUrl.set(url, texture)
+          }
+          surface.map = texture; surface.color.set('#ffffff'); surface.needsUpdate = true
+        })
+        view.render()
+      }).catch(error => { if (live) setTextureWarning(error.message) })
     }
     const first = !view.bounds || view.bounds.isEmpty()
     const hadBlockFrame = Boolean(view.guides.userData.reference)
@@ -206,15 +262,18 @@ function Viewer({ plan, blockFrame }) {
     view.bounds = blockFrame && singleBlock ? referenceFrame(view.guides) : bounds
     if (first || (view.guides.userData.reference && !hadBlockFrame)) fit()
     view.render()
-  }, [plan, blockFrame])
+    return () => { live = false }
+  }, [plan, blockFrame, catalog])
 
   return <div className="viewer" ref={container}>
     <button type="button" className="fit3d" onClick={fit}>3D einpassen</button>
     {error && <p className="preview-error" role="status">{error}</p>}
+    {textureWarning && <p className="texture-warning" role="status">{textureWarning}</p>}
   </div>
 }
 
-export default function Preview({ mode, document, library, selected, previewMode, onMode, collapsed, onToggle }) {
+export default function Preview({ mode, document, library, selected, previewMode, onMode, collapsed, onToggle, materials }) {
+  const { catalog } = useWorkspace()
   const worker = useRef(null)
   const sequence = useRef(0)
   const running = useRef(false)
@@ -269,6 +328,7 @@ export default function Preview({ mode, document, library, selected, previewMode
 
 
   const noun = mode === 'building' ? 'Platzierungen' : 'Rasterzellen'
+  const texturedPlan = useMemo(() => result.plan && mode === 'form' ? { ...result.plan, meshes: result.plan.meshes.map(mesh => ({ ...mesh, material: materials[mesh.material] || mesh.material })) } : result.plan, [result.plan, mode, materials])
   return <section className="preview-panel" aria-label="Gebäude- und Formvorschau">
     <div className="panel-heading"><span>3D-Vorschau</span><div className="button-row">
       <select aria-label="Vorschauziel" value={previewMode} onChange={event => onMode(event.target.value)}>
@@ -277,7 +337,7 @@ export default function Preview({ mode, document, library, selected, previewMode
       <button type="button" aria-expanded={!collapsed} aria-controls={`${mode}-preview`} aria-label={collapsed ? '3D-Vorschau ausklappen' : '3D-Vorschau einklappen'} onClick={onToggle}>{collapsed ? '▸' : '▾'}</button>
     </div></div>
     <div id={`${mode}-preview`} className="preview-body" hidden={collapsed}>
-    <Viewer key={`${mode}:${previewMode}:${target}`} plan={result.plan} blockFrame={blockFrame} />
+    <Viewer key={`${mode}:${previewMode}:${target}`} plan={texturedPlan} blockFrame={blockFrame} catalog={catalog} />
     <div className="preview-meta" role="status">
       {result.error ? <><strong>{result.plan ? 'Letzter gültiger Stand' : 'Vorschau wartet auf einen gültigen Graphen'}</strong><br />{result.error}</>
         : result.pending ? 'Vorschau wird berechnet …'

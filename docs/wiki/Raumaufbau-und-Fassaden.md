@@ -1,6 +1,6 @@
 # Räume aus Segmenten und gemeinsame Wände
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.2** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
 
 Der Architektentisch kann Raumgrenzen, Fensteröffnungen und Bauteilanschlüsse bis zur Auswertung des ganzen Gebäudes erhalten. Die Segmentanordnung arbeitet mit vollständigen Segmenten im Blockraster. Die Copycat-Geometrie innerhalb dieser Segmente behält ihre genaue Form.
 

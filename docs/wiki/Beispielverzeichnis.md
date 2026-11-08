@@ -1,6 +1,6 @@
 # Reproduzierbare Beispiele
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.2** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
 
 Die Beispiele decken verschiedene Generationen des Editors ab. Ihr Dateiformat und ihre Bibliotheksreferenzen sind wichtiger als ihr sichtbarer Name. Die zugehörigen README-Dateien beschreiben den geprüften Entwurf; daraus wird hier keine neue Spielprüfung abgeleitet.
 

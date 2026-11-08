@@ -1,6 +1,6 @@
 # Bauen mit einer Turtle
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.2** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
 
 Eine CC:Tweaked-Turtle kann ein geplantes Gebäude selbstständig errichten. Sie fährt zu jeder Bauposition, setzt den Block unter sich und lädt Material am Depot nach. Der mitgelieferte Befehl `architect` benötigt kein GPS. Die Turtle gräbt keine Hindernisse weg; Baufläche und Flugwege müssen vorbereitet sein.
 

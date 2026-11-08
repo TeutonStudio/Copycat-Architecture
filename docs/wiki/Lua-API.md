@@ -1,6 +1,6 @@
 # Lua-API (Entwicklungsstand 0.5.1)
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.2** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
 
 Die Rückgabefelder `units` bezeichnen im aktuellen Stand **mB Zink**. Ein Zinkbarren liefert 144 mB, ein vollständig gefüllter Copycat-Block kostet 256 mB. Historische Feldnamen bleiben für bestehende Programme erhalten. Eine geführte Anleitung bietet die [Turtle-Wiki](Turtle-Bau.md).
 

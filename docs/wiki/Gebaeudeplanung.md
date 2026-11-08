@@ -1,6 +1,6 @@
 # Gebäude am Architektentisch planen
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.2** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
 
 [Knoten und Anschlüsse](Knoten-Gebaeudegraph.md) · [Raumaufbau, Fassaden und Anschlüsse](Raumaufbau-und-Fassaden.md) · [Älteren Gebäudegraph im Browser öffnen](Graphstudio.md)
 [Wiki-Start](Home.md) · [Formeditor](Formeditor.md) · [Beispiele und Import](Beispiele-und-Import.md) · [Turtle-Bau](Turtle-Bau.md) · [Fehlerhilfe](Fehlerhilfe.md)

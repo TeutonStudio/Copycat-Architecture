@@ -1,6 +1,6 @@
 # Create: Copycat Architect
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.2** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
 
 **Copycat-Formen entwerfen, Gebäude aus Bauteilen zusammensetzen und mit einer Turtle bauen.**
 
@@ -38,3 +38,5 @@ Die Wiki trennt die aktuelle lokale Mod, das veröffentlichte Graphstudio und ge
 ![Panelgebäude mit dünnen Wänden und Schichtfenstern](../images/panel-building-exterior-35.png)
 
 Das [Panelgebäude](Panelgebaeude.md) bleibt als älteres Modulbeispiel dokumentiert. Seine feste Materialliste gilt nur für den unveränderten Entwurf und den dort genannten Spielstand.
+
+[Materialbibliothek und persönliche Browserbibliotheken](Materialbibliothek.md) · Faithful-Texturen, Mod-Repositories, gespeicherte Graphen und Knotengruppen.

@@ -1,6 +1,6 @@
 # Beispiele und Import
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.2** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
 
 Mit JSON kannst du Formen, Module und Gebäude austauschen. Die Beispiele zeigen unterschiedliche Werkzeuge; insbesondere verwenden die älteren Gebäudeentwürfe noch ihren bestehenden, weiterhin unterstützten Graph- oder Modulaufbau. Sie werden beim Öffnen nicht automatisch in den neuen expliziten Gebäudegraphen umgewandelt.
 

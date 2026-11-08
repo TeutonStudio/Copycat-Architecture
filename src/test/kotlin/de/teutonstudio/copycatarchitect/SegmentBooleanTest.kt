@@ -59,4 +59,10 @@ class SegmentBooleanTest {
         assertTrue(actual.contains(expected));assertTrue(expected.contains(actual))
     }
 
+    @Test fun `segment results are valid semantic room sources`() {
+        val g=graph(BuildingKind.SEGMENT_UNION)
+        val room=BuildingNode("room",BuildingKind.ROOM,roomConfig=RoomConfig(interiorSource="op",defaultPartition="op"))
+        BuildingSemantics.validate(room,g.nodes.associateBy { it.id })
+    }
+
 }

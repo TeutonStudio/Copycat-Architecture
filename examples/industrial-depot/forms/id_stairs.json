@@ -1,0 +1,19 @@
+{
+  "schema": 4,
+  "id": "id_stairs",
+  "version": 1,
+  "name": "Lichtwerk/Erschliessung/Treppenstufe",
+  "parts": [
+    {
+      "source": "copycats:copycat_stairs"
+    }
+  ],
+  "groups": [
+    {
+      "id": "body",
+      "name": "Body",
+      "role": "surface",
+      "priority": 0
+    }
+  ]
+}

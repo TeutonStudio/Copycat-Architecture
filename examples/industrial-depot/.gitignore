@@ -1,0 +1,4 @@
+.validation-classes/
+__pycache__/
+source/__pycache__/
+views/*.blend1

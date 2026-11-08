@@ -1,0 +1,22 @@
+{
+  "schema": 4,
+  "id": "id_wall",
+  "version": 1,
+  "name": "Lichtwerk/Fassade/Ziegelpanel 6-16",
+  "parts": [
+    {
+      "source": "copycats:copycat_layer",
+      "size": 3,
+      "tilt": 3,
+      "group": "body"
+    }
+  ],
+  "groups": [
+    {
+      "id": "body",
+      "name": "Body",
+      "role": "surface",
+      "priority": 0
+    }
+  ]
+}

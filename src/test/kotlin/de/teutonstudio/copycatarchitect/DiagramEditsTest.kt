@@ -42,6 +42,30 @@ class DiagramEditsTest {
         w=wires(changed).filter { it.target!="building" || it.port!="level:-1" }
         assertEquals(mapOf(0 to "storey"),DiagramEdits.building(changed,positions(changed),w).nodes.single { it.kind==BuildingKind.BUILDING }.levels)
     }
+    @Test fun `room grid edits change only the footprint and its perimeter connections`() {
+        val original=BuildingGraph.starter()
+        val changed=DiagramEdits.toggleRoomCell(original,"room",P(1,0,1))
+        val room=changed.nodes.first { it.id=="room" }
+        assertEquals(original.nodes.filter { it.id!="room" },changed.nodes.filter { it.id!="room" })
+        assertEquals(8,RoomGeometry.cells(room.rectangles).size)
+        assertEquals("floor",room.floor);assertEquals("ceiling",room.ceiling)
+        assertEquals(RoomGeometry.edges(room.rectangles).map { it.id }.toSet(),room.walls.keys)
+        assertFailsWith<IllegalArgumentException> { DiagramEdits.toggleRoomCell(original,"storey",P()) }
+        assertFailsWith<IllegalArgumentException> { DiagramEdits.toggleRoomCell(original,"room",P(0,1,0)) }
+        assertEquals(9,RoomGeometry.cells(original.nodes.first { it.id=="room" }.rectangles).size)
+    }
+    @Test fun `storey map moves repeated room instances independently within the grid`() {
+        val starter=BuildingGraph.starter();val storey=starter.nodes.first { it.id=="storey" }.copy(inputs=listOf("room","room"),offsets=listOf(P(),P(4,0,0)))
+        val original=starter.replace(storey)
+        val changed=DiagramEdits.moveStoreyRoom(original,"storey",1,P(8,0,-3))
+        assertEquals(listOf(P(),P(8,0,-3)),changed.nodes.first { it.id=="storey" }.offsets)
+        assertEquals(storey.inputs,changed.nodes.first { it.id=="storey" }.inputs)
+        assertEquals(original.nodes.filter { it.id!="storey" },changed.nodes.filter { it.id!="storey" })
+        assertFailsWith<IllegalArgumentException> { DiagramEdits.moveStoreyRoom(original,"storey",2,P()) }
+        assertFailsWith<IllegalArgumentException> { DiagramEdits.moveStoreyRoom(original,"storey",1,P(65,0,0)) }
+        assertFailsWith<IllegalArgumentException> { DiagramEdits.moveStoreyRoom(original,"storey",1,P(0,1,0)) }
+        assertEquals(listOf(P(),P(4,0,0)),original.nodes.first { it.id=="storey" }.offsets)
+    }
     @Test fun `building typed connections deletion and protected sources are validated`() {
         val g=BuildingGraph.starter()
         assertFails { DiagramEdits.building(g,positions(g),wires(g).filter { it.target!="room" || it.port!="floor" }+DiagramConnection("roof","room","floor")) }

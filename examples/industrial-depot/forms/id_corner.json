@@ -1,0 +1,169 @@
+{
+  "schema": 4,
+  "id": "id_corner",
+  "version": 1,
+  "name": "Lichtwerk/Fassade/Profilierte Aussenecke",
+  "parts": [
+    {
+      "source": "copycats:copycat_layer",
+      "size": 8,
+      "group": "body",
+      "exact": {
+        "cells": [
+          {
+            "planes": [
+              {
+                "x": 1,
+                "y": 0,
+                "z": 0,
+                "d": 16
+              },
+              {
+                "x": -1,
+                "y": 0,
+                "z": 0,
+                "d": -8
+              },
+              {
+                "x": 0,
+                "y": 1,
+                "z": 0,
+                "d": 16
+              },
+              {
+                "x": 0,
+                "y": -1,
+                "z": 0,
+                "d": 0
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": 1,
+                "d": 16
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": -1,
+                "d": -8
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "source": "copycats:copycat_layer",
+      "size": 8,
+      "group": "trim",
+      "exact": {
+        "cells": [
+          {
+            "planes": [
+              {
+                "x": 1,
+                "y": 0,
+                "z": 0,
+                "d": 8
+              },
+              {
+                "x": -1,
+                "y": 0,
+                "z": 0,
+                "d": -4
+              },
+              {
+                "x": 0,
+                "y": 1,
+                "z": 0,
+                "d": 16
+              },
+              {
+                "x": 0,
+                "y": -1,
+                "z": 0,
+                "d": 0
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": 1,
+                "d": 16
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": -1,
+                "d": -12
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "source": "copycats:copycat_layer",
+      "size": 8,
+      "group": "trim",
+      "exact": {
+        "cells": [
+          {
+            "planes": [
+              {
+                "x": 1,
+                "y": 0,
+                "z": 0,
+                "d": 16
+              },
+              {
+                "x": -1,
+                "y": 0,
+                "z": 0,
+                "d": -12
+              },
+              {
+                "x": 0,
+                "y": 1,
+                "z": 0,
+                "d": 16
+              },
+              {
+                "x": 0,
+                "y": -1,
+                "z": 0,
+                "d": 0
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": 1,
+                "d": 8
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": -1,
+                "d": -4
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "groups": [
+    {
+      "id": "body",
+      "name": "Body",
+      "role": "surface",
+      "priority": 0
+    },
+    {
+      "id": "trim",
+      "name": "Trim",
+      "role": "trim",
+      "priority": 1
+    }
+  ]
+}

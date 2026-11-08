@@ -1,0 +1,100 @@
+{
+  "schema": 3,
+  "id": "h_panel",
+  "version": 1,
+  "name": "Horloge/Fassade/3-16 Ziegelwand",
+  "parts": [
+    {
+      "source": "create:copycat_panel",
+      "turn": 0,
+      "top": false,
+      "size": 1,
+      "offset": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "tilt": 3,
+      "group": "body",
+      "cutMask": "",
+      "recipeSource": "",
+      "spin": 0,
+      "discCut": 0
+    }
+  ],
+  "groups": [
+    {
+      "id": "body",
+      "name": "body",
+      "role": "surface",
+      "priority": 0
+    }
+  ],
+  "graph": {
+    "schema": 2,
+    "nodes": [
+      {
+        "id": "s0",
+        "kind": "INPUT",
+        "inputs": [],
+        "part": {
+          "source": "create:copycat_panel",
+          "turn": 0,
+          "top": false,
+          "size": 1,
+          "offset": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "tilt": 3,
+          "group": "body",
+          "cutMask": "",
+          "recipeSource": "",
+          "spin": 0,
+          "discCut": 0
+        },
+        "x": 20,
+        "y": 20,
+        "materialMode": "SEPARATED",
+        "materialGroup": "",
+        "previewGroup": "",
+        "inputGroups": [],
+        "rotationAxis": "NORMAL",
+        "quarterTurns": 0
+      },
+      {
+        "id": "result",
+        "kind": "OUTPUT",
+        "inputs": [
+          "s0"
+        ],
+        "part": {
+          "source": "copycats:copycat_slice",
+          "turn": 0,
+          "top": false,
+          "size": 1,
+          "offset": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "tilt": 0,
+          "group": "body",
+          "cutMask": "",
+          "recipeSource": "",
+          "spin": 0,
+          "discCut": 0
+        },
+        "x": 520,
+        "y": 100,
+        "materialMode": "SEPARATED",
+        "materialGroup": "",
+        "previewGroup": "",
+        "inputGroups": [],
+        "rotationAxis": "NORMAL",
+        "quarterTurns": 0
+      }
+    ]
+  }
+}

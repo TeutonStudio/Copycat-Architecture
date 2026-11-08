@@ -1,0 +1,13 @@
+{
+  "measurement": "actual server Json.encode; Geometry.validate; Module.validate; real Library.seed merged before measuring",
+  "storageLimitCharacters": 180000,
+  "targetCharacters": 170000,
+  "formsCharacters": 10828,
+  "modulesCharacters": 14404,
+  "buildingsCharacters": 112112,
+  "standaloneNormalizedCharacters": 137410,
+  "defaultSeedCharacters": 5403,
+  "includingDefaultSeedCharacters": 142744,
+  "remainingCharactersWithDefaults": 37256,
+  "fitsStorageLimit": true
+}

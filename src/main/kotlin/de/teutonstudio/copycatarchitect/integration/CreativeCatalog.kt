@@ -39,9 +39,12 @@ object CreativeCatalog {
             .sortedWith(compareBy<ItemStack> { ordered[BuiltInRegistries.ITEM.getKey(it.item).toString()] ?: Int.MAX_VALUE }.thenBy { BuiltInRegistries.ITEM.getKey(it.item).toString() })
         val frequent=native.filter { stack -> val key=BuiltInRegistries.ITEM.getKey(stack.item);CreativeCatalogPolicy.section(key.namespace,key.path)==CreativeCatalogSection.FREQUENT }
             .sortedBy { BuiltInRegistries.ITEM.getKey(it.item).toString() }
+        val special=native.filter { stack -> val key=BuiltInRegistries.ITEM.getKey(stack.item);CreativeCatalogPolicy.section(key.namespace,key.path)==CreativeCatalogSection.SPECIAL }
+            .sortedBy { BuiltInRegistries.ITEM.getKey(it.item).toString() }
         return linkedMapOf(
             CreativeCatalogSection.PROCEDURAL to listOf(ItemStack(Architect.GUN.get()),ItemStack(CartridgeRegistry.EMPTY.get()),Economy.cartridge(256),ItemStack(CartridgeRegistry.CREATIVE.get()),ItemStack(Architect.TABLE_ITEM.get())),
-            CreativeCatalogSection.BASIC to geometry,CreativeCatalogSection.FREQUENT to frequent,CreativeCatalogSection.SAVED to savedForms())
+            CreativeCatalogSection.BASIC to geometry,CreativeCatalogSection.FREQUENT to frequent,
+            CreativeCatalogSection.SPECIAL to special,CreativeCatalogSection.SAVED to savedForms())
     }
     private fun contents(event:BuildCreativeModeTabContentsEvent) {
         if(event.tabKey.location()==ID) {

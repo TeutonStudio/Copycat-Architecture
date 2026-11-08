@@ -10,9 +10,9 @@ class DiscGeometryTest {
     private fun disc(cut:Int=0)=Part(source=source,discCut=cut)
 
     @Test fun `centered disc family retains real pane items and stable selection keys`() {
-        assertEquals(18,Adapters.all.size)
-        assertEquals(20,BaseShapes.all.size)
-        assertEquals(20,BaseShapes.all.map { it.id }.distinct().size)
+        assertEquals(19,Adapters.all.size)
+        assertEquals(21,BaseShapes.all.size)
+        assertEquals(21,BaseShapes.all.map { it.id }.distinct().size)
         val family=(0..2).map { BaseShapes.find(source,it) }
         assertEquals(listOf(source,"$source#half_disc","$source#quarter_disc"),family.map { it.id })
         assertEquals(listOf("flat_pane","half_disc","quarter_disc"),family.map { it.name })
@@ -89,19 +89,15 @@ class DiscGeometryTest {
         }
     }
 
-    @Test fun `rotation rejects unavailable native orientations but permits valid upside down states`() {
+    @Test fun `composed stairs rotate freely while native sources retain their orientation limits`() {
         val stairs=Part("copycats:copycat_stairs")
-        val turned=assertNotNull(PartRotations.rotate(stairs,RotationAxis.X,1))
-        assertEquals(Solid.part(stairs).rotate(RotationAxis.X,1).key(),Solid.part(turned).key())
-        assertEquals(0,turned.tilt)
-        assertFalse(turned.top)
-        assertEquals("north",turned.sourceProperties()["facing"])
-        assertNull(PartRotations.rotate(stairs,RotationAxis.Z,-1))
+        for(axis in listOf(RotationAxis.X,RotationAxis.Y,RotationAxis.Z)) for(q in -1..2) {
+            val turned=assertNotNull(PartRotations.rotate(stairs,axis,q))
+            assertEquals(Solid.part(stairs).rotate(axis,q).key(),Solid.part(turned).key())
+        }
         assertNull(PartRotations.rotate(Part("copycats:copycat_vertical_step"),RotationAxis.X,1))
         val inverted=assertNotNull(PartRotations.rotate(stairs,RotationAxis.X,2))
         assertEquals(Solid.part(stairs).rotate(RotationAxis.X,2).key(),Solid.part(inverted).key())
-        assertEquals(0,inverted.tilt)
-        assertTrue(inverted.top)
         assertNotNull(PartRotations.rotate(Part("copycats:copycat_block"),RotationAxis.X,1))
         assertNull(PartRotations.rotate(disc(2).copy(offset=P(15,0,0)),RotationAxis.X,1))
     }
@@ -145,16 +141,16 @@ class DiscGeometryTest {
         assertEquals(mapOf("minecraft:stone" to 1,"minecraft:glass" to 1),Placement(parts=halves,groups=groups,surfaces=mapOf("glass" to "minecraft:glass")).surfaceItems())
     }
 
-    @Test fun `disc fractions validate their source rotation and integral recipe share`() {
+    @Test fun `disc fractions validate their source rotation and ignore legacy cutting yields`() {
         assertFails { Solid.part(disc(3)) }
         assertFails { Solid.part(disc(-1)) }
         assertFails { Solid.part(disc(2).copy(spin=4)) }
         assertFails { Solid.part(Part("copycats:copycat_byte",discCut=1)) }
         val recipes=Adapters.all.mapValues { it.value.output }
-        assertEquals(1,Extrusion.cost(listOf(disc(2)),recipes=recipes+(source to 64)))
-        assertEquals(1,Extrusion.cost(listOf(disc(1)),recipes=recipes+(source to 128)))
-        assertFails { Extrusion.cost(listOf(disc(2)),recipes=recipes+(source to 128)) }
-        assertFails { Extrusion.cost(listOf(disc(1)),recipes=recipes+(source to 3)) }
+        assertEquals(8,Extrusion.cost(listOf(disc(2)),recipes=recipes+(source to 64)))
+        assertEquals(16,Extrusion.cost(listOf(disc(1)),recipes=recipes+(source to 128)))
+        assertEquals(8,Extrusion.cost(listOf(disc(2)),recipes=recipes+(source to 128)))
+        assertEquals(16,Extrusion.cost(listOf(disc(1)),recipes=recipes+(source to 3)))
     }
 
     @Test fun `old saved parts default to whole shape and zero local spin`() {

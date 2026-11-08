@@ -37,7 +37,7 @@ class BuildingCornerTest {
     @Test fun `optional corner source is typed and reaches all four inner corner rotations`() {
         for(direct in listOf(false,true)) {
             val graph=graph(direct);val enclosure=graph.nodes.first { it.id==if(direct) "storey" else "room" }
-            assertEquals(setOf(BuildingKind.COPYCAT),BuildingPorts.of(enclosure).single { it.key=="corner" }.accepts)
+            assertEquals(setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE),BuildingPorts.of(enclosure).single { it.key=="corner" }.accepts)
             assertFails { graph.connect(enclosure.id,"corner","wall") }
             val plan=plan(graph,direct)
             assertEquals(8,plan.placements.count { it.component=="trim" })
@@ -67,7 +67,7 @@ class BuildingCornerTest {
         assertTrue(this.plan(graph.replace(room.copy(walls=emptyMap()))).placements.none { it.component=="trim" })
     }
 
-    @Test fun `legacy automatic panel corners merge both compatible wall faces`() {
+    @Test fun `automatic panel corners merge both wall faces with their finishes`() {
         val graph=graph(explicit=false);val plan=plan(graph)
         for((corner,_) in rotations) for(y in 0..1) {
             val joint=plan.placements.single { it.pos==corner+P(0,y,0) }
@@ -81,7 +81,12 @@ class BuildingCornerTest {
         val room=graph.nodes.first { it.id=="room" };val wall=graph.nodes.first { it.id=="wall" }
         val other=wall.copy(id="other_wall",role="frame")
         val mixed=graph.copy(nodes=graph.nodes+other).replace(room.copy(walls=RoomGeometry.edges(rectangles).associate { it.id to if(it.direction==0) other.id else wall.id }))
-        assertEquals(768,Geometry.solid(this.plan(mixed).placements.single { it.pos==P(-1,0,-1) }.parts).count())
+        val joint=this.plan(mixed).placements.single { it.pos==P(-1,0,-1) }
+        assertEquals(1392,Geometry.solid(joint.parts).count())
+        assertEquals(2,joint.groups.size)
+        val finishes=Geometry.resolve(joint.parts,joint.groups).materialSolids(joint.material,joint.surfaces)
+        assertEquals(setOf(Building().palette.getValue("wall"),Building().palette.getValue("frame")),finishes.keys)
+        assertEquals(listOf(624,768),finishes.values.map { it.count() }.sorted())
     }
 
     @Test fun `corner disconnect and source removal restore valid automatic joints`() {

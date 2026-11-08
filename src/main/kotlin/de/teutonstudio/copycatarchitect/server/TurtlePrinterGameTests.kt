@@ -83,6 +83,21 @@ object TurtlePrinterGameTests {
     private fun same(first:List<ItemStack>,second:List<ItemStack>)=first.size==second.size && first.indices.all { ItemStack.matches(first[it],second[it]) }
     private fun cartridges(h:GameTestHelper,stack:ItemStack)=PrinterStack.contents(stack,h.level.registryAccess()).map(ItemStack::copy)
 
+    @JvmStatic @GameTest(template="empty") fun turtleHistoryLimitPreservesPlacedPrinterCartridgesAndCoatings(h:GameTestHelper) {
+        val turtle=Turtle(h);val api=turtle.peripheral;turtle.inventory.setItem(0,device(h))
+        val session=success(h,api.printerBegin("front")).getValue("session") as String
+        val be=h.level.getBlockEntity(turtle.target) as PrinterEntity
+        // A persisted server preview need not have entered through the peripheral's smaller JSON input limit.
+        be.preview=ExactGeometryGameTests.oversizedHistoryForm();be.surfaces=mapOf("body" to "minecraft:stone")
+        turtle.inventory.setItem(1,ItemStack(Items.STONE,2))
+        val before=be.saveWithoutMetadata(h.level.registryAccess());val items=inventory(turtle)
+        val result=api.printerPrint("front",session)
+        h.assertTrue(result.result?.firstOrNull()==false && result.result?.lastOrNull().toString().contains("80,000"),"The actual queued turtle print entry must report the history size limit")
+        h.assertTrue(h.level.getBlockEntity(turtle.target)===be && !be.released && be.saveWithoutMetadata(h.level.registryAccess())==before && same(items,inventory(turtle)),"History rejection must preserve the world printer, all cartridges, coatings and turtle inventory")
+        h.assertTrue(ArchitectData.get(h.level).library(turtle.owner.id).history.isEmpty(),"A rejected turtle print must not create a history record")
+        be.preview=form();success(h,api.printerCancel("front",session));h.succeed()
+    }
+
     @JvmStatic @GameTest(template="empty") fun turtlePrinterBeginCancelPreservesSevenSlotsAndChecksOwnerSession(h:GameTestHelper) {
         val turtle=Turtle(h);val api=turtle.peripheral
         failed(h,api.printerBegin("front"),"The peripheral upgrade must not fabricate a placeable printer")

@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "id": "house_door",
+  "version": 1,
+  "name": "Horloge kompakt/house_door",
+  "width": 1,
+  "height": 5,
+  "depth": 1,
+  "minWidth": 1,
+  "maxWidth": 1,
+  "cells": [
+    {
+      "pos": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "form": "hc_full@1",
+      "role": "plaster",
+      "empty": true
+    },
+    {
+      "pos": {
+        "x": 0,
+        "y": 1,
+        "z": 0
+      },
+      "form": "hc_full@1",
+      "role": "plaster",
+      "empty": true
+    },
+    {
+      "pos": {
+        "x": 0,
+        "y": 2,
+        "z": 0
+      },
+      "form": "hc_full@1",
+      "role": "plaster",
+      "empty": true
+    },
+    {
+      "pos": {
+        "x": 0,
+        "y": 3,
+        "z": 0
+      },
+      "form": "hc_wall@1",
+      "role": "plaster",
+      "empty": false
+    },
+    {
+      "pos": {
+        "x": 0,
+        "y": 4,
+        "z": 0
+      },
+      "form": "hc_trim@1",
+      "role": "plaster",
+      "empty": false
+    }
+  ]
+}

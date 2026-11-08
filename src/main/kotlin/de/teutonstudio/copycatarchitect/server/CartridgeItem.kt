@@ -11,6 +11,11 @@ enum class CartridgeKind { FULL, EMPTY, CREATIVE }
 
 /** The original cartridge ID and its legacy custom-data units remain valid. */
 class CartridgeItem(properties:Properties,val kind:CartridgeKind=CartridgeKind.FULL):BlockItem(CartridgeRegistry.BLOCK.get(),properties) {
+    override fun getDescriptionId()=when(kind) {
+        CartridgeKind.FULL->"item.copycat_architect.cartridge"
+        CartridgeKind.EMPTY->"item.copycat_architect.empty_cartridge"
+        CartridgeKind.CREATIVE->"item.copycat_architect.creative_cartridge"
+    }
     override fun registerBlocks(map:MutableMap<Block,Item>,item:Item) {
         if(kind==CartridgeKind.FULL) super.registerBlocks(map,item)
     }

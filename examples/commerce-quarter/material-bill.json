@@ -1,0 +1,36 @@
+{
+  "positions": 4289,
+  "zincMillibuckets": 541666,
+  "surfaceItems": {
+    "minecraft:bricks": 384,
+    "minecraft:dark_oak_planks": 849,
+    "minecraft:deepslate_bricks": 130,
+    "minecraft:deepslate_tiles": 1141,
+    "minecraft:glass": 374,
+    "minecraft:light_gray_terracotta": 464,
+    "minecraft:moss_block": 43,
+    "minecraft:polished_andesite": 424,
+    "minecraft:spruce_planks": 1452,
+    "minecraft:stone_bricks": 363
+  },
+  "storeys": [
+    {
+      "level": 0,
+      "base": 1,
+      "minimum": 0,
+      "maximum": 7
+    },
+    {
+      "level": 1,
+      "base": 7,
+      "minimum": 6,
+      "maximum": 13
+    },
+    {
+      "level": 2,
+      "base": 13,
+      "minimum": 12,
+      "maximum": 21
+    }
+  ]
+}

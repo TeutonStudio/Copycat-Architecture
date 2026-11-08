@@ -1,0 +1,13 @@
+// Isolate compiled classes, test reports, worlds and options from other development runs.
+// ./gradlew -I tools/room-mounting-validation.init.gradle --project-cache-dir build/room-mounting-gradle test
+gradle.beforeProject { project ->
+    if (project.path == ':') project.layout.buildDirectory.set(project.file('build/room-mounting-validation'))
+}
+gradle.projectsEvaluated {
+    rootProject.tasks.withType(Test).configureEach { maxHeapSize = '1G' }
+    rootProject.extensions.getByName('neoForge').runs.configureEach {
+        if (name == 'client') gameDirectory.set(rootProject.file('build/room-mounting-client'))
+        if (name == 'gameTestServer') gameDirectory.set(rootProject.file('build/room-mounting-server'))
+        jvmArgument('-Xmx3G')
+    }
+}

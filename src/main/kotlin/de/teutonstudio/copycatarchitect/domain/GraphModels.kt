@@ -1,58 +1,127 @@
 package de.teutonstudio.copycatarchitect.domain
 
-enum class NodeKind { INPUT, UNION, INTERSECTION, DIFFERENCE, SYMMETRIC_DIFFERENCE, ROTATE, ROTATION, OUTPUT }
-enum class MaterialMode { SEPARATED, GROUPED }
-enum class BuildingKind { COPYCAT, SEGMENT, PATTERN, FLOOR, CEILING, ROOM, STOREY, ROOF, BUILDING }
+import com.google.gson.Gson
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 
-/** Shared graph contract for the Minecraft and browser editors. */
-object GraphModels {
-    const val FORM_NODES = 64
-    const val FORM_SOURCES = 32
-    const val BUILDING_NODES = 96
-    const val SOCKETS = 16
-    const val LEVELS = 8
-    val formSchemas = 1..2
-    val buildingSchemas = 1..1
-    val coordinates = -8192..8192
-
-    fun inputs(kind: NodeKind): IntRange = when (kind) {
-        NodeKind.INPUT, NodeKind.ROTATION -> 0..0
-        NodeKind.OUTPUT -> 1..1
-        NodeKind.DIFFERENCE, NodeKind.ROTATE -> 2..2
-        NodeKind.UNION, NodeKind.INTERSECTION, NodeKind.SYMMETRIC_DIFFERENCE -> 2..SOCKETS
-    }
-
-    fun accepts(target: NodeKind, slot: Int, source: NodeKind): Boolean =
-        source != NodeKind.OUTPUT && (source == NodeKind.ROTATION) == (target == NodeKind.ROTATE && slot == 1)
-
-    fun requiredBuildingInputs(kind: BuildingKind, storeyMode: String): Int = when (kind) {
-        BuildingKind.PATTERN -> 2
-        BuildingKind.STOREY -> if (storeyMode == "rooms") 1 else 0
-        else -> 0
-    }
-
-    val expandableBuildingInputs = setOf(BuildingKind.SEGMENT, BuildingKind.FLOOR, BuildingKind.CEILING, BuildingKind.ROOF)
-}
-
-data class BuildingPort(val key:String,val source:String,val accepts:Set<BuildingKind>,val number:Int=0,val length:Int=0,val height:Int=0)
-object BuildingPorts {
-    private val segments=setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN)
-    private fun copies(n:BuildingNode,expanding:Boolean)=inputs(n,setOf(BuildingKind.COPYCAT),expanding)
-    private fun inputs(n:BuildingNode,kinds:Set<BuildingKind>,expanding:Boolean)=
-        (n.inputs+if(expanding && n.inputs.size<GraphModels.SOCKETS && n.inputs.none { it.isEmpty() }) listOf("") else emptyList()).mapIndexed { i,s -> BuildingPort("in:$i",s,kinds,i) }
-    private fun enclosure(n:BuildingNode)=RoomGeometry.edges(n.rectangles).mapIndexed { i,e -> BuildingPort("wall:${e.id}",n.walls[e.id].orEmpty().ifEmpty { "empty_wall" },segments,i,e.length,n.height) }+
-        listOf(BuildingPort("floor",n.floor,setOf(BuildingKind.FLOOR)),BuildingPort("ceiling",n.ceiling,setOf(BuildingKind.CEILING)),BuildingPort("corner",n.corner,setOf(BuildingKind.COPYCAT)))
-    fun of(n:BuildingNode,expanding:Boolean=false):List<BuildingPort> = when(n.kind) {
-        BuildingKind.SEGMENT -> if(n.id=="empty_wall") emptyList() else copies(n,expanding)
-        BuildingKind.FLOOR,BuildingKind.CEILING -> copies(n,expanding)
-        BuildingKind.PATTERN -> n.inputs.mapIndexed { i,s -> BuildingPort("in:$i",s,segments,i) }
-        BuildingKind.ROOM -> enclosure(n)
-        BuildingKind.STOREY -> if(n.storeyMode=="walls") enclosure(n) else inputs(n,setOf(BuildingKind.ROOM),expanding)
-        BuildingKind.ROOF -> copies(n,expanding)+(0..3).map { BuildingPort("wall:$it",n.walls[it.toString()].orEmpty(),segments,it) }
-        BuildingKind.BUILDING -> {
-            val levels=n.levels.keys+0+(if(expanding) setOf((n.levels.keys.maxOrNull() ?: 0)+1,(n.levels.keys.minOrNull() ?: 0)-1) else emptySet())
-            listOf(BuildingPort("roof",n.roof,setOf(BuildingKind.ROOF)))+levels.filter { it in -GraphModels.LEVELS..GraphModels.LEVELS }.sortedDescending().map { i -> BuildingPort("level:$i",n.levels[i].orEmpty(),setOf(BuildingKind.STOREY),i) }
+/** The editor catalog is packaged in the mod and imported directly by the web editor. */
+internal object GraphModels {
+    private val gson = Gson()
+    private val catalog by lazy {
+        val stream = checkNotNull(javaClass.getResourceAsStream("/assets/copycat_architect/graph-models.json"))
+        stream.bufferedReader(Charsets.UTF_8).use { gson.fromJson(it, Catalog::class.java) }.also {
+            check(it.version == 1) { "Unsupported graph model catalog version" }
+            check(it.copycat.nodes.keys == NodeKind.entries.map { kind -> kind.name }.toSet())
+            check(it.building.nodes.keys == BuildingKind.entries.map { kind -> kind.name }.toSet())
         }
-        else -> emptyList()
     }
+
+    val copycat get() = catalog.copycat
+    val building get() = catalog.building
+
+    fun shape(kind: NodeKind) = copycat.nodes.getValue(kind.name)
+    fun building(kind: BuildingKind) = building.nodes.getValue(kind.name)
+    fun buildingInsertable(kind: BuildingKind, explicit: Boolean): Boolean =
+        building(kind).let { it.output != null && (!explicit || !it.legacyOnly) }
+
+    val shapeOperations get() = NodeKind.entries.filter { it != NodeKind.INPUT && it != NodeKind.SAVED && shape(it).output != null }
+
+    fun newShape(kind: NodeKind): GraphNode {
+        val model = shape(kind)
+        return gson.fromJson(defaults(copycat, kind.name, model.defaults), GraphNode::class.java)
+            .copy(inputs = List(checkNotNull(model.inputs).min) { "" })
+    }
+
+    private val assemblyTemplates by lazy { buildingTemplates(true) }
+    private val legacyTemplates by lazy { buildingTemplates(false) }
+
+    fun newBuilding(kind: BuildingKind, explicit: Boolean): BuildingNode =
+        (if (explicit || building(kind).alwaysExplicit) assemblyTemplates else legacyTemplates).getValue(kind)
+
+    private fun buildingTemplates(explicit: Boolean): Map<BuildingKind, BuildingNode> =
+        BuildingKind.entries.associateWith { kind ->
+            val model = building(kind)
+            val overrides = if (explicit) model.defaults else model.legacyDefaults
+            gson.fromJson(defaults(building, kind.name, overrides), BuildingNode::class.java)
+        }
+
+    private fun defaults(model: Model, kind: String, overrides: JsonObject?): JsonObject =
+        model.nodeDefaults.deepCopy().apply {
+            overrides?.entrySet()?.forEach { (name, value) -> add(name, value) }
+            addProperty("kind", kind)
+        }
+
+    private val buildingRules by lazy {
+        BuildingKind.entries.associateWith { kind -> building(kind).ports.orEmpty().map(::PortRule) }
+    }
+    private val semanticRules by lazy { building.semanticPorts.orEmpty().map(::PortRule) }
+
+    fun buildingPort(node: BuildingNode, key: String): BuildingPortModel {
+        val rules = if (key.startsWith("semantic:")) semanticRules else buildingRules.getValue(node.kind)
+        return checkNotNull(rules.firstOrNull { it.matches(node, key) }) { "Missing ${node.kind} port model for $key" }.model
+    }
+
+    private class PortRule(val model: BuildingPortModel) {
+        private val exactKey = model.key.takeUnless { '*' in it }
+        private val keyPattern = if (exactKey == null) Regex(model.key.split('*').joinToString(".*", transform = Regex::escape)) else null
+        private val conditions = model.`when`.orEmpty().map { (field, value) -> Condition(field, value) }
+
+        fun matches(node: BuildingNode, key: String): Boolean =
+            (exactKey == key || keyPattern?.matches(key) == true) && conditions.all { it.matches(node) }
+    }
+
+    private class Condition(private val field: String, value: JsonElement) {
+        private val inverted = value.isJsonObject
+        private val expected = if (inverted) value.asJsonObject.get("not").asString else value.asString
+
+        fun matches(node: BuildingNode): Boolean {
+            val actual = when (field) {
+                "assembly" -> node.assembly.toString()
+                "id" -> node.id
+                "roomConfig.mode" -> node.roomConfig?.mode?.name
+                "storeyMode" -> node.storeyMode
+                else -> error("Unknown graph port condition $field")
+            }
+            return (actual == expected) != inverted
+        }
+    }
+
+    private class Catalog(val version: Int, val copycat: Model, val building: Model)
+
+    class Model(
+        val graphSchemas: Set<Int>,
+        val defaultSchema: Int,
+        val documentSchemas: Set<Int>,
+        val maxNodes: Int,
+        val maxSources: Int,
+        val maxInputs: Int,
+        val nodeDefaults: JsonObject,
+        val baseShapes: List<BaseShape>?,
+        val semanticPorts: List<BuildingPortModel>?,
+        val nodes: Map<String, NodeModel>
+    )
+
+    class NodeModel(
+        val labelKey: String,
+        val output: String?,
+        val inputs: ShapeInputs?,
+        val defaults: JsonObject,
+        val legacyDefaults: JsonObject?,
+        val legacyOnly: Boolean,
+        val alwaysExplicit: Boolean,
+        val ports: List<BuildingPortModel>?
+    )
+
+    class ShapeInputs(val min: Int, val max: Int, private val types: List<String>) {
+        fun type(slot: Int): String = types.getOrElse(slot) { types.last() }
+    }
+
+    class BuildingPortModel(
+        val key: String,
+        val accepts: Set<BuildingKind>,
+        val min: Int?,
+        val max: Int?,
+        val expand: Boolean?,
+        val `when`: Map<String, JsonElement>?
+    )
 }

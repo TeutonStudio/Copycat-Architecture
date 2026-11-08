@@ -13,6 +13,11 @@
   },
   "result": {
     "id": "copycat_architect:cartridge",
-    "count": 1
+    "count": 1,
+    "components": {
+      "minecraft:custom_data": {
+        "units": 144
+      }
+    }
   }
 }

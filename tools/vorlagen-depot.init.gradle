@@ -1,0 +1,22 @@
+// Opt-in only. Keep compiled classes and runtime world away from other client tasks.
+def vorlagenDepotMode = gradle.startParameter.projectProperties.containsKey('vorlagenDepotInspect') ? 'inspect' :
+    gradle.startParameter.projectProperties.containsKey('vorlagenDepotApply') ? 'apply' :
+    gradle.startParameter.projectProperties.containsKey('vorlagenDepotVerify') ? 'verify' : null
+gradle.beforeProject { project ->
+    if (vorlagenDepotMode != null && project.path == ':') {
+        project.layout.buildDirectory.set(project.file('build/vorlagen-depot-build'))
+    }
+}
+gradle.projectsEvaluated {
+    if (vorlagenDepotMode != null) {
+        rootProject.extensions.getByName('neoForge').runs.configureEach {
+            if (name == 'client') {
+                gameDirectory.set(rootProject.file('build/vorlagen-depot-client'))
+                systemProperty('architect.vorlagenDepotMode', vorlagenDepotMode)
+                systemProperty('architect.vorlagenDepotOutput', rootProject.file('build/vorlagen-depot').absolutePath)
+                programArguments.addAll('--quickPlaySingleplayer', 'Vorlagen', '--width', '1920', '--height', '1080')
+                jvmArgument('-Xmx4G')
+            }
+        }
+    }
+}

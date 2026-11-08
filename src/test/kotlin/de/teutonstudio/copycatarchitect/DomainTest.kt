@@ -22,7 +22,7 @@ class DomainTest {
         assertEquals(full.parts,Geometry.normalized(listOf(Part(),full.parts[0])))
         assertEquals(full.parts,Geometry.normalized(listOf(full.parts[0],Part())))
         assertEquals(256,Extrusion.cost(listOf(Part(),full.parts[0])))
-        assertEquals(16,Extrusion.cost(listOf(Part(),Part())))
+        assertEquals(4,Extrusion.cost(listOf(Part(),Part())))
     }
     @Test fun `overlarge translations and unsupported adapters are rejected`() {
         assertFails { Geometry.normalized(listOf(Part(offset=P(0,-1,0)))) }
@@ -141,7 +141,7 @@ class DomainTest {
         val back=Geometry.validate(f.copy(groups=f.groups.map { it.copy(priority=1-it.priority) }))
         assertEquals(1,back.parts.size);assertEquals("body",back.parts.single().group)
         assertEquals(256,Extrusion.cost(back.parts,back.groups))
-        assertEquals(288,Extrusion.cost(f.parts,f.groups))
+        assertEquals(256,Extrusion.cost(f.parts,f.groups))
     }
     @Test fun `coincident duplicate groups pay and expose only the foreground`() {
         val f=groupedForm().copy(parts=listOf(Part("copycats:copycat_block"),Part("copycats:copycat_block",group="cap")))

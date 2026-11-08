@@ -1,0 +1,150 @@
+{
+  "schema": 1,
+  "status": "PASS",
+  "method": "Independent axis-ray / triangle intersections with exported mesh faces",
+  "mesh": "render-mesh.json",
+  "meshSha256": "d0610eaa1b0f8f10f2091c88c2643348758a3ef4348bfb3d10276bdeca5b333f",
+  "buildingSha256": "8ed06530be50830d58344a0f84ac78449d9aaf6666bead5730de1c03207df2cd",
+  "canonicalMeshSha256": "464ae5b246816185e80c6dee4beeb1af579034c7136aaea240ef083da1edd1b2",
+  "librarySha256": "e87dd78ac5c5f1c0f5163a51e6c60dc2de181a1db7eaebbf9519912ae2172584",
+  "generatorSha256": "10a56cc8fe45a7d86e810563afe4ca23b471174b06554f822493bc42561514b0",
+  "checkerSha256": "49b3d2bd8e30fd063540ba33e657eaf58841e20529feb571d4489b12e72455d0",
+  "graphNodes": 69,
+  "forms": 14,
+  "placements": 6662,
+  "meshObjects": 17,
+  "meshFaces": 89786,
+  "triangles": 178388,
+  "bounds": {
+    "min": [
+      -1.0,
+      0.0,
+      -8.0
+    ],
+    "max": [
+      49.0,
+      16.875,
+      30.0
+    ]
+  },
+  "checks": [
+    {
+      "name": "library_building_identity",
+      "passed": true
+    },
+    {
+      "name": "library_forms_identity",
+      "passed": true,
+      "forms": 14
+    },
+    {
+      "name": "export_metadata",
+      "passed": true
+    },
+    {
+      "name": "compact_graph_patterns",
+      "passed": true,
+      "nodes": 69,
+      "patterns": {
+        "hall_36": [
+          "bay_6",
+          "bay_6",
+          "bay_6",
+          "bay_6",
+          "bay_6",
+          "bay_6"
+        ],
+        "hall_28": [
+          "end_pier",
+          "bay_6",
+          "bay_6",
+          "bay_6",
+          "bay_6",
+          "end_pier"
+        ]
+      },
+      "source_lengths": {
+        "bay_6": 6,
+        "end_pier": 2
+      }
+    },
+    {
+      "name": "mesh_export_digest_matches_bill",
+      "passed": true,
+      "mesh_sha256": "d0610eaa1b0f8f10f2091c88c2643348758a3ef4348bfb3d10276bdeca5b333f",
+      "material_bill_mesh_sha256": "d0610eaa1b0f8f10f2091c88c2643348758a3ef4348bfb3d10276bdeca5b333f"
+    },
+    {
+      "name": "hall_roof_coverage_and_open_volume",
+      "passed": true,
+      "rays": 4032,
+      "missing": [],
+      "intermediate_surfaces": []
+    },
+    {
+      "name": "both_rooflight_bands_are_glass",
+      "passed": true,
+      "rays": 10,
+      "failures": []
+    },
+    {
+      "name": "gable_closure",
+      "passed": true,
+      "rays": 1224,
+      "failures": []
+    },
+    {
+      "name": "windows_have_no_opaque_backing",
+      "passed": true,
+      "rays": 444,
+      "failures": []
+    },
+    {
+      "name": "hall_office_passage_clear",
+      "passed": true,
+      "rays": 32,
+      "failures": []
+    },
+    {
+      "name": "gallery_shells_bridge_at_level_7",
+      "passed": true,
+      "walking_surface_samples": {
+        "36.25": true,
+        "36.75": true,
+        "37.25": true,
+        "37.5": true,
+        "38.25": true
+      }
+    },
+    {
+      "name": "stair_route_and_headroom",
+      "passed": true,
+      "samples": 18,
+      "minimum_headroom": 2.7,
+      "failures": []
+    },
+    {
+      "name": "personnel_entrance_clear",
+      "passed": true,
+      "rays": 12,
+      "failures": []
+    },
+    {
+      "name": "personnel_entrance_half_steps",
+      "passed": true,
+      "samples": 6,
+      "failures": []
+    },
+    {
+      "name": "gallery_camera_clearance",
+      "passed": true,
+      "gallery_walking_level": 7,
+      "camera_eye": [
+        39.5,
+        8.7,
+        22
+      ],
+      "roof_underside": 12
+    }
+  ]
+}

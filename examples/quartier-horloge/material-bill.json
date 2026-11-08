@@ -1,0 +1,115 @@
+{
+  "validation": "passed: actual BuildingGraphCompiler; unique positions; unobstructed clear cells; 5 x 17 gallery void; both gallery rails; four real staircases; five tower levels",
+  "graphNodes": 89,
+  "forms": 26,
+  "modules": 3,
+  "positions": 7733,
+  "requiredClearCells": 6619,
+  "zincMillibuckets": 881488,
+  "surfaceItems": {
+    "minecraft:stone": 93,
+    "minecraft:spruce_planks": 2420,
+    "minecraft:bricks": 1769,
+    "minecraft:stone_bricks": 75,
+    "minecraft:smooth_sandstone": 1693,
+    "minecraft:dark_oak_planks": 1319,
+    "minecraft:glass": 580,
+    "minecraft:white_terracotta": 188,
+    "minecraft:gold_block": 75,
+    "minecraft:deepslate_tiles": 1749,
+    "minecraft:quartz_block": 36,
+    "minecraft:cut_copper": 335
+  },
+  "storeys": [
+    {
+      "level": 0,
+      "base": 1,
+      "minimum": 0,
+      "maximum": 7
+    },
+    {
+      "level": 1,
+      "base": 7,
+      "minimum": 6,
+      "maximum": 13
+    },
+    {
+      "level": 2,
+      "base": 13,
+      "minimum": 12,
+      "maximum": 19
+    },
+    {
+      "level": 3,
+      "base": 19,
+      "minimum": 18,
+      "maximum": 25
+    },
+    {
+      "level": 4,
+      "base": 25,
+      "minimum": 24,
+      "maximum": 31
+    }
+  ],
+  "accessFootprints": {
+    "hall_stairs": {
+      "min": [
+        0,
+        15
+      ],
+      "max": [
+        4,
+        22
+      ],
+      "cells": 28
+    },
+    "tower_stairs": {
+      "min": [
+        19,
+        0
+      ],
+      "max": [
+        23,
+        7
+      ],
+      "cells": 28
+    },
+    "west_stairs": {
+      "min": [
+        1,
+        28
+      ],
+      "max": [
+        5,
+        35
+      ],
+      "cells": 28
+    },
+    "east_stairs": {
+      "min": [
+        19,
+        28
+      ],
+      "max": [
+        23,
+        35
+      ],
+      "cells": 28
+    }
+  },
+  "libraryStorageCharacters": 440113,
+  "currentLibraryStorageLimit": 180000,
+  "bounds": {
+    "max": [
+      29.0,
+      40.125,
+      40.0
+    ],
+    "min": [
+      -2.0,
+      0.0,
+      -5.0
+    ]
+  }
+}

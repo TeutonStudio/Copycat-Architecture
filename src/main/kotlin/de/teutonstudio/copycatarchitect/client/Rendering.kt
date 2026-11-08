@@ -18,6 +18,7 @@ import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.client.event.EntityRenderersEvent
+import net.neoforged.neoforge.client.event.ModelEvent
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent
 import net.neoforged.neoforge.common.NeoForge
@@ -33,12 +34,12 @@ object ClientSetup {
             val snapshot=Json.decode<Snapshot>(json);ClientState.snapshot=snapshot;Extrusion.outputs=snapshot.extrusionOutputs
             val mc=Minecraft.getInstance()
             CreativeCatalogClient.refresh()
-            if(mc.screen is PrinterStorageScreen) (mc.screen as PrinterStorageScreen).refresh()
+            if(mc.screen is PrinterStorageScreen) (mc.screen as PrinterStorageScreen).refresh(fromSnapshot=true)
             if(snapshot.editor=="printer") mc.setScreen(ShapeScreen(printerSession=snapshot.printer))
-            if(snapshot.editor=="printerStorage" && mc.screen !is PrinterStorageScreen) mc.setScreen(PrinterStorageScreen(mc.screen))
             if(snapshot.editor=="printerDone") { WorldPeek.active=false;mc.setScreen(null) }
             if(snapshot.editor=="shape") mc.setScreen(ShapeScreen())
             if(snapshot.editor=="building") mc.setScreen(BuildingScreen())
+            else (mc.screen as? BuildingScreen)?.refreshProjectionBinding()
         }
         CreativeCatalogClient.setup()
         net.createmod.ponder.foundation.PonderIndex.addPlugin(ArchitectPonderPlugin())
@@ -46,14 +47,21 @@ object ClientSetup {
         NeoForge.EVENT_BUS.addListener(ClientSmoke::frame)
         NeoForge.EVENT_BUS.addListener(PrinterDisplayCapture::afterScreen)
         NeoForge.EVENT_BUS.addListener(GunControls::tick)
+        NeoForge.EVENT_BUS.addListener(ClientSetup::preview)
+        NeoForge.EVENT_BUS.addListener(BuildingWorldPreview::render)
+        NeoForge.EVENT_BUS.addListener(BuildingWorldPreview::tick)
     } }
+    @SubscribeEvent fun menus(e:net.neoforged.neoforge.client.event.RegisterMenuScreensEvent) {
+        e.register(Architect.PRINTER_MENU.get()) { menu,_,_ -> PrinterStorageScreen(Minecraft.getInstance().screen,menu) }
+    }
     @SubscribeEvent fun upgradeModels(e:dan200.computercraft.api.client.turtle.RegisterTurtleModellersEvent) { e.register(Architect.UPGRADE.get(),dan200.computercraft.api.client.turtle.TurtleUpgradeModeller.flatItem()) }
     @SubscribeEvent fun keys(e:net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent) { e.register(GunControls.rotate) }
-    @SubscribeEvent fun fluidExtensions(e:net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent) { CartridgeClient.register(e);e.registerItem(CompositeFormItemRenderer.extensions,Architect.COMPOSITE_ITEM.get()) }
+    @SubscribeEvent fun fluidExtensions(e:net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent) { e.registerItem(CompositeFormItemRenderer.extensions,Architect.COMPOSITE_ITEM.get()) }
     @SubscribeEvent fun renderers(e:EntityRenderersEvent.RegisterRenderers) {
         e.registerBlockEntityRenderer(Architect.BE.get()) { CompositeRenderer(it) }
         e.registerBlockEntityRenderer(Architect.PRINTER_BE.get()) { PrinterRenderer(it) }
     }
+    @SubscribeEvent fun thumbnailResources(e:ModelEvent.BakingCompleted) { GraphPreviewThumbnails.invalidateResources() }
     fun preview(e:RenderLevelStageEvent) {
         if(e.stage!=RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return
         val mc=Minecraft.getInstance();val p=mc.player ?: return;val level=mc.level ?: return
@@ -63,7 +71,7 @@ object ClientSetup {
         val form=ClientState.snapshot.library.forms[tag?.getString("form").orEmpty().ifEmpty { "inner@1" }] ?: return
         val pos=hit.blockPos.relative(hit.direction);val camera=e.camera.position
         val pose=e.poseStack;pose.pushPose();pose.translate(pos.x-camera.x,pos.y-camera.y,pos.z-camera.z)
-        Meshes.draw(Geometry.rotate(form.parts,tag?.getInt("turn") ?: 0),tag?.getString("material").orEmpty().ifEmpty { "minecraft:stone" },pose,mc.renderBuffers().bufferSource(),15728880,0.45f,groups=form.groups,surfaces=Json.materials(tag?.getString("surfaces").orEmpty().ifEmpty { "{}" }))
+        Meshes.draw(Geometry.rotate(form.parts,tag?.getInt("turn") ?: 0),tag?.getString("material").orEmpty().ifEmpty { "minecraft:stone" },pose,mc.renderBuffers().bufferSource(),15728880,0.45f,groups=form.groups,surfaces=Json.materials(tag?.getString("surfaces").orEmpty().ifEmpty { "{}" }),textures=CopycatTextureContext.world(pos))
         mc.renderBuffers().bufferSource().endBatch();pose.popPose()
     }
 }
@@ -72,28 +80,39 @@ object ClientState {
     fun send(c:Command) {
         if(Minecraft.getInstance().connection==null) return
         val json=Json.encode(c)
-        if(json.length>30000) { snapshot=snapshot.copy(message=ui("request_too_large"));return }
+        if(runCatching { CommandTransport.encode(json) }.isFailure) { snapshot=snapshot.copy(message=ui("request_too_large"));return }
         net.neoforged.neoforge.network.PacketDistributor.sendToServer(Request(json))
     }
 }
 class CompositeRenderer(ctx:BlockEntityRendererProvider.Context):BlockEntityRenderer<CompositeEntity> {
     override fun render(be:CompositeEntity,partial:Float,pose:PoseStack,buffers:MultiBufferSource,light:Int,overlay:Int) {
+        val neighborGroups=linkedMapOf<Direction,List<MaterialGroup>>()
+        val neighborTransparent=linkedMapOf<Direction,Set<String>>()
         val neighbors=buildMap<Direction,List<Part>> {
             for(d in Direction.entries) {
                 val pos=be.blockPos.relative(d);val other=be.level?.getBlockEntity(pos) as? CompositeEntity
-                if(other!=null) put(d,other.parts)
-                else if(be.level?.getBlockState(pos)==runCatching { Economy.state(be.material) }.getOrNull()) put(d,listOf(Part("copycats:copycat_block")))
+                if(other!=null) {
+                    put(d,other.parts);neighborGroups[d]=other.groups
+                    neighborTransparent[d]=other.groups.filter { group -> runCatching { CopycatMaterials.state(other.surfaces[group.id] ?: other.material).block is net.minecraft.world.level.block.TransparentBlock }.getOrDefault(false) }.map { it.id }.toSet()
+                } else if(be.level?.getBlockState(pos)==runCatching { Economy.state(be.material) }.getOrNull()) {
+                    put(d,listOf(Part("copycats:copycat_block")))
+                    if(be.level?.getBlockState(pos)?.block is net.minecraft.world.level.block.TransparentBlock) neighborTransparent[d]=setOf("body")
+                }
             }
         }
-        Meshes.draw(be.parts,be.material,pose,buffers,light,neighbors=neighbors,groups=be.groups,surfaces=be.surfaces)
+        Meshes.draw(be.parts,be.material,pose,buffers,light,neighbors=neighbors,groups=be.groups,surfaces=be.surfaces,neighborGroups=neighborGroups,neighborTransparent=neighborTransparent,textures=CopycatTextureContext.world(be.blockPos))
     }
 }
-data class Face(val direction:Direction,val vertices:List<FloatArray>,val group:String)
+data class Face(val direction:Direction,override val vertices:List<FloatArray>,val group:String,
+                override val normal:FloatArray=floatArrayOf(direction.stepX.toFloat(),direction.stepY.toFloat(),direction.stepZ.toFloat())):TextureSurface
 object Meshes {
-    private data class MeshKey(val parts:List<Part>,val neighbors:Map<Direction,List<Part>>,val groups:List<MaterialGroup>,val transparent:Set<String>)
+    private data class MeshKey(val parts:List<Part>,val neighbors:Map<Direction,List<Part>>,val groups:List<MaterialGroup>,val transparent:Set<String>,val neighborGroups:Map<Direction,List<MaterialGroup>>,val neighborTransparent:Map<Direction,Set<String>>)
     private val cache=object:LinkedHashMap<MeshKey,List<Face>>(64,0.75f,true) { override fun removeEldestEntry(e:MutableMap.MutableEntry<MeshKey,List<Face>>?)=size>1024 }
-    fun mesh(parts:List<Part>,neighbors:Map<Direction,List<Part>> = emptyMap(),groups:List<MaterialGroup> = DEFAULT_GROUPS,transparent:Set<String> = emptySet()):List<Face> {
-        val resolved=Geometry.resolve(parts,groups);val solid=resolved.solid;return cache.getOrPut(MeshKey(parts,neighbors,groups,transparent)) {
+    fun mesh(parts:List<Part>,neighbors:Map<Direction,List<Part>> = emptyMap(),groups:List<MaterialGroup> = DEFAULT_GROUPS,transparent:Set<String> = emptySet(),neighborGroups:Map<Direction,List<MaterialGroup>> = emptyMap(),neighborTransparent:Map<Direction,Set<String>> = emptyMap()):List<Face> {
+        return cache.getOrPut(MeshKey(parts,neighbors,groups,transparent,neighborGroups,neighborTransparent)) {
+            val resolved=Geometry.resolve(parts,groups)
+            val solid=resolved.solid
+            if(resolved.exactSolid!=null || neighbors.values.any { ps -> ps.any(ExactGeometry::usesExact) } || neighborTransparent.values.any { it.isNotEmpty() }) return@getOrPut exactMesh(resolved,neighbors,transparent,neighborGroups,neighborTransparent)
             val adjacent=neighbors.mapValues { Geometry.solid(it.value) }
             val result=mutableListOf<Face>()
             for(d in Direction.entries) for(w in 0..15) {
@@ -121,30 +140,75 @@ object Meshes {
             };result
         }
     }
-    fun draw(parts:List<Part>,material:String,pose:PoseStack,buffers:MultiBufferSource,light:Int,alpha:Float=1f,neighbors:Map<Direction,List<Part>> = emptyMap(),groups:List<MaterialGroup> = DEFAULT_GROUPS,surfaces:Map<String,String> = emptyMap()) {
+    private fun exactMesh(resolved:ResolvedGeometry,neighbors:Map<Direction,List<Part>>,transparent:Set<String>,neighborGroups:Map<Direction,List<MaterialGroup>>,neighborTransparent:Map<Direction,Set<String>>):List<Face> {
+        val adjacent=neighbors.map { (d,ps) ->
+            val geometry=Geometry.resolve(ps,neighborGroups[d] ?: ps.map { it.group }.distinct().mapIndexed { i,id -> MaterialGroup(id,id.take(32),priority=i) })
+            val offset=P(d.stepX*16,d.stepY*16,d.stepZ*16)
+            val regions=(if(geometry.exactSolid!=null) geometry.exactOwned else geometry.owned.mapValues { ExactVolume.fromSolid(it.value) }).mapValues { it.value.translated(offset) }
+            ResolvedGeometry(Solid(),emptyMap(),regions.values.fold(ExactVolume()) { a,b -> a.union(b) },regions) to neighborTransparent[d].orEmpty()
+        }
+        val result=mutableListOf<Face>()
+        for((surface,group) in resolved.visibleSurfaces(transparent,adjacent)) {
+                val plane=surface.plane
+                val length=kotlin.math.sqrt((plane.x.toDouble()*plane.x+plane.y.toDouble()*plane.y+plane.z.toDouble()*plane.z)).toFloat()
+                val normal=floatArrayOf(plane.x/length,plane.y/length,plane.z/length)
+                val direction=when {
+                    plane.y>0->Direction.UP;plane.y<0->Direction.DOWN
+                    kotlin.math.abs(plane.x)>=kotlin.math.abs(plane.z)->if(plane.x>0) Direction.EAST else Direction.WEST
+                    else->if(plane.z>0) Direction.SOUTH else Direction.NORTH
+                }
+                val polygon=surface.vertices
+                for(i in 1 until polygon.size-1) {
+                    fun vertex(p:ExactPoint)=floatArrayOf((p.x.toDouble()/16).toFloat(),(p.y.toDouble()/16).toFloat(),(p.z.toDouble()/16).toFloat())
+                    val a=vertex(polygon[0]);val b=vertex(polygon[i]);val c=vertex(polygon[i+1])
+                    result+=Face(direction,listOf(a,b,c,c),group,normal)
+                }
+        }
+        return result
+    }
+    fun draw(parts:List<Part>,material:String,pose:PoseStack,buffers:MultiBufferSource,light:Int,alpha:Float=1f,neighbors:Map<Direction,List<Part>> = emptyMap(),groups:List<MaterialGroup> = DEFAULT_GROUPS,surfaces:Map<String,String> = emptyMap(),neighborGroups:Map<Direction,List<MaterialGroup>> = emptyMap(),neighborTransparent:Map<Direction,Set<String>> = emptyMap(),textures:CopycatTextureContext=CopycatTextureContext()) {
         val mc=Minecraft.getInstance()
         val models=(surfaces.values+material).distinct().associateWith { id ->
-            val state=runCatching { CopycatMaterials.state(id.ifEmpty { "create:zinc_block" }) }.getOrElse { net.minecraft.world.level.block.Blocks.STONE.defaultBlockState() };state to mc.blockRenderer.getBlockModel(state)
+            val state=CopycatTextureContext.materialState(id);state to mc.blockRenderer.getBlockModel(state)
         }
-        val consumer=buffers.getBuffer(RenderType.entityTranslucent(InventoryMenu.BLOCK_ATLAS))
+        val cell=CopycatTextureContext.Cell(parts,groups,material,surfaces)
+        val consumer=buffers.getBuffer(RenderType.entityTranslucentCull(InventoryMenu.BLOCK_ATLAS))
         val matrix=pose.last()
         val transparent=groups.filter { models.getValue(surfaces[it.id] ?: material).first.block is net.minecraft.world.level.block.TransparentBlock }.map { it.id }.toSet()
-        for(face in mesh(parts,neighbors,groups,transparent)) {
-            val (state,model)=models.getValue(surfaces[face.group] ?: material)
-            val quads=model.getQuads(state,face.direction,RandomSource.create(42))
-            val sprite=quads.firstOrNull()?.sprite ?: model.particleIcon
-            val shade=when(face.direction.axis) { Direction.Axis.Y->1f;Direction.Axis.X->0.8f;else->0.65f }
+        data class TextureKey(val material:String,val direction:Direction,val normal:List<Float>,val plane:Float)
+        val mappings=mutableMapOf<TextureKey,MaterialQuadUv?>()
+        for(face in mesh(parts,neighbors,groups,transparent,neighborGroups,neighborTransparent)) {
+            val id=surfaces[face.group] ?: material
+            val (state,model)=models.getValue(id)
+            val key=TextureKey(id,face.direction,face.normal.toList(),(0..2).sumOf { (face.normal[it]*face.vertices[0][it]).toDouble() }.toFloat())
+            val uv=mappings.getOrPut(key) {
+                val data=model.getModelData(textures.view(cell,face),textures.position,state,net.neoforged.neoforge.client.model.data.ModelData.EMPTY)
+                val quads=model.getQuads(state,face.direction,RandomSource.create(state.getSeed(textures.position)),data,null)
+                val quad=quads.firstOrNull() ?: model.getQuads(state,null,RandomSource.create(state.getSeed(textures.position)),data,null).firstOrNull { it.direction==face.direction }
+                quad?.let(::MaterialQuadUv)
+            }
+            val shade=face.normal[1]*face.normal[1]+0.8f*face.normal[0]*face.normal[0]+0.65f*face.normal[2]*face.normal[2]
             for(v in face.vertices) {
-                val (u,t)=when(face.direction.axis) { Direction.Axis.X->v[2] to (1-v[1]);Direction.Axis.Y->v[0] to v[2];else->v[0] to (1-v[1]) }
-                consumer.addVertex(matrix,v[0],v[1],v[2]).setColor(shade,shade,shade,alpha).setUv(sprite.getU(u),sprite.getV(t))
-                    .setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(matrix,face.direction.stepX.toFloat(),face.direction.stepY.toFloat(),face.direction.stepZ.toFloat())
+                val (u,t)=uv?.at(v) ?: run {
+                    val (a,b)=when(face.direction.axis) { Direction.Axis.X->v[2] to (1-v[1]);Direction.Axis.Y->v[0] to v[2];else->v[0] to (1-v[1]) }
+                    model.particleIcon.getU(a) to model.particleIcon.getV(b)
+                }
+                consumer.addVertex(matrix,v[0],v[1],v[2]).setColor(shade,shade,shade,alpha).setUv(u,t)
+                    .setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(matrix,face.normal[0],face.normal[1],face.normal[2])
             }
         }
     }
-    fun preview(g:GuiGraphics,x:Int,y:Int,scale:Float,yaw:Float,parts:List<Part>,material:String="minecraft:stone",pitch:Float=25f,groups:List<MaterialGroup> = DEFAULT_GROUPS,surfaces:Map<String,String> = emptyMap()) {
+    fun preview(g:GuiGraphics,x:Int,y:Int,scale:Float,yaw:Float,parts:List<Part>,material:String="minecraft:stone",pitch:Float=25f,groups:List<MaterialGroup> = DEFAULT_GROUPS,surfaces:Map<String,String> = emptyMap(),showMaterials:Boolean=true) {
         g.flush();val p=g.pose();p.pushPose();p.translate(x.toDouble(),y.toDouble(),180.0);p.scale(scale,-scale,scale)
         p.mulPose(Axis.XP.rotationDegrees(pitch));p.mulPose(Axis.YP.rotationDegrees(yaw));p.translate(-0.5,-0.5,-0.5)
-        draw(parts,material,p,g.bufferSource(),15728880,groups=groups,surfaces=surfaces)
+        if(showMaterials) draw(parts,material,p,g.bufferSource(),15728880,groups=groups,surfaces=surfaces)
+        else {
+            val consumer=g.bufferSource().getBuffer(RenderType.debugQuads());val matrix=p.last()
+            for(face in mesh(parts,groups=groups)) {
+                val shade=0.82f*(face.normal[1]*face.normal[1]+0.8f*face.normal[0]*face.normal[0]+0.65f*face.normal[2]*face.normal[2])
+                for(v in face.vertices) consumer.addVertex(matrix,v[0],v[1],v[2]).setColor(shade,shade,shade,1f)
+            }
+        }
         val lines=g.bufferSource().getBuffer(RenderType.lines());val matrix=p.last()
         for(axis in 0..2) for(a in 0..1) for(b in 0..1) {
             val start=when(axis) { 0->floatArrayOf(0f,a.toFloat(),b.toFloat());1->floatArrayOf(a.toFloat(),0f,b.toFloat());else->floatArrayOf(a.toFloat(),b.toFloat(),0f) }

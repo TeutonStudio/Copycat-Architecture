@@ -98,6 +98,60 @@ class BuildingGraphTest {
         assertEquals(4,moved.walls.size);assertTrue(moved.walls.values.all { it=="wall" })
         assertEquals(4,eval(graph.replace(moved)).room("room").usableHeight)
     }
+    @Test fun `clicked room cells preserve holes and roundtrip in the rectangle schema`() {
+        val g=BuildingGraph.starter();val room=g.nodes.first { it.id=="room" }.copy(walls=emptyMap())
+        val hollow=RoomGeometry.toggleCell(room,P(1,0,1))
+        assertEquals(RoomGeometry.cells(room.rectangles)-P(1,0,1),RoomGeometry.cells(hollow.rectangles))
+        assertEquals(8,RoomGeometry.edges(hollow.rectangles).size)
+        assertEquals(8,BuildingPorts.of(hollow).count { it.key.startsWith("wall:") })
+        assertEquals(1,BuildingPorts.of(hollow).count { it.key=="floor" })
+        assertEquals(1,BuildingPorts.of(hollow).count { it.key=="ceiling" })
+        val restored=Gson().fromJson(Gson().toJson(hollow),BuildingNode::class.java)
+        assertEquals(hollow,restored)
+        assertEquals(eval(g.replace(hollow)).room("room"),eval(g.replace(restored)).room("room"))
+        assertEquals(RoomGeometry.cells(room.rectangles),RoomGeometry.cells(RoomGeometry.toggleCell(hollow,P(1,0,1)).rectangles))
+        val single=room.copy(rectangles=listOf(Rect(width=1,length=1)))
+        assertFailsWith<IllegalArgumentException> { RoomGeometry.toggleCell(single,P()) }
+        assertFailsWith<IllegalArgumentException> { RoomGeometry.toggleCell(room,P(64,0,0)) }
+        assertEquals(setOf(P()),RoomGeometry.cells(single.rectangles))
+    }
+    @Test fun `raster packing supports more than sixteen rectangles within the wall run limit`() {
+        val cells=((-31..31).map { P(it,0,0) }+(0 until 15).map { P(-30+4*it,0,1) }).toSet()
+        val rectangles=RoomGeometry.fromCells(cells)
+        assertEquals(17,rectangles.size)
+        assertEquals(cells,RoomGeometry.cells(rectangles))
+        assertEquals(64,RoomGeometry.edges(rectangles).size)
+        assertEquals(rectangles,RoomGeometry.fromCells(cells.toList().reversed().toSet()))
+        val tooManyTurns=cells+P(30,0,1)
+        assertFailsWith<IllegalArgumentException> { RoomGeometry.fromCells(tooManyTurns) }
+    }
+    @Test fun `legacy positive boundary footprints remain editable after raster packing`() {
+        val room=BuildingNode("boundary",BuildingKind.ROOM,rectangles=listOf(Rect(32,0,32,1)))
+        val original=RoomGeometry.cells(room.rectangles)
+        val cut=RoomGeometry.toggleCell(room,P(32,0,0))
+        assertEquals(original-P(32,0,0),RoomGeometry.cells(cut.rectangles))
+        assertEquals(33,cut.rectangles.single().x)
+        val restored=RoomGeometry.toggleCell(cut,P(32,0,0))
+        assertEquals(original,RoomGeometry.cells(restored.rectangles))
+        assertEquals(room.rectangles,restored.rectangles)
+        assertEquals(setOf(P(63,0,63)),RoomGeometry.cells(RoomGeometry.fromCells(setOf(P(63,0,63)))))
+        assertFailsWith<IllegalArgumentException> { RoomGeometry.toggleCell(room,P(64,0,0)) }
+        assertFailsWith<IllegalArgumentException> { RoomGeometry.cells(listOf(Rect(63,0,2,1))) }
+    }
+    @Test fun `reshape reserves unchanged wall sources and inherits split runs`() {
+        val oldRects=listOf(Rect(-2,0,4,1),Rect(0,1,1,1))
+        val room=BuildingNode("shaped",BuildingKind.ROOM,rectangles=oldRects,walls=RoomGeometry.edges(oldRects).associate { it.id to "wall_${it.id}" })
+        val changed=RoomGeometry.toggleCell(room,P(-2,0,1))
+        val unchanged=RoomGeometry.edges(oldRects).map { it.id }.intersect(RoomGeometry.edges(changed.rectangles).map { it.id }.toSet())
+        assertTrue(unchanged.isNotEmpty())
+        unchanged.forEach { assertEquals(room.walls[it],changed.walls[it]) }
+        val rectangle=listOf(Rect(width=5,length=3))
+        val solid=room.copy(rectangles=rectangle,walls=RoomGeometry.edges(rectangle).associate { it.id to "source_${it.direction}" })
+        val split=RoomGeometry.toggleCell(solid,P(2,0,0))
+        val north=RoomGeometry.edges(split.rectangles).filter { it.direction==0 && it.cells.all { p -> p.z==-1 } }
+        assertEquals(2,north.size)
+        assertTrue(north.all { split.walls[it.id]=="source_0" })
+    }
     @Test fun `native air module cells are openings and carpets reject unsupported bases`() {
         val graph=BuildingGraph.starter();val source=graph.nodes.first { it.id=="wall" }.copy(module="opening@1")
         val module=Module(id="opening",cells=(0..2).flatMap { x -> (0..3).map { y -> Cell(P(x,y,0),block="minecraft:air") } })
@@ -140,7 +194,7 @@ class BuildingGraphTest {
         val copy=BuildingNode("copy",BuildingKind.COPYCAT,form="full@1")
         val second=copy.copy(id="second",role="frame")
         var g=BuildingGraph.starter().copy(nodes=BuildingGraph.starter().nodes+copy+second)
-        assertEquals(setOf(BuildingKind.COPYCAT),BuildingPorts.of(g.nodes.first { it.id=="wall" },true).single().accepts)
+        assertEquals(setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE),BuildingPorts.of(g.nodes.first { it.id=="wall" },true).single().accepts)
         g=g.connect("wall","in:0","copy").connect("wall","in:1","second")
         val segment=eval(g).segment("wall")
         assertEquals(12,segment.cells.size)
@@ -179,8 +233,8 @@ class BuildingGraphTest {
         assertEquals(8,p.placements.count { it.component=="gable" })
         assertEquals(p.placements.size,p.placements.map { it.pos }.distinct().size)
         val roof=g.nodes.first { it.id=="roof" }
-        assertEquals(setOf(BuildingKind.COPYCAT),BuildingPorts.of(roof).first { it.key=="in:0" }.accepts)
-        assertEquals(setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN),BuildingPorts.of(roof).first { it.key=="wall:0" }.accepts)
+        assertEquals(setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE),BuildingPorts.of(roof).first { it.key=="in:0" }.accepts)
+        assertEquals(setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE),BuildingPorts.of(roof).first { it.key=="wall:0" }.accepts)
         val wrong=g.nodes.first { it.id=="gable_wall" }.copy(length=4)
         assertFails { plan(g.replace(wrong)) }
         val grouped=roof.copy(materialMode=MaterialMode.GROUPED)
@@ -202,7 +256,9 @@ class BuildingGraphTest {
         val b=Gson().fromJson(java.io.File("examples/building-graph-assembly.json").readText(),Building::class.java)
         assertEquals(plan(BuildingGraph.assembledStarter()).placements,Generator.generate(b,forms,emptyMap()).placements)
         val restored=Gson().fromJson(Gson().toJson(building(BuildingGraph.assembledStarter())),Building::class.java)
-        assertEquals("walls",restored.graph!!.nodes.first { it.id=="storey" }.storeyMode)
+        assertEquals("rooms",restored.graph!!.nodes.first { it.id=="storey" }.storeyMode)
+        assertEquals(listOf("room"),restored.graph!!.nodes.first { it.id=="storey" }.inputs)
+        assertEquals(BuildingKind.ROOM,restored.graph!!.nodes.first { it.id=="room" }.kind)
         assertEquals(plan(BuildingGraph.assembledStarter()),Generator.generate(restored,forms,emptyMap()))
     }
     @Test fun `optional Copycat tails disappear after disconnect or source deletion`() {

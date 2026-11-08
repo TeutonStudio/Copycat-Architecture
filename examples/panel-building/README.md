@@ -19,7 +19,7 @@ Die freie Innenfläche beträgt **4 × 4 Blöcke bei vier Blöcken Höhe**, also
 
 | Material | Anzahl |
 | --- | ---: |
-| Druckermaterial | 33.024 Einheiten = 129 Zinkbarren |
+| Druckermaterial | 30.528 mB Zink = 212 Zinkbarren aus Molten Metals |
 | Eichenholzbretter | 136 |
 | Steinziegel | 48 |
 | Glas | 16 |

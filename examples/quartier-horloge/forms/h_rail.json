@@ -1,0 +1,356 @@
+{
+  "schema": 4,
+  "id": "h_rail",
+  "version": 1,
+  "name": "Horloge/Galerie/Messinghandlauf und Staebe",
+  "parts": [
+    {
+      "source": "copycats:copycat_block",
+      "turn": 0,
+      "top": false,
+      "size": 1,
+      "offset": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "tilt": 0,
+      "group": "body",
+      "cutMask": "",
+      "recipeSource": "",
+      "spin": 0,
+      "discCut": 0,
+      "exact": {
+        "cells": [
+          {
+            "planes": [
+              {
+                "x": -1,
+                "y": 0,
+                "z": 0,
+                "d": 0
+              },
+              {
+                "x": 1,
+                "y": 0,
+                "z": 0,
+                "d": 16
+              },
+              {
+                "x": 0,
+                "y": -1,
+                "z": 0,
+                "d": -13
+              },
+              {
+                "x": 0,
+                "y": 1,
+                "z": 0,
+                "d": 16
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": -1,
+                "d": -7
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": 1,
+                "d": 9
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "source": "copycats:copycat_block",
+      "turn": 0,
+      "top": false,
+      "size": 1,
+      "offset": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "tilt": 0,
+      "group": "body",
+      "cutMask": "",
+      "recipeSource": "",
+      "spin": 0,
+      "discCut": 0,
+      "exact": {
+        "cells": [
+          {
+            "planes": [
+              {
+                "x": -1,
+                "y": 0,
+                "z": 0,
+                "d": -7
+              },
+              {
+                "x": 1,
+                "y": 0,
+                "z": 0,
+                "d": 9
+              },
+              {
+                "x": 0,
+                "y": -1,
+                "z": 0,
+                "d": 0
+              },
+              {
+                "x": 0,
+                "y": 1,
+                "z": 0,
+                "d": 13
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": -1,
+                "d": -7
+              },
+              {
+                "x": 0,
+                "y": 0,
+                "z": 1,
+                "d": 9
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "groups": [
+    {
+      "id": "body",
+      "name": "body",
+      "role": "surface",
+      "priority": 0
+    }
+  ],
+  "graph": {
+    "schema": 3,
+    "nodes": [
+      {
+        "id": "s0",
+        "kind": "INPUT",
+        "inputs": [],
+        "part": {
+          "source": "copycats:copycat_block",
+          "turn": 0,
+          "top": false,
+          "size": 1,
+          "offset": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "tilt": 0,
+          "group": "body",
+          "cutMask": "",
+          "recipeSource": "",
+          "spin": 0,
+          "discCut": 0,
+          "exact": {
+            "cells": [
+              {
+                "planes": [
+                  {
+                    "x": -1,
+                    "y": 0,
+                    "z": 0,
+                    "d": 0
+                  },
+                  {
+                    "x": 1,
+                    "y": 0,
+                    "z": 0,
+                    "d": 16
+                  },
+                  {
+                    "x": 0,
+                    "y": -1,
+                    "z": 0,
+                    "d": -13
+                  },
+                  {
+                    "x": 0,
+                    "y": 1,
+                    "z": 0,
+                    "d": 16
+                  },
+                  {
+                    "x": 0,
+                    "y": 0,
+                    "z": -1,
+                    "d": -7
+                  },
+                  {
+                    "x": 0,
+                    "y": 0,
+                    "z": 1,
+                    "d": 9
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "x": 20,
+        "y": 20,
+        "materialMode": "SEPARATED",
+        "materialGroup": "",
+        "previewGroup": "",
+        "inputGroups": [],
+        "rotationAxis": "NORMAL",
+        "quarterTurns": 0
+      },
+      {
+        "id": "s1",
+        "kind": "INPUT",
+        "inputs": [],
+        "part": {
+          "source": "copycats:copycat_block",
+          "turn": 0,
+          "top": false,
+          "size": 1,
+          "offset": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "tilt": 0,
+          "group": "body",
+          "cutMask": "",
+          "recipeSource": "",
+          "spin": 0,
+          "discCut": 0,
+          "exact": {
+            "cells": [
+              {
+                "planes": [
+                  {
+                    "x": -1,
+                    "y": 0,
+                    "z": 0,
+                    "d": -7
+                  },
+                  {
+                    "x": 1,
+                    "y": 0,
+                    "z": 0,
+                    "d": 9
+                  },
+                  {
+                    "x": 0,
+                    "y": -1,
+                    "z": 0,
+                    "d": 0
+                  },
+                  {
+                    "x": 0,
+                    "y": 1,
+                    "z": 0,
+                    "d": 13
+                  },
+                  {
+                    "x": 0,
+                    "y": 0,
+                    "z": -1,
+                    "d": -7
+                  },
+                  {
+                    "x": 0,
+                    "y": 0,
+                    "z": 1,
+                    "d": 9
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "x": 20,
+        "y": 180,
+        "materialMode": "SEPARATED",
+        "materialGroup": "",
+        "previewGroup": "",
+        "inputGroups": [],
+        "rotationAxis": "NORMAL",
+        "quarterTurns": 0
+      },
+      {
+        "id": "union",
+        "kind": "UNION",
+        "inputs": [
+          "s0",
+          "s1"
+        ],
+        "part": {
+          "source": "copycats:copycat_slice",
+          "turn": 0,
+          "top": false,
+          "size": 1,
+          "offset": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "tilt": 0,
+          "group": "body",
+          "cutMask": "",
+          "recipeSource": "",
+          "spin": 0,
+          "discCut": 0
+        },
+        "x": 280,
+        "y": 100,
+        "materialMode": "SEPARATED",
+        "materialGroup": "",
+        "previewGroup": "",
+        "inputGroups": [],
+        "rotationAxis": "NORMAL",
+        "quarterTurns": 0
+      },
+      {
+        "id": "result",
+        "kind": "OUTPUT",
+        "inputs": [
+          "union"
+        ],
+        "part": {
+          "source": "copycats:copycat_slice",
+          "turn": 0,
+          "top": false,
+          "size": 1,
+          "offset": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "tilt": 0,
+          "group": "body",
+          "cutMask": "",
+          "recipeSource": "",
+          "spin": 0,
+          "discCut": 0
+        },
+        "x": 520,
+        "y": 100,
+        "materialMode": "SEPARATED",
+        "materialGroup": "",
+        "previewGroup": "",
+        "inputGroups": [],
+        "rotationAxis": "NORMAL",
+        "quarterTurns": 0
+      }
+    ]
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "capture": "Native Minecraft screenshots, copied byte-for-byte",
+  "world": "Lichtwerk Industrie-Depot",
+  "table": [
+    310,
+    74,
+    268
+  ],
+  "origin": [
+    256,
+    74,
+    256
+  ],
+  "views": [
+    {
+      "file": "views/exterior-front.png",
+      "source": "build/industrial-depot-client/screenshots/architect-industrial-depot-verified-exterior-front.png",
+      "size": [
+        1920,
+        1011
+      ],
+      "sha256": "25ee3346f08fcf9908ec531ccd6a329eeef6e78ed3c240d3d9e168425316fe15"
+    },
+    {
+      "file": "views/exterior-rear.png",
+      "source": "build/industrial-depot-client/screenshots/architect-industrial-depot-verified-exterior-rear.png",
+      "size": [
+        1920,
+        1011
+      ],
+      "sha256": "3874d8f9368af5a7c9a0a85bd2d2274e50c288269979a7ca63e613b43c9edc74"
+    },
+    {
+      "file": "views/exterior-loading.png",
+      "source": "build/industrial-depot-client/screenshots/architect-industrial-depot-verified-exterior-loading.png",
+      "size": [
+        1920,
+        1011
+      ],
+      "sha256": "39b68888488e79694d79bd8441f027fd3be55ce7b1bc8588f788eb8b1d33284c"
+    },
+    {
+      "file": "views/interior-hall.png",
+      "source": "build/industrial-depot-client/screenshots/architect-industrial-depot-verified-interior-hall.png",
+      "size": [
+        1920,
+        1011
+      ],
+      "sha256": "6fc487f041e584db64c2db6d2d5f76a3e5750cf97bceafc46655f06471cbd501"
+    },
+    {
+      "file": "views/interior-gallery.png",
+      "source": "build/industrial-depot-client/screenshots/architect-industrial-depot-verified-interior-gallery.png",
+      "size": [
+        1920,
+        1011
+      ],
+      "sha256": "ffdadb2bf6db417c437b06ca9b8b29b225e615af2184faa9fcd8c80201c58a69"
+    },
+    {
+      "file": "views/table-graph.png",
+      "source": "build/industrial-depot-client/screenshots/architect-industrial-depot-reloaded-table.png",
+      "size": [
+        1920,
+        1011
+      ],
+      "sha256": "fbd47ba26fbaa1b436f79f6c07bd14e549dbf697917bc000785493dfaa30410d"
+    },
+    {
+      "file": "views/table-floorplan.png",
+      "source": "build/industrial-depot-client/screenshots/architect-industrial-depot-table-floorplan.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "a14900c0a43468c18074c166ebc91bb8ef58ba768f5ccc6b6ff1ffe51b27882b"
+    },
+    {
+      "file": "views/table-build.png",
+      "source": "build/industrial-depot-client/screenshots/architect-industrial-depot-table-build.png",
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "20708a1b39dce2edcf0d64847731a04748c77d6eed163da0a4436085fe06f7f2"
+    }
+  ]
+}

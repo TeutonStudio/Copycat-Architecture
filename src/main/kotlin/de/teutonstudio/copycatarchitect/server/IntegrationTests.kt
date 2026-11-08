@@ -73,14 +73,14 @@ object IntegrationTests {
         val inv=SimpleContainer(4);inv.setItem(0,Economy.cartridge(256));inv.setItem(1,ItemStack(net.minecraft.world.item.Items.STONE,2))
         val placement=Placement(P(),listOf(Part(),Part(turn=1)),"minecraft:stone")
         PlacementService.place(l,pos,placement,inv,actor,"test")
-        h.assertTrue(Economy.units(inv.getItem(0))==224,"Must debit exactly 32 units")
+        h.assertTrue(Economy.units(inv.getItem(0))==248,"The 120 occupied union voxels must debit exactly 8 mB")
         h.assertTrue(inv.getItem(1).count==1,"Must consume one surface")
         h.assertTrue(!PlacementService.place(l,pos,placement,inv,actor,"test"),"Repeat must be idempotent")
-        h.assertTrue(Economy.units(inv.getItem(0))==224,"Repeat must not charge")
+        h.assertTrue(Economy.units(inv.getItem(0))==248,"Repeat must not charge")
         val be=l.getBlockEntity(pos) as CompositeEntity
         val tag=be.saveWithoutMetadata(l.registryAccess());val loaded=CompositeEntity(pos,be.blockState);loaded.loadWithComponents(tag,l.registryAccess())
         h.assertTrue(Geometry.solid(loaded.parts).key()==Geometry.solid(placement.parts).key(),"Geometry survives NBT reload")
-        h.assertTrue(loaded.receipt.units==32,"Receipt survives reload")
+        h.assertTrue(loaded.receipt.units==8,"The 8 mB receipt survives reload")
         l.destroyBlock(pos,true,actor)
         h.succeed()
     }
@@ -131,14 +131,14 @@ object IntegrationTests {
         val placement=Placement(parts=Geometry.rotate(form.parts,1))
         val inv=SimpleContainer(3);inv.setItem(0,Economy.cartridge(512));inv.setItem(1,ItemStack(net.minecraft.world.item.Items.STONE,2))
         PlacementService.place(l,pos,placement,inv,actor,"graph")
-        h.assertTrue(Economy.units(inv.getItem(0))==256 && inv.getItem(1).count==1,"Only surviving source and surface are charged")
+        h.assertTrue(Economy.units(inv.getItem(0))==292 && inv.getItem(1).count==1,"The 3520 surviving voxels and one surface cost exactly 220 mB")
         val be=l.getBlockEntity(pos) as CompositeEntity
         val loaded=CompositeEntity(pos,be.blockState);loaded.loadWithComponents(be.saveWithoutMetadata(l.registryAccess()),l.registryAccess())
         val solid=Geometry.solid(placement.parts)
         h.assertTrue(Geometry.solid(loaded.parts).key()==solid.key(),"Clipped shape persists without a live graph")
         for(x in 0..15) for(y in 0..15) for(z in 0..15) h.assertTrue(loaded.shape().toAabbs().any { it.contains((x+0.5)/16,(y+0.5)/16,(z+0.5)/16) }==solid.has(x,y,z),"Clipped collision must match the rendered grid")
         h.assertTrue(!PlacementService.place(l,pos,placement,inv,actor,"repeat"),"Graph placement is idempotent")
-        h.assertTrue(loaded.receipt.units==256,"Cutting cannot manufacture refundable sources")
+        h.assertTrue(loaded.receipt.units==220,"Cutting refunds only its paid 220 mB of surviving volume")
         l.destroyBlock(pos,true,actor);h.succeed()
     }
     @JvmStatic @GameTest(template="empty") fun nodeMaterialBranchesSurvivalRoundtrip(h:GameTestHelper) {
@@ -153,14 +153,14 @@ object IntegrationTests {
         val placement=Placement(parts=form.parts,groups=groups,surfaces=mapOf("body" to "minecraft:stone","cap" to "minecraft:oak_planks"))
         val inv=SimpleContainer(4);inv.setItem(0,Economy.cartridge(512));inv.setItem(1,ItemStack(net.minecraft.world.item.Items.STONE,2));inv.setItem(2,ItemStack(net.minecraft.world.item.Items.OAK_PLANKS,2))
         PlacementService.place(l,pos,placement,inv,actor,"branches")
-        h.assertTrue(Economy.units(inv.getItem(0))==256,"Shared source is paid once across material branches")
+        h.assertTrue(Economy.units(inv.getItem(0))==256,"The full union volume costs 256 mB across material branches")
         h.assertTrue(inv.getItem(1).count==1 && inv.getItem(2).count==1,"Both visible surfaces are paid")
         val be=l.getBlockEntity(pos) as CompositeEntity;val loaded=CompositeEntity(pos,be.blockState)
         loaded.loadWithComponents(be.saveWithoutMetadata(l.registryAccess()),l.registryAccess())
         val resolved=Geometry.resolve(loaded.parts,loaded.groups)
         h.assertTrue(resolved.owner(0,0,0)=="cap" && resolved.owner(0,15,0)=="body","Branch materials survive NBT")
         h.assertTrue(resolved.solid.count()==4096,"Preview selection must never remove placed geometry")
-        h.assertTrue(Extrusion.cost(loaded.parts,loaded.groups)==256 && loaded.receipt.units==256,"Shared source accounting persists")
+        h.assertTrue(Extrusion.cost(loaded.parts,loaded.groups)==256 && loaded.receipt.units==256,"Full-block volume accounting persists")
         h.assertTrue(!PlacementService.place(l,pos,placement,inv,actor,"repeat"),"Identical branches remain idempotent")
         l.destroyBlock(pos,true,actor)
         val drops=l.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity::class.java,net.minecraft.world.phys.AABB(pos).inflate(1.0))
@@ -169,7 +169,7 @@ object IntegrationTests {
         h.succeed()
     }
     @JvmStatic @GameTest(template="empty") fun dependenciesAndPersistence(h:GameTestHelper) {
-        for(a in Adapters.all.values) h.assertTrue(BuiltInRegistries.BLOCK.containsKey(ResourceLocation.parse(a.source)),"Missing source ${a.source}")
+        for(a in Adapters.all.values) h.assertTrue(if(a.source==RoofPartParameters.SOURCE) BuiltInRegistries.ITEM.containsKey(ResourceLocation.parse(a.source)) else BuiltInRegistries.BLOCK.containsKey(ResourceLocation.parse(a.source)),"Missing source ${a.source}")
         h.assertTrue(Architect.UPGRADE.get()!=null,"Upgrade type registered")
         val l=h.level;val owner=UUID.randomUUID();val d=ArchitectData.get(l);val lib=d.library(owner)
         val plan=Generator.generate(lib.buildings.getValue("demo@1"),lib.forms,lib.modules)
@@ -259,11 +259,18 @@ object IntegrationTests {
     }
 
     @JvmStatic @GameTest(template="empty",timeoutTicks=400) fun adaptersMatchPublishedSourceStates(h:GameTestHelper) {
-        for(a in Adapters.all.values) for(size in 1..a.max) for(top in listOf(false,true)) for(turn in 0..3) for(tilt in (if(a.tiltable) 0..3 else 0..0)) for(spin in 0..3) {
+        val roof=ResourceLocation.parse(RoofPartParameters.SOURCE)
+        h.assertTrue(BuiltInRegistries.ITEM.containsKey(roof) && BuiltInRegistries.ITEM.get(roof)!==net.minecraft.world.item.Items.AIR,"The procedural roof source requires its registered Copycat selection item")
+        h.assertTrue(!BuiltInRegistries.BLOCK.containsKey(roof),"Procedural roof models use exact composite geometry and require no native source BlockState")
+        for(a in Adapters.all.values.filter { it.source!=RoofPartParameters.SOURCE }) for(size in 1..a.max) for(top in listOf(false,true)) for(turn in 0..3) for(tilt in (if(a.tiltable) 0..3 else 0..0)) for(spin in 0..3) {
             val p=Part(a.source,turn,top,size,tilt=tilt,spin=spin)
-            val block=BuiltInRegistries.BLOCK.get(ResourceLocation.parse(a.source))
-            val source=de.teutonstudio.copycatarchitect.integration.SourceStates.apply(block.defaultBlockState(),p.sourceProperties())
-            val boxes=source.getShape(h.level,h.absolutePos(BlockPos.ZERO)).toAabbs()
+            // Composed sources use the published states of their primitive bytes.
+            // A tilted stair has no equivalent single native stair block state.
+            val boxes=SourceDefinitions.expand(p).flatMap { primitive ->
+                val block=BuiltInRegistries.BLOCK.get(ResourceLocation.parse(primitive.source))
+                val source=de.teutonstudio.copycatarchitect.integration.SourceStates.apply(block.defaultBlockState(),primitive.sourceProperties())
+                source.getShape(h.level,h.absolutePos(BlockPos.ZERO)).toAabbs()
+            }
             val local=Solid.part(p)
             for(x in 0..15) for(y in 0..15) for(z in 0..15) {
                 val hit=boxes.any { it.contains((x+0.5)/16,(y+0.5)/16,(z+0.5)/16) }
@@ -352,7 +359,7 @@ object IntegrationTests {
         h.assertTrue(Economy.units(inventory.getItem(0))==512 && inventory.getItem(1).count==2,"Missing group must not debit other materials")
         inventory.setItem(2,ItemStack(net.minecraft.world.item.Items.OAK_PLANKS,2))
         PlacementService.place(l,pos,p,inventory,actor,"groups")
-        h.assertTrue(Economy.units(inventory.getItem(0))==224 && inventory.getItem(1).count==1 && inventory.getItem(2).count==1,"Exactly 288 units and two surfaces must be consumed")
+        h.assertTrue(Economy.units(inventory.getItem(0))==256 && inventory.getItem(1).count==1 && inventory.getItem(2).count==1,"The full block with an overlapping top layer consumes 256 mB and two surfaces")
         h.assertTrue(!PlacementService.place(l,pos,p,inventory,actor,"groups"),"Grouped repetition must be idempotent")
         val be=l.getBlockEntity(pos) as CompositeEntity
         val copy=CompositeEntity(pos,be.blockState);copy.loadWithComponents(be.saveWithoutMetadata(l.registryAccess()),l.registryAccess())
@@ -360,7 +367,7 @@ object IntegrationTests {
         h.assertTrue(!PlacementService.matches(l,pos,p.copy(groups=groups.map { it.copy(priority=1-it.priority) })),"Different foreground must not be mistaken for a completed target")
         l.destroyBlock(pos,true,actor)
         val items=l.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity::class.java,net.minecraft.world.phys.AABB(pos).inflate(1.0))
-        h.assertTrue(items.filter { it.item.`is`(Architect.CARTRIDGE.get()) }.sumOf { Economy.units(it.item) }==288,"Refund must return paid raw units")
+        h.assertTrue(items.filter { it.item.`is`(Architect.CARTRIDGE.get()) }.sumOf { Economy.units(it.item) }==256,"Refund must return exactly the paid 256 mB")
         h.assertTrue(items.any { it.item.`is`(net.minecraft.world.item.Items.STONE) } && items.any { it.item.`is`(net.minecraft.world.item.Items.OAK_PLANKS) },"Both paid materials must be refunded")
         h.succeed()
     }

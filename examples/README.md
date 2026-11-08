@@ -23,3 +23,7 @@ Für einen Einzelentwurf die entsprechende JSON-Datei kopieren und im passenden 
 - `building-graph-assembly.json`: Copycat-Quellen, Wandsegmente, Boden und Decke bilden direkt ein Stockwerk; das Dach erhält Copycat-Deckung und Giebelsegmente.
 
 - `panel-building/`: geprüftes Panelhaus mit 3/16-Wänden, 2/16-Schichtfenstern, Kantenleisten, vollständigen Quellformen und Modulen. Bedienung, Materialliste und Importhinweise stehen in [der zugehörigen Anleitung](panel-building/README.md).
+
+- `t-building/`: dreigeschossiges T-Testhaus mit acht Materialien, 214 Fensterzellen, erhabenen Quarzmustern, vollständigen Formen und Gebäudegraph. Die [Anleitung](t-building/README.md) beschreibt auch die tatsächlich gebaute Testwelt und ihre erneute Prüfung nach dem Laden.
+
+- `modular-roofs-and-access.json`: zwei unterschiedlich breite Geschosse mit eigenem unterem Teildach und oberem Satteldach, exakter Steigung 1:2, U-Treppenhaus, vorbereitetem Aufzugsschacht und Versorgungsschacht. Verwendet die integrierten Formen `full@1` und `stair@1`. Im Gebäudeeditor importieren; unter **Dach** die Dachebenen und unter **Erschließung** die Kerne bearbeiten. **Gebäude/Außenanlagen platzieren** zeigt die einzeln verschiebbaren Kernflächen.

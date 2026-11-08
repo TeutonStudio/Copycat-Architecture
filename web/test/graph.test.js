@@ -132,10 +132,19 @@ test('six world-axis mountings preserve source shape volume, offset and JSON com
 })
 
 
-test('mounting rejects unsupported native orientations rather than changing the source geometry', () => {
+test('composed stairs support six mountings without losing their source or volume', () => {
   const part = { ...newNode(false, 'INPUT', 'source', 0, 0).part, source: 'copycats:copycat_stairs' }
-  assert.throws(() => mountSource(part, 'east'), /no supported native orientation/)
-  assert.equal(sourceMounting(mountSource(part, 'down')), 'down')
+  for (const normal of ['up', 'down', 'east', 'west', 'south', 'north']) {
+    const mounted = mountSource(part, normal)
+    assert.equal(sourceMounting(mounted), normal)
+    assert.equal(mounted.source, part.source)
+    const document = { schema: 3, name: 'Stairs', graph: { schema: 2, nodes: [
+      { ...newNode(false, 'INPUT', 'source', 0, 0), part: mounted },
+      { ...newNode(false, 'OUTPUT', 'out', 0, 0), inputs: ['source'] }
+    ] } }
+    assert.equal(previewGraph(false, document, library, '').count, 3072)
+    assert.deepEqual(writeGraph('form', document).graph, document.graph)
+  }
 })
 
 
@@ -163,4 +172,36 @@ test('empty intermediate geometry is inspectable but the empty final form cannot
   assert.equal(previewGraph(false, graph, library, difference.id).count, 0)
   assert.throws(() => previewGraph(false, graph, library, ''), /Result is empty/)
   assert.throws(() => writeGraph('form', graph), /Result is empty/)
+})
+
+test('native-only nodes, schemas and geometry are rejected before browser import or export', () => {
+  const original = fixture('nodegraph-form')
+  const input = original.graph.nodes.find(node => node.kind === 'INPUT')
+  for (const kind of ['MIRROR', 'SAVED']) {
+    const document = replaceNodes(original, original.graph.nodes.map(node => node.id === input.id ? { ...node, kind } : node))
+    assert.throws(() => readGraph(document, 'form'), /native editor/)
+  }
+  for (const field of ['exact', 'exactClip', 'roof']) {
+    const document = replaceNodes(original, original.graph.nodes.map(node => node.id === input.id ? { ...node, part: { ...node.part, [field]: {} } } : node))
+    assert.throws(() => writeGraph('form', document), /native editor/)
+  }
+  const groups = { ...original, graph: { ...original.graph, nodeGroups: [{ id: 'group' }] } }
+  assert.throws(() => readGraph(groups, 'form'), /native editor/)
+  const graph = fixture('building-graph')
+  for (const change of [{ assembly: true }, { depth: 2 }, { surfaces: { body: 'minecraft:gold_block' } }]) {
+    const document = replaceNodes(graph, graph.graph.nodes.map((node, index) => index === 0 ? { ...node, ...change } : node))
+    assert.throws(() => writeGraph('building', document), /native editor/)
+  }
+  assert.throws(() => readGraph({ ...graph, graph: { ...graph.graph, schema: 3 } }, 'building'), /schema/)
+  assert.throws(() => newNode(false, 'MIRROR', 'mirror', 0, 0), /native editor/)
+  assert.throws(() => newNode(true, 'ROOM_LAYOUT', 'layout', 0, 0), /native editor/)
+})
+
+test('plate previews use the connected footprint while independent room branches stay incomplete', () => {
+  const original = fixture('building-graph')
+  const room = original.graph.nodes.find(node => node.kind === 'ROOM')
+  const full = previewGraph(true, original, library, room.floor)
+  const altered = replaceNodes(original, original.graph.nodes.map(node => node.id === room.id
+    ? { ...node, rectangles: node.rectangles.map(rect => ({ ...rect, width: rect.width + 2 })), ceiling: '' } : node))
+  assert.ok(previewGraph(true, altered, library, room.floor).count > full.count)
 })

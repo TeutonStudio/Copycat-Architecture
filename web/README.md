@@ -62,6 +62,18 @@ Ausrichtungs-Enums übersetzen weiterhin in das vorhandene Quellformat. Nicht un
 
 Die vollständige deutsche [Knotenreferenz](../docs/wiki/Knotenreferenz.md) dokumentiert außerdem den neueren lokalen Modstand; jede Knotenbeschreibung kennzeichnet ihre Browserverfügbarkeit.
 
+## Integration mit dem nativen Mod ab 0.6.0
+
+Der Browser kompiliert den vollständigen aktuellen Fachkern. Der Knoten- und
+Anschlussvertrag wird aus derselben `graph-models.json` wie im Mod geladen;
+Browseradapter ersetzen JVM-Caches, Bitsets und Ganzzahlarithmetik.
+
+Die Browseroberfläche unterstützt weiterhin die bisherigen acht Form- und neun
+Gebäudeknotentypen. Erweiterte native Graphen, Gruppen, exakte Geometrien und
+nicht unterstützte Knoteneinstellungen werden beim Import und vor dem Export
+mit einem Hinweis auf den nativen Editor abgewiesen. Dadurch können sie nicht
+unbemerkt vereinfacht oder mit fehlenden Einstellungen gespeichert werden.
+
 ## Material and personal libraries
 
 Graphstudio includes a declarative Minecraft 1.21.1 blockstate/model catalog and loads **Faithful 64x Java** texture previews directly from the pinned 1.21.1 repository commit. Credit: [Faithful Resource Pack](https://faithfulpack.net); [license](https://faithfulpack.net/license). No PNG textures are bundled. See `src/data/README.md` for provenance and the catalog rebuild tool.

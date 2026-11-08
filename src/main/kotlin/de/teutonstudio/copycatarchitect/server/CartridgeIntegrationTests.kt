@@ -40,7 +40,7 @@ import java.util.function.Consumer
 object CartridgeIntegrationTests {
     @JvmStatic @GameTest(template="empty") fun creativeCartridgeDebitAndReceipt(h:GameTestHelper) {
         val legacy=ItemStack(Architect.CARTRIDGE.get())
-        h.assertTrue(Economy.units(legacy)==256,"Existing cartridges without custom data must retain one zinc ingot")
+        h.assertTrue(Economy.units(legacy)==256,"Existing cartridges without custom data must retain 256 mB")
         legacy.set(DataComponents.CUSTOM_NAME,Component.literal("Existing cartridge"))
         val inventory=SimpleContainer(3);inventory.setItem(0,Economy.withUnits(legacy,16));inventory.setItem(1,ItemStack(Items.STONE,2))
         Economy.prepare(inventory,16,"minecraft:stone",1).apply()
@@ -82,7 +82,7 @@ object CartridgeIntegrationTests {
         val refill=FluidStack(CartridgeRegistry.ZINC.get(),256)
         h.assertTrue(amount.invoke(null,h.level,stack,refill)==156,"Create must only request the remaining cartridge capacity")
         stack=fill.invoke(null,h.level,156,stack,refill) as ItemStack
-        h.assertTrue(Economy.units(stack)==256 && refill.amount==100 && canFill.invoke(null,h.level,stack)==false,"A full cartridge holds exactly one ingot without discarding the remaining fluid")
+        h.assertTrue(Economy.units(stack)==256 && refill.amount==100 && canFill.invoke(null,h.level,stack)==false,"A full cartridge holds exactly 256 mB without discarding the remaining fluid")
         val handler=checkNotNull(stack.getCapability(Capabilities.FluidHandler.ITEM))
         h.assertTrue(handler.fill(FluidStack(net.minecraft.world.level.material.Fluids.WATER,100),FluidAction.EXECUTE)==0,"Cartridges reject unrelated liquids")
         h.assertTrue(handler.drain(64,FluidAction.SIMULATE).amount==64 && Economy.units(handler.getContainer())==256,"Drain simulation is atomic")
@@ -91,6 +91,29 @@ object CartridgeIntegrationTests {
         h.assertTrue(handler.getContainer().`is`(CartridgeRegistry.EMPTY.get()) && Economy.units(handler.getContainer())==0,"Draining produces a reusable empty cartridge")
         h.assertTrue(handler.getContainer().get(DataComponents.CUSTOM_NAME)?.string=="Refillable","Filling and draining preserve unrelated item components")
         h.assertTrue(ItemStack(CartridgeRegistry.CREATIVE.get()).getCapability(Capabilities.FluidHandler.ITEM)==null,"Creative raw supplies must not turn into ordinary refillable liquid")
+        h.succeed()
+    }
+
+    @JvmStatic @GameTest(template="empty") fun physicalMillibucketsMatchIngotAndCraftingPayments(h:GameTestHelper) {
+        val recipe=h.level.recipeManager.byKey(ResourceLocation.fromNamespaceAndPath(Architect.ID,"cartridge")).orElseThrow().value()
+        val crafted=recipe.getResultItem(h.level.registryAccess())
+        h.assertTrue(Economy.units(crafted)==144,"Crafting a cartridge from one zinc ingot must supply exactly 144 mB")
+        val zinc=Economy.item("create:zinc_ingot")
+        val inventory=SimpleContainer(2);inventory.setItem(0,ItemStack(zinc,2))
+        Economy.prepare(inventory,200,emptyMap()).apply()
+        h.assertTrue((0 until inventory.containerSize).sumOf { Economy.units(inventory.getItem(it)) }==88 &&
+            (0 until inventory.containerSize).none { inventory.getItem(it).`is`(zinc) },"Two ingots pay 200 mB and return the remaining 88 mB")
+        val insufficient=SimpleContainer(2);insufficient.setItem(0,ItemStack(zinc))
+        h.assertTrue(runCatching { Economy.prepare(insufficient,145,emptyMap()) }.isFailure && insufficient.getItem(0).count==1 && insufficient.getItem(1).isEmpty,
+            "One ingot cannot supply 145 mB and a failed debit must leave the inventory untouched")
+        val handler=checkNotNull(Economy.cartridge(0).getCapability(Capabilities.FluidHandler.ITEM))
+        h.assertTrue(handler.fill(FluidStack(CartridgeRegistry.ZINC.get(),144),FluidAction.EXECUTE)==144 && Economy.units(handler.getContainer())==144,
+            "Molten Metals fluid uses one stored mB per transferred mB")
+        h.assertTrue(handler.fill(FluidStack(CartridgeRegistry.ZINC.get(),144),FluidAction.EXECUTE)==112 && Economy.units(handler.getContainer())==256,
+            "A cartridge caps physical fluid at 256 mB")
+        h.assertTrue(handler.drain(1,FluidAction.EXECUTE).amount==1 && Economy.units(handler.getContainer())==255 &&
+            handler.fill(FluidStack(CartridgeRegistry.ZINC.get(),1),FluidAction.EXECUTE)==1 && Economy.units(handler.getContainer())==256,
+            "Single-mB drain and refill operations remain exact")
         h.succeed()
     }
 
@@ -107,11 +130,17 @@ object CartridgeIntegrationTests {
             h.assertTrue(level.getBlockState(pos).getValue(CartridgeStackBlock.COUNT)==index+1,"Cartridges stack from one to four at the same position")
         }
         val entity=level.getBlockEntity(pos) as CartridgeStackEntity
+        val originalKinds=entity.modelData.get(CartridgeStackEntity.KINDS)
+        h.assertTrue(originalKinds==listOf(CartridgeKind.EMPTY,CartridgeKind.FULL,CartridgeKind.FULL,CartridgeKind.CREATIVE),"Placed model data must distinguish each cartridge's own variant")
         val reloaded=CartridgeStackEntity(pos,entity.blockState);reloaded.loadWithComponents(entity.saveWithoutMetadata(level.registryAccess()),level.registryAccess())
         h.assertTrue(reloaded.cartridges.map(Economy::units)==listOf(0,32,256,Int.MAX_VALUE),"Every cartridge's kind and exact units survive NBT")
+        h.assertTrue(reloaded.modelData.get(CartridgeStackEntity.KINDS)==originalKinds,"Reloading must preserve each placed cartridge's appearance")
         val handler=checkNotNull(level.getCapability(Capabilities.FluidHandler.BLOCK,pos,null))
         h.assertTrue(handler.fill(FluidStack(CartridgeRegistry.ZINC.get(),100),FluidAction.EXECUTE)==100,"Create pipes can refill a placed cartridge")
         h.assertTrue(Economy.units(entity.cartridges[0])==100 && Economy.units(entity.cartridges[1])==32,"Placed filling preserves the other stored cartridges")
+        h.assertTrue(entity.modelData.get(CartridgeStackEntity.KINDS)==listOf(CartridgeKind.FULL,CartridgeKind.FULL,CartridgeKind.FULL,CartridgeKind.CREATIVE) && originalKinds?.first()==CartridgeKind.EMPTY,"Refilling must update the appearance without mutating an earlier render snapshot")
+        h.assertTrue(handler.drain(100,FluidAction.EXECUTE).amount==100 && entity.modelData.get(CartridgeStackEntity.KINDS)?.first()==CartridgeKind.EMPTY,"Draining must restore the empty appearance")
+        handler.fill(FluidStack(CartridgeRegistry.ZINC.get(),100),FluidAction.EXECUTE)
         h.assertTrue(level.destroyBlock(pos,true,actor),"Cartridge holder must be breakable")
         val drops=level.getEntitiesOfClass(ItemEntity::class.java,AABB(pos).inflate(1.0)).flatMap { List(it.item.count) { _ -> it.item.copyWithCount(1) } }
         h.assertTrue(drops.size==4 && drops.map(Economy::units).sorted()==listOf(32,100,256,Int.MAX_VALUE),"Breaking returns exactly the four original cartridges with their current partial contents")
@@ -182,19 +211,19 @@ object CartridgeIntegrationTests {
         val records=CartridgeIntegrationTests::class.java.getResourceAsStream("/data/copycat_architect/zinc_recycling.json")!!.bufferedReader().use { JsonParser.parseReader(it).asJsonObject }
         h.assertTrue(records.size()>=47,"Recycling must cover functional Copycats as well as geometry sources")
         for((item,entry) in records.entrySet()) {
-            val data=entry.asJsonObject;val units=data.get("units").asInt;val count=data.get("items").asInt
+            val data=entry.asJsonObject;val millibuckets=data.get("millibuckets").asInt;val count=data.get("items").asInt
             val recipe=h.level.recipeManager.byKey(ResourceLocation.fromNamespaceAndPath(Architect.ID,"zinc_recycling/"+item.replace(':','_'))).orElseThrow().value()
             val fluids=recipe.javaClass.getMethod("getFluidResults").invoke(recipe) as List<*>
             val metal=fluids.single() as FluidStack
-            h.assertTrue(metal.`is`(CartridgeRegistry.ZINC.get()) && metal.amount==units && recipe.ingredients.size==count,"Loaded Create recycling must preserve the exact recorded item/fluid quantities for $item")
+            h.assertTrue(metal.`is`(CartridgeRegistry.ZINC.get()) && metal.amount==millibuckets && recipe.ingredients.size==count,"Loaded Create recycling must preserve the exact recorded item/fluid quantities for $item")
             for(cut in h.level.recipeManager.getAllRecipesFor(RecipeType.STONECUTTING)) {
                 val result=cut.value().getResultItem(h.level.registryAccess())
                 if(result.`is`(Economy.item(item)) && cut.value().ingredients.single().test(ItemStack(Economy.item("create:zinc_ingot"))))
-                    h.assertTrue(units.toLong()*result.count<=256L*count,"Recycling cannot return more zinc than the actual stonecutting recipe paid for $item")
+                    h.assertTrue(millibuckets.toLong()*result.count<=144L*count,"Recycling cannot return more zinc than the actual stonecutting recipe paid for $item")
             }
         }
-        h.assertTrue(records.getAsJsonObject("copycats:copycat_cogwheel").get("units").asInt==64 && records.getAsJsonObject("copycats:copycat_fluid_pipe").get("units").asInt==64,"Functional Copycat substrates must not multiply their extra zinc payment")
-        h.assertTrue(records.getAsJsonObject("copycats:copycat_ladder").get("items").asInt==3,"Fractional recipe values must use exact batches instead of rounding zinc upward")
+        h.assertTrue(records.getAsJsonObject("copycats:copycat_cogwheel").get("millibuckets").asInt==36 && records.getAsJsonObject("copycats:copycat_fluid_pipe").get("millibuckets").asInt==36,"Functional Copycat substrates must not multiply their extra zinc payment")
+        h.assertTrue(records.getAsJsonObject("copycats:copycat_ladder").get("items").asInt==1 && records.getAsJsonObject("copycats:copycat_ladder").get("millibuckets").asInt==24,"Each ladder recovers exactly one sixth of a 144 mB zinc ingot")
         h.succeed()
     }
 }

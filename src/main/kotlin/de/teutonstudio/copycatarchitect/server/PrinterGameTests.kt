@@ -58,6 +58,37 @@ object PrinterGameTests {
     private fun contents(be:PrinterEntity)=(0 until 7).map { be.cartridges.getItem(it).copy() }
     private fun update(be:PrinterEntity,form:Form,surfaces:Map<String,String> = emptyMap(),turn:Int=0)=Command("printerPreview",key=be.session,payload=Json.encode(form),surfaces=surfaces,turn=turn)
 
+    @JvmStatic @GameTest(template="empty") fun playerHistoryLimitRejectsValidExactFormBeforeWorldOrMaterialChanges(h:GameTestHelper) {
+        val initial=form();val oversized=ExactGeometryGameTests.oversizedHistoryForm()
+        h.assertTrue(Json.encode(listOf(PrintRecord(form=oversized))).length>80000,"The valid exact source must exceed the existing history budget")
+        val slots=SimpleContainer(7);slots.setItem(0,Economy.cartridge(512))
+        val (actor,be)=place(h,stack(h,initial,slots),"PrinterHistoryLimit")
+        actor.inventory.setItem(5,ItemStack(Items.STONE,2))
+        val before=be.saveWithoutMetadata(h.level.registryAccess())
+        val inventory=(0 until actor.inventory.containerSize).map { actor.inventory.getItem(it).copy() }
+        val library=Library()
+        val error=runCatching { PrinterService.print(actor,update(be,oversized,mapOf("body" to "minecraft:stone")).copy(action="printerPrint"),library) }.exceptionOrNull()
+        h.assertTrue(error?.message?.contains("80,000")==true,"The actual player print entry must explain the history size limit")
+        h.assertTrue(h.level.getBlockEntity(be.blockPos)===be && !be.released && be.saveWithoutMetadata(h.level.registryAccess())==before,"History rejection must preserve the placed frame, draft, session and all seven cartridges")
+        h.assertTrue(inventory.indices.all { ItemStack.matches(inventory[it],actor.inventory.getItem(it)) } && library.history.isEmpty(),"History rejection must not consume materials, return a second device or create a history entry")
+        PrinterService.cancelDirect(h.level,be,actor);h.succeed()
+    }
+
+    @JvmStatic @GameTest(template="empty") fun historyCapacityKeepsThePreparedSnapshotAndRejectsAnOverfullLibrary(h:GameTestHelper) {
+        val library=Library();val fresh=PrinterService.prepareRecord(library,form(),emptyMap(),2)
+        val oversized=ExactGeometryGameTests.oversizedHistoryForm()
+        library.history+=PrintRecord(form=oversized)
+        PrinterService.record(library,fresh)
+        h.assertTrue(library.history.single()===fresh,"Trimming older history must retain the exact prepared snapshot")
+        repeat(30) { PrinterService.record(library,form(),emptyMap(),it%4) }
+        h.assertTrue(library.history.size==24 && Json.encode(library.history).length<=80000 && Json.encode(library).length<=180000,"The established history count and JSON budgets must remain enforced")
+        val crowded=Library(forms=linkedMapOf("large@1" to oversized,"large@2" to oversized,"large@3" to oversized))
+        val before=Json.encode(crowded)
+        val error=runCatching { PrinterService.prepareRecord(crowded,form(),emptyMap(),0) }.exceptionOrNull()
+        h.assertTrue(error?.message?.contains("180,000")==true && Json.encode(crowded)==before,"Library capacity must be checked without old history and without mutating saved data")
+        h.succeed()
+    }
+
     @JvmStatic @GameTest(template="empty") fun printerPlacePreviewCancelAndSevenSlotPersistence(h:GameTestHelper) {
         val form=form(true);val surfaces=mapOf("cap" to "minecraft:glass")
         val slots=SimpleContainer(7)

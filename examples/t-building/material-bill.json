@@ -1,0 +1,15 @@
+{
+  "positions": 1902,
+  "usableInteriorCells": 1875,
+  "zincMillibuckets": 286608,
+  "surfaceItems": {
+    "minecraft:bricks": 102,
+    "minecraft:dark_oak_planks": 214,
+    "minecraft:deepslate_tiles": 189,
+    "minecraft:glass": 214,
+    "minecraft:oak_planks": 756,
+    "minecraft:quartz_block": 743,
+    "minecraft:stone_bricks": 305,
+    "minecraft:white_terracotta": 246
+  }
+}

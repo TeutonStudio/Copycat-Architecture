@@ -51,7 +51,7 @@ object PanelBuildingGameTests {
                 stack.count=amount;inventory.setItem(slot++,stack);left-=amount
             }
         }
-        val budget=plan.placements.sumOf { Extrusion.cost(it.parts,it.groups) }
+        val budget=plan.placements.sumOf { (Geometry.solid(it.parts).count()+15)/16 }
         h.assertTrue(plan.raw==budget && plan.raw>0,"Survival supply must use the generated plan's exact raw total")
         for(placement in plan.placements) {
             h.assertTrue(PlacementService.place(level,world(placement.pos),placement,inventory,actor,"panel-house"),"Every generated house position must place in Survival: ${placement.pos}")
@@ -84,7 +84,7 @@ object PanelBuildingGameTests {
             h.assertTrue(Geometry.resolve(loaded.parts,loaded.groups).visualKey(loaded.material,loaded.surfaces)==placement.visualKey() &&
                 Geometry.solid(loaded.parts).key()==solid.key() && loaded.receipt==be.receipt,
                 "NBT must retain the thin collision geometry, material ownership and receipt at ${placement.pos}")
-            h.assertTrue(be.receipt.units==Extrusion.cost(placement.parts,placement.groups) && be.receipt.surfaces==placement.surfaceItems(),"Every house receipt must equal the material actually paid")
+            h.assertTrue(be.receipt.units==(solid.count()+15)/16 && be.receipt.surfaces==placement.surfaceItems(),"Every house receipt must equal its occupied voxel volume in mB and paid surfaces")
             receipts+=be.receipt.units
         }
         h.assertTrue(receipts==plan.raw,"All placed receipts together must equal the calculated zinc payment")

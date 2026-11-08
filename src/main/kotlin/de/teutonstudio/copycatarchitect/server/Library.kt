@@ -26,6 +26,11 @@ data class PrintSettings(val surfaces:Map<String,String> = emptyMap(),val turn:I
 }
 data class Library(val forms:MutableMap<String,Form> = linkedMapOf(),val modules:MutableMap<String,Module> = linkedMapOf(),val buildings:MutableMap<String,Building> = linkedMapOf(),val history:MutableList<PrintRecord> = mutableListOf(),
     val printSettings:MutableMap<String,PrintSettings> = linkedMapOf()) {
+    companion object { const val MAX_JSON_CHARS=500000 }
+    /** Versioned building documents share this bounded persistent library. */
+    fun validateStorageSize() {
+        require(Json.encode(this).length<=MAX_JSON_CHARS) { "Library storage limit reached; export or reuse existing templates" }
+    }
     /** Preserve the printed appearance separately so older geometry-only libraries still load. */
     fun savePrintHistory(id:String,name:String):String {
         require(id.length<=64 && name.trim().length in 1..64) { "Use a history ID and a name of 1–64 characters" }
@@ -34,7 +39,7 @@ data class Library(val forms:MutableMap<String,Form> = linkedMapOf(),val modules
         val form=Geometry.validate(record.form.copy(id=UUID.randomUUID().toString(),version=1,name=name.trim()));val key="${form.id}@1"
         val settings=PrintSettings(record.surfaces.toMap(),record.turn).validate(form)
         val candidate=copy(forms=(forms+(key to form)).toMutableMap(),printSettings=(printSettings+(key to settings)).toMutableMap())
-        require(Json.encode(candidate).length<=180000) { "Library is too large" }
+        candidate.validateStorageSize()
         forms[key]=form;printSettings[key]=settings;return key
     }
     fun seed() {
@@ -54,8 +59,8 @@ data class Library(val forms:MutableMap<String,Form> = linkedMapOf(),val modules
 }
 data class Job(val schema:Int=1,val id:String=UUID.randomUUID().toString(),val owner:String="",val dimension:String="",val name:String="",
     val origin:P=P(),val rotation:Int=0,val dock:P=P(),val plan:Plan=Plan(emptyList(),emptyList(),emptyList(),0,emptyMap()),
-    var computer:Int=-1,var index:Int=0,var state:String="paused",var message:String="Ready",val recipeOutputs:Map<String,Int> = Extrusion.outputs.toMap())
-data class Database(val schema:Int=1,val libraries:MutableMap<String,Library> = linkedMapOf(),val jobs:MutableList<Job> = mutableListOf())
+    var computer:Int=-1,var index:Int=0,var state:String="paused",var message:String="Ready",val recipeOutputs:Map<String,Int> = Extrusion.outputs.toMap(),var buildingId:String="")
+data class Database(val schema:Int=1,val libraries:MutableMap<String,Library> = linkedMapOf(),val jobs:MutableList<Job> = mutableListOf(),val tableBuildings:MutableMap<String,TableBuilding> = linkedMapOf())
 class ArchitectData(var db:Database=Database()):SavedData() {
     override fun save(tag:CompoundTag,registries:HolderLookup.Provider):CompoundTag = tag.apply { putByteArray("architect",Json.encode(db).toByteArray(Charsets.UTF_8)) }
     fun library(owner:UUID):Library = db.libraries.getOrPut(owner.toString()) { Library().also { it.seed();setDirty() } }

@@ -8,6 +8,25 @@ import kotlin.js.JsExport
 import kotlin.js.Json
 import kotlin.js.json
 
+// These are the lossless browser authoring capabilities; native-only fields must
+// be rejected before a preview or export can silently discard them.
+private val browserFormKinds=listOf(NodeKind.INPUT,NodeKind.UNION,NodeKind.INTERSECTION,NodeKind.DIFFERENCE,NodeKind.SYMMETRIC_DIFFERENCE,NodeKind.ROTATE,NodeKind.ROTATION,NodeKind.OUTPUT)
+private val browserBuildingKinds=listOf(BuildingKind.COPYCAT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.ROOM,BuildingKind.STOREY,BuildingKind.ROOF,BuildingKind.BUILDING)
+private val browserFormFields=setOf("id","kind","inputs","part","x","y","materialMode","materialGroup","previewGroup","inputGroups","rotationAxis","quarterTurns")
+private val browserBuildingFields=setOf("id","kind","name","x","y","inputs","module","block","length","height","rectangles","walls","floor","ceiling","offsets","form","thickness","occupied","finish","levels","roof","roofType","ridge","overhang","materialMode","role","preview","storeyMode","corner")
+private fun browserNode(value:dynamic,isBuilding:Boolean):dynamic {
+    val kind=string(value,"kind",if(isBuilding) "SEGMENT" else "INPUT")
+    require(if(isBuilding) browserBuildingKinds.any { it.name==kind } else browserFormKinds.any { it.name==kind }) { "$kind requires the native editor" }
+    GraphModels.validateBrowserFields(value,isBuilding,if(isBuilding) browserBuildingFields else browserFormFields)
+    return value
+}
+private fun browserGraph(value:dynamic,isBuilding:Boolean):dynamic {
+    val schema=int(value,"schema",if(isBuilding) 1 else 2)
+    require(if(isBuilding) schema==1 else schema in 1..2) { "Unsupported browser graph schema; use the native editor" }
+    require(array(value,"nodeGroups").isNullOrEmpty() && value.projection==null) { "Graph groups and projections require the native editor" }
+    return value
+}
+
 private fun int(obj: dynamic, key: String, default: Int): Int {
     val value = obj[key]
     if (value == null) return default
@@ -44,11 +63,15 @@ private fun P.jsPoint() = json("x" to x, "y" to y, "z" to z)
 private fun rect(v: dynamic): Rect = Rect(int(v, "x", 0), int(v, "z", 0), int(v, "width", 11), int(v, "length", 9))
 private fun Rect.jsRect() = json("x" to x, "z" to z, "width" to width, "length" to length)
 
-private fun part(v: dynamic): Part = if (v == null) Part() else Part(
+private fun part(v: dynamic): Part {
+    if(v==null) return Part()
+    require(v.exact==null && v.exactClip==null && v.roof==null) { "Exact and roof geometry require the native editor" }
+    return Part(
     string(v, "source", Part().source), int(v, "turn", 0), bool(v, "top"), int(v, "size", 1),
     point(v.offset), int(v, "tilt", 0), string(v, "group", "body"), string(v, "cutMask"), string(v, "recipeSource"),
     int(v, "spin", 0), int(v, "discCut", 0)
 )
+}
 private fun Part.jsPart() = json(
     "source" to source, "turn" to turn, "top" to top, "size" to size, "offset" to offset.jsPoint(),
     "tilt" to tilt, "group" to group, "cutMask" to cutMask, "recipeSource" to recipeSource,
@@ -61,24 +84,29 @@ private fun strings(v: dynamic, key: String): List<String> = array(v, key)?.map 
     require(jsTypeOf(it) == "string") { "$key must contain strings" }
     it.unsafeCast<String>()
 }.orEmpty()
-private fun formNode(v: dynamic): GraphNode = GraphNode(
+private fun formNode(raw: dynamic): GraphNode {
+    val v=browserNode(raw,false)
+    return GraphNode(
     string(v, "id"), NodeKind.valueOf(string(v, "kind", "INPUT")), strings(v, "inputs"), part(v.part),
     int(v, "x", 0), int(v, "y", 0), MaterialMode.valueOf(string(v, "materialMode", "SEPARATED")),
     string(v, "materialGroup"), string(v, "previewGroup"), strings(v, "inputGroups"),
     RotationAxis.valueOf(string(v, "rotationAxis", "NORMAL")), int(v, "quarterTurns", 0)
 )
+}
 private fun GraphNode.jsNode() = json(
     "id" to id, "kind" to kind.name, "inputs" to inputs.toTypedArray(), "part" to part.jsPart(),
     "x" to x, "y" to y, "materialMode" to materialMode.name, "materialGroup" to materialGroup,
     "previewGroup" to previewGroup, "inputGroups" to inputGroups.toTypedArray(),
     "rotationAxis" to rotationAxis.name, "quarterTurns" to quarterTurns
 )
-private fun formGraph(v: dynamic): NodeGraph = NodeGraph(int(v, "schema", 2), array(v, "nodes")?.map(::formNode).orEmpty())
+private fun formGraph(raw: dynamic): NodeGraph { val v=browserGraph(raw,false);return NodeGraph(int(v,"schema",2),array(v,"nodes")?.map(::formNode).orEmpty()) }
 private fun form(v: dynamic): Form = Form(
-    int(v, "schema", 3), string(v, "id"), int(v, "version", 1), string(v, "name", "Form"),
+    int(v, "schema", 3).also { require(it in 1..3) { "Invalid form schema for browser; use the native editor" } }, string(v, "id"), int(v, "version", 1), string(v, "name", "Form"),
     array(v, "parts")?.map(::part) ?: listOf(Part()), groups(v), if (v.graph == null) null else formGraph(v.graph)
 )
-private fun buildingNode(v: dynamic): BuildingNode = BuildingNode(
+private fun buildingNode(raw: dynamic): BuildingNode {
+    val v=browserNode(raw,true)
+    return BuildingNode(
     id = string(v, "id"), kind = BuildingKind.valueOf(string(v, "kind", "SEGMENT")), name = string(v, "name"),
     x = int(v, "x", 0), y = int(v, "y", 0), inputs = strings(v, "inputs"), module = string(v, "module", "window@1"),
     block = string(v, "block"), length = int(v, "length", 3), height = int(v, "height", 4),
@@ -92,6 +120,7 @@ private fun buildingNode(v: dynamic): BuildingNode = BuildingNode(
     role = string(v, "role", "wall"), preview = string(v, "preview", "all"), storeyMode = string(v, "storeyMode", "rooms"),
     corner = string(v, "corner")
 )
+}
 private fun BuildingNode.jsNode() = json(
     "id" to id, "kind" to kind.name, "name" to name, "x" to x, "y" to y, "inputs" to inputs.toTypedArray(),
     "module" to module, "block" to block, "length" to length, "height" to height,
@@ -102,7 +131,7 @@ private fun BuildingNode.jsNode() = json(
     "ridge" to ridge, "overhang" to overhang, "materialMode" to materialMode.name, "role" to role, "preview" to preview,
     "storeyMode" to storeyMode, "corner" to corner
 )
-private fun buildingGraph(v: dynamic) = BuildingGraph(int(v, "schema", 1), array(v, "nodes")?.map(::buildingNode).orEmpty())
+private fun buildingGraph(raw:dynamic):BuildingGraph { val v=browserGraph(raw,true);return BuildingGraph(int(v,"schema",1),array(v,"nodes")?.map(::buildingNode).orEmpty()) }
 private fun building(v: dynamic) = Building(
     schema = int(v, "schema", 2), id = string(v, "id"), version = int(v, "version", 1), name = string(v, "name", "L House"),
     palette = if (v.palette == null) Building().palette else map(v.palette) { obj, key -> string(obj, key) },
@@ -119,9 +148,9 @@ private fun module(v: dynamic): Module {
 
 @JsExport
 fun graphModels(): Json = json(
-    "form" to NodeKind.entries.map { kind -> json("kind" to kind.name,
+    "form" to browserFormKinds.map { kind -> json("kind" to kind.name,
         "min" to GraphModels.inputs(kind).first, "max" to GraphModels.inputs(kind).last) }.toTypedArray(),
-    "building" to BuildingKind.entries.map { it.name }.toTypedArray(),
+    "building" to browserBuildingKinds.map { it.name }.toTypedArray(),
     "shapes" to Adapters.all.values.map { json("id" to it.source, "name" to it.name, "max" to it.max, "tiltable" to it.tiltable) }.toTypedArray(),
     "rotationAxes" to RotationAxis.entries.map { it.name }.toTypedArray(),
     "materialModes" to MaterialMode.entries.map { it.name }.toTypedArray(),
@@ -149,7 +178,7 @@ fun inspectGraph(isBuilding: Boolean, document: dynamic): Array<Json> {
     GraphCompiler.structure(graph, groups(document))
     return graph.nodes.map { n ->
         json("node" to n.jsNode(), "ports" to n.inputs.mapIndexed { index, source ->
-            json("id" to index.toString(), "source" to source, "accepts" to NodeKind.entries
+            json("id" to index.toString(), "source" to source, "accepts" to browserFormKinds
                 .filter { GraphModels.accepts(n.kind, index, it) }.map { it.name }.toTypedArray())
         }.toTypedArray())
     }.toTypedArray()
@@ -167,12 +196,14 @@ fun applyDiagram(isBuilding: Boolean, document: dynamic, positions: Array<dynami
 fun newNode(isBuilding: Boolean, kind: String, id: String, x: Int, y: Int): Json {
     if (isBuilding) {
         val type = BuildingKind.valueOf(kind)
+        require(type in browserBuildingKinds) { "Use the native editor for $kind" }
         val inputs = List(GraphModels.requiredBuildingInputs(type, "rooms")) { "" }
         val node = BuildingNode(id = id, kind = type, x = x, y = y, inputs = inputs,
             module = "", role = if (type == BuildingKind.ROOF) "roof" else "wall")
         return node.jsNode()
     }
     val type = NodeKind.valueOf(kind)
+    require(type in browserFormKinds) { "Use the native editor for $kind" }
     return GraphNode(id, type, List(GraphModels.inputs(type).first) { "" }, x = x, y = y).jsNode()
 }
 
@@ -233,7 +264,9 @@ fun previewGraph(isBuilding: Boolean, document: dynamic, library: dynamic, selec
     val modules = map(library.modules) { obj, key -> module(obj[key]) }
     val graph = requireNotNull(b.graph)
     val plan = if(selected.isEmpty()) BuildingGraphCompiler.compile(b,forms,modules).plan
-        else BuildingGraphCompiler.Evaluation(graph,b.palette,forms,modules).preview(selected)
+        else BuildingGraphCompiler.Evaluation(graph,b.palette,forms,modules).let { evaluation ->
+            if(graph.nodes.first { it.id==selected }.kind in setOf(BuildingKind.FLOOR,BuildingKind.CEILING)) evaluation.contextualPlatePreview(selected) else evaluation.preview(selected)
+        }
     val filter = graph.nodes.firstOrNull { it.id == selected }?.preview
         ?: graph.nodes.single { it.kind == BuildingKind.BUILDING }.preview
     val grouped = plan.placements.filter { filter == "all" || it.component == filter ||

@@ -34,6 +34,8 @@ import net.minecraft.world.phys.shapes.Shapes
 import net.minecraft.world.phys.shapes.VoxelShape
 import net.neoforged.neoforge.fluids.FluidStack
 import net.neoforged.neoforge.fluids.capability.IFluidHandler
+import net.neoforged.neoforge.client.model.data.ModelData
+import net.neoforged.neoforge.client.model.data.ModelProperty
 
 /** Four individually persisted cartridges, arranged like candles on one supporting block. */
 class CartridgeStackEntity(pos:BlockPos,state:BlockState):BlockEntity(CartridgeRegistry.ENTITY.get(),pos,state) {
@@ -50,13 +52,23 @@ class CartridgeStackEntity(pos:BlockPos,state:BlockState):BlockEntity(CartridgeR
     }
     fun sync() {
         setChanged();val world=level ?: return
+        requestModelDataUpdate()
         world.sendBlockUpdated(blockPos,blockState,blockState,3)
     }
+    override fun getModelData():ModelData = ModelData.of(KINDS,cartridges.map {
+        when {
+            it.isEmpty -> CartridgeKind.FULL
+            Economy.isCreativeCartridge(it) -> CartridgeKind.CREATIVE
+            Economy.units(it)==0 -> CartridgeKind.EMPTY
+            else -> CartridgeKind.FULL
+        }
+    })
     override fun saveAdditional(tag:CompoundTag,registries:HolderLookup.Provider) {
         super.saveAdditional(tag,registries);ContainerHelper.saveAllItems(tag,cartridges,registries)
     }
     override fun loadAdditional(tag:CompoundTag,registries:HolderLookup.Provider) {
         super.loadAdditional(tag,registries);cartridges.clear();ContainerHelper.loadAllItems(tag,cartridges,registries)
+        if(level?.isClientSide==true) sync()
     }
     override fun getUpdateTag(registries:HolderLookup.Provider)=saveWithoutMetadata(registries)
     override fun getUpdatePacket()=ClientboundBlockEntityDataPacket.create(this)
@@ -86,6 +98,9 @@ class CartridgeStackEntity(pos:BlockPos,state:BlockState):BlockEntity(CartridgeR
             if(action.execute()) sync()
             return FluidStack(CartridgeRegistry.ZINC.get(),maxDrain-remaining)
         }
+    }
+    companion object {
+        val KINDS=ModelProperty<List<CartridgeKind>>()
     }
 }
 

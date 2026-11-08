@@ -65,11 +65,15 @@ object CreativeCatalogClient {
         for((section,row) in sectionRows) {
             val visible=row-current;if(visible !in 0 until VISIBLE_ROWS) continue
             val y=top+visible*18
-            val background=if(section==CreativeCatalogSection.PROCEDURAL) 0xff5a3a20.toInt() else 0xff1f4b59.toInt()
-            val border=if(section==CreativeCatalogSection.PROCEDURAL) 0xffffc66d.toInt() else 0xff79d7ee.toInt()
-            event.guiGraphics.fill(left,y,left+162,y+17,background)
-            event.guiGraphics.fill(left,y,left+3,y+17,border)
-            event.guiGraphics.drawString(screen.minecraft!!.font,Component.translatable("creative_section.copycat_architect.${section.key}"),left+7,y+5,0xffffffff.toInt(),true)
+            val accent=when(section) {
+                CreativeCatalogSection.PROCEDURAL -> ArchitectTheme.brass
+                CreativeCatalogSection.SPECIAL -> 0xffc99b78.toInt()
+                CreativeCatalogSection.SAVED -> ArchitectTheme.green
+                else -> ArchitectTheme.muted
+            }
+            ArchitectTheme.bevel(event.guiGraphics,left,y,162,17,ArchitectTheme.panel)
+            event.guiGraphics.fill(left+3,y+4,left+5,y+13,accent)
+            event.guiGraphics.drawString(screen.minecraft!!.font,Component.translatable("creative_section.copycat_architect.${section.key}"),left+9,y+5,ArchitectTheme.text,false)
         }
     }
 }

@@ -26,7 +26,13 @@ fetch org/jetbrains/kotlin kotlin-stdlib-js "$version" klib & pids+=("$!")
 for pid in "${pids[@]}"; do wait "$pid"; done
 
 domain=../src/main/kotlin/de/teutonstudio/copycatarchitect/domain
-sources=("$domain"/{Geometry,BaseShapes,GraphModels,DiagramEdits,NodeGraph,BuildingGraph,Planning}.kt kotlin/*.kt)
+node prepare-engine.mjs
+sources=()
+for file in "$domain"/*.kt; do
+    case "$(basename "$file")" in GraphModels.kt|GraphPlatform.kt) continue ;; esac
+    sources+=("$file")
+done
+sources+=(kotlin/*.kt "$out/Catalog.kt")
 stdlib="$cache/kotlin-stdlib-js-$version.klib"
 target="$out/engine.mjs"
 if [[ -f "$target" ]]; then

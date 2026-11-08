@@ -32,17 +32,31 @@ class CompositeEntity(pos:BlockPos,state:BlockState):BlockEntity(Architect.BE.ge
     var surfaces:Map<String,String> = emptyMap()
     var receipt=Receipt()
     var owner=""
+    var buildingId=""
+    var buildingToken=""
     fun install(p:Placement,r:Receipt,owner:String) { parts=Geometry.normalized(p.parts,p.groups);material=p.material;groups=p.groups;surfaces=p.surfaces;receipt=r;this.owner=owner;setChanged();level?.sendBlockUpdated(blockPos,blockState,blockState,3) }
-    override fun saveAdditional(tag:CompoundTag,registries:HolderLookup.Provider) { super.saveAdditional(tag,registries);tag.putString("parts",Json.encode(parts));tag.putString("material",material);tag.putString("groups",Json.encode(groups));tag.putString("surfaces",Json.encode(surfaces));tag.putString("receipt",Json.encode(receipt));tag.putString("owner",owner) }
+    override fun saveAdditional(tag:CompoundTag,registries:HolderLookup.Provider) { super.saveAdditional(tag,registries);JsonNbt.put(tag,"parts",Json.encode(parts));tag.putString("material",material);tag.putString("groups",Json.encode(groups));tag.putString("surfaces",Json.encode(surfaces));tag.putString("receipt",Json.encode(receipt));tag.putString("owner",owner);tag.putString("buildingId",buildingId);tag.putString("buildingToken",buildingToken) }
     override fun loadAdditional(tag:CompoundTag,registries:HolderLookup.Provider) {
         super.loadAdditional(tag,registries)
         groups=if(tag.contains("groups")) Json.decode<Array<MaterialGroup>>(tag.getString("groups")).toList() else DEFAULT_GROUPS
         surfaces=if(tag.contains("surfaces")) Json.materials(tag.getString("surfaces")) else emptyMap()
-        if(tag.contains("parts")) parts=Geometry.normalized(Json.decode<Array<Part>>(tag.getString("parts")).toList(),groups)
+        if(tag.contains("parts")) parts=Geometry.normalized(Json.decode<Array<Part>>(JsonNbt.get(tag,"parts")).toList(),groups)
         material=if(tag.contains("material")) tag.getString("material") else "minecraft:stone";owner=tag.getString("owner")
         if(tag.contains("receipt")) receipt=Json.decode(tag.getString("receipt"))
+        buildingId=tag.getString("buildingId");buildingToken=tag.getString("buildingToken")
+        if(level?.isClientSide==true) {
+            requestModelDataUpdate()
+            level?.sendBlockUpdated(blockPos,blockState,blockState,3)
+        }
     }
-    fun hitGroup(hit:BlockHitResult):MaterialGroup? {
+    fun hitGroup(hit:BlockHitResult,player:Player?=null):MaterialGroup? {
+        val geometry=Geometry.resolve(parts,groups)
+        if(geometry.exactSolid!=null && player!=null) {
+            val origin=player.eyePosition.subtract(net.minecraft.world.phys.Vec3.atLowerCornerOf(blockPos)).scale(16.0)
+            val ray=hit.location.subtract(player.eyePosition).scale(16.0)
+            val id=geometry.exactOwned.mapNotNull { (id,volume) -> volume.rayEntry(doubleArrayOf(origin.x,origin.y,origin.z),doubleArrayOf(ray.x,ray.y,ray.z))?.let { id to it } }.minByOrNull { it.second }?.first
+            return groups.firstOrNull { it.id==id }
+        }
         val local=hit.location.subtract(net.minecraft.world.phys.Vec3.atLowerCornerOf(blockPos)).subtract(net.minecraft.world.phys.Vec3.atLowerCornerOf(hit.direction.normal).scale(0.00001))
         val id=Geometry.resolve(parts,groups).owner(kotlin.math.floor(local.x*16).toInt().coerceIn(0,15),kotlin.math.floor(local.y*16).toInt().coerceIn(0,15),kotlin.math.floor(local.z*16).toInt().coerceIn(0,15))
         return groups.firstOrNull { it.id==id }
@@ -91,6 +105,29 @@ class CompositeBlock(properties:Properties):BaseEntityBlock(properties.dynamicSh
     override fun codec():MapCodec<out BaseEntityBlock> = simpleCodec(::CompositeBlock)
     override fun newBlockEntity(pos:BlockPos,state:BlockState)=CompositeEntity(pos,state)
     override fun getRenderShape(state:BlockState)=RenderShape.ENTITYBLOCK_ANIMATED
+    /** Let native connected-texture blocks query the coating at their shared outer seam. */
+    override fun getAppearance(state:BlockState,level:BlockAndTintGetter,pos:BlockPos,side:Direction,queryState:BlockState?,queryPos:BlockPos?):BlockState {
+        val entity=level.getBlockEntity(pos) as? CompositeEntity ?: return state
+        val geometry=Geometry.resolve(entity.parts,entity.groups)
+        val delta=queryPos?.subtract(pos)
+        val normalAxis=when(side.axis) { Direction.Axis.X->0;Direction.Axis.Y->1;else->2 }
+        val seen=mutableSetOf<String>()
+        for(u in 0..15) for(v in 0..15) {
+            val edge=if(side.axisDirection==Direction.AxisDirection.POSITIVE) 15 else 0
+            val p=when(side.axis) { Direction.Axis.X->intArrayOf(edge,u,v);Direction.Axis.Y->intArrayOf(u,edge,v);else->intArrayOf(u,v,edge) }
+            if(delta!=null && (0..2).any { axis ->
+                val step=when(axis) { 0->delta.x;1->delta.y;else->delta.z }
+                axis!=normalAxis && step!=0 && p[axis]!=if(step>0) 15 else 0
+            }) continue
+            val group=geometry.owner(p[0],p[1],p[2]) ?: continue
+            if(!seen.add(group)) continue
+            val material=entity.coating(group)
+            if(material.isEmpty()) continue
+            val coating=runCatching { CopycatMaterials.state(material) }.getOrNull() ?: continue
+            if(queryState==null || coating.block==queryState.block) return coating
+        }
+        return state
+    }
     override fun getShape(state:BlockState,level:BlockGetter,pos:BlockPos,context:CollisionContext):VoxelShape = (level.getBlockEntity(pos) as? CompositeEntity)?.shape() ?: Shapes.block()
     override fun getCollisionShape(state:BlockState,level:BlockGetter,pos:BlockPos,context:CollisionContext)=getShape(state,level,pos,context)
     override fun useItemOn(stack:ItemStack,state:BlockState,level:Level,pos:BlockPos,player:Player,hand:InteractionHand,hit:BlockHitResult):ItemInteractionResult {
@@ -101,7 +138,7 @@ class CompositeBlock(properties:Properties):BaseEntityBlock(properties.dynamicSh
         val id=net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(material).toString()
         if(runCatching { CopycatMaterials.state(id) }.isFailure) return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION
         val be=level.getBlockEntity(pos) as? CompositeEntity ?: return ItemInteractionResult.FAIL
-        val group=be.hitGroup(hit) ?: return ItemInteractionResult.FAIL
+        val group=be.hitGroup(hit,player) ?: return ItemInteractionResult.FAIL
         if(be.coating(group.id).isNotEmpty()) return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION
         if(be.owner.isNotEmpty() && be.owner!=player.uuid.toString() && !player.isCreative) return ItemInteractionResult.FAIL
         if(!level.mayInteract(player,pos) || !player.mayUseItemAt(pos,hit.direction,stack)) return ItemInteractionResult.FAIL
@@ -121,7 +158,7 @@ class CompositeBlock(properties:Properties):BaseEntityBlock(properties.dynamicSh
         val be=level.getBlockEntity(pos) as? CompositeEntity ?: return InteractionResult.PASS
         if(be.owner.isNotEmpty() && be.owner!=player.uuid.toString() && !player.isCreative) return InteractionResult.FAIL
         val hit=BlockHitResult(context.clickLocation,context.clickedFace,pos,false)
-        val group=be.hitGroup(hit) ?: return InteractionResult.PASS
+        val group=be.hitGroup(hit,player) ?: return InteractionResult.PASS
         if(!level.isClientSide) {
             val returned=be.removeCoating(group.id)
             if(!returned.isEmpty && !player.inventory.add(returned)) player.drop(returned,false)
@@ -130,12 +167,12 @@ class CompositeBlock(properties:Properties):BaseEntityBlock(properties.dynamicSh
     }
     override fun useWithoutItem(state:BlockState,level:Level,pos:BlockPos,player:Player,hit:BlockHitResult):InteractionResult {
         if(!level.isClientSide) (level.getBlockEntity(pos) as? CompositeEntity)?.let { be ->
-            be.hitGroup(hit)?.let { group -> player.displayClientMessage(Component.translatable("gui.copycat_architect.hit_group",group.name,Economy.item(be.coating(group.id).ifEmpty { "create:zinc_block" }).description),true) }
+            be.hitGroup(hit,player)?.let { group -> player.displayClientMessage(Component.translatable("gui.copycat_architect.hit_group",group.name,Economy.item(be.coating(group.id).ifEmpty { "create:zinc_block" }).description),true) }
         }
         return InteractionResult.sidedSuccess(level.isClientSide)
     }
     override fun onRemove(state:BlockState,level:Level,pos:BlockPos,next:BlockState,moving:Boolean) {
-        if(!state.`is`(next.block) && !level.isClientSide) (level.getBlockEntity(pos) as? CompositeEntity)?.let { be ->
+        if(!state.`is`(next.block) && !level.isClientSide && !level.restoringBlockSnapshots) (level.getBlockEntity(pos) as? CompositeEntity)?.let { be ->
             if(be.receipt.units>0 || be.receipt.paidMaterial || be.receipt.surfaces.isNotEmpty()) {
                 if(be.receipt.units>0) popResource(level,pos,Economy.cartridge(be.receipt.units))
                 be.receipt.surfaces.forEach { (id,count) -> popResource(level,pos,ItemStack(Economy.item(id),count)) }
@@ -146,9 +183,22 @@ class CompositeBlock(properties:Properties):BaseEntityBlock(properties.dynamicSh
         super.onRemove(state,level,pos,next,moving)
     }
 }
-class TableBlock(properties:Properties):Block(properties) {
+class TableBlock(properties:Properties):BaseEntityBlock(properties) {
+    override fun codec():MapCodec<out BaseEntityBlock> = simpleCodec(::TableBlock)
+    override fun newBlockEntity(pos:BlockPos,state:BlockState)=TableEntity(pos,state)
+    override fun getRenderShape(state:BlockState)=RenderShape.MODEL
+    override fun onRemove(state:BlockState,level:Level,pos:BlockPos,next:BlockState,moving:Boolean) {
+        if(level is ServerLevel && !state.`is`(next.block) && !level.restoringBlockSnapshots)
+            (level.getBlockEntity(pos) as? TableEntity)?.let { TableBuildings.detach(level,it) }
+        super.onRemove(state,level,pos,next,moving)
+    }
+    override fun setPlacedBy(level:Level,pos:BlockPos,state:BlockState,placer:net.minecraft.world.entity.LivingEntity?,stack:ItemStack) {
+        super.setPlacedBy(level,pos,state,placer,stack)
+        if(level is ServerLevel && placer is net.minecraft.server.level.ServerPlayer)
+            (level.getBlockEntity(pos) as? TableEntity)?.let { TableBuildings.bind(level,it,placer,stack.get(DataComponents.CUSTOM_DATA)?.copyTag()?.getString("buildingId").orEmpty()) }
+    }
     override fun useWithoutItem(state:BlockState,level:Level,pos:BlockPos,player:Player,hit:BlockHitResult):InteractionResult {
-        if(player is net.minecraft.server.level.ServerPlayer) Network.open(player,"building")
+        if(player is net.minecraft.server.level.ServerPlayer) Network.open(player,"building",pos)
         return InteractionResult.sidedSuccess(level.isClientSide)
     }
 }

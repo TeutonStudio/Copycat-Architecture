@@ -7,8 +7,8 @@
   ],
   "results": [
     {
-      "id": "copycat_architect:molten_zinc",
-      "amount": 16
+      "id": "molten_metals:molten_zinc",
+      "amount": 9
     }
   ],
   "heat_requirement": "heated"

@@ -37,19 +37,19 @@ object PrinterStack {
         draft.graph?.let { GraphCompiler.structure(it,draft.groups) }
         return runCatching { Geometry.validate(draft) }.getOrElse { if(draft.graph!=null) draft.copy(parts=emptyList()) else throw it }
     }
-    fun form(stack:ItemStack):Form = runCatching { tag(stack).getString("draft").takeIf(String::isNotEmpty)?.let(::definition) }.getOrNull()
+    fun form(stack:ItemStack):Form = runCatching { JsonNbt.get(tag(stack),"draft").takeIf(String::isNotEmpty)?.let(::definition) }.getOrNull()
         ?: Geometry.validate(Form(id=UUID.randomUUID().toString(),name="Unnamed print",graph=NodeGraph.fromParts(listOf(Part("copycats:copycat_block")))))
     fun surfaces(stack:ItemStack)=runCatching { Json.materials(tag(stack).getString("surfaces").ifEmpty { "{}" }) }.getOrDefault(emptyMap())
     fun contents(stack:ItemStack,registries:HolderLookup.Provider):NonNullList<ItemStack> = NonNullList.withSize(7,ItemStack.EMPTY).also { ContainerHelper.loadAllItems(tag(stack).getCompound("cartridges"),it,registries) }
     fun contents(stack:ItemStack,slots:Container,registries:HolderLookup.Provider) = update(stack) { tag -> tag.put("cartridges",CompoundTag().also { out -> ContainerHelper.saveAllItems(out,NonNullList.withSize(7,ItemStack.EMPTY).also { list -> repeat(7) { list[it]=slots.getItem(it).copy() } },registries) }) }
-    fun draft(stack:ItemStack,form:Form,surfaces:Map<String,String>,turn:Int)=update(stack) { it.putString("draft",Json.encode(form));it.putString("surfaces",Json.encode(surfaces));it.putInt("turn",turn) }
+    fun draft(stack:ItemStack,form:Form,surfaces:Map<String,String>,turn:Int)=update(stack) { JsonNbt.put(it,"draft",Json.encode(form));it.putString("surfaces",Json.encode(surfaces));it.putInt("turn",turn) }
 }
 class PrinterEntity(pos:BlockPos,state:BlockState):BlockEntity(Architect.PRINTER_BE.get(),pos,state) {
     var original:ItemStack=ItemStack.EMPTY
     var owner="";var session="";var released=false;var returnItem=true
     var preview:Form?=null;var surfaces:Map<String,String> = emptyMap();var turn=0
     val cartridges=object:SimpleContainer(7) { override fun canPlaceItem(slot:Int,stack:ItemStack)=Economy.isCartridge(stack) }
-    init { cartridges.addListener { setChanged() } }
+    init { cartridges.addListener { if(level?.isClientSide==false) changed() else setChanged() } }
     fun changed() { setChanged();level?.sendBlockUpdated(blockPos,blockState,blockState,3) }
     fun device():ItemStack=original.copy().also { stack -> if(!stack.isEmpty) { level?.let { PrinterStack.contents(stack,cartridges,it.registryAccess()) };preview?.let { PrinterStack.draft(stack,it,surfaces,turn) } } }
     override fun saveAdditional(tag:CompoundTag,registries:HolderLookup.Provider) {
@@ -57,13 +57,13 @@ class PrinterEntity(pos:BlockPos,state:BlockState):BlockEntity(Architect.PRINTER
         if(!original.isEmpty) tag.put("original",original.save(registries))
         ContainerHelper.saveAllItems(tag,NonNullList.withSize(7,ItemStack.EMPTY).also { list -> repeat(7) { list[it]=cartridges.getItem(it) } },registries)
         tag.putString("owner",owner);tag.putString("session",session);tag.putBoolean("released",released);tag.putBoolean("returnItem",returnItem)
-        preview?.let { tag.putString("preview",Json.encode(it)) };tag.putString("surfaces",Json.encode(surfaces));tag.putInt("turn",turn)
+        preview?.let { JsonNbt.put(tag,"preview",Json.encode(it)) };tag.putString("surfaces",Json.encode(surfaces));tag.putInt("turn",turn)
     }
     override fun loadAdditional(tag:CompoundTag,registries:HolderLookup.Provider) {
         super.loadAdditional(tag,registries);original=ItemStack.parseOptional(registries,tag.getCompound("original"))
         val slots=NonNullList.withSize(7,ItemStack.EMPTY);ContainerHelper.loadAllItems(tag,slots,registries);repeat(7) { cartridges.setItem(it,slots[it]) }
         owner=tag.getString("owner");session=tag.getString("session");released=tag.getBoolean("released");returnItem=!tag.contains("returnItem") || tag.getBoolean("returnItem")
-        preview=tag.getString("preview").takeIf(String::isNotEmpty)?.let { runCatching { PrinterStack.definition(it) }.getOrNull() }
+        preview=JsonNbt.get(tag,"preview").takeIf(String::isNotEmpty)?.let { runCatching { PrinterStack.definition(it) }.getOrNull() }
         surfaces=runCatching { Json.materials(tag.getString("surfaces").ifEmpty { "{}" }) }.getOrDefault(emptyMap());turn=Math.floorMod(tag.getInt("turn"),4)
     }
     override fun getUpdateTag(registries:HolderLookup.Provider)=saveWithoutMetadata(registries)
@@ -125,7 +125,7 @@ class CompositeFormItem(properties:Item.Properties):Item(properties) {
         val player=ctx.player ?: return InteractionResult.FAIL
         if(ctx.level.isClientSide) return InteractionResult.SUCCESS
         return try {
-            val form=Geometry.validate(Json.decode<Form>(PrinterStack.tag(ctx.itemInHand).getString("form_definition")))
+            val form=Geometry.validate(Json.decode<Form>(JsonNbt.get(PrinterStack.tag(ctx.itemInHand),"form_definition")))
             val pos=if(ctx.level.getBlockState(ctx.clickedPos).canBeReplaced()) ctx.clickedPos else ctx.clickedPos.relative(ctx.clickedFace)
             val surfaces=PrinterStack.surfaces(ctx.itemInHand);val turn=PrinterStack.tag(ctx.itemInHand).getInt("turn")
             val placed=PlacementService.place(ctx.level as ServerLevel,pos,Placement(parts=Geometry.rotate(form.parts,turn),material="",groups=form.groups,surfaces=surfaces),player.inventory,player,"saved",player.isCreative)
@@ -135,7 +135,7 @@ class CompositeFormItem(properties:Item.Properties):Item(properties) {
     }
     companion object {
         fun stack(form:Form,materials:Map<String,String> = emptyMap(),turn:Int=0):ItemStack=ItemStack(Architect.COMPOSITE_ITEM.get()).also {
-            PrinterStack.update(it) { tag -> tag.putString("form_definition",Json.encode(form));tag.putString("surfaces",Json.encode(materials));tag.putInt("turn",turn) }
+            PrinterStack.update(it) { tag -> JsonNbt.put(tag,"form_definition",Json.encode(form));tag.putString("surfaces",Json.encode(materials));tag.putInt("turn",turn) }
             it.set(DataComponents.CUSTOM_NAME,Component.literal(form.name))
         }
     }
@@ -154,9 +154,33 @@ object PrinterService {
         Network.open(player,if(storage) "printerStorage" else "printer")
     }
     fun held(player:Player):ItemStack=when { player.mainHandItem.`is`(Architect.GUN.get())->player.mainHandItem;player.offhandItem.`is`(Architect.GUN.get())->player.offhandItem;else->ItemStack.EMPTY }
+    fun openStorage(player:ServerPlayer) {
+        val be=active(player)
+        if(be!=null) accessible(player.serverLevel(),be,player)
+        val stack=if(be!=null) be.original else held(player)
+        require(!stack.isEmpty) { "Hold or place your block printer" }
+        val deviceId=PrinterStack.id(stack)
+        val lockedSlot=if(be!=null) -1 else if(player.mainHandItem===stack) player.inventory.selected else 40
+        val identity=if(be!=null) "${player.level().dimension().location()}:${be.blockPos.asLong()}:${be.session}" else "$deviceId:$lockedSlot"
+        val current=player.containerMenu as? PrinterStorageMenu
+        if(current?.storageIdentity==identity && current.stillValid(player)) return
+        val (_,cartridges)=inventory(player,be)
+        val validity:(Player)->Boolean={ actor ->
+            actor===player && actor.isAlive && if(be!=null) {
+                active(player)===be && runCatching { accessible(player.serverLevel(),be,player) }.isSuccess
+            } else {
+                held(player)===stack && player.inventory.getItem(lockedSlot)===stack && stack.`is`(Architect.GUN.get()) &&
+                    PrinterStack.tag(stack).getString("printer_id")==deviceId
+            }
+        }
+        if(player.containerMenu===player.inventoryMenu && !player.inventoryMenu.carried.isEmpty) player.inventoryMenu.removed(player)
+        player.openMenu(SimpleMenuProvider({ id,inventory,_ -> PrinterStorageMenu(id,inventory,cartridges,validity,lockedSlot,identity) },
+            Component.translatable("gui.copycat_architect.printer_storage"))) { buffer -> buffer.writeVarInt(lockedSlot) }
+    }
     private fun inventory(player:ServerPlayer,be:PrinterEntity?=active(player)):Pair<ItemStack,Container> {
         if(be!=null) return be.original to be.cartridges
         val stack=held(player);require(!stack.isEmpty) { "Hold or place your block printer" };PrinterStack.id(stack)
+        (player.containerMenu as? PrinterStorageMenu)?.takeIf { it.stillValid(player) }?.let { return stack to it.cartridges }
         val container=SimpleContainer(7);val slots=PrinterStack.contents(stack,player.registryAccess());repeat(7) { container.setItem(it,slots[it]) }
         container.addListener { PrinterStack.contents(stack,container,player.registryAccess()) };return stack to container
     }
@@ -166,7 +190,7 @@ object PrinterService {
         return PrinterView(be?.blockPos?.let(PlacementService::local) ?: P(),be?.session.orEmpty(),be?.preview ?: PrinterStack.form(stack),be?.surfaces ?: PrinterStack.surfaces(stack),be?.turn ?: Math.floorMod(PrinterStack.tag(stack).getInt("turn"),4),
             (0 until 7).map { val s=inv.getItem(it);if(s.isEmpty) CartridgeView() else CartridgeView(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(s.item).toString(),Economy.units(s),Economy.isCreativeCartridge(s)) },be!=null)
     }
-    fun update(player:ServerPlayer,c:Command) {
+    private fun checkedUpdate(player:ServerPlayer,c:Command):Pair<PrinterEntity,Form> {
         val be=active(player) ?: error("Place your printer first")
         require(c.key==be.session && c.turn in 0..3) { "Printer session expired" }
         accessible(player.serverLevel(),be,player)
@@ -175,6 +199,10 @@ object PrinterService {
         val form=runCatching { Geometry.validate(draft) }.getOrElse { if(draft.graph!=null) draft.copy(parts=emptyList()) else throw it }
         require(c.surfaces.keys.all { key -> form.groups.any { it.id==key } })
         c.surfaces.values.filter(String::isNotEmpty).forEach { Economy.state(it) }
+        return be to form
+    }
+    fun update(player:ServerPlayer,c:Command) {
+        val (be,form)=checkedUpdate(player,c)
         be.preview=form;be.surfaces=c.surfaces;be.turn=c.turn;be.changed()
     }
     private fun give(player:ServerPlayer,be:PrinterEntity,stack:ItemStack) {
@@ -217,14 +245,26 @@ object PrinterService {
             be.released=false;throw e
         }
     }
-    fun record(library:Library,form:Form,surfaces:Map<String,String>,turn:Int) {
-        library.history.add(0,PrintRecord(form=form,surfaces=surfaces,turn=turn,time=System.currentTimeMillis()))
-        while(library.history.size>24 || library.history.isNotEmpty() && (Json.encode(library.history).length>80000 || Json.encode(library).length>180000)) library.history.removeLast()
+    /** Reserve the exact snapshot before spending materials or replacing the placed printer. */
+    fun prepareRecord(library:Library,form:Form,surfaces:Map<String,String>,turn:Int):PrintRecord =
+        PrintRecord(form=form,surfaces=surfaces.toMap(),turn=turn,time=System.currentTimeMillis()).also { checkRecordCapacity(library,it) }
+    private fun checkRecordCapacity(library:Library,record:PrintRecord) {
+        val history=mutableListOf(record)
+        require(Json.encode(history).length<=80000) { "Print definition exceeds the 80,000-character history limit; simplify the form before printing" }
+        require(Json.encode(library.copy(history=history)).length<=180000) { "Print snapshot exceeds the 180,000-character library limit; remove saved library entries before printing" }
     }
+    fun record(library:Library,record:PrintRecord) {
+        checkRecordCapacity(library,record)
+        library.history.add(0,record)
+        // Capacity was checked with this record alone, so only older snapshots may be evicted.
+        while(library.history.size>1 && (library.history.size>24 || Json.encode(library.history).length>80000 || Json.encode(library).length>180000)) library.history.removeLast()
+    }
+    fun record(library:Library,form:Form,surfaces:Map<String,String>,turn:Int)=record(library,prepareRecord(library,form,surfaces,turn))
     fun print(player:ServerPlayer,c:Command,library:Library):Boolean {
-        update(player,c);val be=active(player) ?: error("Printer unavailable");val form=be.preview ?: error("No print definition")
-        val stack=printDirect(player.serverLevel(),be,player.inventory,player,form,be.surfaces,be.turn)
-        give(player,be,stack);record(library,form,be.surfaces,be.turn);return true
+        val (be,draft)=checkedUpdate(player,c);val form=Geometry.validate(draft)
+        val snapshot=prepareRecord(library,form,c.surfaces,c.turn)
+        val stack=printDirect(player.serverLevel(),be,player.inventory,player,form,snapshot.surfaces,snapshot.turn)
+        give(player,be,stack);record(library,snapshot);return true
     }
     fun cartridge(player:ServerPlayer,slot:Int,inventorySlot:Int) {
         require(slot in 0..6);val be=active(player)

@@ -1,7 +1,6 @@
 {
-  "parent": "minecraft:item/generated",
+  "parent": "copycat_architect:item/cartridge",
   "textures": {
-    "layer0": "copycat_architect:item/cartridge",
-    "layer1": "minecraft:item/nether_star"
+    "cap": "minecraft:block/amethyst_block"
   }
 }

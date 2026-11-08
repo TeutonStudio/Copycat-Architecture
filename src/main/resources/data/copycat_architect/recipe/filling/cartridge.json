@@ -7,7 +7,7 @@
     {
       "type": "neoforge:single",
       "amount": 256,
-      "fluid": "copycat_architect:molten_zinc"
+      "fluid": "molten_metals:molten_zinc"
     }
   ],
   "results": [

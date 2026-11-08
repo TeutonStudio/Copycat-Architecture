@@ -1,0 +1,154 @@
+{
+  "schema": 1,
+  "status": "PASS",
+  "method": "Independent read-only SavedData NBT and Anvil palette/block-entity audit",
+  "world": "/home/alex/Dokumente/VoxelTeuton/Modding/Copycat Architect/build/industrial-depot-client/saves/Lichtwerk Industrie-Depot",
+  "metadata": {
+    "origin": {
+      "x": 256,
+      "y": 74,
+      "z": 256
+    },
+    "table": {
+      "x": 310,
+      "y": 74,
+      "z": 268
+    },
+    "buildingKey": "industrial_depot_lichtwerk@1",
+    "placements": 6662,
+    "clearCells": 15416,
+    "materials": {
+      "minecraft:smooth_stone": 2386,
+      "minecraft:polished_andesite": 1450,
+      "minecraft:bricks": 1830,
+      "minecraft:polished_blackstone": 980,
+      "minecraft:glass": 896,
+      "minecraft:deepslate_tiles": 1730
+    },
+    "tableBuildingId": "27710889-cb38-43e6-a196-cc7fc6320add",
+    "owner": "380df991-f603-344c-a090-369bad2a924a"
+  },
+  "savedForms": 19,
+  "depotForms": 14,
+  "graphNodes": 69,
+  "ownedCopycats": 6662,
+  "savedRegionChunks": 15,
+  "buildingId": "27710889-cb38-43e6-a196-cc7fc6320add",
+  "architectDataSha256": "7ac249cb9f0300f913622c60afa75f17f69c08cd74b0db2c6150e37104c188fb",
+  "metadataSha256": "897d7fd9f63714a020261d9b0ca50bc0b3988af3ccd0522ecc72a64cc23edf0d",
+  "sourceLibrarySha256": "e87dd78ac5c5f1c0f5163a51e6c60dc2de181a1db7eaebbf9519912ae2172584",
+  "checkerSha256": "2f5046a8d4e94058ee280a78d85b3c41b5fc93e69839b44bf72529a857cc026c",
+  "savedLibrarySha256": "cf86897951e3f68dd6a52bc6bc7a7bb8f93fa88200b0174032b6416d79dc3b3b",
+  "savedGraphSha256": "39a0c672c687097a14043cc9b1675de425b7c455f84b14cf2218d017800fe4ca",
+  "ownershipLedgerSha256": "ab4522f9e493aac9ae65f24c80192a58448ee6ada93da83204f229fabef45bc8",
+  "checks": [
+    {
+      "name": "one_saved_library_owner",
+      "passed": true
+    },
+    {
+      "name": "one_saved_table_record",
+      "passed": true
+    },
+    {
+      "name": "table_record_identity",
+      "passed": true,
+      "buildingId": "27710889-cb38-43e6-a196-cc7fc6320add"
+    },
+    {
+      "name": "table_and_library_building_identity",
+      "passed": true
+    },
+    {
+      "name": "table_projection_origin",
+      "passed": true
+    },
+    {
+      "name": "saved_source_forms",
+      "passed": true,
+      "depotForms": 14
+    },
+    {
+      "name": "authored_graph_fields_and_palette",
+      "passed": true,
+      "graphNodes": 69
+    },
+    {
+      "name": "complete_unique_block_ledger",
+      "passed": true
+    },
+    {
+      "name": "unique_nonempty_ownership_tokens",
+      "passed": true
+    },
+    {
+      "name": "actual_saved_architect_table",
+      "passed": true
+    },
+    {
+      "name": "actual_saved_copycat_states",
+      "passed": true,
+      "blocks": 6662,
+      "savedChunks": 15
+    },
+    {
+      "name": "actual_saved_copycat_ownership",
+      "passed": true
+    },
+    {
+      "name": "saved_copycat_geometry_and_material_fields",
+      "passed": true
+    },
+    {
+      "name": "restart_preserves_saved_data_library_graph_and_ownership",
+      "passed": true
+    },
+    {
+      "name": "create_client_process_completed",
+      "passed": true
+    },
+    {
+      "name": "reload_client_process_completed",
+      "passed": true
+    }
+  ],
+  "beforeRestartFingerprints": {
+    "architectDataSha256": "7ac249cb9f0300f913622c60afa75f17f69c08cd74b0db2c6150e37104c188fb",
+    "metadataSha256": "897d7fd9f63714a020261d9b0ca50bc0b3988af3ccd0522ecc72a64cc23edf0d",
+    "savedLibrarySha256": "cf86897951e3f68dd6a52bc6bc7a7bb8f93fa88200b0174032b6416d79dc3b3b",
+    "savedGraphSha256": "39a0c672c687097a14043cc9b1675de425b7c455f84b14cf2218d017800fe4ca",
+    "ownershipLedgerSha256": "ab4522f9e493aac9ae65f24c80192a58448ee6ada93da83204f229fabef45bc8"
+  },
+  "empty_graph_groups_default_comparison": {
+    "persistedLibraryCharacters": 173615,
+    "currentDefaultSerializationCharacters": 173631,
+    "addedFields": [
+      {
+        "path": "buildings/industrial_depot_lichtwerk@1/graph/nodeGroups",
+        "value": []
+      }
+    ]
+  },
+  "runtimeLogs": {
+    "create": {
+      "path": "/home/alex/Dokumente/VoxelTeuton/Modding/Copycat Architect/build/industrial-depot-client-create.log",
+      "sha256": "cd25f23f2ba97cc9ad21df17674551125b183d429f957e2d873ac0113fb6870f",
+      "milestones": [
+        "ARCHITECT INDUSTRIAL DEPOT SITE READY: origin=P(x=256, y=74, z=256) table=P(x=310, y=74, z=268); no depot blocks placed yet",
+        "ARCHITECT INDUSTRIAL DEPOT FORMS NETWORK SAVED: 14 authoritative forms",
+        "ARCHITECT INDUSTRIAL DEPOT GRAPH NETWORK SAVED: industrial_depot_lichtwerk@1, 69 nodes",
+        "ARCHITECT INDUSTRIAL DEPOT SERVER VERIFIED: 6662 actual blocks, 15416 air cells; table=27710889-cb38-43e6-a196-cc7fc6320add, 6662 owned tokens; library=173615/180000 characters",
+        "ARCHITECT INDUSTRIAL DEPOT SERVER VERIFIED: 6662 actual blocks, 15416 air cells; table=27710889-cb38-43e6-a196-cc7fc6320add, 6662 owned tokens; library=173615/180000 characters",
+        "ARCHITECT INDUSTRIAL DEPOT CLIENT PASSED: genuine table/network form+graph saves, UI Creative Build, 6662 real world blocks, complete table ownership, five world views and table graph/build/floorplan screenshots"
+      ]
+    },
+    "reload": {
+      "path": "/home/alex/Dokumente/VoxelTeuton/Modding/Copycat Architect/build/industrial-depot-client-verify.log",
+      "sha256": "bd429b6c423abff40b1598858e474bd72c73614e1742e05f0869387433f1e647",
+      "milestones": [
+        "ARCHITECT INDUSTRIAL DEPOT SERVER VERIFIED: 6662 actual blocks, 15416 air cells; table=27710889-cb38-43e6-a196-cc7fc6320add, 6662 owned tokens; library=173631/180000 characters",
+        "ARCHITECT INDUSTRIAL DEPOT RELOAD PASSED: exact world geometry/materials, clear interiors, saved graph/form library and complete real architect-table ownership ledger survived fresh load"
+      ]
+    }
+  }
+}

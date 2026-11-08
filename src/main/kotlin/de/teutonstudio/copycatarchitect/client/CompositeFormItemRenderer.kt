@@ -3,6 +3,7 @@ package de.teutonstudio.copycatarchitect.client
 import com.mojang.blaze3d.vertex.PoseStack
 import de.teutonstudio.copycatarchitect.domain.*
 import de.teutonstudio.copycatarchitect.server.Json
+import de.teutonstudio.copycatarchitect.server.JsonNbt
 import de.teutonstudio.copycatarchitect.server.PrinterStack
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer
@@ -20,7 +21,7 @@ class CompositeFormItemRenderer:BlockEntityWithoutLevelRenderer(Minecraft.getIns
     }
     override fun renderByItem(stack:ItemStack,context:ItemDisplayContext,pose:PoseStack,buffers:MultiBufferSource,light:Int,overlay:Int) {
         val data=PrinterStack.tag(stack)
-        val key=Key(data.getString("form_definition"),data.getString("surfaces"),Math.floorMod(data.getInt("turn"),4))
+        val key=Key(JsonNbt.get(data,"form_definition"),data.getString("surfaces"),Math.floorMod(data.getInt("turn"),4))
         val model=cache.getOrPut(key) {
             runCatching {
                 val form=Geometry.validate(Json.decode<Form>(key.definition))

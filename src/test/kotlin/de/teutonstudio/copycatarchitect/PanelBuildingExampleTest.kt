@@ -82,7 +82,7 @@ class PanelBuildingExampleTest {
         assertEquals(example.building,b)
         assertEquals(plan,Generator.generate(b,bundle.forms,bundle.modules))
         assertEquals(plan,Generator.generate(gson.fromJson(gson.toJson(b),Building::class.java),bundle.forms,bundle.modules))
-        assertEquals(33024,plan.raw)
+        assertEquals(30528,plan.raw)
         assertEquals(mapOf("minecraft:oak_planks" to 136,"minecraft:stone_bricks" to 48,"minecraft:glass" to 16,"minecraft:deepslate_tiles" to 36),plan.materials)
     }
 }

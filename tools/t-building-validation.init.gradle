@@ -1,0 +1,8 @@
+// Keep the generated demonstration separate from the regular development worlds.
+gradle.projectsEvaluated {
+    rootProject.extensions.getByName('neoForge').runs.configureEach {
+        if (name == 'client') gameDirectory.set(rootProject.file('build/t-building-client'))
+        if (name == 'gameTestServer') gameDirectory.set(rootProject.file('build/t-building-server'))
+        jvmArgument('-Xmx2G')
+    }
+}

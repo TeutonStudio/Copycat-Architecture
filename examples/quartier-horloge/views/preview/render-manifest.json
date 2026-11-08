@@ -1,0 +1,83 @@
+{
+  "mesh": "/home/alex/Dokumente/VoxelTeuton/Modding/Copycat Architect/examples/quartier-horloge/plan-geometry.json",
+  "coordinate_conversion": "(X,Y,Z) -> (X,-Z,Y)",
+  "architecture": "Compiled graph geometry only; non-destructive 8 mm edge highlight",
+  "views": [
+    {
+      "file": "exterior-front.png",
+      "caption": "01 | Außenansicht · Uhrturm und Quartier",
+      "minecraft_eye": [
+        -42,
+        28,
+        -55
+      ],
+      "minecraft_target": [
+        11,
+        16,
+        17
+      ],
+      "lens_mm": 55.0,
+      "resolution": [
+        800,
+        560
+      ]
+    },
+    {
+      "file": "exterior-rear.png",
+      "caption": "02 | Außenansicht · Hof und Dachlandschaft",
+      "minecraft_eye": [
+        63,
+        32,
+        65
+      ],
+      "minecraft_target": [
+        12,
+        13,
+        19
+      ],
+      "lens_mm": 48.0,
+      "resolution": [
+        800,
+        560
+      ]
+    },
+    {
+      "file": "courtyard.png",
+      "caption": "03 | Außenansicht · Hof zwischen den Wohnhäusern",
+      "minecraft_eye": [
+        13,
+        5,
+        44
+      ],
+      "minecraft_target": [
+        13,
+        9,
+        25
+      ],
+      "lens_mm": 25.0,
+      "resolution": [
+        800,
+        560
+      ]
+    },
+    {
+      "file": "clock-detail.png",
+      "caption": "07 | Detailansicht · Uhr und exaktes Kupferdach",
+      "minecraft_eye": [
+        36,
+        28,
+        -19
+      ],
+      "minecraft_target": [
+        21.5,
+        28,
+        1
+      ],
+      "lens_mm": 50.0,
+      "resolution": [
+        800,
+        560
+      ]
+    }
+  ]
+}

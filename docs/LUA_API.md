@@ -1,4 +1,6 @@
-# Lua-API 0.4
+# Lua-API (Entwicklungsstand 0.5.1)
+
+Die Rückgabefelder `units` bezeichnen im aktuellen Stand **mB Zink**. Ein Zinkbarren liefert 144 mB, ein vollständig gefüllter Copycat-Block kostet 256 mB. Historische Feldnamen bleiben für bestehende Programme erhalten. Eine geführte Anleitung bietet die [Turtle-Wiki](wiki/Turtle-Bau.md).
 
 Drucker wie ein normales Turtle-Upgrade ausrüsten: Drucker in ausgewähltem Slot, dann `turtle.equipLeft()` oder `turtle.equipRight()`. Die bestehende Datapack-Upgrade-ID `copycat_architect:extrusion_gun` und der Peripheralname bleiben erhalten. Für die physische Druckersteuerung benötigt die Turtle zusätzlich einen Drucker in ihrem Inventar; das ausgerüstete Upgrade wird dabei weder verbraucht noch dupliziert.
 
@@ -60,7 +62,7 @@ if not ready then
     architect.printerCancel("front", session.session)
     error(preview)
 end
-print(preview.units, "Zinkeinheiten")
+print(preview.units, "mB Zink")
 local printed, result = architect.printerPrint("front", session.session)
 if not printed then
     -- Ressourcen nachlegen und mit derselben Sitzung erneut drucken oder abbrechen.
@@ -74,7 +76,7 @@ print(form.key)
 
 ```lua
 local ok, cost = architect.cost("inner@1")
-if ok then print(cost.units, "Zinkeinheiten") end
+if ok then print(cost.units, "mB Zink") end
 local ok, result = architect.place("front", "inner@1", "minecraft:oak_planks", 0)
 if not ok then print(result) end
 ```

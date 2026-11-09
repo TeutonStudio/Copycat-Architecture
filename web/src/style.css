@@ -228,8 +228,9 @@ button.primary:hover:not(:disabled) { background: #cef6e9; }
 .copycat-detail-heading h3 { font-size: 21px; margin: 5px 0 0; }
 .copycat-detail-heading p { color: var(--muted); font-size: 11px; margin: 6px 0 0; }
 .copycat-preview-stage { position: relative; flex: 1; min-height: 140px; }
-.copycat-preview-stage > .viewer { height: 100%; min-height: 0; }
-.copycat-preview-stage.is-pending > .viewer { visibility: hidden; }
+.copycat-preview-stage > .viewer-with-sides { height: 100%; min-height: 0; }
+.copycat-preview-stage .viewer { min-height: 0; flex: 1 1 0; }
+.copycat-preview-stage.is-pending > .viewer-with-sides { visibility: hidden; }
 .copycat-detail-info { padding: 12px 20px 18px; font-size: 11px; line-height: 1.6; color: var(--muted); }
 .copycat-detail-info p { margin: 0 0 5px; }
 .copycat-detail-info p:first-child { color: #d2e4df; }

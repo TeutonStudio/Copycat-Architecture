@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { useWorkspace } from './Workspace.jsx'
+import { axisColors, sides } from './orientation.js'
 
 const colors = {
   body: '#8ba4a2', cap: '#d29763', 'minecraft:stone_bricks': '#979999',
@@ -35,8 +36,9 @@ function referenceFrame(group) {
   bounds.max.copy(bounds.min).add(size)
   const geometry = new THREE.CylinderGeometry(1, 1, 1, 8)
   const material = (color, opacity) => new THREE.MeshBasicMaterial({ color, opacity, transparent: true, depthTest: false, depthWrite: false, toneMapped: false })
-  const front = material('#f5f6f2', 0.95)
-  const back = material('#87919d', 0.42)
+  const surfaces = ['x', 'y', 'z'].map(axis => ({
+    front: material(axisColors[axis], 0.95), back: material(axisColors[axis], 0.42)
+  }))
   const markFront = material('#ff8b2d', 0.98)
   const markBack = material('#ff8b2d', 0.38)
   const cylinder = (position, direction, length, surface) => {
@@ -50,6 +52,7 @@ function referenceFrame(group) {
   }
   const edges = []
   for (let axis = 0; axis < 3; axis++) {
+    const { front, back } = surfaces[axis]
     const others = [0, 1, 2].filter(value => value !== axis)
     const direction = new THREE.Vector3().setComponent(axis, 1)
     for (const first of [0, 1]) for (const second of [0, 1]) {
@@ -62,10 +65,10 @@ function referenceFrame(group) {
         const position = start.clone().addScaledVector(direction, size.getComponent(axis) * fraction)
         return { mesh: cylinder(position, new THREE.Vector3(0, 1, 0), 0.05, markFront), major: fraction === 0.5 }
       })
-      edges.push({ mesh, marks, direction, faces: [{ axis: others[0], sign: first ? 1 : -1 }, { axis: others[1], sign: second ? 1 : -1 }] })
+      edges.push({ mesh, marks, direction, front, back, faces: [{ axis: others[0], sign: first ? 1 : -1 }, { axis: others[1], sign: second ? 1 : -1 }] })
     }
   }
-  group.userData.reference = { edges, front, back, markFront, markBack }
+  group.userData.reference = { edges, markFront, markBack }
   return bounds
 }
 
@@ -76,7 +79,7 @@ function updateReferenceFrame(group, camera, height) {
   const up = new THREE.Vector3(0, 1, 0)
   for (const edge of reference.edges) {
     const visible = edge.faces.some(face => face.sign * (camera.position.getComponent(face.axis) - edge.mesh.position.getComponent(face.axis)) > 0)
-    edge.mesh.material = visible ? reference.front : reference.back
+    edge.mesh.material = visible ? edge.front : edge.back
     edge.mesh.renderOrder = visible ? 3 : 2
     const radius = unitsPerPixel(edge.mesh.position) * (visible ? 0.9 : 0.55)
     edge.mesh.scale.x = radius
@@ -96,9 +99,52 @@ function updateReferenceFrame(group, camera, height) {
   }
 }
 
+function groundCompass(group, bounds) {
+  if (bounds.isEmpty()) return
+  const center = bounds.getCenter(new THREE.Vector3())
+  const size = bounds.getSize(new THREE.Vector3())
+  const diameter = Math.max(size.x, size.z, 1) * 2.5
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = 1024
+  const context = canvas.getContext('2d')
+  context.translate(512, 512)
+  context.strokeStyle = '#8fbbb4'; context.fillStyle = '#d9eee9'; context.lineWidth = 7
+  context.beginPath(); context.arc(0, 0, 440, 0, Math.PI * 2); context.stroke()
+  for (const [label, x, z] of [['Nord', 0, -1], ['Ost', 1, 0], ['Süd', 0, 1], ['West', -1, 0]]) {
+    context.beginPath(); context.moveTo(x * 255, z * 255); context.lineTo(x * 300, z * 300); context.stroke()
+  }
+  context.fillStyle = '#eead7f'
+  context.beginPath(); context.moveTo(0, -325); context.lineTo(-18, -280); context.lineTo(18, -280); context.closePath(); context.fill()
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(diameter, diameter), new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide, depthWrite: false, toneMapped: false }))
+  plane.rotation.x = -Math.PI / 2
+  plane.position.set(center.x, bounds.min.y - Math.max(size.length() * 0.03, 0.08), center.z)
+  group.add(plane)
+  const labels = []
+  for (const [label, x, z] of [['Nord', 0, -1], ['Ost', 1, 0], ['Süd', 0, 1], ['West', -1, 0]]) {
+    const text = document.createElement('canvas')
+    text.width = 384; text.height = 160
+    const ink = text.getContext('2d')
+    ink.fillStyle = '#d9eee9'; ink.font = 'bold 112px system-ui'
+    ink.textAlign = 'center'; ink.textBaseline = 'middle'; ink.fillText(label, 192, 80)
+    const map = new THREE.CanvasTexture(text)
+    map.colorSpace = THREE.SRGBColorSpace
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(diameter * 384 / 1024, diameter * 160 / 1024), new THREE.MeshBasicMaterial({ map, transparent: true, side: THREE.DoubleSide, depthWrite: false, toneMapped: false }))
+    mesh.rotation.x = -Math.PI / 2
+    mesh.position.set(center.x + x * diameter * 360 / 1024, plane.position.y + 0.002, center.z + z * diameter * 360 / 1024)
+    group.add(mesh); labels.push(mesh)
+  }
+  group.userData.labels = labels
+  group.userData.bounds = new THREE.Box3(
+    new THREE.Vector3(center.x - diameter * 0.55, plane.position.y, center.z - diameter * 0.55),
+    new THREE.Vector3(center.x + diameter * 0.55, plane.position.y, center.z + diameter * 0.55))
+}
+
 export function Viewer({ plan, blockFrame, catalog }) {
   const container = useRef(null)
   const viewer = useRef(null)
+  const [activeSide, setActiveSide] = useState('')
   const [error, setError] = useState('')
   const [textureWarning, setTextureWarning] = useState('')
   useEffect(() => {
@@ -120,9 +166,23 @@ export function Viewer({ plan, blockFrame, catalog }) {
     const controls = new OrbitControls(camera, renderer.domElement)
     const render = () => {
       updateReferenceFrame(guides, camera, element.clientHeight)
+      // Rotate only the lettering around world Y; compass anchors stay fixed.
+      const groundCenter = ground.userData.bounds?.getCenter(new THREE.Vector3())
+      if (groundCenter) {
+        const offset = camera.position.clone().sub(groundCenter)
+        if (Math.hypot(offset.x, offset.z) > 0.001) {
+          for (const label of ground.userData.labels ?? []) {
+            const direction = camera.position.clone().sub(label.position)
+            const yaw = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(direction.x, direction.z))
+            label.rotation.set(-Math.PI / 2, 0, 0)
+            label.quaternion.premultiply(yaw)
+          }
+        }
+      }
       renderer.render(scene, camera)
     }
     controls.addEventListener('change', render)
+    controls.addEventListener('start', () => setActiveSide(''))
     scene.add(new THREE.HemisphereLight('#e8f5ff', '#525764', 2.35))
     const sun = new THREE.DirectionalLight('#fff2d8', 2.1)
     sun.position.set(4, 7, 3)
@@ -131,6 +191,8 @@ export function Viewer({ plan, blockFrame, catalog }) {
     scene.add(model)
     const guides = new THREE.Group()
     scene.add(guides)
+    const ground = new THREE.Group()
+    scene.add(ground)
     let measured = false
     const resize = new ResizeObserver(() => {
       const { clientWidth: width, clientHeight: height } = element
@@ -151,12 +213,13 @@ export function Viewer({ plan, blockFrame, catalog }) {
       render()
     })
     resize.observe(element)
-    viewer.current = { model, guides, camera, controls, render, bounds: null }
+    viewer.current = { model, guides, ground, camera, controls, render, bounds: null }
     return () => {
       resize.disconnect()
       controls.dispose()
       dispose(model)
       dispose(guides)
+      dispose(ground)
       renderer.dispose()
       renderer.forceContextLoss()
       renderer.domElement.remove()
@@ -164,14 +227,18 @@ export function Viewer({ plan, blockFrame, catalog }) {
     }
   }, [])
 
-  const fit = () => {
+  const fit = (side = null) => {
     const view = viewer.current
     if (!view?.bounds || view.bounds.isEmpty()) return
-    const center = view.bounds.getCenter(new THREE.Vector3())
-    const radius = Math.max(view.bounds.getSize(new THREE.Vector3()).length() / 2, 0.75)
+    const fitBounds = view.bounds.clone()
+    if (!side && view.ground.userData.bounds) fitBounds.union(view.ground.userData.bounds)
+    const center = fitBounds.getCenter(new THREE.Vector3())
+    const radius = Math.max(fitBounds.getSize(new THREE.Vector3()).length() / 2, 0.75)
     const angle = Math.min(Math.tan(view.camera.fov * Math.PI / 360), Math.tan(view.camera.fov * Math.PI / 360) * view.camera.aspect)
     view.controls.target.copy(center)
-    view.camera.position.copy(center).addScaledVector(new THREE.Vector3(1, 0.72, 1.1).normalize(), radius / angle * 1.08)
+    view.camera.up.set(...(side?.up ?? [0, 1, 0]))
+    view.camera.position.copy(center).addScaledVector(new THREE.Vector3(...(side?.direction ?? [1, 0.72, 1.1])).normalize(), radius / angle * 1.08)
+    setActiveSide(side?.id ?? '')
     view.controls.update()
     view.render()
   }
@@ -273,15 +340,23 @@ export function Viewer({ plan, blockFrame, catalog }) {
     const singleBlock = bounds.isEmpty() || (bounds.min.x >= 0 && bounds.min.y >= 0 && bounds.min.z >= 0 && bounds.max.x <= 1 && bounds.max.y <= 1 && bounds.max.z <= 1 && Math.max(size.x, size.y, size.z) <= 1)
     view.guides.userData.reference = null
     view.bounds = blockFrame && singleBlock ? referenceFrame(view.guides) : bounds
+    dispose(view.ground); view.ground.clear(); view.ground.userData.bounds = null
+    groundCompass(view.ground, view.bounds)
     if (first || (view.guides.userData.reference && !hadBlockFrame)) fit()
     view.render()
     return () => { live = false }
   }, [plan, blockFrame, catalog])
 
-  return <div className="viewer" ref={container}>
-    <button type="button" className="fit3d" onClick={fit}>3D einpassen</button>
-    {error && <p className="preview-error" role="status">{error}</p>}
-    {textureWarning && <p className="texture-warning" role="status">{textureWarning}</p>}
+  return <div className="viewer-with-sides">
+    <div className="preview-sides" role="group" aria-label="Seitenansicht wählen">
+      {sides.map(side => <button key={side.id} type="button" aria-pressed={activeSide === side.id}
+        aria-label={`Ansicht ${side.label}`} onClick={() => fit(side)}>{side.label}</button>)}
+    </div>
+    <div className="viewer" ref={container}>
+      <button type="button" className="fit3d" onClick={() => fit()}>3D einpassen</button>
+      {error && <p className="preview-error" role="status">{error}</p>}
+      {textureWarning && <p className="texture-warning" role="status">{textureWarning}</p>}
+    </div>
   </div>
 }
 
@@ -359,7 +434,7 @@ export default function Preview({ mode, document, library, selected, previewMode
     </div>
     {result.plan?.value && <p className="preview-meta">{result.plan.value}</p>}
     {result.plan?.warnings?.map((warning, index) => <p className="preview-meta" key={index}>{warning}</p>)}
-    <p className="axis-legend"><span>X</span> Ost/West · <span>Y</span> Höhe · <span>Z</span> Süd/Nord
+    <p className="axis-legend"><span style={{color:axisColors.x}}>West (−X) · Ost (+X)</span> · <span style={{color:axisColors.y}}>Unten (−Y) · Oben (+Y)</span><br /><span style={{color:axisColors.z}}>Nord (−Z) · Süd (+Z)</span>
       {blockFrame && <><br />Rahmen: 16 hB · lange Marke: 8 hB · kurze Marken: 4 / 12 hB</>}</p>
     {result.plan?.materials && <details className="materials"><summary>Materialbedarf</summary>
       {Object.entries(result.plan.materials).map(([id, count]) => <div key={id}><code>{id}</code><span>{count}</span></div>)}

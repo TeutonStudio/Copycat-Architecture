@@ -343,7 +343,11 @@
       "roomConfig": null,
       "facade": null,
       "features": null,
-      "attachments": null
+      "attachments": null,
+      "rotation": null,
+      "mirroring": null,
+      "rotations": null,
+      "mirrors": null
     },
     "semanticPorts": [
       {"key": "semantic:room:filler", "path": ["roomLayout", "filler"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"]},
@@ -751,20 +755,57 @@
       "SEGMENT_MIRROR": {
         "labelKey": "bg_segment_mirror",
         "output": "SEGMENT_MIRROR",
-        "defaults": {"inputs": [""], "rotationAxis": "X"},
+        "defaults": {
+          "inputs": [
+            ""
+          ],
+          "rotationAxis": "X"
+        },
         "alwaysExplicit": true,
         "ports": [
-          {"key": "in:0", "path": ["inputs", "0"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"]}
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "SEGMENT",
+              "PATTERN",
+              "SEGMENT_MIRROR",
+              "SEGMENT_ROTATE",
+              "SEGMENT_UNION",
+              "SEGMENT_INTERSECTION",
+              "SEGMENT_DIFFERENCE",
+              "SEGMENT_SYMMETRIC_DIFFERENCE"
+            ]
+          },
+          {
+            "key": "mirroring",
+            "path": [
+              "mirroring"
+            ],
+            "accepts": [
+              "MIRRORING"
+            ]
+          }
         ],
         "fields": {
           "rotationAxis": {
             "labelKey": "rotation_axis",
-            "choices": ["X", "Y", "Z"]
+            "choices": [
+              "X",
+              "Y",
+              "Z"
+            ]
           },
           "mirrorPositionsOnly": {},
           "materialMode": {
             "labelKey": "material_mode",
-            "choices": ["SEPARATED", "GROUPED"]
+            "choices": [
+              "SEPARATED",
+              "GROUPED"
+            ]
           },
           "role": {
             "labelKey": "role"
@@ -775,30 +816,109 @@
       "COPYCAT_MIRROR": {
         "labelKey": "bg_copycat_mirror",
         "output": "COPYCAT_MIRROR",
-        "defaults": {"inputs": [""], "mirror": {"plane": "X"}},
+        "defaults": {
+          "inputs": [
+            ""
+          ],
+          "mirror": {
+            "plane": "X"
+          }
+        },
         "alwaysExplicit": true,
         "ports": [
-          {"key": "in:0", "path": ["inputs", "0"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"]}
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "COPYCAT",
+              "COPYCAT_MIRROR",
+              "COPYCAT_ROTATE",
+              "COPYCAT_UNION",
+              "COPYCAT_INTERSECTION",
+              "COPYCAT_DIFFERENCE",
+              "COPYCAT_SYMMETRIC_DIFFERENCE"
+            ]
+          },
+          {
+            "key": "mirroring",
+            "path": [
+              "mirroring"
+            ],
+            "accepts": [
+              "MIRRORING"
+            ]
+          }
         ],
         "fields": {
           "mirror.plane": {
             "labelKey": "mirror_plane",
-            "choices": ["X", "Y", "Z", "XY", "XY_NEGATIVE", "XZ", "XZ_NEGATIVE", "YZ", "YZ_NEGATIVE", "BODY_PPP", "BODY_PPN", "BODY_PNP", "BODY_PNN"]
+            "choices": [
+              "X",
+              "Y",
+              "Z",
+              "XY",
+              "XY_NEGATIVE",
+              "XZ",
+              "XZ_NEGATIVE",
+              "YZ",
+              "YZ_NEGATIVE",
+              "BODY_PPP",
+              "BODY_PPN",
+              "BODY_PNP",
+              "BODY_PNN"
+            ]
           }
         }
       },
       "SEGMENT_ROTATE": {
         "labelKey": "bg_segment_rotate",
         "output": "SEGMENT_ROTATE",
-        "defaults": {"inputs": [""], "quarterTurns": 1},
+        "defaults": {
+          "inputs": [
+            ""
+          ],
+          "quarterTurns": 1
+        },
         "alwaysExplicit": true,
         "ports": [
-          {"key": "in:0", "path": ["inputs", "0"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"]}
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "SEGMENT",
+              "PATTERN",
+              "SEGMENT_MIRROR",
+              "SEGMENT_ROTATE",
+              "SEGMENT_UNION",
+              "SEGMENT_INTERSECTION",
+              "SEGMENT_DIFFERENCE",
+              "SEGMENT_SYMMETRIC_DIFFERENCE"
+            ]
+          },
+          {
+            "key": "rotation",
+            "path": [
+              "rotation"
+            ],
+            "accepts": [
+              "ROTATION"
+            ]
+          }
         ],
         "fields": {
           "rotationAxis": {
             "labelKey": "rotation_axis",
-            "choices": ["X", "Y", "Z"]
+            "choices": [
+              "X",
+              "Y",
+              "Z"
+            ]
           },
           "quarterTurns": {
             "labelKey": "rotation_angle",
@@ -811,15 +931,48 @@
       "COPYCAT_ROTATE": {
         "labelKey": "bg_copycat_rotate",
         "output": "COPYCAT_ROTATE",
-        "defaults": {"inputs": [""], "quarterTurns": 1},
+        "defaults": {
+          "inputs": [
+            ""
+          ],
+          "quarterTurns": 1
+        },
         "alwaysExplicit": true,
         "ports": [
-          {"key": "in:0", "path": ["inputs", "0"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"]}
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "COPYCAT",
+              "COPYCAT_MIRROR",
+              "COPYCAT_ROTATE",
+              "COPYCAT_UNION",
+              "COPYCAT_INTERSECTION",
+              "COPYCAT_DIFFERENCE",
+              "COPYCAT_SYMMETRIC_DIFFERENCE"
+            ]
+          },
+          {
+            "key": "rotation",
+            "path": [
+              "rotation"
+            ],
+            "accepts": [
+              "ROTATION"
+            ]
+          }
         ],
         "fields": {
           "rotationAxis": {
             "labelKey": "rotation_axis",
-            "choices": ["X", "Y", "Z"]
+            "choices": [
+              "X",
+              "Y",
+              "Z"
+            ]
           },
           "quarterTurns": {
             "labelKey": "rotation_angle",
@@ -1206,6 +1359,39 @@
           "role": {
             "labelKey": "role"
           }
+        }
+      },
+      "ROTATION": {
+        "labelKey": "bg_rotation",
+        "output": "ROTATION",
+        "alwaysExplicit": true,
+        "defaults": {
+          "rotations": [
+            {
+              "axis": "Y",
+              "quarterTurns": 1
+            }
+          ]
+        },
+        "ports": [],
+        "fields": {
+          "rotations": {}
+        }
+      },
+      "MIRRORING": {
+        "labelKey": "bg_mirroring",
+        "output": "MIRRORING",
+        "alwaysExplicit": true,
+        "defaults": {
+          "mirrors": [
+            {
+              "plane": "X"
+            }
+          ]
+        },
+        "ports": [],
+        "fields": {
+          "mirrors": {}
         }
       }
     }

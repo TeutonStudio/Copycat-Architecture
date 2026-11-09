@@ -12,14 +12,14 @@ import kotlin.js.json
 // be rejected before a preview or export can silently discard them.
 private val browserFormKinds=listOf(NodeKind.INPUT,NodeKind.UNION,NodeKind.INTERSECTION,NodeKind.DIFFERENCE,NodeKind.SYMMETRIC_DIFFERENCE,NodeKind.ROTATE,NodeKind.ROTATION,NodeKind.OUTPUT,NodeKind.SAVED,NodeKind.MIRROR)
 private val browserBuildingKinds=listOf(
-    BuildingKind.COPYCAT,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_MIRROR,
+    BuildingKind.ROTATION,BuildingKind.MIRRORING,BuildingKind.COPYCAT,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_MIRROR,
     BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE,
     BuildingKind.SEGMENT,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR,
     BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,
     BuildingKind.PATTERN,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.ROOM,BuildingKind.STOREY,BuildingKind.ROOF,BuildingKind.BUILDING
 )
 private val browserFormFields=setOf("id","kind","inputs","part","x","y","materialMode","materialGroup","previewGroup","inputGroups","rotationAxis","quarterTurns","savedCopycat","mirror")
-private val browserBuildingFields=setOf("id","kind","name","x","y","inputs","module","block","length","height","rectangles","walls","floor","ceiling","offsets","form","thickness","occupied","finish","levels","roof","roofType","ridge","overhang","materialMode","role","preview","storeyMode","corner","surfaces","rotationAxis","quarterTurns","mirror","mirrorPositionsOnly","patternAxis","transforms")
+private val browserBuildingFields=setOf("id","kind","name","x","y","inputs","module","block","length","height","rectangles","walls","floor","ceiling","offsets","form","thickness","occupied","finish","levels","roof","roofType","ridge","overhang","materialMode","role","preview","storeyMode","corner","surfaces","rotationAxis","quarterTurns","mirror","mirrorPositionsOnly","patternAxis","transforms","rotation","mirroring","rotations","mirrors")
 private fun browserNode(value:dynamic,isBuilding:Boolean):dynamic {
     val kind=string(value,"kind",if(isBuilding) "SEGMENT" else "INPUT")
     require(if(isBuilding) browserBuildingKinds.any { it.name==kind } else browserFormKinds.any { it.name==kind }) { "$kind requires the native editor" }
@@ -134,6 +134,9 @@ private fun buildingNode(raw: dynamic): BuildingNode {
     role = string(v, "role", "wall"), preview = string(v, "preview", "all"), storeyMode = string(v, "storeyMode", "rooms"),
     corner = string(v, "corner"), surfaces = if(v.surfaces==null) null else map(v.surfaces) { obj,key -> string(obj,key) },
     rotationAxis=RotationAxis.valueOf(string(v,"rotationAxis","Y")),quarterTurns=int(v,"quarterTurns",0),mirror=mirror(v.mirror),
+    rotation=string(v,"rotation").takeIf(String::isNotEmpty),mirroring=string(v,"mirroring").takeIf(String::isNotEmpty),
+    rotations=array(v,"rotations")?.map { SegmentRotation(RotationAxis.valueOf(string(it,"axis","Y")),int(it,"quarterTurns",0)) },
+    mirrors=array(v,"mirrors")?.map { requireNotNull(mirror(it)) },
     mirrorPositionsOnly=if(v.mirrorPositionsOnly==null) null else bool(v,"mirrorPositionsOnly"),
     patternAxis=string(v,"patternAxis","horizontal"),transforms=array(v,"transforms")?.map { t ->
         SegmentTransform(if(t.offset==null) P() else point(t.offset),RotationAxis.valueOf(string(t,"axis","Y")),int(t,"quarterTurns",0))
@@ -150,6 +153,9 @@ private fun BuildingNode.jsNode() = json(
     "ridge" to ridge, "overhang" to overhang, "materialMode" to materialMode.name, "role" to role, "preview" to preview,
     "storeyMode" to storeyMode, "corner" to corner, "surfaces" to surfaces?.asJson(),
     "rotationAxis" to rotationAxis.name,"quarterTurns" to quarterTurns,"mirror" to mirror?.let { json("plane" to it.plane.name) },
+    "rotation" to rotation.orEmpty(),"mirroring" to mirroring.orEmpty(),
+    "rotations" to rotations?.map { json("axis" to it.axis.name,"quarterTurns" to it.quarterTurns) }?.toTypedArray(),
+    "mirrors" to mirrors?.map { json("plane" to it.plane.name) }?.toTypedArray(),
     "mirrorPositionsOnly" to mirrorPositionsOnly,"patternAxis" to patternAxis,"transforms" to transforms.map {
         json("offset" to it.offset.jsPoint(),"axis" to it.axis.name,"quarterTurns" to it.quarterTurns)
     }.toTypedArray()
@@ -231,6 +237,8 @@ fun newNode(isBuilding: Boolean, kind: String, id: String, x: Int, y: Int): Json
             module = "", role = if (type == BuildingKind.ROOF) "roof" else "wall",
             rotationAxis=if(type==BuildingKind.SEGMENT_MIRROR) RotationAxis.X else RotationAxis.Y,
             quarterTurns=if(type in setOf(BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT_ROTATE)) 1 else 0,
+            rotations=if(type==BuildingKind.ROTATION) listOf(SegmentRotation(RotationAxis.Y,1)) else null,
+            mirrors=if(type==BuildingKind.MIRRORING) listOf(CopycatMirror()) else null,
             mirror=if(type==BuildingKind.COPYCAT_MIRROR) CopycatMirror() else null)
         return node.jsNode()
     }
@@ -296,6 +304,12 @@ fun previewGraph(isBuilding: Boolean, document: dynamic, library: dynamic, selec
     val forms = map(library.forms) { obj, key -> form(obj[key]) }
     val modules = map(library.modules) { obj, key -> module(obj[key]) }
     val graph = requireNotNull(b.graph)
+    val selectedNode=graph.nodes.firstOrNull { it.id==selected }
+    if(selectedNode?.kind in setOf(BuildingKind.ROTATION,BuildingKind.MIRRORING)) {
+        BuildingGraphCompiler.structure(graph)
+        val value=if(selectedNode!!.kind==BuildingKind.ROTATION) selectedNode.rotations.orEmpty().joinToString(" → ") { "${it.axis}: ${it.quarterTurns*90}°" } else selectedNode.mirrors.orEmpty().joinToString(" → ") { it.plane.name }
+        return json("count" to 0,"raw" to 0,"meshes" to emptyArray<Json>(),"value" to value.ifEmpty { "Identität (leere Liste)" })
+    }
     val plan = if(selected.isEmpty()) BuildingGraphCompiler.compile(b,forms,modules).plan
         else BuildingGraphCompiler.Evaluation(graph,b.palette,forms,modules).let { evaluation ->
             if(graph.nodes.first { it.id==selected }.kind in setOf(BuildingKind.FLOOR,BuildingKind.CEILING)) evaluation.contextualPlatePreview(selected) else evaluation.preview(selected)
@@ -363,6 +377,11 @@ fun arrangementGraph(document:dynamic,library:dynamic,selected:String,view:Strin
             "items" to node.inputs.mapIndexed { i,id -> json("id" to id,"label" to graph.nodes.first { it.id==id }.let { it.name.ifBlank { id } },
                 "cells" to draft.projected(i,plane).map { arrayOf(it.x,it.z) }.toTypedArray()) }.toTypedArray())
     }
+    if(node.kind==BuildingKind.SEGMENT_UNION) return json("items" to node.inputs.mapIndexed { i,id ->
+        val offset=node.offsets.getOrNull(i) ?: P()
+        json("id" to id,"label" to graph.nodes.first { it.id==id }.let { it.name.ifBlank { id } },
+            "cells" to evaluation.segment(id).cells.filter { !it.cell.empty && it.cell.block!="minecraft:air" }.map { plane.project(it.cell.pos+offset) }.toSet().map { arrayOf(it.x,it.z) }.toTypedArray())
+    }.toTypedArray())
     require(node.kind==BuildingKind.STOREY && node.storeyMode=="rooms") { "Select a segment pattern or storey made from rooms" }
     return json("items" to node.inputs.mapIndexed { i,id ->
         val plan=evaluation.preview(id)

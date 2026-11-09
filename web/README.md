@@ -54,7 +54,7 @@ veröffentlicht erfolgreiche Builds von `master`. Die Wiki-Seite
 
 ## Vorschau und Orientierung
 
-**Graph** wertet das endgültige Ergebnis aus, **Selektiert** den angeklickten Knoten. Die gemeinsame Domänenlogik stellt dafür `GraphCompiler.intermediate` und `BuildingGraphCompiler.Evaluation.preview` bereit. Boden/Decke verwenden einen verbundenen Grundriss, ohne andere Raumzweige auszuwerten; das Dach benötigt den Gebäudekontext. Rotationswerte werden als typisierte Werte angezeigt.
+**Graph** wertet das endgültige Ergebnis aus, **Selektiert** den angeklickten Knoten. Die gemeinsame Domänenlogik stellt dafür `GraphCompiler.intermediate` und `BuildingGraphCompiler.Evaluation.preview` bereit. Boden/Decke verwenden einen verbundenen Grundriss, ohne andere Raumzweige auszuwerten; das Dach benötigt den Gebäudekontext. Rotationswerte werden als typisierte Werte angezeigt. Knotenwechsel erhalten Kameraposition, Blickziel und Zoom; „3D einpassen“ setzt die Ansicht ausdrücklich neu.
 
 Im Formmodus bleibt der Referenzrahmen eine volle Blockzelle, mit 16 hB je Achse. X/Y/Z entsprechen den Minecraft-Weltachsen. Rahmenkanten und Legende verwenden dieselben Achsenfarben: X rot, Y grün und Z blau. Verdeckte Kanten behalten ihre Achsenfarbe mit geringerer Deckkraft. Der Bodenkompass zeigt Nord, Ost, Süd und West an festen Weltpositionen; seine Beschriftungen drehen sich innerhalb der Bodenebene zur Kamera. Oben-/Unten-Markierungen entfallen. Die sechs Seitenansichten und „3D einpassen“ richten die Kamera aus. Die Seitenleiste teilt eine feste Gesamthöhe mit dem Graphen, solange mindestens einer ihrer Bereiche offen ist. Beide Splitter unterstützen Pointer- und Tastaturbedienung.
 
@@ -123,7 +123,16 @@ Alle sechs Operationen sind im Gebäudegraphen für beide Wertfamilien vorhanden
 | Differenz A − B | `COPYCAT_DIFFERENCE` | `SEGMENT_DIFFERENCE` |
 | Symmetrische Differenz | `COPYCAT_SYMMETRIC_DIFFERENCE` | `SEGMENT_SYMMETRIC_DIFFERENCE` |
 
-Rotation und Spiegelung bieten im Browser X/Y/Z; Segmentspiegelung kann
+Die separaten Werte-Knoten `ROTATION` und `MIRRORING` enthalten geordnete Listen
+mit X/Y/Z und Vierteldrehungen bzw. Spiegelebenen. Im Inspektor lassen sich
+Schritte hinzufügen, entfernen und umsortieren. Die passenden Werteingänge an
+Copycat- und Segmentoperatoren akzeptieren ausschließlich den jeweiligen Typ.
+Leere Listen entsprechen der Identität. Bestehende Graphen ohne Werteverbindung
+verwenden weiter ihre direkt gespeicherten Einstellungen.
+
+Die Grundformauswahl bietet außerdem „Leere Copycat“ als explizite leere Quelle.
+
+Segmentspiegelung kann
 wahlweise nur Positionen oder Positionen samt Zellgeometrie spiegeln.
 Die booleschen Knoten akzeptieren 2–16 geordnete Eingänge, Differenz genau zwei.
 Copycat-Ergebnisse bleiben mit Copycat-Eingängen verbindbar, Segmentergebnisse
@@ -137,9 +146,13 @@ enthält sie noch nicht.
 
 ## 2D-Anordnungsraster
 
-Das 2D-Raster im Inspektor ordnet Segmente am Wandmuster (X/Y, X/Z, Z/Y) und
+Das 2D-Raster im Inspektor ordnet Segmente am Wandmuster und bei der
+Segment-Vereinigung (X/Y, X/Z, Z/Y) sowie
 Rauminstanzen am Geschoss (X/Z) an. Ziehen und Pfeiltasten verwenden ganze
-Blöcke. Segmentinstanzen besitzen zusätzlich Drehachse und Vierteldrehung.
+Blöcke. Bei der Vereinigung wirken die Versätze auf die tatsächliche Geometrie.
+Negative Versätze verschieben den gemeinsamen lokalen Ursprung, damit die
+resultierenden Segmentkoordinaten nichtnegativ bleiben; die relative Lage bleibt
+erhalten. Wandmuster-Instanzen besitzen zusätzlich Drehachse und Vierteldrehung.
 Übernehmen prüft das Ergebnis und erzeugt einen gemeinsamen Undo-Schritt;
 Verwerfen lässt das Dokument unverändert. Native `transforms`, `patternAxis`
 und `offsets` bleiben beim JSON-Austausch erhalten.

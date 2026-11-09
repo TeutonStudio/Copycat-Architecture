@@ -63,7 +63,7 @@ export function insertNodeGroup(document, template, idFactory = () => `node_${cr
       if (node.materialMode === 'GROUPED' && !node.materialGroup) node.materialGroup = groupIds.get(template.groups[0]?.id) || groups[0].id
     } else {
       node.inputs = (node.inputs || []).map(() => '')
-      for (const key of ['floor', 'ceiling', 'corner', 'roof']) if (key in node) node[key] = ''
+      for (const key of ['floor', 'ceiling', 'corner', 'roof', 'rotation', 'mirroring']) if (key in node) node[key] = ''
       node.walls = Object.fromEntries(Object.keys(node.walls || {}).map(key => [key, 'empty_wall']))
       node.levels = {}
     }

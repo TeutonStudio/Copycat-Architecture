@@ -54,7 +54,7 @@ export function applyWires(mode, document, entries, wires, removed = []) {
   return replaceNodes(document, next.map(node => {
     const before = previous.get(node.id)
     const original = originals.get(node.id)
-    const fields = mode === 'building' ? ['inputs', 'offsets', 'walls', 'floor', 'ceiling', 'corner', 'levels', 'roof'] : ['inputs']
+    const fields = mode === 'building' ? ['inputs', 'offsets', 'walls', 'floor', 'ceiling', 'corner', 'levels', 'roof', 'rotation', 'mirroring'] : ['inputs']
     const changed = fields.filter(key => JSON.stringify(before[key]) !== JSON.stringify(node[key]))
     return { ...original, ...Object.fromEntries(changed.map(key => [key, node[key]])) }
   }))

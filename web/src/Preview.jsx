@@ -238,6 +238,7 @@ export function Viewer({ plan, blockFrame, catalog }) {
     view.controls.target.copy(center)
     view.camera.up.set(...(side?.up ?? [0, 1, 0]))
     view.camera.position.copy(center).addScaledVector(new THREE.Vector3(...(side?.direction ?? [1, 0.72, 1.1])).normalize(), radius / angle * 1.08)
+    view.fitted = true
     setActiveSide(side?.id ?? '')
     view.controls.update()
     view.render()
@@ -332,8 +333,6 @@ export function Viewer({ plan, blockFrame, catalog }) {
         view.render()
       }).catch(error => { if (live) setTextureWarning(error.message) })
     }
-    const first = !view.bounds || view.bounds.isEmpty()
-    const hadBlockFrame = Boolean(view.guides.userData.reference)
     dispose(view.guides)
     view.guides.clear()
     const size = bounds.getSize(new THREE.Vector3())
@@ -342,7 +341,7 @@ export function Viewer({ plan, blockFrame, catalog }) {
     view.bounds = blockFrame && singleBlock ? referenceFrame(view.guides) : bounds
     dispose(view.ground); view.ground.clear(); view.ground.userData.bounds = null
     groundCompass(view.ground, view.bounds)
-    if (first || (view.guides.userData.reference && !hadBlockFrame)) fit()
+    if (!view.fitted) fit()
     view.render()
     return () => { live = false }
   }, [plan, blockFrame, catalog])
@@ -425,7 +424,7 @@ export default function Preview({ mode, document, library, selected, previewMode
       <button type="button" aria-expanded={!collapsed} aria-controls={`${mode}-preview`} aria-label={collapsed ? '3D-Vorschau ausklappen' : '3D-Vorschau einklappen'} onClick={onToggle}>{collapsed ? '▸' : '▾'}</button>
     </div></div>
     <div id={`${mode}-preview`} className="preview-body" hidden={collapsed}>
-    <Viewer key={`${mode}:${previewMode}:${target}`} plan={texturedPlan} blockFrame={blockFrame} catalog={catalog} />
+    <Viewer plan={texturedPlan} blockFrame={blockFrame} catalog={catalog} />
     <div className="preview-meta" role="status">
       {result.error ? <><strong>{result.plan ? 'Letzter gültiger Stand' : 'Vorschau wartet auf einen gültigen Graphen'}</strong><br />{result.error}</>
         : result.pending ? 'Vorschau wird berechnet …'

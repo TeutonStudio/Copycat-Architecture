@@ -16,6 +16,11 @@ const nameOf = (name, fallback) => typeof name === 'string' && name.trim() ? nam
 // Build labels and references only. Saved documents are parsed when their card
 // becomes visible or the user selects them, not while opening the catalogue.
 export function listCopycatOptions({ savedForms = [], library = {} } = {}) {
+  const empty = { schema:3,name:'Leere Copycat',graph:{schema:2,nodes:[
+    {id:'empty',kind:'SAVED',savedCopycat:{name:'Leere Copycat',version:1,parts:[]}},
+    {id:'result',kind:'OUTPUT',inputs:['empty']},
+  ]} }
+  const emptyOption = {id:'empty',kind:'empty',category:'basic',name:'Leere Copycat',document:empty,materials:{},entry:{id:'empty',name:'Leere Copycat',mode:'form',document:empty,materials:{}}}
   const basic = model.shapes.map(shape => {
     const name = copycatShapeNames[shape.name] || shape.name
     const document = { schema: 3, name, parts: [{ source: shape.id }] }
@@ -38,7 +43,7 @@ export function listCopycatOptions({ savedForms = [], library = {} } = {}) {
       entry: { id: `library_${reference}`, name, mode: 'form', document, materials },
     }
   })
-  return [...basic, ...saved, ...referenced]
+  return [emptyOption, ...basic, ...saved, ...referenced]
 }
 
 export function previewCopycatOption(option) {

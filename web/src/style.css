@@ -180,3 +180,11 @@ button.primary:hover:not(:disabled) { background: #cef6e9; }
 .palette-row > .material-field { flex: 1; }
 .error { color: #ffb4a2; }
 @media (max-width: 650px) { .library-overlay { padding: 8px; } .library-window { max-height: 96dvh; } .personal-library-bar > * { max-width: 100%; } .page-header { flex-wrap: wrap; } }
+
+.arrangement-editor { margin: 1rem 0; }
+.arrangement-grid { display: block; width: 100%; height: 280px; background: #172c37; touch-action: none; border: 1px solid #647984; border-radius: 6px; }
+.arrangement-grid:focus-visible { outline: 3px solid #edbb72; outline-offset: 2px; }
+.arrangement-grid path { cursor: grab; }
+.arrangement-tools { display: flex; flex-wrap: wrap; gap: .5rem; margin: .6rem 0; }
+.arrangement-tools label { flex: 1 1 100px; min-width: 0; }
+.arrangement-tools input, .arrangement-tools select { width: 100%; }

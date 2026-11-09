@@ -51,9 +51,9 @@ Diese Referenz beschreibt **Anschlüsse**, **Ausgangstypen**, **Inspektoreigensc
 | [Gebäude](Knoten-Gebaeudegraph.md#building) | `BUILDING` | Ergebnis | Älterer Aufbau vorhanden |
 | [Garten](Knoten-Gebaeudegraph.md#garden) | `GARDEN` | `GARDEN` | Noch nicht vorhanden |
 | [Weg](Knoten-Gebaeudegraph.md#path) | `PATH` | `PATH` | Noch nicht vorhanden |
-| [Segment spiegeln](Knoten-Gebaeudegraph.md#segment_mirror) | `SEGMENT_MIRROR` | `SEGMENT_MIRROR` | Noch nicht vorhanden |
+| [Segment spiegeln](Knoten-Gebaeudegraph.md#segment_mirror) | `SEGMENT_MIRROR` | `SEGMENT_MIRROR` | Auf dem Entwicklungszweig implementiert, noch nicht in master integriert oder im Live-Graphstudio bereitgestellt |
 | [Copycat spiegeln](Knoten-Gebaeudegraph.md#copycat_mirror) | `COPYCAT_MIRROR` | `COPYCAT_MIRROR` | Vorhanden |
-| [Segment rotieren](Knoten-Gebaeudegraph.md#segment_rotate) | `SEGMENT_ROTATE` | `SEGMENT_ROTATE` | Noch nicht vorhanden |
+| [Segment rotieren](Knoten-Gebaeudegraph.md#segment_rotate) | `SEGMENT_ROTATE` | `SEGMENT_ROTATE` | Auf dem Entwicklungszweig implementiert, noch nicht in master integriert oder im Live-Graphstudio bereitgestellt |
 | [Copycat rotieren](Knoten-Gebaeudegraph.md#copycat_rotate) | `COPYCAT_ROTATE` | `COPYCAT_ROTATE` | Vorhanden |
 | [Raumanordnung](Knoten-Gebaeudegraph.md#room_layout) | `ROOM_LAYOUT` | `ROOM_LAYOUT` | Noch nicht vorhanden |
 

@@ -16,6 +16,33 @@ Graphstudio **0.4** ist der Browsereditor für den älteren öffentlichen Graphs
 
 Form- und Gebäudeansicht behalten während des Wechsels getrennte Entwürfe. Vor Schließen oder Neuladen als JSON sichern; der Browser ist keine dauerhafte Weltbibliothek.
 
+## Segmente rotieren und spiegeln
+
+**Status:** Im nativen Fachkern vorhanden. Die Bedienung dieser beiden Knoten im Graphstudio-Browser ist auf diesem Entwicklungszweig implementiert; sie ist noch nicht in master integriert oder im Live-Graphstudio bereitgestellt. Die folgende Anleitung gilt für diesen erweiterten Browserstand.
+
+1. Ein **Wandsegment** (`SEGMENT`), **Wandmuster** (`PATTERN`) oder das Ergebnis einer booleschen Segmentoperation als Quelle verwenden.
+2. **Segment rotieren** (`SEGMENT_ROTATE`) oder **Segment spiegeln** (`SEGMENT_MIRROR`) einfügen und die Quelle mit `in:0` verbinden.
+3. Zum Rotieren **X**, **Y** oder **Z** und **0°, 90°, 180° oder 270°** wählen. Die Drehung verändert die Blockpositionen und die Ausrichtung der enthaltenen Copycat-Formen gemeinsam. X und Z können ein stehendes Segment in eine liegende Anordnung drehen.
+4. Zum Spiegeln die Normale der Spiegelebene **X**, **Y** oder **Z** wählen. Ohne **Nur Blockpositionen spiegeln** werden sowohl die Anordnung als auch die Copycat-Formen gespiegelt. Mit dieser Option wechseln nur die Zellpositionen; die Formen selbst behalten ihre Ausrichtung.
+5. Unter **Selektiert** das Ergebnis prüfen. Der Ausgang bleibt ein **Segmentwert** und kann beispielsweise in weitere Segmentoperationen oder einen passenden Raumanschluss fließen.
+
+Beispiel: **Wandsegment → Segment rotieren (Y, 90°) → Segment spiegeln (X) → Segment-Differenz**. Die Bearbeitung des vollständigen Bauteils erfolgt dabei an den Segmentknoten; die einzelnen Quellen müssen dafür nicht separat transformiert werden. [Segmentrotation nachschlagen](https://github.com/TeutonStudio/copycat-architect/wiki/Knoten-Gebaeudegraph#segment_rotate) · [Segmentspiegelung nachschlagen](https://github.com/TeutonStudio/copycat-architect/wiki/Knoten-Gebaeudegraph#segment_mirror)
+
+## 2D-Raster für Anordnungen
+
+**Status: auf dem Entwicklungszweig lokal implementiert, noch nicht in master integriert oder im Live-Graphstudio bereitgestellt.** Diese Browserfunktion ergänzt die getrennten Raster im Minecraft-Editor.
+
+| Knoten | Raster und Bearbeitung |
+| --- | --- |
+| **Wandmuster** (`PATTERN`) | Angeschlossene Segmente räumlich anordnen. **Vorne · X/Y**, **Oben · X/Z** und **Seite · Z/Y** zeigen dieselbe Anordnung aus drei Richtungen. Pro Eingang sind X/Y/Z-Versatz sowie Drehachse und Vierteldrehung einstellbar. |
+| **Geschoss** (`STOREY`), Zusammensetzung **Aus Räumen** | Angeschlossene Rauminstanzen in der X/Z-Draufsicht platzieren. Die Raumquelle bleibt erhalten; jeder Eingang hat seinen eigenen Versatz. |
+
+Alle Eingänge zuerst mit gültigen Quellen verbinden. Im Inspektor **2D-Raster** öffnen, den gewünschten **Eingang** wählen oder seine belegte Fläche anklicken und ziehen. Eine Zelle entspricht **1 Block = 16 hB**. Die **Pfeiltasten** bewegen den markierten Eingang um einen Block. Bei einer Vorder- oder Seitenansicht liegt positives Y nach oben. Ein Ansichtswechsel erhält die dritte, gerade unsichtbare Koordinate.
+
+**X/Y/Z · Blöcke** erlauben genaue Versätze; im Raumraster sind nur X/Z veränderbar. Segmentversätze liegen zwischen −128 und 128, Raumversätze zwischen −64 und 64 Blöcken. Wiederholt angeschlossene Quellen lassen sich pro Eingang getrennt platzieren. Beim Wandmuster startet das Raster mit der bisherigen Reihenfolge; die erste Übernahme speichert die expliziten `transforms` mit `patternAxis=transform`.
+
+Die mittlere Maustaste verschiebt die Ansicht. **Vergrößern**, **Verkleinern** und **Einpassen** ändern nur die Darstellung. **Escape** verwirft eine laufende Ziehbewegung. **Verwerfen** entfernt alle noch nicht übernommenen Rasteränderungen. Erst **Anordnung übernehmen** prüft das Ergebnis und speichert es als einen Schritt in der gemeinsamen Rückgängig-/Wiederholen-Historie. Fehlerhafte Anordnungen zeigen eine Meldung und werden nicht übernommen. Der JSON-Export bewahrt Versätze und Segmentdrehungen im vorhandenen Minecraft-Format.
+
 ## 3D-Vorschau: Graph oder Selektiert
 
 | Auswahl | Darstellung |

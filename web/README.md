@@ -97,3 +97,22 @@ Segmentknoten. Die gemeinsame Auswertung schneidet Copycat-Teilformen je
 Blockposition. Teilumwandlungen normaler Vollblöcke und semantische
 Segmentmetadaten werden ausdrücklich abgewiesen. Für die neuen Operator-IDs
 ist beim Spielimport ein aktualisierter Mod-Build erforderlich.
+
+
+## Segmenttransformationen und 2D-Anordnungsraster (Entwicklungszweig)
+
+Dieser Zweig ergänzt **Segment rotieren** und **Segment spiegeln** im Browser
+und unterstützt damit 17 Gebäudeknotentypen. Der bestehende gemeinsame Fachkern
+berechnet die Transformationen; es werden keine neuen Mod-Knotentypen eingeführt.
+Spiegelung kann nur die Positionen oder zusätzlich die Copycat-Geometrien ändern.
+
+Das 2D-Raster im Inspektor ordnet Segmente am Wandmuster (X/Y, X/Z, Z/Y) und
+Rauminstanzen am Geschoss (X/Z) an. Ziehen und Pfeiltasten verwenden ganze
+Blöcke. Segmentinstanzen besitzen zusätzlich Drehachse und Vierteldrehung.
+Übernehmen prüft das Ergebnis und erzeugt einen gemeinsamen Undo-Schritt;
+Verwerfen lässt das Dokument unverändert. Native `transforms`, `patternAxis`
+und `offsets` bleiben beim JSON-Austausch erhalten.
+
+Die Änderungen sind lokal implementiert und noch nicht in master integriert oder im Live-Graphstudio bereitgestellt.
+Der Vorschau-Auswahldialog und boolesche Copycat-Gebäudeknoten aus dem separaten
+Erweiterungspaket gehören nicht zu diesem Codezweig.

@@ -25,7 +25,7 @@ internal object GraphModels {
     fun accepts(target:NodeKind,slot:Int,source:NodeKind)=shape(source).output?.let { it==shape(target).inputs?.type(slot) } ?: false
     fun requiredBuildingInputs(kind:BuildingKind,mode:String)=when(kind) {
         BuildingKind.PATTERN,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE->2
-        BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE->1
+        BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE->1
         BuildingKind.STOREY->if(mode=="rooms") 1 else 0
         else->0
     }

@@ -1,5 +1,7 @@
 # Entwicklungsstand und Kompatibilität
 
+> **Entwicklungszweig `codex/segment-transforms-arrangement-grid`:** Segmentrotation und -spiegelung sowie ein 2D-Raster für Segmentanordnungen am Wandmuster und Raumplatzierungen am Geschoss sind auf diesem Zweig implementiert. Der Browserumfang beträgt hier 17 Gebäudeknotentypen. Diese Änderungen sind noch nicht in master integriert oder im Live-Graphstudio bereitgestellt; die folgende Übersicht beschreibt den bisherigen öffentlichen Stand. [Bedienung](Graphstudio.md#2d-raster-für-anordnungen)
+
 Abgleich vom **8. November 2026**. Drei Stände sind auseinanderzuhalten:
 
 | Stand | Vorhanden | Grenzen |

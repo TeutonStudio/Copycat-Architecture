@@ -103,6 +103,8 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 ## PATTERN
 
+**2D-Anordnung im Browser:** Auf dem Entwicklungszweig lokal implementiert, noch nicht in master integriert oder im Live-Graphstudio bereitgestellt. Das Raster platziert Segmentinstanzen in X/Y, X/Z oder Z/Y. [Bedienung und Übernahme](https://github.com/TeutonStudio/copycat-architect/wiki/Graphstudio#2d-raster-für-anordnungen)
+
 **Segmente vereinigen.** Ordnet mehrere Segmente in Eingangsreihenfolge aneinander oder transformiert sie frei. Dies ist keine boolesche Vereinigung; überlappende Bauteile unterliegen den vorhandenen Zusammenführungsregeln.
 
 **Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
@@ -237,6 +239,8 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | `joinWallEnds` | Verbindet Wandendbereiche in expliziten Räumen. Fehlende Altwerte und ein ausdrückliches false können unterschiedliche Altsemantik erhalten. | Vom Typ / Quellwert abhängig |
 
 ## STOREY
+
+**2D-Anordnung im Browser:** Auf dem Entwicklungszweig lokal implementiert, noch nicht in master integriert oder im Live-Graphstudio bereitgestellt. Das Raster platziert Rauminstanzen in X/Z bei Zusammensetzung **Aus Räumen**. [Bedienung und Übernahme](https://github.com/TeutonStudio/copycat-architect/wiki/Graphstudio#2d-raster-für-anordnungen)
 
 **Stockwerk.** Platziert Raumquellen und löst gemeinsame Wände sowie Fassaden auf. Alternativ bleibt der ältere Direkt-Wandmodus verfügbar.
 
@@ -488,7 +492,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Segment spiegeln.** Spiegelt ein vollständiges Segment oder Muster, wahlweise nur dessen Zellpositionen.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: nicht vorhanden.
+**Verfügbarkeit:** Nativer Fachkern: implementiert. Browser: auf dem Entwicklungszweig `codex/segment-transforms-arrangement-grid` implementiert, noch nicht in master integriert oder im Live-Graphstudio bereitgestellt.
 
 **Ausgang:** `SEGMENT_MIRROR`.
 
@@ -534,7 +538,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Segment rotieren.** Dreht Segmentpositionen und enthaltene Copycats gemeinsam um eine Weltachse.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: nicht vorhanden.
+**Verfügbarkeit:** Nativer Fachkern: implementiert. Browser: auf dem Entwicklungszweig `codex/segment-transforms-arrangement-grid` implementiert, noch nicht in master integriert oder im Live-Graphstudio bereitgestellt.
 
 **Ausgang:** `SEGMENT_ROTATE`.
 

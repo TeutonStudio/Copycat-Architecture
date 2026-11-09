@@ -40,7 +40,7 @@ Eine im Copycat-Referenzknoten geladene Form wird als feste Version in der **Ref
 
 ## Gemeinsamer Vertrag und Prüfungen
 
-Der [Knotenvertrag im Repository](https://github.com/TeutonStudio/copycat-architect/blob/master/src/main/resources/assets/copycat_architect/graph-models.json) legt Knotentypen, Anschlüsse, Standardwerte und Felder für Mod und Browser fest. Der zu dieser Referenz gehörende [Wiki-Snapshot](https://raw.githubusercontent.com/wiki/TeutonStudio/copycat-architect/reference/graph-models-2026-11-08.json) enthält denselben Vertrag. Die Browseroberfläche gibt nur die Typen und Felder frei, die ihr Parser und Exporter vollständig unterstützen.
+Der [Knotenvertrag im Repository](https://github.com/TeutonStudio/copycat-architect/blob/1896c21b2ae6962fdf5791579efe064655d3a391/src/main/resources/assets/copycat_architect/graph-models.json) legt Knotentypen, Anschlüsse, Standardwerte und Felder für Mod und Browser fest. Der zu dieser Referenz gehörende [Wiki-Snapshot](https://raw.githubusercontent.com/wiki/TeutonStudio/copycat-architect/reference/graph-models-2026-11-08.json) enthält denselben Vertrag. Die Browseroberfläche gibt nur die Typen und Felder frei, die ihr Parser und Exporter vollständig unterstützen.
 
 Die Knotenreferenz beschreibt auch native Funktionen, die im Browser fehlen. Ein implementierter Knoten kann unvollständige Eingänge besitzen oder im Gebäudekontext unzulässig sein. Ein gültiger Typvertrag ersetzt deshalb keine erfolgreiche Ergebnisberechnung.
 

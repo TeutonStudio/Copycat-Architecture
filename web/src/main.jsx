@@ -108,6 +108,8 @@ function Studio({ mode, active }) {
   const [flow, setFlow] = useState(null)
   const [kind, setKind] = useState('')
   const [workspace, setWorkspace] = useState(0)
+  // React Flow measurements belong to the view, never to the Minecraft document.
+  const [nodeMeasurements, setNodeMeasurements] = useState({})
   const [graphShare, setGraphShare] = useState(68)
   const [previewShare, setPreviewShare] = useState(45)
   const [previewCollapsed, setPreviewCollapsed] = useState(false)
@@ -125,11 +127,29 @@ function Studio({ mode, active }) {
   const visibleNode = current ?? resultNode
   const kinds = mode === 'form' ? model.form.map(type => type.kind).filter(kind => kind !== 'OUTPUT') : model.building.filter(kind => kind !== 'BUILDING')
   const edgeId = ({ target, port }) => `${target}/${port}`
-  const nodes = entries.map(data => ({
+  const nodes = useMemo(() => entries.map(data => ({
     id: data.node.id, type: 'architect', data,
     position: dragging?.id === data.node.id ? dragging.position : { x: data.node.x, y: data.node.y },
-    selected: selectedIds.includes(data.node.id)
-  }))
+    selected: selectedIds.includes(data.node.id),
+    measured: nodeMeasurements[data.node.id]
+  })), [entries, dragging, selectedIds, nodeMeasurements])
+  const onNodesChange = useCallback(changes => {
+    const measured = changes.filter(change => change.type === 'dimensions' && change.dimensions)
+    if (!measured.length) return
+    setNodeMeasurements(previous => {
+      const ids = new Set(entries.map(({ node }) => node.id))
+      let changed = false
+      const next = Object.fromEntries(Object.entries(previous).filter(([id]) => ids.has(id)))
+      changed = Object.keys(next).length !== Object.keys(previous).length
+      for (const { id, dimensions } of measured) {
+        if (!ids.has(id)) continue
+        if (next[id]?.width !== dimensions.width || next[id]?.height !== dimensions.height) {
+          next[id] = dimensions; changed = true
+        }
+      }
+      return changed ? next : previous
+    })
+  }, [entries])
   const edges = useMemo(() => wires.map(wire => ({
     id: edgeId(wire), source: wire.source, sourceHandle: 'out', target: wire.target, targetHandle: wire.port,
     style: wire.source === 'empty_wall' ? { ...edgeStyle, opacity: 0.38 } : edgeStyle,
@@ -192,6 +212,7 @@ function Studio({ mode, active }) {
     setSelected(null)
     setSelectedWire(null)
     setSelectedIds([])
+    setNodeMeasurements({})
     setWorkspace(key => key + 1)
   }
   const add = () => transact(() => {
@@ -355,7 +376,7 @@ function Studio({ mode, active }) {
           </div>
         </div>
         <div className="canvas" ref={canvas}>
-          {active && <ReactFlow key={workspace} nodes={nodes} edges={edges} nodeTypes={nodeTypes} onInit={setFlow}
+          {active && <ReactFlow key={workspace} nodes={nodes} onNodesChange={onNodesChange} edges={edges} nodeTypes={nodeTypes} onInit={setFlow}
             fitView fitViewOptions={{ padding: 0.15, maxZoom: 1.1 }} minZoom={0.13} maxZoom={2}
             onNodeDrag={onDrag} onNodeDragStop={onDragStop} deleteKeyCode={null} nodesConnectable
             onNodeClick={(event, node) => { setSelected(node.id); setSelectedWire(null); setSelectedIds(ids => event.shiftKey ? ids.includes(node.id) ? ids.filter(id => id !== node.id) : [...ids, node.id] : [node.id]) }}

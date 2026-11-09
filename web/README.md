@@ -146,3 +146,20 @@ und `offsets` bleiben beim JSON-Austausch erhalten.
 
 
 Der gesamte hier beschriebene Stand ist auf diesem Entwicklungszweig implementiert, aber noch nicht in master integriert oder live bereitgestellt.
+
+## Browserprüfung des Produktionsbuilds
+
+`tools/verify-graphstudio-browser.py` prüft wiederholte JSON-Importe, sichtbare
+Knoten nach erneuten Renderdurchläufen, Copycat-Vorschauen, gespeicherte Formen,
+Undo/Redo, Neuladen, fehlerhafte Quellen und Desktop-/Tablet-/Handybedienung.
+Es benötigt Python, Playwright und Chromium. Nach `npm run build` den Build
+beispielsweise mit `npx vite preview --host 127.0.0.1 --port 4173` ausliefern:
+
+```sh
+python3 tools/verify-graphstudio-browser.py --url http://127.0.0.1:4173
+```
+
+`--chromium` wählt die ausführbare Chromium-Datei. `--artifacts` bestimmt das
+Verzeichnis für die Screenshots (Standard: `/tmp/graphstudio-browser-check`).
+Gemessene Knotengrößen bleiben ausschließlich Ansichtsstatus; der Test prüft,
+dass diese Daten nicht im Minecraft-JSON landen.

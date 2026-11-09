@@ -66,6 +66,21 @@ class RoomTopologyTest {
         assertTrue(outline.closed);assertEquals(25,outline.footprint.size)
         assertEquals(4,outline.height)
     }
+    @Test fun `geometry only outlines preserve every boolean dimension rule without loading forms`() {
+        val a=BuildingNode("a",BuildingKind.SEGMENT,module="",form="unavailable_a@1",length=5,height=4,depth=2)
+        val b=BuildingNode("b",BuildingKind.SEGMENT,module="",form="unavailable_b@1",length=3,height=6,depth=3)
+        for((kind,expected) in listOf(BuildingKind.SEGMENT_UNION to P(5,6,3),BuildingKind.SEGMENT_INTERSECTION to P(3,4,2),
+            BuildingKind.SEGMENT_DIFFERENCE to P(5,4,2),BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE to P(5,6,3))) {
+            val operation=BuildingNode("op",kind,inputs=listOf("a","b"))
+            val raster=layout(listOf(RoomSegmentInstance("side",0,P(),quarterTurns=1))).copy(inputs=listOf("op"))
+            val graph=BuildingGraph(nodes=listOf(a,b,operation,raster))
+            val outline=RoomTopology.outline(graph,raster)
+            val value=outline.instances.single().value
+            assertEquals(P(expected.z,expected.y,expected.x),P(value.length,value.height,value.depth),kind.name)
+            assertEquals(expected.y,outline.height,kind.name)
+            assertTrue(value.cells.isEmpty(),"Dimension-only outlines must not invent geometry")
+        }
+    }
     @Test fun `opening modules close the logical boundary while normal walls determine height`() {
         val raster=layout(rectangle().map {if(it.id=="north") it.copy(sourceIndex=1,contribution=RoomContribution.OPENING) else it})
         val outline=RoomTopology.resolve(raster) {if(it=="window") wall(5,12) else wall()}

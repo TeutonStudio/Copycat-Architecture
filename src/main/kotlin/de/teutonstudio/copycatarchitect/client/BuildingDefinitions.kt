@@ -9,7 +9,7 @@ import net.minecraft.client.gui.narration.NarrationElementOutput
 import kotlin.math.roundToInt
 
 enum class BuildingPanelSection(val key:String,val kinds:List<BuildingKind>) {
-    SEGMENTS("panel_segments",listOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.SEGMENT_LAYOUT)),
+    SEGMENTS("panel_segments",listOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.SEGMENT_LAYOUT)),
     ROOMS("panel_rooms",listOf(BuildingKind.AREA,BuildingKind.ROOM_GEOMETRY,BuildingKind.ROOM_LAYOUT,BuildingKind.ROOM)),
     STOREYS("panel_storeys",listOf(BuildingKind.STOREY)),
     BUILDING("panel_building",listOf(BuildingKind.BUILDING)),
@@ -43,7 +43,7 @@ class BuildingDefinitionList(left:Int,top:Int,listWidth:Int,listHeight:Int,
     }
     private fun name(node:BuildingNode):String = when {
         node.id=="empty_wall"->ui("empty_wall")
-        node.name.isBlank() || node.name in setOf("Room","Storey","Building","Roof","Floor","Ceiling","Wall segment","Wall Copycat","Roof Copycat","Gable segment")->ui("bg_"+node.kind.name.lowercase())
+        node.name.isBlank() || node.name in setOf("Room","Storey","Building","Roof","Floor","Ceiling","Wall segment","Wall Copycat","Roof Copycat","Gable segment")->ui(GraphModels.building(node.kind).labelKey)
         node.name=="Solid wall"->ui("bg_solid_wall")
         else->node.name
     }
@@ -57,7 +57,7 @@ class BuildingDefinitionList(left:Int,top:Int,listWidth:Int,listHeight:Int,
                 val hovered=mx>=x+5 && mx<x+width-8 && my>=maxOf(top,rowTop) && my<minOf(top+27,y+height-4)
                 ArchitectTheme.button(g,x+5,top,width-14,27,hovered,node.id==selected())
                 g.drawString(font,font.plainSubstrByWidth(name(node),width-26),x+10,top+4,if(node.id==selected()) ArchitectTheme.brass else ArchitectTheme.text,false)
-                g.drawString(font,font.plainSubstrByWidth(ui("bg_"+node.kind.name.lowercase()),width-26),x+10,top+16,ArchitectTheme.muted,false)
+                g.drawString(font,font.plainSubstrByWidth(ui(GraphModels.building(node.kind).labelKey),width-26),x+10,top+16,ArchitectTheme.muted,false)
             }
         }
         if(nodes.isEmpty()) g.drawString(font,font.plainSubstrByWidth(ui("panel_no_definitions"),width-14),x+7,rowTop+5,ArchitectTheme.muted,false)

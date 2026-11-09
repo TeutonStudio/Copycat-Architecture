@@ -2,11 +2,11 @@
 
 Die vollständige deutsche Anleitung findest du in der **[GitHub-Wiki](https://github.com/TeutonStudio/copycat-architect/wiki)**. Ihre lokale Fassung beginnt auf der **[Startseite](wiki/Home.md)**.
 
-Dokumentiert ist der **Entwicklungsstand 0.5.1 vom 8. November 2026** für Minecraft 1.21.1, NeoForge und Java 21. Der öffentliche Quellstand und ältere Builds können davon abweichen.
+Dokumentiert ist der **Quellstand vom 8. November 2026** für Minecraft 1.21.1, NeoForge und Java 21 sowie **Graphstudio 0.4**. Die neuen booleschen Gebäude-Knoten benötigen einen aktualisierten Mod-Build gegenüber dem veröffentlichten Modrelease 0.6.0.
 
 ![Panelgebäude mit Schichtfenstern](images/panel-building-exterior-35.png)
 
-Die [Standübersicht](wiki/Entwicklungsstand.md) trennt lokale Mod, Graphstudio 0.2 und geplante Funktionen. Die [Knotenreferenz](wiki/Knotenreferenz.md) erklärt alle aktuellen Knotentypen, Anschlüsse und Inspektoreigenschaften sowie die vier geplanten Segmentoperatoren.
+Die [Standübersicht](wiki/Entwicklungsstand.md) trennt Modrelease, gemeinsamen Fachkern und Graphstudio 0.4. Die [Knotenreferenz](wiki/Knotenreferenz.md) erklärt alle aktuellen Knotentypen, Anschlüsse und Inspektoreigenschaften. Rotieren, Spiegeln, Vereinigung, Schnitt, Differenz und symmetrische Differenz sind im Gebäudegraphen für Copycats und Segmente implementiert; Copycat-Referenzen laden gespeicherte Formen.
 
 ## Kapitel
 
@@ -19,7 +19,7 @@ Die [Standübersicht](wiki/Entwicklungsstand.md) trennt lokale Mod, Graphstudio 
 | [Kartuschen und Materialien](wiki/Kartuschen-und-Materialien.md) | Zinkversorgung, Verbrauch, Verkleidungen und Rückgabe |
 | [Gebäudeplanung](wiki/Gebaeudeplanung.md) | Segmentanordnung, Raumgeometrie, Stockwerke und Tischbezug |
 | [Graphstudio](wiki/Graphstudio.md) | Browserbedienung, Graph-/Selektionsvorschau, hB und JSON-Austausch |
-| [Knotenreferenz](wiki/Knotenreferenz.md) | Form- und Gebäudeknoten, Felder und geplante Segmentoperatoren |
+| [Knotenreferenz](wiki/Knotenreferenz.md) | Form- und Gebäudeknoten, Felder und implementierte Copycat-/Segmentoperationen |
 | [Raumaufbau und Fassaden](wiki/Raumaufbau-und-Fassaden.md) | Raumgrenzen, gemeinsame Wände, Öffnungen und Anschlüsse |
 | [Turtle-Bau](wiki/Turtle-Bau.md) | Upgrade, Depot, Bauauftrag und Wiederaufnahme |
 | [Beispiele und Import](wiki/Beispiele-und-Import.md) | JSON-Austausch und Panelgebäude |

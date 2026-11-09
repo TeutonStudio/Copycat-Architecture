@@ -126,7 +126,7 @@ class RoomSegmentLayoutScreen private constructor(private val parent:Screen?,ini
     private fun chooseFiller() {
         var filler=config.filler
         StructurePropertyScreen.open(tr("semantic_closure_wall"),{
-            val sources=graph.nodes.filter { it.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE) && it.id!="empty_wall" }
+            val sources=graph.nodes.filter { it.kind in (setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds) && it.id!="empty_wall" }
             choice(ui("semantic_filler_source"),filler,listOf("")+sources.map { it.id },{ id -> sources.firstOrNull { it.id==id }?.name ?: ui("bg_no_connection") }) { filler=it }
             hint(ui("semantic_closure_help"))
         }) { require(filler.isNotEmpty()) { ui("semantic_choose_filler") };acceptClosure(true,filler) }

@@ -15,7 +15,9 @@ export function loadBuildingCopycat(document, library, entry, nodeId) {
   while (forms[`${id}@${form.version}`] && JSON.stringify(forms[`${id}@${form.version}`]) !== JSON.stringify(form))
   const key = `${id}@${form.version}`
   forms[key] = structuredClone(form)
-  const surfaces = Object.fromEntries(Object.entries(entry.materials || {}).filter(([group]) => form.groups.some(item => item.id === group)).map(([group, material]) => [group, parseMaterial(material).block]))
+  const surfaces = Object.fromEntries(Object.entries(entry.materials || {})
+    .filter(([group, material]) => form.groups.some(item => item.id === group) && material.trim())
+    .map(([group, material]) => [group, parseMaterial(material.trim()).block]))
   let nodes = document.graph.nodes
   if (!nodeId) {
     nodeId = `copycat_${crypto.randomUUID().slice(0, 13)}`
@@ -28,9 +30,21 @@ export function loadBuildingCopycat(document, library, entry, nodeId) {
 }
 
 export function loadFormCopycat(document, entry, nodeId) {
+  return loadFormCopycatWithMaterials(document, entry, nodeId).document
+}
+
+export function loadFormCopycatWithMaterials(document, entry, nodeId, materials = {}) {
   const source = writeGraph('form', readGraph(entry.document, 'form'))
   const result = insertSavedCopycat(document, source, nodeId)
   const next = replaceNodes({ ...document, groups: result.groups }, result.nodes)
   inspect('form', next)
-  return next
+  const nextMaterials = Object.fromEntries(Object.entries(materials)
+    .filter(([group, material]) => result.groups.some(item => item.id === group) && material.trim()))
+  for (const [group, material] of Object.entries(entry.materials || {})) {
+    const targetGroup = result.groupMapping[group]
+    if (!targetGroup || !material.trim()) continue
+    parseMaterial(material.trim())
+    nextMaterials[targetGroup] = material.trim()
+  }
+  return { document: next, materials: nextMaterials, nodeId: result.nodeId }
 }

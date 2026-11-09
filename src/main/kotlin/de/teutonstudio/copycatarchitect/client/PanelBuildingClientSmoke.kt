@@ -31,7 +31,7 @@ object PanelBuildingClientSmoke {
         val storey=graph.nodes.single { it.id=="storey" }
         val ports=BuildingPorts.of(storey,true)
         val corner=ports.single { it.key=="corner" }
-        check(corner.source.isNotEmpty() && corner.accepts==setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE)) {
+        check(corner.source.isNotEmpty() && corner.accepts==CopycatBooleans.sourceKinds) {
             "The optional corner input must be connected to its own native Copycat source"
         }
         check(graph.nodes.single { it.id==corner.source }.kind==BuildingKind.COPYCAT)

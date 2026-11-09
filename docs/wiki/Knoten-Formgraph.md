@@ -1,6 +1,8 @@
 # Knotenreferenz: Formgraph
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.4** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> **Stand dieses Entwicklungszweigs:** Diese Anleitung beschreibt die vollständige Überarbeitung mit Vorschau-Auswahldialog, allen sechs Copycat- und Segmentoperationen sowie dem 2D-Anordnungsraster. Der Browser unterstützt hier 10 Form- und 21 Gebäudeknotentypen. Die Änderungen sind noch nicht in master integriert oder im Live-Graphstudio bereitgestellt. Das Modrelease 0.6.0 bleibt unverändert.
+
+> Stand: **9. November 2026**. Beschreibt den aktuellen gemeinsamen Knotenvertrag. Die im Browser **Graphstudio 0.4** verfügbaren Knoten und Felder sind in der [Knotenreferenz](Knotenreferenz.md) und im [Entwicklungsstand](Entwicklungsstand.md) ausgewiesen.
 
 [Übersicht](Knotenreferenz.md) · [Gemeinsame und verschachtelte Eigenschaften](Knoten-Eigenschaften.md) · [Einheiten](Einheiten-und-Ausrichtung.md)
 
@@ -9,6 +11,8 @@ Die Anschlusskennungen sind die gespeicherten API-Schlüssel. Ein `*` bezeichnet
 ## INPUT
 
 **Standard-Copycat.** Eine geometrische Standard-Copycat-Quelle innerhalb einer Blockzelle.
+
+Im Browser öffnet **Copycat auswählen** einen Dialog mit den Reitern **Grundformen** und **Gespeicherte Formen**. Die Karten zeigen gerenderte Geometrievorschauen; eine markierte Form erscheint zusätzlich in einer größeren, drehbaren Ansicht. Erst **Auswahl übernehmen** setzt die Quelle. Eine gespeicherte Form wandelt diesen Knoten in `SAVED` um, wobei Knoten-ID und Verbindungen erhalten bleiben. **Abbrechen** und **Escape** verwerfen die Auswahl. [Auswahldialog und Herkunft der Formen](Graphstudio.md#copycat-auswählen-grundformen-und-gespeicherte-formen)
 
 **Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
 
@@ -209,6 +213,8 @@ Keine Eingänge.
 ## SAVED
 
 **Gespeicherter Copycat.** Eine unabhängige Kopie einer gespeicherten Formversion als neue Quelle.
+
+Im Browser unter **Copycat auswählen → Gespeicherte Formen** einen persönlichen Formgraphen oder eine Form aus der geladenen Referenzbibliothek wählen, die Vorschau prüfen und **Auswahl übernehmen** betätigen. Die Karten kennzeichnen ihre Herkunft. Eine Auswahl unter **Grundformen** wandelt denselben Knoten in `INPUT` um; Knoten-ID und Verbindungen bleiben erhalten. **Abbrechen** und **Escape** ändern die bisherige Quelle nicht. [Auswahldialog](Graphstudio.md#copycat-auswählen-grundformen-und-gespeicherte-formen)
 
 **Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden.
 

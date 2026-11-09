@@ -1,6 +1,8 @@
 # Materialbibliothek und persönliche Bibliotheken
 
-Graphstudio **0.3** speichert Entwürfe und Bibliotheken lokal in deinem Browser. Die Materialbibliothek ist über **Meine Bibliotheken** erreichbar.
+> **Stand dieses Entwicklungszweigs:** Diese Anleitung beschreibt die vollständige Überarbeitung mit Vorschau-Auswahldialog, allen sechs Copycat- und Segmentoperationen sowie dem 2D-Anordnungsraster. Der Browser unterstützt hier 10 Form- und 21 Gebäudeknotentypen. Die Änderungen sind noch nicht in master integriert oder im Live-Graphstudio bereitgestellt. Das Modrelease 0.6.0 bleibt unverändert.
+
+Graphstudio **0.4** speichert Entwürfe und Bibliotheken lokal in deinem Browser. Die Materialbibliothek ist über **Meine Bibliotheken** erreichbar.
 
 ## Minecraft-Materialien
 
@@ -44,6 +46,10 @@ Die Repository-Verknüpfung benötigt öffentlich lesbare, bereits vorhandene Re
 
 Die Leiste über dem Graphen besitzt ein Namensfeld, **Graph speichern** und **Gespeicherte Graphen**. Ein gespeicherter Eintrag enthält Graph, geladene Copycat-Bibliothek und Vorschau-Materialbelegungen. Derselbe Name im selben Editor aktualisiert den vorhandenen Eintrag. Form- und Gebäudegraphen werden getrennt angeboten.
 
+Gespeicherte Formgraphen erscheinen unter **Copycat auswählen → Gespeicherte Formen**. Der Dialog ist im Formgraphen an den Quellen **Grundform** und **Gespeicherter Copycat** sowie im Gebäudegraphen an der **Copycat-Referenz** verfügbar. Neben persönlichen Formgraphen stehen dort auch Formen aus der geladenen Referenzbibliothek; die Vorschaukarten kennzeichnen die Herkunft. Suche, gerenderte Karten und eine größere drehbare Vorschau helfen bei der Auswahl. Erst **Auswahl übernehmen** setzt die gewählte Quelle.
+
+Im Gebäudegraphen lädt ein persönlicher Eintrag eine feste Formversion einschließlich der Materialbelegung als Block-IDs. Spätere Änderungen des benannten Formgraphen verändern diese Referenz nicht; erneutes Übernehmen lädt die neue Version ausdrücklich. Bibliotheksformen verwenden ihren bestehenden Versionsschlüssel. **Formdatei laden** im Inspektor oder **Copycat laden** in der Werkzeugleiste importiert alternativ eine einzelne Formdatei. [Auswahldialog und Operatoren](Graphstudio.md)
+
 Zusätzlich wird der zuletzt bearbeitete Entwurf beider Editoren automatisch gespeichert. Nach dem Neuladen wird dieser Entwurf wiederhergestellt. Undo/Redo-Verlauf und eine laufende Knotenauswahl werden nicht als dauerhafter Verlauf gespeichert.
 
 ## Knotengruppen wiederverwenden
@@ -59,6 +65,8 @@ Diese Browser-Knotengruppen sind wiederverwendbare Vorlagen. Sie sind keine Impl
 Graphstudio verwendet **IndexedDB** statt Cookies: Graphen, Bibliotheken und Ressourcenverweise sind für Cookies zu groß. Die Daten gehören zu diesem Browserprofil und dieser Website. Es gibt kein Benutzerkonto und keine automatische Synchronisierung zwischen Geräten.
 
 Unter **Meine Bibliotheken → Gespeicherte Inhalte** können benannte Graphen und Knotengruppen entfernt sowie **Sicherung exportieren** und **Sicherung importieren** verwendet werden. Die Sicherung enthält auch die aktuellen Entwürfe und verlinkten Mods. Beim Import werden benannte Inhalte zusammengeführt; die gesicherten Entwürfe erscheinen als zusätzliche wiederhergestellte Graphen. Aktuell offene Entwürfe werden dabei nicht überschrieben.
+
+Die Sicherung bewahrt auch die in Gebäudeentwürfe geladenen Formversionen auf. Ein normaler Minecraft-Gebäudeexport speichert lediglich deren Referenzschlüssel; er bündelt die Formen nicht. Für den Spielimport müssen die entsprechenden Bibliotheksversionen dort verfügbar sein.
 
 Blockstate- und Modell-JSONs werden nach dem ersten Abruf lokal zwischengespeichert. Bilder nutzen den normalen Browsercache; eine vollständige Offline-Verfügbarkeit aller Texturen wird nicht zugesichert. Das Löschen von Websitedaten, ein privates Browserfenster oder eine Speicherbereinigung des Browsers kann lokale Daten entfernen. Eine exportierte Sicherung bewahrt den eigenen Stand unabhängig davon auf.
 

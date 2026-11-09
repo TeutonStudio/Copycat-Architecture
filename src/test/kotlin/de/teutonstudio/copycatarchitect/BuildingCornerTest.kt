@@ -37,7 +37,7 @@ class BuildingCornerTest {
     @Test fun `optional corner source is typed and reaches all four inner corner rotations`() {
         for(direct in listOf(false,true)) {
             val graph=graph(direct);val enclosure=graph.nodes.first { it.id==if(direct) "storey" else "room" }
-            assertEquals(setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE),BuildingPorts.of(enclosure).single { it.key=="corner" }.accepts)
+            assertEquals(setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE),BuildingPorts.of(enclosure).single { it.key=="corner" }.accepts)
             assertFails { graph.connect(enclosure.id,"corner","wall") }
             val plan=plan(graph,direct)
             assertEquals(8,plan.placements.count { it.component=="trim" })

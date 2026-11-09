@@ -148,7 +148,7 @@ object Roofs {
             }
         }
         val wallNode=shared.wall.takeIf(String::isNotEmpty)?.let { id->graph.nodes.firstOrNull { it.id==id } ?: error("Missing roof wall template $id") }
-        val wallCopycat=wallNode?.takeIf { it.kind in setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE) }?.let { source(it.id) }
+        val wallCopycat=wallNode?.takeIf { it.kind in CopycatBooleans.sourceKinds }?.let { source(it.id) }
         val wallPeriod=wallNode?.takeIf { it.kind in (setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds) }?.let { node->
             segmentSource(node.id)?.also { require(it.width in 1..128 && it.height in 1..128 && it.depth==1) { "Roof wall periods need positive dimensions and depth 1" } } ?: error("Missing roof wall segment ${node.id}")
         }

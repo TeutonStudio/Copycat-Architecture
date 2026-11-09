@@ -786,5 +786,9 @@
   "gui.copycat_architect.segment_union": "Segment Union",
   "gui.copycat_architect.segment_intersection": "Segment Intersection",
   "gui.copycat_architect.segment_difference": "Segment Difference",
-  "gui.copycat_architect.segment_symmetric_difference": "Segment Symmetric Difference"
+  "gui.copycat_architect.segment_symmetric_difference": "Segment Symmetric Difference",
+  "gui.copycat_architect.copycat_union": "Copycat union",
+  "gui.copycat_architect.copycat_intersection": "Copycat intersection",
+  "gui.copycat_architect.copycat_difference": "Copycat difference",
+  "gui.copycat_architect.copycat_symmetric_difference": "Copycat symmetric difference"
 }

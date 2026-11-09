@@ -1,10 +1,23 @@
 # Knotenreferenz: Gebäudegraph
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.4** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> **Stand dieses Entwicklungszweigs:** Diese Anleitung beschreibt die vollständige Überarbeitung mit Vorschau-Auswahldialog, allen sechs Copycat- und Segmentoperationen sowie dem 2D-Anordnungsraster. Der Browser unterstützt hier 10 Form- und 21 Gebäudeknotentypen. Die Änderungen sind noch nicht in master integriert oder im Live-Graphstudio bereitgestellt. Das Modrelease 0.6.0 bleibt unverändert.
+
+> Stand: **9. November 2026**. Beschreibt den aktuellen gemeinsamen Knotenvertrag. **Graphstudio 0.4** bietet 21 der 32 Gebäudeknotentypen; neue boolesche Knoten benötigen im Spiel einen aktualisierten Build gegenüber dem Modrelease **0.6.0**. [Entwicklungsstand](Entwicklungsstand.md)
 
 [Übersicht](Knotenreferenz.md) · [Gemeinsame und verschachtelte Eigenschaften](Knoten-Eigenschaften.md) · [Einheiten](Einheiten-und-Ausrichtung.md)
 
-Die Anschlusskennungen sind die gespeicherten API-Schlüssel. Ein `*` bezeichnet mehrere oder dynamisch bestimmte Anschlüsse; deren konkrete Kennungen liefert die Auswertung. Die Aufzählung von Feldern beschreibt den lokalen Knotenvertrag. Leere Verbindungen bleiben im Entwurf erlaubt, können aber die Ergebnisberechnung verhindern.
+Die Anschlusskennungen sind die gespeicherten API-Schlüssel. Ein `*` bezeichnet mehrere oder dynamisch bestimmte Anschlüsse; deren konkrete Kennungen liefert die Auswertung. Die Aufzählung von Feldern beschreibt den gemeinsamen Knotenvertrag; native Zusatzfelder sind im Browser nur verfügbar, wenn dies ausdrücklich genannt wird. Leere Verbindungen bleiben im Entwurf erlaubt, können aber die Ergebnisberechnung verhindern.
+
+## Wertfamilien
+
+Die Anschlusstabellen verwenden diese Familien, damit auch verkettete Operationen eindeutig zugeordnet sind:
+
+| Familie | Zulässige Knotenausgänge |
+| --- | --- |
+| **Copycat-Werte** | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE`, `COPYCAT_UNION`, `COPYCAT_INTERSECTION`, `COPYCAT_DIFFERENCE`, `COPYCAT_SYMMETRIC_DIFFERENCE` |
+| **Segmentwerte** | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE`, `SEGMENT_UNION`, `SEGMENT_INTERSECTION`, `SEGMENT_DIFFERENCE`, `SEGMENT_SYMMETRIC_DIFFERENCE` |
+
+Copycat-Werte beschreiben eine einzelne Blockzelle; Segmentwerte beschreiben ein Bauteil mit seiner lokalen Ausdehnung. Ein Operatorergebnis behält seine Familie und kann wieder mit den entsprechenden Quellen und Operatoren verbunden werden.
 
 ## AREA
 
@@ -26,11 +39,15 @@ Keine direkten Graph-Eingänge.
 
 ## COPYCAT
 
-**Copycat.** Referenziert eine konkrete gespeicherte Formversion und ihre Materialrollen.
+**Copycat-Referenz.** Referenziert eine konkrete gespeicherte Formversion und ihre Materialrollen.
 
-Im Browser im Formgraphen **Graph speichern** verwenden. Danach im Gebäudegraphen einen **Copycat-Referenz**-Knoten wählen und im Inspektor **Gespeicherten Copycat laden** auswählen. **Copycat laden** in der Werkzeugleiste importiert alternativ eine einzelne Form-JSON und erzeugt bei Bedarf einen Quellknoten. Materialzuordnungen (Block-IDs ohne Vorschauzustände) und Formversion werden im Gebäudeentwurf festgehalten; spätere Änderungen des gespeicherten Graphen ändern bestehende Quellen nicht.
+Im Browser öffnet **Copycat auswählen** den Dialog mit **Grundformen** und **Gespeicherte Formen**. Die gespeicherten Einträge stammen aus persönlichen Formgraphen (**Graph speichern**) oder der geladenen Referenzbibliothek; jede Karte nennt ihre Herkunft und zeigt eine gerenderte Geometrievorschau. Die Suche grenzt die Auswahl ein. Eine Karte markieren, die größere Vorschau drehen und mit **Auswahl übernehmen** einsetzen. **Abbrechen** oder **Escape** lässt die bisherige Referenz unverändert. [Auswahldialog](Graphstudio.md#copycat-auswählen-grundformen-und-gespeicherte-formen)
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
+Eine Bibliotheksform behält ihren genauen Versionsschlüssel. Persönliche Formgraphen und Grundformen werden als feste Formversion in die Referenzbibliothek des Gebäudeentwurfs übernommen. Materialzuordnungen verwenden Block-IDs ohne Vorschauzustände. Spätere Änderungen oder das Löschen eines persönlichen Formgraphen ändern bestehende Quellen nicht. Eine Graphstudio-Sicherung enthält diese Bibliothek. Beim normalen Gebäude-JSON-Export bleiben es Formreferenzen, die im Spiel unter denselben Versionsschlüsseln auflösbar sein müssen.
+
+**Copycat auswählen** in der Werkzeugleiste ersetzt die ausgewählte Copycat-Quelle oder erzeugt beim Bestätigen einen neuen Quellknoten, wenn keine Quelle ausgewählt ist. **Formdatei laden** im Inspektor importiert weiterhin eine einzelne Form-JSON. **Copycat laden** in der Werkzeugleiste verwendet denselben Import und erzeugt bei Bedarf einen Quellknoten.
+
+**Verfügbarkeit:** Mod: implementiert; Graphstudio 0.4: vorhanden, mit Vorschau-Auswahldialog für Grundformen und gespeicherte Formen sowie Einzeldatei-Import.
 
 **Ausgang:** `COPYCAT`.
 
@@ -82,8 +99,8 @@ Keine direkten Graph-Eingänge.
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
 | `layout` | `SEGMENT_LAYOUT` | `assembly` gleich `true`; `id` ungleich `empty_wall` |
-| `in:*` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE` | `id` ungleich `empty_wall`; höchstens 16; zusätzlicher leerer Anschluss wächst bei Belegung |
-| `region:*` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE` | `assembly` gleich `true`; `id` ungleich `empty_wall`; dynamisch: `segmentRegions` |
+| `in:*` | [Copycat-Werte](#wertfamilien) | `id` ungleich `empty_wall`; höchstens 16; zusätzlicher leerer Anschluss wächst bei Belegung |
+| `region:*` | [Copycat-Werte](#wertfamilien) | `assembly` gleich `true`; `id` ungleich `empty_wall`; dynamisch: `segmentRegions` |
 
 Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen erscheinen als [semantische Anschlüsse](Knoten-Eigenschaften.md#semantische-anschluesse), sofern die jeweilige Konfiguration sie verwendet. Zieloberflächen werden teils erst im Gebäudekontext aufgelöst.
 
@@ -103,6 +120,8 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 ## PATTERN
 
+**2D-Anordnung im Browser:** Auf dem Entwicklungszweig lokal implementiert, noch nicht in master integriert oder im Live-Graphstudio bereitgestellt. Das Raster platziert Segmentinstanzen in X/Y, X/Z oder Z/Y. [Bedienung und Übernahme](https://github.com/TeutonStudio/copycat-architect/wiki/Graphstudio#2d-raster-für-anordnungen)
+
 **Segmente vereinigen.** Ordnet mehrere Segmente in Eingangsreihenfolge aneinander oder transformiert sie frei. Dies ist keine boolesche Vereinigung; überlappende Bauteile unterliegen den vorhandenen Zusammenführungsregeln.
 
 **Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
@@ -113,7 +132,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
-| `in:*` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | Immer, sofern strukturell gültig; höchstens 16, mindestens 2 |
+| `in:*` | [Segmentwerte](#wertfamilien) | Immer, sofern strukturell gültig; höchstens 16, mindestens 2 |
 
 Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen erscheinen als [semantische Anschlüsse](Knoten-Eigenschaften.md#semantische-anschluesse), sofern die jeweilige Konfiguration sie verwendet. Zieloberflächen werden teils erst im Gebäudekontext aufgelöst.
 
@@ -162,7 +181,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
-| `in:*` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE` | Immer, sofern strukturell gültig; höchstens 16; zusätzlicher leerer Anschluss wächst bei Belegung |
+| `in:*` | [Copycat-Werte](#wertfamilien) | Immer, sofern strukturell gültig; höchstens 16; zusätzlicher leerer Anschluss wächst bei Belegung |
 
 ### Inspektoreigenschaften
 
@@ -186,7 +205,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
-| `in:*` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE` | Immer, sofern strukturell gültig; höchstens 16; zusätzlicher leerer Anschluss wächst bei Belegung |
+| `in:*` | [Copycat-Werte](#wertfamilien) | Immer, sofern strukturell gültig; höchstens 16; zusätzlicher leerer Anschluss wächst bei Belegung |
 
 Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen erscheinen als [semantische Anschlüsse](Knoten-Eigenschaften.md#semantische-anschluesse), sofern die jeweilige Konfiguration sie verwendet. Zieloberflächen werden teils erst im Gebäudekontext aufgelöst.
 
@@ -213,16 +232,16 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
 | `layout` | `ROOM_LAYOUT` | `roomConfig.mode` gleich `SEGMENTS` |
-| `floor` | `FLOOR`, `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | `roomConfig.mode` gleich `SEGMENTS` |
-| `ceiling` | `CEILING`, `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | `roomConfig.mode` gleich `SEGMENTS` |
+| `floor` | `FLOOR`, [Segmentwerte](#wertfamilien) | `roomConfig.mode` gleich `SEGMENTS` |
+| `ceiling` | `CEILING`, [Segmentwerte](#wertfamilien) | `roomConfig.mode` gleich `SEGMENTS` |
 | `geometry` | `ROOM_GEOMETRY` | `roomConfig.mode` ungleich `SEGMENTS`; `assembly` gleich `true` |
-| `wall:*` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | `roomConfig.mode` ungleich `SEGMENTS`; leer verwendet `empty_wall`; dynamisch: `wallRuns` |
-| `floor` | `FLOOR`, `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | `roomConfig.mode` ungleich `SEGMENTS`; `assembly` gleich `true` |
+| `wall:*` | [Segmentwerte](#wertfamilien) | `roomConfig.mode` ungleich `SEGMENTS`; leer verwendet `empty_wall`; dynamisch: `wallRuns` |
+| `floor` | `FLOOR`, [Segmentwerte](#wertfamilien) | `roomConfig.mode` ungleich `SEGMENTS`; `assembly` gleich `true` |
 | `floor` | `FLOOR` | `roomConfig.mode` ungleich `SEGMENTS`; `assembly` ungleich `true` |
-| `ceiling` | `CEILING`, `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | `roomConfig.mode` ungleich `SEGMENTS`; `assembly` gleich `true` |
+| `ceiling` | `CEILING`, [Segmentwerte](#wertfamilien) | `roomConfig.mode` ungleich `SEGMENTS`; `assembly` gleich `true` |
 | `ceiling` | `CEILING` | `roomConfig.mode` ungleich `SEGMENTS`; `assembly` ungleich `true` |
-| `corner` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE` | `roomConfig.mode` ungleich `SEGMENTS` |
-| `edge:*` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | `roomConfig.mode` ungleich `SEGMENTS`; dynamisch: `roomEdges` |
+| `corner` | [Copycat-Werte](#wertfamilien) | `roomConfig.mode` ungleich `SEGMENTS` |
+| `edge:*` | [Segmentwerte](#wertfamilien) | `roomConfig.mode` ungleich `SEGMENTS`; dynamisch: `roomEdges` |
 
 Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen erscheinen als [semantische Anschlüsse](Knoten-Eigenschaften.md#semantische-anschluesse), sofern die jeweilige Konfiguration sie verwendet. Zieloberflächen werden teils erst im Gebäudekontext aufgelöst.
 
@@ -238,6 +257,8 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 ## STOREY
 
+**2D-Anordnung im Browser:** Auf dem Entwicklungszweig lokal implementiert, noch nicht in master integriert oder im Live-Graphstudio bereitgestellt. Das Raster platziert Rauminstanzen in X/Z bei Zusammensetzung **Aus Räumen**. [Bedienung und Übernahme](https://github.com/TeutonStudio/copycat-architect/wiki/Graphstudio#2d-raster-für-anordnungen)
+
 **Stockwerk.** Platziert Raumquellen und löst gemeinsame Wände sowie Fassaden auf. Alternativ bleibt der ältere Direkt-Wandmodus verfügbar.
 
 **Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
@@ -248,12 +269,12 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
-| `wall:*` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | `storeyMode` gleich `walls`; leer verwendet `empty_wall`; dynamisch: `wallRuns` |
-| `floor` | `FLOOR`, `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | `storeyMode` gleich `walls`; `assembly` gleich `true` |
+| `wall:*` | [Segmentwerte](#wertfamilien) | `storeyMode` gleich `walls`; leer verwendet `empty_wall`; dynamisch: `wallRuns` |
+| `floor` | `FLOOR`, [Segmentwerte](#wertfamilien) | `storeyMode` gleich `walls`; `assembly` gleich `true` |
 | `floor` | `FLOOR` | `storeyMode` gleich `walls`; `assembly` ungleich `true` |
-| `ceiling` | `CEILING`, `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | `storeyMode` gleich `walls`; `assembly` gleich `true` |
+| `ceiling` | `CEILING`, [Segmentwerte](#wertfamilien) | `storeyMode` gleich `walls`; `assembly` gleich `true` |
 | `ceiling` | `CEILING` | `storeyMode` gleich `walls`; `assembly` ungleich `true` |
-| `corner` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE` | `storeyMode` gleich `walls` |
+| `corner` | [Copycat-Werte](#wertfamilien) | `storeyMode` gleich `walls` |
 | `in:*` | `ROOM` | `storeyMode` ungleich `walls`; höchstens 16, mindestens 1; zusätzlicher leerer Anschluss wächst bei Belegung |
 
 Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen erscheinen als [semantische Anschlüsse](Knoten-Eigenschaften.md#semantische-anschluesse), sofern die jeweilige Konfiguration sie verwendet. Zieloberflächen werden teils erst im Gebäudekontext aufgelöst.
@@ -323,9 +344,9 @@ Keine zusätzlichen typspezifischen Eingabefelder im Knotenvertrag. Verbindungen
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
 | `layout` | `ROOF_LAYOUT` | `assembly` gleich `true` |
-| `in:*` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | `assembly` gleich `true`; höchstens 6; zusätzlicher leerer Anschluss wächst bei Belegung |
-| `in:*` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE` | `assembly` ungleich `true`; höchstens 16; zusätzlicher leerer Anschluss wächst bei Belegung |
-| `wall:*` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | `assembly` ungleich `true`; dynamisch: `roofWalls` |
+| `in:*` | [Segmentwerte](#wertfamilien) | `assembly` gleich `true`; höchstens 6; zusätzlicher leerer Anschluss wächst bei Belegung |
+| `in:*` | [Copycat-Werte](#wertfamilien) | `assembly` ungleich `true`; höchstens 16; zusätzlicher leerer Anschluss wächst bei Belegung |
+| `wall:*` | [Segmentwerte](#wertfamilien) | `assembly` ungleich `true`; dynamisch: `roofWalls` |
 
 Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen erscheinen als [semantische Anschlüsse](Knoten-Eigenschaften.md#semantische-anschluesse), sofern die jeweilige Konfiguration sie verwendet. Zieloberflächen werden teils erst im Gebäudekontext aufgelöst.
 
@@ -351,9 +372,9 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
-| `tread` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE` | Immer, sofern strukturell gültig |
-| `landing` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE` | Immer, sofern strukturell gültig |
-| `enclosure` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE` | Immer, sofern strukturell gültig |
+| `tread` | [Copycat-Werte](#wertfamilien) | Immer, sofern strukturell gültig |
+| `landing` | [Copycat-Werte](#wertfamilien) | Immer, sofern strukturell gültig |
+| `enclosure` | [Copycat-Werte](#wertfamilien) | Immer, sofern strukturell gültig |
 
 ### Inspektoreigenschaften
 
@@ -374,7 +395,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
-| `enclosure` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE` | Immer, sofern strukturell gültig |
+| `enclosure` | [Copycat-Werte](#wertfamilien) | Immer, sofern strukturell gültig |
 
 ### Inspektoreigenschaften
 
@@ -394,7 +415,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
-| `enclosure` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE` | Immer, sofern strukturell gültig |
+| `enclosure` | [Copycat-Werte](#wertfamilien) | Immer, sofern strukturell gültig |
 
 ### Inspektoreigenschaften
 
@@ -441,7 +462,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
 | `geometry` | `AREA` | Immer, sofern strukturell gültig |
-| `floor` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE` | Immer, sofern strukturell gültig |
+| `floor` | [Copycat-Werte](#wertfamilien) | Immer, sofern strukturell gültig |
 
 ### Inspektoreigenschaften
 
@@ -468,7 +489,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
-| `floor` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE` | Immer, sofern strukturell gültig |
+| `floor` | [Copycat-Werte](#wertfamilien) | Immer, sofern strukturell gültig |
 
 ### Inspektoreigenschaften
 
@@ -488,7 +509,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Segment spiegeln.** Spiegelt ein vollständiges Segment oder Muster, wahlweise nur dessen Zellpositionen.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: nicht vorhanden.
+**Verfügbarkeit:** Mod und Graphstudio 0.4: implementiert. Der Browser unterstützt X/Y/Z; native semantische Einstellungen benötigen weiterhin den Spiel-Editor.
 
 **Ausgang:** `SEGMENT_MIRROR`.
 
@@ -496,7 +517,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
-| `in:0` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | Immer, sofern strukturell gültig |
+| `in:0` | [Segmentwerte](#wertfamilien) | Immer, sofern strukturell gültig |
 
 Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen erscheinen als [semantische Anschlüsse](Knoten-Eigenschaften.md#semantische-anschluesse), sofern die jeweilige Konfiguration sie verwendet. Zieloberflächen werden teils erst im Gebäudekontext aufgelöst.
 
@@ -504,8 +525,8 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 | Feld | Bedeutung | Werte / Grenze |
 | --- | --- | --- |
-| `rotationAxis` | Drehachse in Minecraft-X/Y/Z; NORMAL bezeichnet die lokale Normale. | `X`, `Y`, `Z` |
-| `mirrorPositionsOnly` | Spiegelt nur die Blockpositionen; bei ausgeschalteter Option werden auch die Formen innerhalb der Zellen gespiegelt. | Vom Typ / Quellwert abhängig |
+| `rotationAxis` | Normale der Spiegelebene durch die Segmentmitte; im Browser als Spiegelebene gewählt. | `X`, `Y`, `Z` |
+| `mirrorPositionsOnly` | **Nur Blockpositionen spiegeln**: true spiegelt nur die Blockanordnung; false spiegelt zusätzlich jede Copycat-Form in ihrer Zelle. | `true` / `false`; fehlend oder Standard: `false` |
 | `materialMode` | SEPARATED erhält eingehende Materialzuordnungen, GROUPED verwendet die gewählte gemeinsame Gruppe/Rolle. | `SEPARATED`, `GROUPED` |
 | `role` | Materialrolle der Gebäudepalette, etwa wall oder roof. | Vom Typ / Quellwert abhängig |
 | `features` | Öffnungen und Säulenverlängerungen; [alle Unterfelder](Knoten-Eigenschaften.md#segmentfeatures). | Vom Typ / Quellwert abhängig |
@@ -514,7 +535,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Copycat spiegeln.** Spiegelt die Quelle innerhalb ihrer Blockzelle; resultiert wieder in einem Copycat-Anschluss.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio: vorhanden.
+**Verfügbarkeit:** Mod und Graphstudio 0.4: implementiert.
 
 **Ausgang:** `COPYCAT_MIRROR`.
 
@@ -522,7 +543,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
-| `in:0` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE` | Immer, sofern strukturell gültig |
+| `in:0` | [Copycat-Werte](#wertfamilien) | Immer, sofern strukturell gültig |
 
 ### Inspektoreigenschaften
 
@@ -530,11 +551,13 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | --- | --- | --- |
 | `mirror.plane` | Spiegelebene durch die Blockmitte, bezeichnet über ihre Normale. Siehe Ebenentabelle in den [Einheiten](Einheiten-und-Ausrichtung.md). | `X`, `Y`, `Z`, `XY`, `XY_NEGATIVE`, `XZ`, `XZ_NEGATIVE`, `YZ`, `YZ_NEGATIVE`, `BODY_PPP`, `BODY_PPN`, `BODY_PNP`, `BODY_PNN` |
 
+Der Browser bietet **X, Y und Z**. Die weiteren aufgeführten Spiegelebenen gehören zum nativen Editor; entsprechende native Dateien werden im Browser ausdrücklich abgewiesen.
+
 ## SEGMENT_ROTATE
 
 **Segment rotieren.** Dreht Segmentpositionen und enthaltene Copycats gemeinsam um eine Weltachse.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: nicht vorhanden.
+**Verfügbarkeit:** Mod und Graphstudio 0.4: implementiert. Der Browser unterstützt X/Y/Z; native semantische Einstellungen benötigen weiterhin den Spiel-Editor.
 
 **Ausgang:** `SEGMENT_ROTATE`.
 
@@ -542,7 +565,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
-| `in:0` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | Immer, sofern strukturell gültig |
+| `in:0` | [Segmentwerte](#wertfamilien) | Immer, sofern strukturell gültig |
 
 Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen erscheinen als [semantische Anschlüsse](Knoten-Eigenschaften.md#semantische-anschluesse), sofern die jeweilige Konfiguration sie verwendet. Zieloberflächen werden teils erst im Gebäudekontext aufgelöst.
 
@@ -550,7 +573,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 | Feld | Bedeutung | Werte / Grenze |
 | --- | --- | --- |
-| `rotationAxis` | Drehachse in Minecraft-X/Y/Z; NORMAL bezeichnet die lokale Normale. | `X`, `Y`, `Z` |
+| `rotationAxis` | Drehachse in Minecraft-X/Y/Z. | `X`, `Y`, `Z` |
 | `quarterTurns` | Drehwinkel als Vierteldrehungen: 0, 1, 2, 3 entsprechen 0°, 90°, 180°, 270°. | 0…3 |
 | `features` | Öffnungen und Säulenverlängerungen; [alle Unterfelder](Knoten-Eigenschaften.md#segmentfeatures). | Vom Typ / Quellwert abhängig |
 
@@ -558,7 +581,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Copycat rotieren.** Dreht eine Copycat-Quelle um ihre Blockmitte.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio: vorhanden.
+**Verfügbarkeit:** Mod und Graphstudio 0.4: implementiert.
 
 **Ausgang:** `COPYCAT_ROTATE`.
 
@@ -566,13 +589,13 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
-| `in:0` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE` | Immer, sofern strukturell gültig |
+| `in:0` | [Copycat-Werte](#wertfamilien) | Immer, sofern strukturell gültig |
 
 ### Inspektoreigenschaften
 
 | Feld | Bedeutung | Werte / Grenze |
 | --- | --- | --- |
-| `rotationAxis` | Drehachse in Minecraft-X/Y/Z; NORMAL bezeichnet die lokale Normale. | `X`, `Y`, `Z` |
+| `rotationAxis` | Drehachse in Minecraft-X/Y/Z. | `X`, `Y`, `Z` |
 | `quarterTurns` | Drehwinkel als Vierteldrehungen: 0, 1, 2, 3 entsprechen 0°, 90°, 180°, 270°. | 0…3 |
 
 ## ROOM_LAYOUT
@@ -587,7 +610,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
-| `in:*` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | Immer, sofern strukturell gültig; höchstens 16; zusätzlicher leerer Anschluss wächst bei Belegung |
+| `in:*` | [Segmentwerte](#wertfamilien) | Immer, sofern strukturell gültig; höchstens 16; zusätzlicher leerer Anschluss wächst bei Belegung |
 
 Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen erscheinen als [semantische Anschlüsse](Knoten-Eigenschaften.md#semantische-anschluesse), sofern die jeweilige Konfiguration sie verwendet. Zieloberflächen werden teils erst im Gebäudekontext aufgelöst.
 
@@ -598,8 +621,6 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | `roomLayout` | Platzierte Segmente, logische Grenzpolygonpunkte und Füllregeln; [alle Unterfelder](Knoten-Eigenschaften.md#roomlayout). | Vom Typ / Quellwert abhängig |
 
 
-## Boolesche Segmentoperationen
-
 ## SEGMENT_UNION
 
 **Segment-Vereinigung.** Positionsweise Operation auf Copycat-Teilformen. [Vertrag und Grenzen](Geplante-Segmentoperatoren.md).
@@ -608,7 +629,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Ausgang:** `SEGMENT_UNION`, weiterverwendbarer Segmentwert.
 
-**Anschlüsse:** `in:*` akzeptiert `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` und alle vier Segmentoperatoren. 2–16 geordnete Eingänge; im Inspektor erweiterbar.
+**Anschlüsse:** `in:*` akzeptiert [Segmentwerte](#wertfamilien). 2–16 geordnete Eingänge; im Inspektor erweiterbar.
 
 **Inspektoreigenschaften:** `materialMode` (SEPARATED/GROUPED), `role` (gemeinsame Materialrolle).
 
@@ -620,7 +641,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Ausgang:** `SEGMENT_INTERSECTION`, weiterverwendbarer Segmentwert.
 
-**Anschlüsse:** `in:*` akzeptiert `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` und alle vier Segmentoperatoren. 2–16 geordnete Eingänge; im Inspektor erweiterbar.
+**Anschlüsse:** `in:*` akzeptiert [Segmentwerte](#wertfamilien). 2–16 geordnete Eingänge; im Inspektor erweiterbar.
 
 **Inspektoreigenschaften:** `materialMode` (SEPARATED/GROUPED), `role` (gemeinsame Materialrolle).
 
@@ -632,7 +653,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Ausgang:** `SEGMENT_DIFFERENCE`, weiterverwendbarer Segmentwert.
 
-**Anschlüsse:** `in:*` akzeptiert `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` und alle vier Segmentoperatoren. Genau zwei Eingänge: A und B; A/B sind tauschbar.
+**Anschlüsse:** `in:*` akzeptiert [Segmentwerte](#wertfamilien). Genau zwei Eingänge: A und B; A/B sind tauschbar.
 
 **Inspektoreigenschaften:** `materialMode` (SEPARATED/GROUPED), `role` (gemeinsame Materialrolle).
 
@@ -644,6 +665,62 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Ausgang:** `SEGMENT_SYMMETRIC_DIFFERENCE`, weiterverwendbarer Segmentwert.
 
-**Anschlüsse:** `in:*` akzeptiert `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` und alle vier Segmentoperatoren. 2–16 geordnete Eingänge; im Inspektor erweiterbar.
+**Anschlüsse:** `in:*` akzeptiert [Segmentwerte](#wertfamilien). 2–16 geordnete Eingänge; im Inspektor erweiterbar.
 
 **Inspektoreigenschaften:** `materialMode` (SEPARATED/GROUPED), `role` (gemeinsame Materialrolle).
+
+## COPYCAT_UNION
+
+**Copycat-Vereinigung.** Vereinigt die belegten Teilvolumen aller Eingänge innerhalb derselben Blockzelle. Überlappungen werden geometrisch einmal belegt; die Materialherkunft folgt dem gewählten Materialmodus.
+
+**Verfügbarkeit:** aktueller Mod-Quellstand und Graphstudio 0.4: implementiert; veröffentlichte Mod 0.6.0: noch nicht enthalten.
+
+**Ausgang:** `COPYCAT_UNION`, weiterverwendbarer Copycat-Wert.
+
+**Anschlüsse:** `in:*` akzeptiert [Copycat-Werte](#wertfamilien). 2–16 geordnete Eingänge; im Inspektor erweiterbar.
+
+**Inspektoreigenschaften:** `materialMode` (`SEPARATED` erhält die Materialherkunft, `GROUPED` verwendet eine gemeinsame Rolle), `role` (Rolle aus der Gebäudepalette).
+
+Drehungen und Spiegelungen vor oder nach der Operation bleiben wirksam. Ein leeres Zwischenergebnis kann als Eingabe weiterer Copycat-Operationen dienen. Das Ergebnis lässt sich an die Copycat-Eingänge von Segmenten, Böden, Decken und Dächern anschließen. Die Grenzen von acht Materialgruppen und 32 Formteilen pro Blockzelle gelten weiterhin.
+
+## COPYCAT_INTERSECTION
+
+**Copycat-Schnitt.** Behält die gemeinsame Teilgeometrie aller Eingänge. Im separierten Materialmodus stammt die Materialherkunft vom ersten Eingang.
+
+**Verfügbarkeit:** aktueller Mod-Quellstand und Graphstudio 0.4: implementiert; veröffentlichte Mod 0.6.0: noch nicht enthalten.
+
+**Ausgang:** `COPYCAT_INTERSECTION`, weiterverwendbarer Copycat-Wert.
+
+**Anschlüsse:** `in:*` akzeptiert [Copycat-Werte](#wertfamilien). 2–16 geordnete Eingänge; im Inspektor erweiterbar.
+
+**Inspektoreigenschaften:** `materialMode` (`SEPARATED` erhält die Materialherkunft, `GROUPED` verwendet eine gemeinsame Rolle), `role` (Rolle aus der Gebäudepalette).
+
+Drehungen und Spiegelungen vor oder nach der Operation bleiben wirksam. Ein leeres Zwischenergebnis kann als Eingabe weiterer Copycat-Operationen dienen. Das Ergebnis lässt sich an die Copycat-Eingänge von Segmenten, Böden, Decken und Dächern anschließen. Die Grenzen von acht Materialgruppen und 32 Formteilen pro Blockzelle gelten weiterhin.
+
+## COPYCAT_DIFFERENCE
+
+**Copycat-Differenz A − B.** Schneidet die Geometrie des zweiten Eingangs B aus dem ersten Eingang A aus. Im separierten Materialmodus bleibt die Materialherkunft von A erhalten.
+
+**Verfügbarkeit:** aktueller Mod-Quellstand und Graphstudio 0.4: implementiert; veröffentlichte Mod 0.6.0: noch nicht enthalten.
+
+**Ausgang:** `COPYCAT_DIFFERENCE`, weiterverwendbarer Copycat-Wert.
+
+**Anschlüsse:** `in:*` akzeptiert [Copycat-Werte](#wertfamilien). Genau zwei geordnete Eingänge: `in:0` = A, `in:1` = B. **A / B tauschen** kehrt die Abzugsrichtung um.
+
+**Inspektoreigenschaften:** `materialMode` (`SEPARATED` erhält die Materialherkunft, `GROUPED` verwendet eine gemeinsame Rolle), `role` (Rolle aus der Gebäudepalette).
+
+Drehungen und Spiegelungen vor oder nach der Operation bleiben wirksam. Ein leeres Zwischenergebnis kann als Eingabe weiterer Copycat-Operationen dienen. Das Ergebnis lässt sich an die Copycat-Eingänge von Segmenten, Böden, Decken und Dächern anschließen. Die Grenzen von acht Materialgruppen und 32 Formteilen pro Blockzelle gelten weiterhin.
+
+## COPYCAT_SYMMETRIC_DIFFERENCE
+
+**Symmetrische Copycat-Differenz.** Behält Teilvolumen mit ungerader Überdeckungszahl. Zwei identische Eingänge ergeben ein leeres Ergebnis, drei identische Eingänge behalten die Form.
+
+**Verfügbarkeit:** aktueller Mod-Quellstand und Graphstudio 0.4: implementiert; veröffentlichte Mod 0.6.0: noch nicht enthalten.
+
+**Ausgang:** `COPYCAT_SYMMETRIC_DIFFERENCE`, weiterverwendbarer Copycat-Wert.
+
+**Anschlüsse:** `in:*` akzeptiert [Copycat-Werte](#wertfamilien). 2–16 geordnete Eingänge; im Inspektor erweiterbar.
+
+**Inspektoreigenschaften:** `materialMode` (`SEPARATED` erhält die Materialherkunft, `GROUPED` verwendet eine gemeinsame Rolle), `role` (Rolle aus der Gebäudepalette).
+
+Drehungen und Spiegelungen vor oder nach der Operation bleiben wirksam. Ein leeres Zwischenergebnis kann als Eingabe weiterer Copycat-Operationen dienen. Das Ergebnis lässt sich an die Copycat-Eingänge von Segmenten, Böden, Decken und Dächern anschließen. Die Grenzen von acht Materialgruppen und 32 Formteilen pro Blockzelle gelten weiterhin.

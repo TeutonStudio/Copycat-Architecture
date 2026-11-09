@@ -1,6 +1,6 @@
 # Gemeinsame und verschachtelte Inspektoreigenschaften
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Beschreibt den aktuellen gemeinsamen Knotenvertrag. Die im Browser **Graphstudio 0.4** verfügbaren Knoten und Felder sind in der [Knotenreferenz](Knotenreferenz.md) und im [Entwicklungsstand](Entwicklungsstand.md) ausgewiesen.
 
 [Knotenreferenz](Knotenreferenz.md) · [Einheiten](Einheiten-und-Ausrichtung.md)
 
@@ -168,14 +168,14 @@ Diese Quellen werden aus den Inspektorstrukturen als zusätzliche Graphanschlüs
 
 | Anschluss | Quelle | Ursprung |
 | --- | --- | --- |
-| `semantic:room:filler` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | `roomLayout.filler` |
-| `semantic:room:interior` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | `roomConfig.interiorSource` |
-| `semantic:room:partition` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | `roomConfig.defaultPartition` |
-| `semantic:facade:source` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | `facade.source` |
-| `semantic:facade:filler` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | `facade.filler` |
-| `semantic:opening:*:mask` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE` | `features.openings.*.maskSource` |
-| `semantic:opening:*:inset` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE` | `features.openings.*.insetSource` |
-| `semantic:column:*:profile` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE` | `features.extensions.*.profileSource` |
+| `semantic:room:filler` | [Segmentwerte](Knoten-Gebaeudegraph.md#wertfamilien) | `roomLayout.filler` |
+| `semantic:room:interior` | [Segmentwerte](Knoten-Gebaeudegraph.md#wertfamilien) | `roomConfig.interiorSource` |
+| `semantic:room:partition` | [Segmentwerte](Knoten-Gebaeudegraph.md#wertfamilien) | `roomConfig.defaultPartition` |
+| `semantic:facade:source` | [Segmentwerte](Knoten-Gebaeudegraph.md#wertfamilien) | `facade.source` |
+| `semantic:facade:filler` | [Segmentwerte](Knoten-Gebaeudegraph.md#wertfamilien) | `facade.filler` |
+| `semantic:opening:*:mask` | [Copycat-Werte](Knoten-Gebaeudegraph.md#wertfamilien) | `features.openings.*.maskSource` |
+| `semantic:opening:*:inset` | [Copycat-Werte](Knoten-Gebaeudegraph.md#wertfamilien) | `features.openings.*.insetSource` |
+| `semantic:column:*:profile` | [Segmentwerte](Knoten-Gebaeudegraph.md#wertfamilien) | `features.extensions.*.profileSource` |
 
 Zielwände und Dachunterseiten sind spät gebundene Oberflächenreferenzen. Sie dürfen keine Raum→Dach→Raum-Auswertungszyklen erzeugen. Ein Schema-3-Dokument trägt diese Absichten weiter, bis der vollständige Gebäudekontext vorhanden ist. [Praktischer Ablauf](Raumaufbau-und-Fassaden.md)
 

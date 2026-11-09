@@ -1,17 +1,19 @@
 # Knotenreferenz
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.4** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> **Stand dieses Entwicklungszweigs:** Diese Anleitung beschreibt die vollständige Überarbeitung mit Vorschau-Auswahldialog, allen sechs Copycat- und Segmentoperationen sowie dem 2D-Anordnungsraster. Der Browser unterstützt hier 10 Form- und 21 Gebäudeknotentypen. Die Änderungen sind noch nicht in master integriert oder im Live-Graphstudio bereitgestellt. Das Modrelease 0.6.0 bleibt unverändert.
+
+> Stand: **9. November 2026**. Diese Referenz beschreibt den aktuellen gemeinsamen Knotenvertrag und **Graphstudio 0.4**. Neue boolesche Gebäudeknoten sind im Modrelease **0.6.0** noch nicht enthalten. [Entwicklungsstand und Kompatibilität](Entwicklungsstand.md)
 
 Diese Referenz beschreibt **Anschlüsse**, **Ausgangstypen**, **Inspektoreigenschaften**, **Einheiten** und **Verfügbarkeit**. Sie ist nach Form- und Gebäudegraph getrennt, weil gleichnamige Rotations- oder Spiegelknoten unterschiedliche Porttypen besitzen.
 
 | Nachschlagen | Inhalt |
 | --- | --- |
 | [Formgraph](Knoten-Formgraph.md) | 10 aktuelle Typen: Quellen, vier Mengenoperationen, Rotation, Spiegelung und Ergebnis |
-| [Gebäudegraph](Knoten-Gebaeudegraph.md) | 28 aktuelle Typen: Flächen, Copycats, Segmente, Räume, Stockwerke, Dächer, Schächte und Außenanlagen |
+| [Gebäudegraph](Knoten-Gebaeudegraph.md) | 32 aktuelle Typen, davon 21 im Browser: Flächen, Copycats, Segmente, Räume, Stockwerke, Dächer, Schächte und Außenanlagen |
 | [Gemeinsame und verschachtelte Eigenschaften](Knoten-Eigenschaften.md) | Raum-/Dachkonfigurationen, Segmentmetadaten, Platzierungen und semantische Referenzen |
 | [Boolesche Segmentoperatoren](Geplante-Segmentoperatoren.md) | Vier implementierte boolesche Segmentknoten mit Vertrag und Grenzen |
 | [Einheiten und Ausrichtung](Einheiten-und-Ausrichtung.md) | hB, Weltachsen, Himmelsrichtungen, Montage und gespeicherte Werte |
-| [Entwicklungsstand](Entwicklungsstand.md) | Lokale Mod, öffentlicher Browser und Dateiformate |
+| [Entwicklungsstand](Entwicklungsstand.md) | Modrelease, gemeinsamer Quellstand, Browser und Dateiformate |
 
 ## Formknoten
 
@@ -33,7 +35,7 @@ Diese Referenz beschreibt **Anschlüsse**, **Ausgangstypen**, **Inspektoreigensc
 | Knoten | ID | Ausgang | Graphstudio 0.4 |
 | --- | --- | --- | --- |
 | [Flächengebiet](Knoten-Gebaeudegraph.md#area) | `AREA` | `AREA` | Noch nicht vorhanden |
-| [Copycat](Knoten-Gebaeudegraph.md#copycat) | `COPYCAT` | `COPYCAT` | Älterer Aufbau vorhanden |
+| [Copycat-Referenz](Knoten-Gebaeudegraph.md#copycat) | `COPYCAT` | `COPYCAT` | Gespeicherte Form laden oder Form-JSON importieren |
 | [Segmentgeometrie](Knoten-Gebaeudegraph.md#segment_layout) | `SEGMENT_LAYOUT` | `SEGMENT_LAYOUT` | Noch nicht vorhanden |
 | [Segment](Knoten-Gebaeudegraph.md#segment) | `SEGMENT` | `SEGMENT` | Älterer Aufbau vorhanden |
 | [Segmente vereinigen](Knoten-Gebaeudegraph.md#pattern) | `PATTERN` | `PATTERN` | Älterer Aufbau vorhanden |
@@ -51,17 +53,21 @@ Diese Referenz beschreibt **Anschlüsse**, **Ausgangstypen**, **Inspektoreigensc
 | [Gebäude](Knoten-Gebaeudegraph.md#building) | `BUILDING` | Ergebnis | Älterer Aufbau vorhanden |
 | [Garten](Knoten-Gebaeudegraph.md#garden) | `GARDEN` | `GARDEN` | Noch nicht vorhanden |
 | [Weg](Knoten-Gebaeudegraph.md#path) | `PATH` | `PATH` | Noch nicht vorhanden |
-| [Segment spiegeln](Knoten-Gebaeudegraph.md#segment_mirror) | `SEGMENT_MIRROR` | `SEGMENT_MIRROR` | Noch nicht vorhanden |
+| [Segment spiegeln](Knoten-Gebaeudegraph.md#segment_mirror) | `SEGMENT_MIRROR` | `SEGMENT_MIRROR` | Vorhanden, X/Y/Z |
 | [Copycat spiegeln](Knoten-Gebaeudegraph.md#copycat_mirror) | `COPYCAT_MIRROR` | `COPYCAT_MIRROR` | Vorhanden |
-| [Segment rotieren](Knoten-Gebaeudegraph.md#segment_rotate) | `SEGMENT_ROTATE` | `SEGMENT_ROTATE` | Noch nicht vorhanden |
+| [Segment rotieren](Knoten-Gebaeudegraph.md#segment_rotate) | `SEGMENT_ROTATE` | `SEGMENT_ROTATE` | Vorhanden, X/Y/Z |
 | [Copycat rotieren](Knoten-Gebaeudegraph.md#copycat_rotate) | `COPYCAT_ROTATE` | `COPYCAT_ROTATE` | Vorhanden |
 | [Raumanordnung](Knoten-Gebaeudegraph.md#room_layout) | `ROOM_LAYOUT` | `ROOM_LAYOUT` | Noch nicht vorhanden |
+| [Segment-Vereinigung](Knoten-Gebaeudegraph.md#segment_union) | `SEGMENT_UNION` | Segment | Vorhanden |
+| [Segment-Schnitt](Knoten-Gebaeudegraph.md#segment_intersection) | `SEGMENT_INTERSECTION` | Segment | Vorhanden |
+| [Segment-Differenz](Knoten-Gebaeudegraph.md#segment_difference) | `SEGMENT_DIFFERENCE` | Segment | Vorhanden |
+| [Symmetrische Segment-Differenz](Knoten-Gebaeudegraph.md#segment_symmetric_difference) | `SEGMENT_SYMMETRIC_DIFFERENCE` | Segment | Vorhanden |
+| [Copycat-Vereinigung](Knoten-Gebaeudegraph.md#copycat_union) | `COPYCAT_UNION` | Copycat | Vorhanden |
+| [Copycat-Schnitt](Knoten-Gebaeudegraph.md#copycat_intersection) | `COPYCAT_INTERSECTION` | Copycat | Vorhanden |
+| [Copycat-Differenz](Knoten-Gebaeudegraph.md#copycat_difference) | `COPYCAT_DIFFERENCE` | Copycat | Vorhanden |
+| [Symmetrische Copycat-Differenz](Knoten-Gebaeudegraph.md#copycat_symmetric_difference) | `COPYCAT_SYMMETRIC_DIFFERENCE` | Copycat | Vorhanden |
 
-| Segment-Vereinigung | `SEGMENT_UNION` | Segment | Vorhanden |
-| Segment-Schnitt | `SEGMENT_INTERSECTION` | Segment | Vorhanden |
-| Segment-Differenz | `SEGMENT_DIFFERENCE` | Segment | Vorhanden |
-| Symmetrische Segment-Differenz | `SEGMENT_SYMMETRIC_DIFFERENCE` | Segment | Vorhanden |
-
+Damit stehen **Rotieren, Spiegeln, Vereinigung, Schnitt, Differenz und symmetrische Differenz** im Gebäudegraphen sowohl für Copycats als auch für Segmente bereit. Die [Bedienungsanleitung](Graphstudio.md) zeigt die Zuordnung und den Ablauf.
 
 ## Anschlussregeln
 

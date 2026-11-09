@@ -5,8 +5,8 @@ import java.util.UUID
 
 /** Transactional authoring of the information which survives segment composition. */
 object SemanticPropertyEditors {
-    private val segmentKinds=setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)
-    private val copycatKinds=setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE)
+    private val segmentKinds=(setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds)
+    private val copycatKinds=CopycatBooleans.sourceKinds
     private fun name(graph:BuildingGraph,id:String)=graph.nodes.firstOrNull { it.id==id }?.let { it.name.ifBlank { ui("bg_"+it.kind.name.lowercase()) } } ?: ui("bg_no_connection")
     private fun StructurePropertyScreen.source(label:String,value:String,graph:BuildingGraph,kinds:Set<BuildingKind>,change:(String)->Unit) {
         choice(ui(label),value,listOf("")+graph.nodes.filter { it.kind in kinds }.map { it.id },{ name(graph,it) },change)

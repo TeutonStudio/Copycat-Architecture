@@ -11,9 +11,15 @@ import kotlin.js.json
 // These are the lossless browser authoring capabilities; native-only fields must
 // be rejected before a preview or export can silently discard them.
 private val browserFormKinds=listOf(NodeKind.INPUT,NodeKind.UNION,NodeKind.INTERSECTION,NodeKind.DIFFERENCE,NodeKind.SYMMETRIC_DIFFERENCE,NodeKind.ROTATE,NodeKind.ROTATION,NodeKind.OUTPUT,NodeKind.SAVED,NodeKind.MIRROR)
-private val browserBuildingKinds=listOf(BuildingKind.COPYCAT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.ROOM,BuildingKind.STOREY,BuildingKind.ROOF,BuildingKind.BUILDING,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)
+private val browserBuildingKinds=listOf(
+    BuildingKind.COPYCAT,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_MIRROR,
+    BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE,
+    BuildingKind.SEGMENT,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR,
+    BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,
+    BuildingKind.PATTERN,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.ROOM,BuildingKind.STOREY,BuildingKind.ROOF,BuildingKind.BUILDING
+)
 private val browserFormFields=setOf("id","kind","inputs","part","x","y","materialMode","materialGroup","previewGroup","inputGroups","rotationAxis","quarterTurns","savedCopycat","mirror")
-private val browserBuildingFields=setOf("id","kind","name","x","y","inputs","module","block","length","height","rectangles","walls","floor","ceiling","offsets","form","thickness","occupied","finish","levels","roof","roofType","ridge","overhang","materialMode","role","preview","storeyMode","corner","surfaces","rotationAxis","quarterTurns","mirror")
+private val browserBuildingFields=setOf("id","kind","name","x","y","inputs","module","block","length","height","rectangles","walls","floor","ceiling","offsets","form","thickness","occupied","finish","levels","roof","roofType","ridge","overhang","materialMode","role","preview","storeyMode","corner","surfaces","rotationAxis","quarterTurns","mirror","mirrorPositionsOnly","patternAxis","transforms")
 private fun browserNode(value:dynamic,isBuilding:Boolean):dynamic {
     val kind=string(value,"kind",if(isBuilding) "SEGMENT" else "INPUT")
     require(if(isBuilding) browserBuildingKinds.any { it.name==kind } else browserFormKinds.any { it.name==kind }) { "$kind requires the native editor" }
@@ -127,7 +133,11 @@ private fun buildingNode(raw: dynamic): BuildingNode {
     overhang = int(v, "overhang", 0), materialMode = MaterialMode.valueOf(string(v, "materialMode", "SEPARATED")),
     role = string(v, "role", "wall"), preview = string(v, "preview", "all"), storeyMode = string(v, "storeyMode", "rooms"),
     corner = string(v, "corner"), surfaces = if(v.surfaces==null) null else map(v.surfaces) { obj,key -> string(obj,key) },
-    rotationAxis=RotationAxis.valueOf(string(v,"rotationAxis","Y")),quarterTurns=int(v,"quarterTurns",0),mirror=mirror(v.mirror)
+    rotationAxis=RotationAxis.valueOf(string(v,"rotationAxis","Y")),quarterTurns=int(v,"quarterTurns",0),mirror=mirror(v.mirror),
+    mirrorPositionsOnly=if(v.mirrorPositionsOnly==null) null else bool(v,"mirrorPositionsOnly"),
+    patternAxis=string(v,"patternAxis","horizontal"),transforms=array(v,"transforms")?.map { t ->
+        SegmentTransform(if(t.offset==null) P() else point(t.offset),RotationAxis.valueOf(string(t,"axis","Y")),int(t,"quarterTurns",0))
+    }.orEmpty()
 )
 }
 private fun BuildingNode.jsNode() = json(
@@ -139,7 +149,10 @@ private fun BuildingNode.jsNode() = json(
     "levels" to levels.mapKeys { it.key.toString() }.asJson(), "roof" to roof, "roofType" to roofType,
     "ridge" to ridge, "overhang" to overhang, "materialMode" to materialMode.name, "role" to role, "preview" to preview,
     "storeyMode" to storeyMode, "corner" to corner, "surfaces" to surfaces?.asJson(),
-    "rotationAxis" to rotationAxis.name,"quarterTurns" to quarterTurns,"mirror" to mirror?.let { json("plane" to it.plane.name) }
+    "rotationAxis" to rotationAxis.name,"quarterTurns" to quarterTurns,"mirror" to mirror?.let { json("plane" to it.plane.name) },
+    "mirrorPositionsOnly" to mirrorPositionsOnly,"patternAxis" to patternAxis,"transforms" to transforms.map {
+        json("offset" to it.offset.jsPoint(),"axis" to it.axis.name,"quarterTurns" to it.quarterTurns)
+    }.toTypedArray()
 )
 private fun buildingGraph(raw:dynamic):BuildingGraph { val v=browserGraph(raw,true);return BuildingGraph(int(v,"schema",1),array(v,"nodes")?.map(::buildingNode).orEmpty()) }
 private fun building(v: dynamic) = Building(
@@ -161,6 +174,12 @@ fun graphModels(): Json = json(
     "form" to browserFormKinds.map { kind -> json("kind" to kind.name,
         "min" to GraphModels.inputs(kind).first, "max" to GraphModels.inputs(kind).last) }.toTypedArray(),
     "building" to browserBuildingKinds.map { it.name }.toTypedArray(),
+    "buildingInputs" to json(*browserBuildingKinds.mapNotNull { kind ->
+        val ports=GraphModels.building.nodes.getValue(kind.name).ports
+        ports.firstOrNull { it.key=="in:*" && it.conditions==null && it.min!=null }?.let {
+            kind.name to json("min" to it.min,"max" to (it.max ?: GraphModels.SOCKETS))
+        }
+    }.toTypedArray()),
     "shapes" to Adapters.all.values.map { json("id" to it.source, "name" to it.name, "max" to it.max, "tiltable" to it.tiltable) }.toTypedArray(),
     "rotationAxes" to RotationAxis.entries.map { it.name }.toTypedArray(),
     "materialModes" to MaterialMode.entries.map { it.name }.toTypedArray(),
@@ -209,7 +228,10 @@ fun newNode(isBuilding: Boolean, kind: String, id: String, x: Int, y: Int): Json
         require(type in browserBuildingKinds) { "Use the native editor for $kind" }
         val inputs = List(GraphModels.requiredBuildingInputs(type, "rooms")) { "" }
         val node = BuildingNode(id = id, kind = type, x = x, y = y, inputs = inputs,
-            module = "", role = if (type == BuildingKind.ROOF) "roof" else "wall")
+            module = "", role = if (type == BuildingKind.ROOF) "roof" else "wall",
+            rotationAxis=if(type==BuildingKind.SEGMENT_MIRROR) RotationAxis.X else RotationAxis.Y,
+            quarterTurns=if(type in setOf(BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT_ROTATE)) 1 else 0,
+            mirror=if(type==BuildingKind.COPYCAT_MIRROR) CopycatMirror() else null)
         return node.jsNode()
     }
     val type = NodeKind.valueOf(kind)
@@ -317,7 +339,35 @@ fun mountSource(value:dynamic,normal:String):Json {
 @JsExport
 fun insertSavedCopycat(document:dynamic,source:dynamic,nodeId:String):Json {
     val target=form(document)
-    val inserted=SavedCopycats.insert(target,form(source),replaceId=nodeId).form
+    val result=SavedCopycats.insert(target,form(source),replaceId=nodeId)
+    val inserted=result.form
     return json("groups" to inserted.groups.map { json("id" to it.id,"name" to it.name,"role" to it.role,"priority" to it.priority) }.toTypedArray(),
+        "groupMapping" to result.groups.asJson(),"nodeId" to result.nodeId,
         "nodes" to inserted.graph!!.nodes.map { it.jsNode() }.toTypedArray())
+}
+
+/** Orthographic authoring uses the same placement and rotation rules as Minecraft. */
+@JsExport
+fun arrangementGraph(document:dynamic,library:dynamic,selected:String,view:String):Json {
+    val b=building(document)
+    val graph=requireNotNull(b.graph)
+    BuildingGraphCompiler.structure(graph)
+    val node=graph.nodes.first { it.id==selected }
+    val forms=map(library.forms) { obj,key -> form(obj[key]) }
+    val modules=map(library.modules) { obj,key -> module(obj[key]) }
+    val evaluation=BuildingGraphCompiler.Evaluation(graph,b.palette,forms,modules)
+    val plane=SegmentView.valueOf(view)
+    if(node.kind==BuildingKind.PATTERN) {
+        val draft=SegmentArrangement(node.inputs.map(evaluation::segment),node)
+        return json("transforms" to draft.transforms.map { json("offset" to it.offset.jsPoint(),"axis" to it.axis.name,"quarterTurns" to it.quarterTurns) }.toTypedArray(),
+            "items" to node.inputs.mapIndexed { i,id -> json("id" to id,"label" to graph.nodes.first { it.id==id }.let { it.name.ifBlank { id } },
+                "cells" to draft.projected(i,plane).map { arrayOf(it.x,it.z) }.toTypedArray()) }.toTypedArray())
+    }
+    require(node.kind==BuildingKind.STOREY && node.storeyMode=="rooms") { "Select a segment pattern or storey made from rooms" }
+    return json("items" to node.inputs.mapIndexed { i,id ->
+        val plan=evaluation.preview(id)
+        val offset=node.offsets.getOrNull(i) ?: P()
+        json("id" to id,"label" to graph.nodes.first { it.id==id }.let { it.name.ifBlank { id } },
+            "cells" to plan.placements.map { plane.project(it.pos+offset) }.toSet().map { arrayOf(it.x,it.z) }.toTypedArray())
+    }.toTypedArray())
 }

@@ -1,8 +1,10 @@
 # Boolesche Segmentoperatoren
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.4** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **8. November 2026**. Beschreibt die implementierten Segmentoperatoren im gemeinsamen Fachkern und in **Graphstudio 0.4**. [Entwicklungsstand](Entwicklungsstand.md)
 
 **Status: implementiert im aktuellen Graphstudio-Quellstand und im gemeinsamen Fachkern.** Die vier Knotentypen sind im Gebäudegraphen auswählbar und ihre Ergebnisse lassen sich mit weiteren Segmentknoten verbinden. Die veröffentlichte Mod 0.6.0 kennt diese neuen IDs noch nicht; für den Spielimport ist ein Mod-Build mit dieser Erweiterung nötig.
+
+Copycat-Werte besitzen entsprechende eigene [Copycat-Operatoren](Knoten-Gebaeudegraph.md#copycat_union). Sie verarbeiten die Geometrie einer einzelnen Blockzelle und können anschließend als Quelle eines Segments dienen. Segmentwerte lassen sich zusätzlich mit **Segment rotieren** und **Segment spiegeln** weiterverarbeiten.
 
 ## Gemeinsamer Vertrag
 
@@ -10,19 +12,19 @@ Die Knoten nehmen vollständige Segmentergebnisse an: `SEGMENT`, `PATTERN`, `SEG
 
 Die Eingänge liegen im selben lokalen Blockkoordinatensystem. Es gibt keine automatische Skalierung und keine automatische Verschiebung zum kleinsten belegten Punkt. Eine fehlende Zelle bedeutet leere Geometrie. Die boolesche Operation wird **positionsweise auf die Copycat-Geometrien innerhalb der jeweiligen Blockzelle** abgebildet. Ein bloßer Vergleich ganzer belegter Zellen wäre bei Teilformen falsch.
 
-Normale Vollblöcke müssen für die Geometrieauswertung als volle Zellen behandelt werden. Die Umwandlung beziehungsweise Rückgabe eines solchen Ergebnisses darf nicht still die bisherige Material-, Item- oder Zinkabrechnung ändern; diese Herkunft ist Bestandteil des noch zu implementierenden Vertrags.
+Normale Vollblöcke werden geometrisch als volle Zellen behandelt. Ihre Block- und Itemherkunft bleibt erhalten; eine notwendige Teilumwandlung in Copycat-Geometrie wird ausdrücklich abgewiesen. Als ausschneidbare Quelle kann stattdessen eine gespeicherte volle Copycat-Form verwendet werden.
 
 ## SEGMENT_UNION
 
 **Segment-Vereinigung.** Mindestens 2, höchstens 16 geordnete Segmenteingänge. Belegte Teilvolumen werden vereinigt; doppelte Belegung erzeugt keine doppelte Geometrie. Pro Zelle entspricht das dem Copycat-Operator UNION.
 
-**Anschlüsse:** `in:0` bis `in:15`, ausschließlich Segmentwerte. **Inspektor:** Eingangszahl, Materialmodus (Separiert/Gruppiert), gemeinsame Materialrolle ; allgemeiner Knotenname. **Ausdehnung:** gemeinsame umschließende Eingabeausdehnung bei unverändertem lokalen Ursprung.
+**Anschlüsse:** `in:0` bis `in:15`, ausschließlich Segmentwerte. **Inspektor:** Eingangszahl, Materialmodus (Separiert/Gruppiert), gemeinsame Materialrolle; allgemeiner Knotenname. **Ausdehnung:** gemeinsame umschließende Eingabeausdehnung bei unverändertem lokalen Ursprung.
 
 ## SEGMENT_INTERSECTION
 
 **Segment-Schnitt.** Mindestens 2, höchstens 16 Segmenteingänge. Pro Zelle bleibt die gemeinsame Teilgeometrie aller Eingänge; eine dort fehlende Zelle macht das Ergebnis leer. Entspricht Copycat-INTERSECTION.
 
-**Anschlüsse:** `in:0` bis `in:15`. **Inspektor:** Eingangszahl, Materialmodus und gemeinsame Rolle; separiert stammt die Materialherkunft vom ersten Eingang. **Ausdehnung:** geometrische Schnittausdehnung, ohne automatische Neuzentrierung.
+**Anschlüsse:** `in:0` bis `in:15`. **Inspektor:** Eingangszahl, Materialmodus und gemeinsame Rolle; separiert stammt die Materialherkunft vom ersten Eingang. **Ausdehnung:** gemeinsame Schnittausdehnung der Eingaberahmen, ohne automatische Neuzentrierung auf die verbleibende Geometrie.
 
 ## SEGMENT_DIFFERENCE
 
@@ -34,7 +36,7 @@ Normale Vollblöcke müssen für die Geometrieauswertung als volle Zellen behand
 
 **Symmetrische Segment-Differenz.** Mindestens 2, höchstens 16 Segmenteingänge. Pro Teilvolumen bleiben ungerade Überdeckungszahlen erhalten. Bei drei identischen Eingängen bleibt die Geometrie bestehen; sie darf nicht wie bei „alles Überlappende entfernen“ verschwinden. Entspricht iteriertem Copycat-XOR.
 
-**Anschlüsse:** `in:0` bis `in:15`. **Inspektor:** Eingangszahl, Separiert/Gruppiert, gemeinsame Rolle . **Ausdehnung:** gemeinsame umschließende Eingabeausdehnung ohne Verschieben des Ursprungs.
+**Anschlüsse:** `in:0` bis `in:15`. **Inspektor:** Eingangszahl, Separiert/Gruppiert, gemeinsame Rolle. **Ausdehnung:** gemeinsame umschließende Eingabeausdehnung ohne Verschieben des Ursprungs.
 
 ## Auswertung und Grenzen
 

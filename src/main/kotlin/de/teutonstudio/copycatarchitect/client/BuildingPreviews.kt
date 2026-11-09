@@ -29,7 +29,7 @@ object BuildingPreviewRenderer {
             val plan=ready.getOrThrow()
             val roomTop=mode=="2d" && node.kind==BuildingKind.ROOM
             val shown=if(roomTop) plan.copy(placements=plan.placements.filter { it.component!="ceiling" }) else plan
-            val projection=if(mode!="2d") "3d" else if(node.kind in setOf(BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)) "front" else "top"
+            val projection=if(mode!="2d") "3d" else if(node.kind in (CopycatBooleans.kinds+SegmentBooleans.kinds+setOf(BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE))) "front" else "top"
             val showHint=h>=100 || roomTop
             val pendingConnections=node.kind!=BuildingKind.BUILDING && (node.features?.extensions.orEmpty().isNotEmpty() || !node.attachments.isNullOrEmpty())
             val footer=(if(showHint) 14 else 0)+(if(sampleRoof) 13 else 0)+(if(pendingConnections) 13 else 0)

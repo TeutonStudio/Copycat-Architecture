@@ -2,7 +2,7 @@ package de.teutonstudio.copycatarchitect.domain
 
 import java.util.concurrent.ConcurrentHashMap
 
-enum class BuildingKind { AREA, COPYCAT, SEGMENT_LAYOUT, SEGMENT, PATTERN, ROOM_GEOMETRY, FLOOR, CEILING, ROOM, STOREY, ROOF_LEVEL, ROOF_LAYOUT, ROOF, STAIRWELL, ELEVATOR_SHAFT, SERVICE_SHAFT, BUILDING, GARDEN, PATH, SEGMENT_MIRROR, COPYCAT_MIRROR, SEGMENT_ROTATE, COPYCAT_ROTATE, ROOM_LAYOUT, SEGMENT_UNION, SEGMENT_INTERSECTION, SEGMENT_DIFFERENCE, SEGMENT_SYMMETRIC_DIFFERENCE, COPYCAT_UNION, COPYCAT_INTERSECTION, COPYCAT_DIFFERENCE, COPYCAT_SYMMETRIC_DIFFERENCE }
+enum class BuildingKind { AREA, COPYCAT, SEGMENT_LAYOUT, SEGMENT, PATTERN, ROOM_GEOMETRY, FLOOR, CEILING, ROOM, STOREY, ROOF_LEVEL, ROOF_LAYOUT, ROOF, STAIRWELL, ELEVATOR_SHAFT, SERVICE_SHAFT, BUILDING, GARDEN, PATH, SEGMENT_MIRROR, COPYCAT_MIRROR, SEGMENT_ROTATE, COPYCAT_ROTATE, ROOM_LAYOUT, SEGMENT_UNION, SEGMENT_INTERSECTION, SEGMENT_DIFFERENCE, SEGMENT_SYMMETRIC_DIFFERENCE, COPYCAT_UNION, COPYCAT_INTERSECTION, COPYCAT_DIFFERENCE, COPYCAT_SYMMETRIC_DIFFERENCE, ROTATION, MIRRORING }
 data class SegmentLayoutCell(val x:Int=0,val y:Int=0,val sourceIndex:Int=0,val turn:Int=0)
 data class BuildingNode(
     val id:String="",val kind:BuildingKind=BuildingKind.SEGMENT,val name:String="",val x:Int=0,val y:Int=0,
@@ -28,7 +28,8 @@ data class BuildingNode(
     // Missing values select joined end rows for explicit rooms; false retains old free-interior layouts.
     val joinWallEnds:Boolean?=null,
     val roomLayout:RoomLayoutConfig?=null,val roomConfig:RoomConfig?=null,val facade:FacadeConfig?=null,
-    val features:SegmentFeatures?=null,val attachments:List<AttachmentSpec>?=null
+    val features:SegmentFeatures?=null,val attachments:List<AttachmentSpec>?=null,
+    val rotation:String?=null,val mirroring:String?=null,val rotations:List<SegmentRotation>?=null,val mirrors:List<CopycatMirror>?=null
 )
 /** Optional Copycat and outdoor sequences grow through spare ports; unused tails are not required inputs. */
 internal fun BuildingNode.trimCopycatInputs():BuildingNode {
@@ -46,6 +47,7 @@ data class BuildingGraph(val schema:Int=1,val nodes:List<BuildingNode> = emptyLi
             inputs=n.inputs.map { if(it==id) "" else it },walls=n.walls.filterValues { it!=id },verticalEdges=n.verticalEdges?.filterValues { it!=id },
             floor=if(n.floor==id) "" else n.floor,ceiling=if(n.ceiling==id) "" else n.ceiling,corner=if(n.corner==id) "" else n.corner,
             roof=if(n.roof==id) "" else n.roof,
+            rotation=if(n.rotation==id) null else n.rotation,mirroring=if(n.mirroring==id) null else n.mirroring,
             layout=if(n.layout==id) "" else n.layout,geometry=if(n.geometry==id) "" else n.geometry,
             regionCopies=n.regionCopies.filterValues { it!=id },sitePaths=n.sitePaths.filterKeys { n.inputs.getOrNull(it)!=id },
             roofLevel=n.roofLevel?.let { it.copy(area=if(it.area==id) "" else it.area) },accessInstances=n.accessInstances.filter { it.source!=id },
@@ -58,6 +60,8 @@ data class BuildingGraph(val schema:Int=1,val nodes:List<BuildingNode> = emptyLi
         val n=nodes.first { it.id==target }
         require(BuildingPorts.of(n,this,true).any { it.key==key }) { "Unknown building socket" }
         var changed=when {
+            key=="rotation" -> n.copy(rotation=source.takeIf(String::isNotEmpty))
+            key=="mirroring" -> n.copy(mirroring=source.takeIf(String::isNotEmpty))
             key=="layout" -> n.copy(layout=source,assembly=true,roomConfig=if(n.kind==BuildingKind.ROOM) (n.roomConfig ?: RoomConfig()).copy(mode=RoomMode.SEGMENTS) else n.roomConfig)
             key=="geometry" -> n.copy(geometry=source,assembly=if(n.kind==BuildingKind.ROOM) true else n.assembly)
             key.startsWith("region:") -> n.copy(regionCopies=resolvedNode(n).withRegionCopy(key,source).regionCopies)
@@ -239,7 +243,8 @@ object BuildingPorts {
             (if(n.assembly) listOf(port(n,"layout",n.layout)) else emptyList())+inputs(n,expanding)+
                 (if(n.assembly) SegmentRegions.of(n.length,n.height,n.depth).mapIndexed { i,region -> port(n,region.key,assigned[region.key].orEmpty(),i) } else emptyList())
         }
-        BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE -> listOf(port(n,"in:0",n.inputs.firstOrNull().orEmpty()))
+        BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE -> listOf(port(n,"in:0",n.inputs.firstOrNull().orEmpty())) +
+            if(n.kind in setOf(BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT_ROTATE)) listOf(port(n,"rotation",n.rotation.orEmpty())) else listOf(port(n,"mirroring",n.mirroring.orEmpty()))
         BuildingKind.GARDEN -> listOf(port(n,"geometry",n.geometry),port(n,"floor",n.floor))
         BuildingKind.PATH -> listOf(port(n,"floor",n.floor))
         BuildingKind.SEGMENT_LAYOUT,BuildingKind.ROOM_GEOMETRY -> listOf(port(n,"geometry",n.geometry))
@@ -295,6 +300,7 @@ object BuildingGraphCompiler {
         require(graph.nodes.count { it.kind==BuildingKind.BUILDING }==1) { "Keep exactly one building result" }
         require(nodes["empty_wall"]?.let { it.kind==BuildingKind.SEGMENT && it.block=="minecraft:air" && it.inputs.isEmpty() }==true) { "Keep the standard Empty wall source" }
         for(n in graph.nodes) {
+            BuildingTransformValues.validate(n)
             BuildingSemantics.validate(n,nodes)
             require(n.roomLayout==null || n.kind==BuildingKind.ROOM_LAYOUT) { "Room arrangements belong to a room layout" }
             require(n.roomConfig==null || n.kind==BuildingKind.ROOM) { "Room settings belong to a room" }
@@ -311,7 +317,7 @@ object BuildingGraphCompiler {
             require(n.transforms.size<=n.inputs.size && n.transforms.all { it.quarterTurns in 0..3 && it.axis in listOf(RotationAxis.X,RotationAxis.Y,RotationAxis.Z) && listOf(it.offset.x,it.offset.y,it.offset.z).all { c -> c in -128..128 } }) { "Invalid segment transformation" }
             require(n.transforms.isEmpty() || n.kind==BuildingKind.PATTERN) { "Only segment composition accepts transformations" }
             val offsetBound=if(n.kind==BuildingKind.BUILDING) 128 else 64
-            require(n.offsets.all { it.y==0 && it.x in -offsetBound..offsetBound && it.z in -offsetBound..offsetBound }) { "Placement offset exceeds bounds" }
+            require(n.offsets.all { (it.y==0 || n.kind==BuildingKind.SEGMENT_UNION && it.y in -64..64) && it.x in -offsetBound..offsetBound && it.z in -offsetBound..offsetBound }) { "Placement offset exceeds bounds" }
             if(n.kind==BuildingKind.BUILDING) BuildingSite.validate(graph,n)
             else require(n.sitePaths.isEmpty()) { "Path placement belongs to the building node" }
             require(n.layout.isEmpty() || n.assembly && n.kind in setOf(BuildingKind.SEGMENT,BuildingKind.ROOF,BuildingKind.ROOM) || n.kind==BuildingKind.ROOM && n.roomConfig?.mode==RoomMode.SEGMENTS) { "Only an explicit segment, room or roof accepts an arrangement source" }
@@ -458,8 +464,7 @@ object BuildingGraphCompiler {
                 require(source.inputs.single().isNotEmpty()) { "Connect the Copycat to rotate" }
                 val cell=sourceCell(pos,copycat(source.inputs.single()))
                 require(cell.block.isEmpty() || cell.empty) { "Copycat rotations require Copycat geometry" }
-                val operations=cell.rotations+listOfNotNull(
-                    SegmentRotation(source.rotationAxis,source.quarterTurns).takeIf { source.quarterTurns!=0 },
+                val operations=cell.rotations+BuildingTransformValues.rotations(source,graph)+listOfNotNull(
                     SegmentRotation(RotationAxis.Y,turn).takeIf { turn!=0 })
                 return cell.copy(role=if(source.materialMode==MaterialMode.GROUPED) source.role else cell.role,rotations=operations)
             }
@@ -467,7 +472,7 @@ object BuildingGraphCompiler {
                 require(source.inputs.single().isNotEmpty()) { "Connect the Copycat to mirror" }
                 val cell=sourceCell(pos,copycat(source.inputs.single()))
                 require(cell.block.isEmpty() || cell.empty) { "Copycat mirrors require Copycat geometry; native blocks cannot be mirrored" }
-                val operations=cell.rotations+SegmentRotation(mirror=source.mirror ?: CopycatMirror())+
+                val operations=cell.rotations+BuildingTransformValues.mirrors(source,graph).map { SegmentRotation(mirror=it) }+
                     if(turn==0) emptyList() else listOf(SegmentRotation(RotationAxis.Y,turn))
                 return cell.copy(role=if(source.materialMode==MaterialMode.GROUPED) source.role else cell.role,rotations=operations)
             }
@@ -476,7 +481,7 @@ object BuildingGraphCompiler {
                 if(turn!=0) add(SegmentRotation(RotationAxis.Y,turn))
             }
             // Keep legacy Y-only cells stable, including their serialized previews.
-            return Cell(pos,form=source.form,role=source.role,block=source.block,empty=source.block=="minecraft:air",
+            return Cell(pos,form=source.form,role=source.role,block=source.block,empty=source.block=="minecraft:air" || source.block.isEmpty() && Geometry.validate(forms[source.form] ?: error("Missing form ${source.form}")).parts.isEmpty(),
                 turn=if(source.quarterTurns==0 || source.rotationAxis==RotationAxis.Y) Math.floorMod(source.quarterTurns+turn,4) else 0,
                 rotations=if(source.quarterTurns==0 || source.rotationAxis==RotationAxis.Y) emptyList() else rotations,surfaces=source.surfaces)
         }
@@ -502,13 +507,13 @@ object BuildingGraphCompiler {
             }
             if(n.kind==BuildingKind.SEGMENT_ROTATE) {
                 require(n.inputs.single().isNotEmpty()) { "Connect the segment to rotate" }
-                return@run SegmentGeometry.rotated(segment(n.inputs.single()),n.rotationAxis,n.quarterTurns).let { value ->
+                return@run BuildingTransformValues.rotations(n,graph).fold(segment(n.inputs.single())) { value,step -> SegmentGeometry.rotated(value,step.axis,step.quarterTurns) }.let { value ->
                     if(n.materialMode==MaterialMode.GROUPED) value.copy(cells=value.cells.map { it.copy(overrideRole=n.role) }) else value
                 }
             }
             if(n.kind==BuildingKind.SEGMENT_MIRROR) {
                 require(n.inputs.single().isNotEmpty()) { "Connect the segment to mirror" }
-                return@run SegmentGeometry.mirror(segment(n.inputs.single()),n.rotationAxis,positionsOnly=n.mirrorPositionsOnly==true).let { value ->
+                return@run BuildingTransformValues.mirrors(n,graph).fold(segment(n.inputs.single())) { value,step -> SegmentGeometry.mirror(value,RotationAxis.valueOf(step.plane.name),positionsOnly=n.mirrorPositionsOnly==true) }.let { value ->
                     if(n.materialMode==MaterialMode.GROUPED) value.copy(cells=value.cells.map { it.copy(overrideRole=n.role) }) else value
                 }
             }

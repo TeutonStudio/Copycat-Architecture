@@ -24,7 +24,7 @@ export function loadBuildingCopycat(document, library, entry, nodeId) {
     nodes = [...nodes, newNode(true, 'COPYCAT', nodeId, 40, 100)]
   }
   if (!nodes.some(node => node.id === nodeId && node.kind === 'COPYCAT')) throw new Error('Einen Copycat-Quellknoten auswählen.')
-  const next = replaceNodes(document, nodes.map(node => node.id === nodeId ? { ...node, name: form.name, form: key, surfaces } : node))
+  const next = replaceNodes(document, nodes.map(node => node.id === nodeId ? { ...node, name: form.name, form: key, block: '', surfaces } : node))
   inspect('building', next)
   return { document: next, library: { ...library, forms }, nodeId }
 }

@@ -5,7 +5,7 @@ import { listCopycatOptions } from './copycat-options.js'
 import { createCopycatPreviewClient } from './copycat-preview-client.js'
 import { createCopycatThumbnailRenderer } from './copycat-thumbnails.js'
 
-const sources = { base: 'Grundform', saved: 'Meine gespeicherten Formen', library: 'Formbibliothek' }
+const sources = { empty: 'Grundform', base: 'Grundform', saved: 'Meine gespeicherten Formen', library: 'Formbibliothek' }
 const categories = [['basic', 'Grundformen'], ['saved', 'Gespeicherte Formen']]
 
 function createPreviews() {

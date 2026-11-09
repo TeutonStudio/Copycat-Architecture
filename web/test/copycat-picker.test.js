@@ -40,7 +40,7 @@ test('the catalogue contains every adapter, personal form and exact library refe
   const options = listCopycatOptions({ savedForms: [saved, invalid, { id: 'building', mode: 'building' }], library: { forms: { 'slab@3': reference } } })
   const basic = options.filter(item => item.kind === 'base')
   assert.deepEqual(basic.map(item => item.source), model.shapes.map(shape => shape.id))
-  assert.equal(options.length, model.shapes.length + 3)
+  assert.equal(options.length, model.shapes.length + 4)
   assert.equal(new Set(options.map(item => item.id)).size, options.length)
   assert.ok(basic.every(item => item.category === 'basic' && item.entry.document === item.document))
   const personal = options.find(item => item.id === 'saved:personal')
@@ -55,7 +55,7 @@ test('the catalogue contains every adapter, personal form and exact library refe
 })
 
 test('all basic thumbnails compile real adapter geometry, including the stepped roof', () => {
-  const counts = new Map(listCopycatOptions().map(item => [item.source, previewCopycatOption(item).count]))
+  const counts = new Map(listCopycatOptions().filter(item => item.kind !== 'empty').map(item => [item.source, previewCopycatOption(item).count]))
   assert.equal(counts.get('copycats:copycat_block'), 4096)
   assert.equal(counts.get('copycats:copycat_slab'), 2048)
   assert.equal(counts.get('copycats:copycat_stairs'), 3072)

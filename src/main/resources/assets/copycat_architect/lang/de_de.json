@@ -790,5 +790,7 @@
   "gui.copycat_architect.copycat_union": "Copycat-Vereinigung",
   "gui.copycat_architect.copycat_intersection": "Copycat-Schnitt",
   "gui.copycat_architect.copycat_difference": "Copycat-Differenz",
-  "gui.copycat_architect.copycat_symmetric_difference": "Symmetrische Copycat-Differenz"
+  "gui.copycat_architect.copycat_symmetric_difference": "Symmetrische Copycat-Differenz",
+  "gui.copycat_architect.bg_rotation": "Rotation",
+  "gui.copycat_architect.bg_mirroring": "Spiegelungen"
 }

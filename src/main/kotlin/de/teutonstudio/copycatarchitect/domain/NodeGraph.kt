@@ -94,7 +94,7 @@ object GraphCompiler {
             if(n.kind==NodeKind.SAVED) {
                 val saved=requireNotNull(n.savedCopycat) { "Choose a saved Copycat" }
                 require(saved.name.length in 1..64 && saved.version>0 && saved.id.length<=128) { "Invalid saved Copycat identity" }
-                Geometry.normalized(saved.parts,groups)
+                if(saved.parts.isNotEmpty()) Geometry.normalized(saved.parts,groups)
             }
             n.inputs.forEachIndexed { slot,input -> if(input.isNotEmpty()) {
                 val source=nodes[input]?.let { GraphModels.shape(it.kind).output }
@@ -113,7 +113,14 @@ object GraphCompiler {
     }
     fun compile(graph:NodeGraph,groups:List<MaterialGroup> = DEFAULT_GROUPS):List<Part> =
         intermediate(graph,graph.nodes.single { it.kind==NodeKind.OUTPUT }.id,groups).also {
-            require(it.isNotEmpty()) { "Result is empty; change the connected shapes" }
+            val nodes=graph.nodes.associateBy { n -> n.id }
+            val seen=mutableSetOf<String>()
+            fun explicitEmpty(id:String):Boolean {
+                if(!seen.add(id)) return false
+                val n=nodes[id] ?: return false
+                return n.kind==NodeKind.SAVED && n.savedCopycat?.parts?.isEmpty()==true || n.inputs.any(::explicitEmpty)
+            }
+            require(it.isNotEmpty() || explicitEmpty(graph.nodes.single { n -> n.kind==NodeKind.OUTPUT }.id)) { "Result is empty; change the connected shapes" }
         }
 
     /** Evaluate this node's ancestors only. Empty geometry is a valid intermediate preview. */

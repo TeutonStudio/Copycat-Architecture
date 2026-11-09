@@ -6,7 +6,8 @@ const colors = ['#55b8d0', '#d69b62', '#90be78', '#ba8dcc', '#da7980', '#799ee0'
 
 export function ArrangementGrid({ node, document, library, edit }) {
   const pattern = node.kind === 'PATTERN'
-  const [plane, setPlane] = useState(pattern ? 'Z' : 'Y')
+  const segments = pattern || node.kind === 'SEGMENT_UNION'
+  const [plane, setPlane] = useState(segments ? 'Z' : 'Y')
   const [patch, setPatch] = useState(null)
   const [selected, setSelected] = useState(0)
   const [viewport, setViewport] = useState(null)
@@ -27,7 +28,7 @@ export function ArrangementGrid({ node, document, library, edit }) {
   const bounds = viewport ?? fitArrangement(base.model?.items ?? [])
   const active = Math.min(selected, Math.max(0, items.length - 1))
   const transforms = current.model?.transforms ?? []
-  const offsets = patch?.offsets ?? node.offsets
+  const offsets = patch?.offsets ?? node.offsets ?? []
   const offset = pattern ? transforms[active]?.offset : offsets[active] ?? { x: 0, y: 0, z: 0 }
   const stage = (index, value, rotation = {}) => {
     if (pattern) setPatch({ patternAxis: 'transform', transforms: transforms.map((item, i) =>
@@ -54,10 +55,10 @@ export function ArrangementGrid({ node, document, library, edit }) {
     } catch (cause) { setError(cause.message || String(cause)) }
   }
   return <details className="arrangement-editor" open>
-    <summary>2D-Raster · {pattern ? 'Segmente anordnen' : 'Räume anordnen'}</summary>
+    <summary>2D-Raster · {segments ? 'Segmente anordnen' : 'Räume anordnen'}</summary>
     {base.error ? <p role="status">Alle Eingänge verbinden und gültige Quellen verwenden: {base.error}</p> : <>
       <div className="arrangement-tools">
-        {pattern && <label>Ansicht<select aria-label="Rasteransicht" value={plane} onChange={event => {
+        {segments && <label>Ansicht<select aria-label="Rasteransicht" value={plane} onChange={event => {
           cancelDrag(); setPlane(event.target.value); setViewport(null)
         }}><option value="Z">Vorne · X/Y</option><option value="Y">Oben · X/Z</option><option value="X">Seite · Z/Y</option></select></label>}
         <label>Eingang<select aria-label="Anordnungseingang" value={active} onChange={event => setSelected(Number(event.target.value))}>
@@ -65,6 +66,7 @@ export function ArrangementGrid({ node, document, library, edit }) {
         </select></label>
       </div>
       <p className="hint">1 Rasterzelle = 1 Block = 16 hB. Ziehen verschiebt den gewählten Eingang; Pfeiltasten bewegen ihn um einen Block. Mittlere Maustaste verschiebt die Ansicht. Escape verwirft eine laufende Bewegung.</p>
+      {node.kind === 'SEGMENT_UNION' && <p className="hint">Negative Versätze verschieben den gemeinsamen lokalen Ursprung; die Lage der Segmente zueinander bleibt erhalten.</p>}
       <svg ref={svg} className="arrangement-grid" viewBox={bounds.join(' ')} tabIndex={0}
         role="application" aria-label="2D-Anordnungsraster" onContextMenu={event => event.preventDefault()}
         onPointerDown={event => {
@@ -121,7 +123,7 @@ export function ArrangementGrid({ node, document, library, edit }) {
         <button type="button" onClick={() => zoom(4 / 3)}>Verkleinern</button>
         <button type="button" onClick={() => setViewport(fitArrangement(items))}>Einpassen</button></div>
       {offset && <div className="arrangement-tools">
-        {(pattern ? ['x', 'y', 'z'] : ['x', 'z']).map(axis => <label key={axis}>{axis.toUpperCase()} · Blöcke
+        {(segments ? ['x', 'y', 'z'] : ['x', 'z']).map(axis => <label key={axis}>{axis.toUpperCase()} · Blöcke
           <input aria-label={`Anordnung ${axis.toUpperCase()}`} type="number" min={pattern ? -128 : -64} max={pattern ? 128 : 64}
             value={offset[axis]} onChange={event => {
               const value = event.target.valueAsNumber

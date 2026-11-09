@@ -2,7 +2,7 @@ import { newNode } from './generated/engine.mjs'
 import { loadBuildingCopycat, loadFormCopycatWithMaterials } from './copycat-library.js'
 import { formGroups, inspect, model, readGraph, replaceNodes, writeGraph } from './model.js'
 
-const sourceKinds = new Set(['base', 'saved', 'library'])
+const sourceKinds = new Set(['empty', 'base', 'saved', 'library'])
 const sourceId = () => `copycat_${crypto.randomUUID().slice(0, 13)}`
 
 function selectedSource(option, library) {
@@ -64,7 +64,7 @@ export function applyCopycatOption({ mode, document, library = { forms: {}, modu
       writeGraph('form', entry.document)
       const node = original ?? newNode(true, 'COPYCAT', sourceId(), 40, 100)
       const nextNode = {
-        ...node, name: entry.name, form: option.reference,
+        ...node, name: entry.name, form: option.reference, block: '',
         surfaces: node.form === option.reference ? node.surfaces : {},
         rotationAxis: 'Y', quarterTurns: 0,
       }
@@ -76,7 +76,7 @@ export function applyCopycatOption({ mode, document, library = { forms: {}, modu
     }
     if (typeof entry.id !== 'string' || !entry.id) throw new Error('Die ausgewählte Form hat keine gültige Kennung.')
     const prepared = original ? replaceNodes(document, document.graph.nodes.map(node => node.id === original.id
-      ? { ...node, rotationAxis: 'Y', quarterTurns: 0 } : node)) : document
+      ? { ...node, block: '', rotationAxis: 'Y', quarterTurns: 0 } : node)) : document
     const result = loadBuildingCopycat(prepared, library, entry, target?.id)
     return { ...result, materials }
   }

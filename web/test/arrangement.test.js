@@ -20,7 +20,7 @@ for (const axis of ['X', 'Y', 'Z']) test(`segment ${axis} rotation survives wiri
   const round = readGraph(JSON.parse(JSON.stringify(writeGraph('building', d))), 'building')
   assert.deepEqual(previewGraph(true, round, library, 'inverse'), previewGraph(true, d, library, 'a'))
   assert.deepEqual(applyWires('building', d, inspect('building', d), connections(inspect('building', d))), d)
-  assert.equal(inspect('building', d).find(({ node }) => node.id === 'rotated').ports.length, 1)
+  assert.equal(inspect('building', d).find(({ node }) => node.id === 'rotated').ports.length, 2)
 })
 
 test('segment mirror preserves positions-only mode and mirrors asymmetric source geometry', () => {

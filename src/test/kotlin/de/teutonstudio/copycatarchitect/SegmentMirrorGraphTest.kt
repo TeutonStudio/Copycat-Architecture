@@ -19,7 +19,7 @@ class SegmentMirrorGraphTest {
         assertEquals(RotationAxis.X,node.rotationAxis)
         assertEquals(BuildingKind.PATH.ordinal+1,BuildingKind.SEGMENT_MIRROR.ordinal)
         val accepts=(setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds)
-        assertEquals(listOf(BuildingPort("in:0","",accepts)),BuildingPorts.of(node,true))
+        assertEquals(listOf(BuildingPort("in:0","",accepts),BuildingPort("mirroring","",setOf(BuildingKind.MIRRORING))),BuildingPorts.of(node,true))
         val graph=graph(node)
         BuildingGraphCompiler.structure(graph)
         assertContains(assertFails { eval(graph).preview(node.id) }.message.orEmpty(),"Connect the segment")

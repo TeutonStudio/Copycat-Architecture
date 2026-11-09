@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { TransformValues } from './TransformValues.jsx'
 import { ArrangementGrid } from './ArrangementGrid.jsx'
 import { sourceMounting, mountSource } from './generated/engine.mjs'
 import { formGroups, model } from './model.js'
@@ -9,7 +10,7 @@ export const names = {
   INPUT: 'Grundform', UNION: 'Vereinigung', INTERSECTION: 'Schnitt', DIFFERENCE: 'Differenz',
   SYMMETRIC_DIFFERENCE: 'Symmetrische Differenz', ROTATE: 'Copycat rotieren', ROTATION: 'Rotation', OUTPUT: 'Ergebnis',
   SAVED: 'Gespeicherter Copycat', MIRROR: 'Copycat spiegeln',
-  COPYCAT_MIRROR: 'Copycat spiegeln', COPYCAT_ROTATE: 'Copycat rotieren',
+  MIRRORING: 'Spiegelungen', COPYCAT_MIRROR: 'Copycat spiegeln', COPYCAT_ROTATE: 'Copycat rotieren',
   COPYCAT_UNION: 'Copycat-Vereinigung', COPYCAT_INTERSECTION: 'Copycat-Schnitt', COPYCAT_DIFFERENCE: 'Copycat-Differenz', COPYCAT_SYMMETRIC_DIFFERENCE: 'Symmetrische Copycat-Differenz',
   SEGMENT_MIRROR: 'Segment spiegeln', SEGMENT_ROTATE: 'Segment rotieren',
   SEGMENT_UNION: 'Segment-Vereinigung', SEGMENT_INTERSECTION: 'Segment-Schnitt', SEGMENT_DIFFERENCE: 'Segment-Differenz', SEGMENT_SYMMETRIC_DIFFERENCE: 'Symmetrische Segment-Differenz',
@@ -18,6 +19,8 @@ export const names = {
 }
 
 export function portName(port, node) {
+  if (port.id === 'rotation') return 'Rotationen'
+  if (port.id === 'mirroring') return 'Spiegelungen'
   const [kind, key] = port.id.split(':')
   if (node.kind === 'SEGMENT_DIFFERENCE' && kind === 'in') return key === '0' ? 'A · Grundsegment' : 'B · Abzug'
   if (node.kind === 'COPYCAT_DIFFERENCE' && kind === 'in') return key === '0' ? 'A · Grundform' : 'B · Abzug'
@@ -124,6 +127,8 @@ export function NodeFields({ mode, node, document, edit, library, onChooseCopyca
     </>
   }
 
+  if (['ROTATION', 'MIRRORING'].includes(node.kind)) return <>{field('name', 'Knotenname')}<TransformValues node={node} edit={edit} /></>
+
   if (node.id === 'empty_wall') return <p className="hint">Standardquelle für eine freie Wandöffnung.</p>
   const enclosure = node.kind === 'ROOM' || (node.kind === 'STOREY' && node.storeyMode === 'walls')
   const references = key => Object.keys(library[key] ?? {})
@@ -138,13 +143,13 @@ export function NodeFields({ mode, node, document, edit, library, onChooseCopyca
       <button type="button" onClick={onImportCopycat}>Formdatei laden</button>
       <p className="hint">Grundformen und gespeicherte Formen lassen sich vor dem Laden in 3D ansehen.</p>
     </>}
-    {node.kind === 'COPYCAT_MIRROR' && <Field label="Spiegelebene" value={node.mirror?.plane || 'X'} options={['X', 'Y', 'Z']} onChange={plane => edit({ mirror: { plane } })} />}
+    {node.kind === 'COPYCAT_MIRROR' && !node.mirroring && <Field label="Spiegelebene" value={node.mirror?.plane || 'X'} options={['X', 'Y', 'Z']} onChange={plane => edit({ mirror: { plane } })} />}
     {node.kind === 'SEGMENT_MIRROR' && <>
-      {field('rotationAxis', 'Spiegelebene', ['X', 'Y', 'Z'])}
+      {!node.mirroring && field('rotationAxis', 'Spiegelebene', ['X', 'Y', 'Z'])}
       <Field label="Nur Blockpositionen spiegeln" type="checkbox" value={node.mirrorPositionsOnly === true} onChange={mirrorPositionsOnly => edit({ mirrorPositionsOnly })} />
       <p className="hint">Ohne diese Option werden auch die Copycat-Formen innerhalb der Blockzellen gespiegelt.</p>
     </>}
-    {['COPYCAT_ROTATE', 'SEGMENT_ROTATE'].includes(node.kind) && <>{field('rotationAxis', 'Drehachse', ['X', 'Y', 'Z'])}{field('quarterTurns', 'Drehwinkel', angles)}</>}
+    {['COPYCAT_ROTATE', 'SEGMENT_ROTATE'].includes(node.kind) && !node.rotation && <>{field('rotationAxis', 'Drehachse', ['X', 'Y', 'Z'])}{field('quarterTurns', 'Drehwinkel', angles)}</>}
     {['COPYCAT_DIFFERENCE', 'SEGMENT_DIFFERENCE'].includes(node.kind) && <button type="button" onClick={() => edit({ inputs: [...node.inputs].reverse() })}>A / B tauschen</button>}
     {field('role', 'Materialrolle')}
     {field('materialMode', 'Materialmodus', materialModes)}
@@ -176,7 +181,7 @@ export function NodeFields({ mode, node, document, edit, library, onChooseCopyca
           onClick={() => edit({ rectangles: node.rectangles.slice(0, -1) })}>Letzte entfernen</button>
       </div>
     </details>}
-    {(node.kind === 'PATTERN' || node.kind === 'STOREY' && !enclosure) && <ArrangementGrid key={node.id} {...{ node, document, library, edit }} />}
+    {(node.kind === 'PATTERN' || node.kind === 'SEGMENT_UNION' || node.kind === 'STOREY' && !enclosure) && <ArrangementGrid key={node.id} {...{ node, document, library, edit }} />}
     {node.kind === 'STOREY' && !enclosure && <details><summary>Raumversatz</summary>
       <NumberGrid entries={node.inputs.map((_, i) => node.offsets[i] ?? { x: 0, y: 0, z: 0 })}
         keys={['x', 'z']} ranges={{ x: [-64, 64], z: [-64, 64] }} prefix="Raumversatz" scale={16} unit="hB · Raster 16" update={(index, offset) =>

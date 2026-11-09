@@ -190,7 +190,7 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
     private fun body(n:BuildingNode)=(if(mapFirst(n) || ports(n).isEmpty()) 29 else 45+ports(n).size*19)+(if(n.kind==BuildingKind.STOREY) 22 else 0)
     private fun copycatGroups(n:BuildingNode)=library().forms[n.form]?.groups ?: DEFAULT_GROUPS
     private fun copycatMaterialEnd(n:BuildingNode)=44+22*copycatGroups(n).size
-    private fun details(n:BuildingNode)=when(layoutKind(n)) { BuildingKind.GARDEN->440;BuildingKind.PATH->396;BuildingKind.COPYCAT->copycatMaterialEnd(n)+(if(n.surfaces.isNullOrEmpty()) 68 else 90);BuildingKind.COPYCAT_ROTATE->160;BuildingKind.SEGMENT_ROTATE->187;BuildingKind.COPYCAT_MIRROR->140;BuildingKind.SEGMENT_LAYOUT->252;BuildingKind.ROOM_LAYOUT->136;BuildingKind.AREA->246;BuildingKind.ROOM_GEOMETRY->272;BuildingKind.ROOF_LAYOUT->90;BuildingKind.ROOF_LEVEL->160;BuildingKind.STAIRWELL,BuildingKind.ELEVATOR_SHAFT,BuildingKind.SERVICE_SHAFT->120;BuildingKind.SEGMENT->209;BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE->120;BuildingKind.PATTERN->181;BuildingKind.SEGMENT_MIRROR->206;BuildingKind.FLOOR,BuildingKind.CEILING->158;BuildingKind.ROOM->if(n.kind==BuildingKind.STOREY) 444 else 341;BuildingKind.STOREY->392;BuildingKind.ROOF->160;BuildingKind.BUILDING->332 }
+    private fun details(n:BuildingNode)=when(layoutKind(n)) { BuildingKind.ROTATION,BuildingKind.MIRRORING->72; BuildingKind.GARDEN->440;BuildingKind.PATH->396;BuildingKind.COPYCAT->copycatMaterialEnd(n)+(if(n.surfaces.isNullOrEmpty()) 68 else 90);BuildingKind.COPYCAT_ROTATE->160;BuildingKind.SEGMENT_ROTATE->187;BuildingKind.COPYCAT_MIRROR->140;BuildingKind.SEGMENT_LAYOUT->252;BuildingKind.ROOM_LAYOUT->136;BuildingKind.AREA->246;BuildingKind.ROOM_GEOMETRY->272;BuildingKind.ROOF_LAYOUT->90;BuildingKind.ROOF_LEVEL->160;BuildingKind.STAIRWELL,BuildingKind.ELEVATOR_SHAFT,BuildingKind.SERVICE_SHAFT->120;BuildingKind.SEGMENT->209;BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE->120;BuildingKind.PATTERN->181;BuildingKind.SEGMENT_MIRROR->206;BuildingKind.FLOOR,BuildingKind.CEILING->158;BuildingKind.ROOM->if(n.kind==BuildingKind.STOREY) 444 else 341;BuildingKind.STOREY->392;BuildingKind.ROOF->160;BuildingKind.BUILDING->332 }
     fun nodeHeight(n:BuildingNode)=body(n)+details(n)+(if(mapFirst(n)) ports(n).size*19 else 0)
     private fun nx(mx:Double)=(mx-x-panX)/scale
     private fun ny(my:Double)=(my-y-panY)/scale
@@ -462,6 +462,7 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
             if(!inspector && n.kind!=BuildingKind.BUILDING) { ArchitectTheme.inset(g,n.x+w-5,n.y+31,10,10);g.fill(n.x+w-2,n.y+34,n.x+w+2,n.y+38,color(n.kind)) }
             if(n.kind==BuildingKind.STOREY) row(g,ui("bg_storey_mode",ui("bg_storey_"+n.storeyMode))+" ▾",n.x+8,by-22,w-16)
             when(layoutKind(n)) {
+                BuildingKind.ROTATION,BuildingKind.MIRRORING -> row(g,"${n.rotations?.size ?: n.mirrors?.size ?: 0} Schritte",n.x+8,by,w-16)
                 BuildingKind.COPYCAT -> {
                     row(g,(if(n.block==BuildingSourceEditors.AIR_SOURCE) ui("bg_air_source") else library().forms[n.form]?.name ?: n.form)+" ▾",n.x+8,by,w-16)
                     row(g,ui("role",roleLabel(n.role)),n.x+8,by+22,w-16)
@@ -906,6 +907,7 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
                     }
                 }
                 when(layoutKind(n)) {
+                    BuildingKind.ROTATION,BuildingKind.MIRRORING -> Unit
                     BuildingKind.COPYCAT -> {
                         val groups=copycatGroups(n);val end=copycatMaterialEnd(n)
                         val group=groups.firstOrNull { inside(44+groups.indexOf(it)*22) }

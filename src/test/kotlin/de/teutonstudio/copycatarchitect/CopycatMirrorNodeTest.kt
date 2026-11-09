@@ -21,7 +21,7 @@ class CopycatMirrorNodeTest {
         assertEquals(listOf(""),node.inputs)
         assertEquals(CopycatMirror(),node.mirror)
         assertEquals(BuildingKind.SEGMENT_MIRROR.ordinal+1,BuildingKind.COPYCAT_MIRROR.ordinal)
-        assertEquals(listOf(BuildingPort("in:0","",setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE))),BuildingPorts.of(node,true))
+        assertEquals(listOf(BuildingPort("in:0","",setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE))),BuildingPorts.of(node,true))
         val graph=graph(source,node)
         BuildingGraphCompiler.structure(graph)
         assertContains(assertFails { eval(graph).preview(node.id) }.message.orEmpty(),"Connect the Copycat")

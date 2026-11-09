@@ -3,13 +3,15 @@ import { ArrangementGrid } from './ArrangementGrid.jsx'
 import { sourceMounting, mountSource } from './generated/engine.mjs'
 import { formGroups, model } from './model.js'
 import { MaterialField } from './Workspace.jsx'
+import { copycatShapeNames } from './copycat-options.js'
 
 export const names = {
   INPUT: 'Grundform', UNION: 'Vereinigung', INTERSECTION: 'Schnitt', DIFFERENCE: 'Differenz',
   SYMMETRIC_DIFFERENCE: 'Symmetrische Differenz', ROTATE: 'Copycat rotieren', ROTATION: 'Rotation', OUTPUT: 'Ergebnis',
   SAVED: 'Gespeicherter Copycat', MIRROR: 'Copycat spiegeln',
-  SEGMENT_MIRROR: 'Segment spiegeln', SEGMENT_ROTATE: 'Segment rotieren',
   COPYCAT_MIRROR: 'Copycat spiegeln', COPYCAT_ROTATE: 'Copycat rotieren',
+  COPYCAT_UNION: 'Copycat-Vereinigung', COPYCAT_INTERSECTION: 'Copycat-Schnitt', COPYCAT_DIFFERENCE: 'Copycat-Differenz', COPYCAT_SYMMETRIC_DIFFERENCE: 'Symmetrische Copycat-Differenz',
+  SEGMENT_MIRROR: 'Segment spiegeln', SEGMENT_ROTATE: 'Segment rotieren',
   SEGMENT_UNION: 'Segment-Vereinigung', SEGMENT_INTERSECTION: 'Segment-Schnitt', SEGMENT_DIFFERENCE: 'Segment-Differenz', SEGMENT_SYMMETRIC_DIFFERENCE: 'Symmetrische Segment-Differenz',
   COPYCAT: 'Copycat-Referenz', SEGMENT: 'Wandsegment', PATTERN: 'Wandmuster', FLOOR: 'Boden', CEILING: 'Decke',
   ROOM: 'Raum', STOREY: 'Geschoss', ROOF: 'Dach', BUILDING: 'Gebäude'
@@ -18,9 +20,11 @@ export const names = {
 export function portName(port, node) {
   const [kind, key] = port.id.split(':')
   if (node.kind === 'SEGMENT_DIFFERENCE' && kind === 'in') return key === '0' ? 'A · Grundsegment' : 'B · Abzug'
+  if (node.kind === 'COPYCAT_DIFFERENCE' && kind === 'in') return key === '0' ? 'A · Grundform' : 'B · Abzug'
   if (kind === 'in') return `${(node.kind === 'PATTERN' || node.kind.startsWith('SEGMENT_')) ? 'Segment' : node.kind === 'STOREY' ? 'Raum' : 'Copycat'} ${Number(key) + 1}`
   if (kind === 'wall') return `Wand ${port.id.slice(5)}${port.length ? ` · ${port.length} B` : ''}`
   if (kind === 'level') return Number(key) === 0 ? 'Erdgeschoss' : `Geschoss ${Number(key) > 0 ? '+' : ''}${key}`
+  if (kind === 'access') return `Zugang ${Number(key) + 1}`
   if (kind === 'floor') return 'Boden'
   if (kind === 'ceiling') return 'Decke'
   if (kind === 'corner') return 'Ecke'
@@ -55,7 +59,6 @@ export function Field({ label, value, onChange, options, type = 'text', min, max
     }} /></label>
 }
 
-const shapeNames = { full: 'Vollblock', slab: 'Stufe', stairs: 'Treppe', panel: 'Panel', slice: 'Gerade Leiste', vertical_slice: 'Vertikale Leiste', corner_slice: 'Eckscheibe', layer: 'Schicht', beam: 'Balken', byte: 'Byte', step: 'Feste Leiste', vertical_step: 'Feste vertikale Leiste', half_panel: 'Halbes Panel', flat_pane: 'Mittige Scheibe', byte_panel: 'Byte-Panel', half_layer: 'Halbe Schicht', vertical_half_layer: 'Vertikale halbe Schicht', stacked_half_layer: 'Gestapelte halbe Schicht' }
 const directions = [[2, 'Nord (−Z)'], [3, 'Ost (+X)'], [0, 'Süd (+Z)'], [1, 'West (−X)']]
 const angles = [[0, '0°'], [1, '90°'], [2, '180°'], [3, '270°']]
 const mountings = [['up', 'Oben (+Y)'], ['down', 'Unten (−Y)'], ['east', 'Seitlich +X'], ['west', 'Seitlich −X'], ['south', 'Seitlich +Z'], ['north', 'Seitlich −Z']]
@@ -72,12 +75,17 @@ function NumberGrid({ entries, keys, ranges, update, prefix, scale = 1, unit = '
   </div>)
 }
 
-export function NodeFields({ mode, node, document, edit, library, savedForms = [], onLoadCopycat }) {
+export function NodeFields({ mode, node, document, edit, library, onChooseCopycat, onImportCopycat }) {
   const field = (key, label, options, type, min, max) =>
     <Field key={key} label={label} value={node[key]} onChange={value => edit({ [key]: value })} {...{ options, type, min, max }} />
   const number = (key, label, min, max) => field(key, label, undefined, 'number', min, max)
   const groups = formGroups(document)
-  const savedPicker = <Field label="Gespeicherten Copycat laden" value="" options={[["", "Copycat auswählen …", true], ...savedForms.map(entry => [entry.id, entry.name])]} onChange={onLoadCopycat} />
+  const source = model.shapes.find(shape => shape.id === node.part?.source)
+  const sourceName = node.kind === 'INPUT' ? copycatShapeNames[source?.name] || source?.name
+    : node.kind === 'SAVED' ? node.savedCopycat?.name : library.forms?.[node.form]?.name || node.form
+  const copycatPicker = <button type="button" className="copycat-source-button" aria-label="Copycat auswählen" onClick={onChooseCopycat}>
+    <span>Copycat auswählen …</span><small>{sourceName || 'Grundform oder gespeicherte Form'}</small>
+  </button>
   if (mode === 'form') {
     const part = node.part
     const partField = (key, label, options, type, min, max) =>
@@ -86,11 +94,10 @@ export function NodeFields({ mode, node, document, edit, library, savedForms = [
     const adapter = model.shapes.find(shape => shape.id === part.source)
     const groupFields = ['UNION', 'SYMMETRIC_DIFFERENCE'].includes(node.kind)
     return <>
-      {node.kind === 'SAVED' && <>{savedPicker}<p className="hint">{node.savedCopycat?.name || 'Copycat auswählen'}</p></>}
+      {node.kind === 'SAVED' && copycatPicker}
       {node.kind === 'MIRROR' && <Field label="Spiegelebene" value={node.mirror?.plane || 'X'} options={['X', 'Y', 'Z']} onChange={plane => edit({ mirror: { plane } })} />}
       {node.kind === 'INPUT' && <>
-        <Field label="Copycat-Grundform" value={part.source} options={model.shapes.map(shape => [shape.id, shapeNames[shape.name] ?? shape.name])}
-          onChange={source => edit({ part: { ...part, source, size: 1, tilt: 0, discCut: 0, offset: { x: 0, y: 0, z: 0 } } })} />
+        {copycatPicker}
         {partField('size', 'Größe', undefined, 'number', 1, adapter.max)}
         {partField('turn', 'Drehung um Y', directions)}
         {partField('spin', 'Drehung um die lokale Normale', angles)}
@@ -126,12 +133,19 @@ export function NodeFields({ mode, node, document, edit, library, savedForms = [
     <datalist id="library-forms">{references('forms').map(id => <option key={id} value={id} />)}</datalist>
     <datalist id="library-modules">{references('modules').map(id => <option key={id} value={id} />)}</datalist>
     {field('name', 'Knotenname')}
-    {node.kind === 'COPYCAT' && savedPicker}
+    {node.kind === 'COPYCAT' && <>
+      {copycatPicker}
+      <button type="button" onClick={onImportCopycat}>Formdatei laden</button>
+      <p className="hint">Grundformen und gespeicherte Formen lassen sich vor dem Laden in 3D ansehen.</p>
+    </>}
     {node.kind === 'COPYCAT_MIRROR' && <Field label="Spiegelebene" value={node.mirror?.plane || 'X'} options={['X', 'Y', 'Z']} onChange={plane => edit({ mirror: { plane } })} />}
-    {node.kind === 'SEGMENT_MIRROR' && <>{field('rotationAxis', 'Spiegelebene', ['X', 'Y', 'Z'])}
-      {field('mirrorPositionsOnly', 'Nur Blockpositionen spiegeln', undefined, 'checkbox')}</>}
+    {node.kind === 'SEGMENT_MIRROR' && <>
+      {field('rotationAxis', 'Spiegelebene', ['X', 'Y', 'Z'])}
+      <Field label="Nur Blockpositionen spiegeln" type="checkbox" value={node.mirrorPositionsOnly === true} onChange={mirrorPositionsOnly => edit({ mirrorPositionsOnly })} />
+      <p className="hint">Ohne diese Option werden auch die Copycat-Formen innerhalb der Blockzellen gespiegelt.</p>
+    </>}
     {['COPYCAT_ROTATE', 'SEGMENT_ROTATE'].includes(node.kind) && <>{field('rotationAxis', 'Drehachse', ['X', 'Y', 'Z'])}{field('quarterTurns', 'Drehwinkel', angles)}</>}
-    {node.kind === 'SEGMENT_DIFFERENCE' && <button onClick={() => edit({ inputs: [...node.inputs].reverse() })}>A / B tauschen</button>}
+    {['COPYCAT_DIFFERENCE', 'SEGMENT_DIFFERENCE'].includes(node.kind) && <button type="button" onClick={() => edit({ inputs: [...node.inputs].reverse() })}>A / B tauschen</button>}
     {field('role', 'Materialrolle')}
     {field('materialMode', 'Materialmodus', materialModes)}
     {node.kind === 'STOREY' && field('storeyMode', 'Zusammensetzung', [['rooms', 'Aus Räumen'], ['walls', 'Aus Wänden']])}
@@ -174,7 +188,8 @@ export function NodeFields({ mode, node, document, edit, library, savedForms = [
 export function DocumentFields({ mode, document, edit, library, materials, setMaterials }) {
   const groups = formGroups(document)
   const usedGroups = new Set(document.graph.nodes.flatMap(node => [
-    node.kind === 'INPUT' ? node.part?.group : null, node.materialGroup, node.previewGroup, ...(node.inputGroups ?? [])
+    node.kind === 'INPUT' ? node.part?.group : null, ...(node.savedCopycat?.parts ?? []).map(part => part.group || 'body'),
+    node.materialGroup, node.previewGroup, ...(node.inputGroups ?? [])
   ]))
   function updateGroup(id, patch) {
     edit({ ...document, groups: groups.map(group => group.id === id ? { ...group, ...patch } : group) })

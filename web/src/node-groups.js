@@ -4,7 +4,10 @@ export function saveNodeGroup(mode, document, ids, name, materials = {}, library
   const entries = inspect(mode, document)
   const selected = new Set(entries.filter(({ node }) => ids.includes(node.id) && !protectedNode(node)).map(({ node }) => node.id))
   if (!selected.size) throw new Error('Mindestens einen bearbeitbaren Knoten auswählen. Ergebnis und Standard-Leerwand gehören nicht zur Knotengruppe.')
-  const used = new Set([formGroups(document)[0].id, ...entries.filter(({ node }) => selected.has(node.id)).flatMap(({ node }) => [node.part?.group, node.materialGroup, node.previewGroup, ...(node.inputGroups || [])])])
+  const used = new Set([formGroups(document)[0].id, ...entries.filter(({ node }) => selected.has(node.id)).flatMap(({ node }) => [
+    node.part?.group, ...(node.savedCopycat?.parts || []).map(part => part.group),
+    node.materialGroup, node.previewGroup, ...(node.inputGroups || []),
+  ])])
   return { id: crypto.randomUUID(), name: name.trim() || 'Knotengruppe', mode, materials: structuredClone(materials), library: mode === 'building' ? structuredClone(library) : null,
     nodes: structuredClone(document.graph.nodes.filter(node => selected.has(node.id))),
     wires: connections(entries).filter(wire => selected.has(wire.source) && selected.has(wire.target)),
@@ -50,6 +53,11 @@ export function insertNodeGroup(document, template, idFactory = () => `node_${cr
     if (mode === 'form') {
       node.inputs = (node.inputs || []).map(() => '')
       if (node.part) node.part.group = groupIds.get(node.part.group || template.groups[0]?.id) || groups[0].id
+      if (node.savedCopycat) node.savedCopycat.parts = node.savedCopycat.parts.map(part => {
+        const group = groupIds.get(part.group || 'body')
+        if (!group) throw new Error('Der gespeicherten Copycat-Quelle fehlt eine Materialgruppe in der Knotengruppe.')
+        return { ...part, group }
+      })
       for (const key of ['materialGroup', 'previewGroup']) if (node[key]) node[key] = groupIds.get(node[key]) || ''
       if (node.inputGroups) node.inputGroups = node.inputGroups.map(id => groupIds.get(id) || '')
       if (node.materialMode === 'GROUPED' && !node.materialGroup) node.materialGroup = groupIds.get(template.groups[0]?.id) || groups[0].id

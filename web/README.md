@@ -21,9 +21,9 @@ Der Build legt die Projektlizenz, die npm-Lizenzen sowie Lizenz und Herkunft
 der eingebundenen Kotlin-Standardbibliothek im Ausgabeverzeichnis ab.
 
 Der Workflow prüft außerdem mit `./gradlew test` die Minecraft-Seite der
-gemeinsamen Domänenlogik. Graphstudio 0.1 entspricht dem öffentlichen
-Repository-Spielstand, auf dem es gebaut wird. Zusätzliche Knoten aus einer
-neueren lokalen Mod werden erst nach Übernahme ihrer Domänenlogik unterstützt.
+gemeinsamen Domänenlogik. Der Browser wird aus dem Fachkern desselben
+Repository-Stands gebaut. Seine Oberfläche gibt nur Knoten und Einstellungen
+frei, die der Browser verlustfrei lesen, bearbeiten und exportieren kann.
 
 ## Austausch mit Minecraft
 
@@ -35,9 +35,9 @@ und den Geschossen. `DiagramEdits` wendet Verbindungsänderungen für
 beide Oberflächen an.
 
 Der Web Worker führt `GraphCompiler` und `BuildingGraphCompiler` aus. Die
-3D-Ansicht zeigt die berechneten Rasterformen und unterscheidet Materialien
-farblich. Minecraft-Texturen und modabhängige Blockmodelle erscheinen als
-Farbersatz. Die Bibliothek lässt sich als JSON mit `forms` und `modules` öffnen.
+3D-Ansicht zeigt die berechneten Rasterformen mit Materialfarben oder
+Texturvorschauen. Minecraft-Spezialrenderer werden nicht nachgebildet.
+Die Bibliothek lässt sich als JSON mit `forms` und `modules` öffnen.
 Für ältere Gebäudedokumente wird ein in Minecraft erzeugter Gebäudegraph benötigt.
 
 Formexporte enthalten auch das frisch berechnete `parts`-Ergebnis. Bei Gebäuden
@@ -60,7 +60,7 @@ Im Formmodus bleibt der Referenzrahmen eine volle Blockzelle, mit 16 hB je Achse
 
 Ausrichtungs-Enums übersetzen weiterhin in das vorhandene Quellformat. Nicht unterstützte native Neigungen bleiben deaktiviert; importierte Werte werden beim bloßen Anzeigen nicht umgeschrieben. Raumversätze werden als hB im bisherigen Ganzblockraster angezeigt und beim Export zurückgerechnet. Die neuen Bedienelemente erweitern nicht still den unterstützten Knoten-/Schemabereich.
 
-Die vollständige deutsche [Knotenreferenz](../docs/wiki/Knotenreferenz.md) dokumentiert außerdem den neueren lokalen Modstand; jede Knotenbeschreibung kennzeichnet ihre Browserverfügbarkeit.
+Die vollständige deutsche [Knotenreferenz](../docs/wiki/Knotenreferenz.md) dokumentiert den gemeinsamen Knotenvertrag einschließlich zusätzlicher nativer Funktionen; jede Knotenbeschreibung kennzeichnet ihre Browserverfügbarkeit.
 
 ## Integration mit dem nativen Mod ab 0.6.0
 
@@ -68,8 +68,9 @@ Der Browser kompiliert den vollständigen aktuellen Fachkern. Der Knoten- und
 Anschlussvertrag wird aus derselben `graph-models.json` wie im Mod geladen;
 Browseradapter ersetzen JVM-Caches, Bitsets und Ganzzahlarithmetik.
 
-Die Browseroberfläche unterstützt weiterhin die zehn Form- und fünfzehn
-Gebäudeknotentypen. Erweiterte native Graphen, Gruppen, exakte Geometrien und
+Die Browseroberfläche unterstützt zehn Form- und einundzwanzig
+Gebäudeknotentypen; der gemeinsame Katalog enthält insgesamt 32 Gebäudetypen.
+Erweiterte native Graphen, Gruppen, exakte Geometrien und
 nicht unterstützte Knoteneinstellungen werden beim Import und vor dem Export
 mit einem Hinweis auf den nativen Editor abgewiesen. Dadurch können sie nicht
 unbemerkt vereinfacht oder mit fehlenden Einstellungen gespeichert werden.
@@ -84,27 +85,57 @@ IndexedDB holds current drafts, named graphs (including loaded copycat libraries
 
 [German usage guide](../docs/wiki/Materialbibliothek.md).
 
-## Copycat-Quellen und Segmentoperationen
+## Gespeicherte Copycats und Gebäudeoperationen
 
-Im Formgraphen **Graph speichern**, anschließend im Gebäudegraphen den
-Copycat-Quellknoten wählen und **Gespeicherten Copycat laden** verwenden.
-**Copycat laden** importiert alternativ eine einzelne Form-JSON. Die Formversion
-bleibt als Schnappschuss in der Referenzbibliothek des Gebäudeentwurfs erhalten.
+**Copycat auswählen** öffnet in der Werkzeugleiste und an den Formquellen
+`INPUT` und `SAVED` sowie der Gebäudequelle `COPYCAT` den Auswahldialog.
+**Grundformen** enthält 19 Quellen einschließlich Dachvorlage;
+**Gespeicherte Formen** enthält persönliche Formgraphen und geladene
+Bibliotheksformen mit Herkunft oder Versionsschlüssel. Suchbare Karten zeigen
+die berechnete Geometrie; die größere Vorschau lässt sich drehen und zoomen.
+**Auswahl übernehmen** ersetzt die ausgewählte Quelle oder erzeugt einen neuen
+Quellknoten, wenn keine Quelle ausgewählt ist. **Abbrechen** und Escape ändern
+nichts. Der Wechsel zwischen `INPUT` und `SAVED` erhält Knoten-ID und Verbindungen.
+Gespeicherte Geometrie und Materialgruppen werden übernommen. Zusätzliche
+Drehwerte am Quellknoten werden zurückgesetzt; nachgeschaltete Transformationen
+bleiben erhalten.
+
+Im Formgraphen mit **Graph speichern** einen persönlichen Eintrag anlegen.
+Im Gebäudegraphen verwendet die Auswahl einer Bibliotheksform ihren genauen
+Versionsschlüssel; persönliche Formgraphen und Grundformen werden als feste
+Version in die Referenzbibliothek des Gebäudeentwurfs aufgenommen.
 Materialzuordnungen übernehmen wie die Gebäudepalette die reine Block-ID.
+**Formdatei laden** im Inspektor oder **Copycat laden** in der Werkzeugleiste
+importiert weiterhin eine einzelne Form-JSON.
 
-Vereinigung, Schnitt, Differenz und symmetrische Differenz sind eigenständige
-Segmentknoten. Die gemeinsame Auswertung schneidet Copycat-Teilformen je
-Blockposition. Teilumwandlungen normaler Vollblöcke und semantische
-Segmentmetadaten werden ausdrücklich abgewiesen. Für die neuen Operator-IDs
-ist beim Spielimport ein aktualisierter Mod-Build erforderlich.
+Benannte Browsergraphen und Graphstudio-Sicherungen enthalten die geladene
+Referenzbibliothek. Der normale Minecraft-Gebäudeexport enthält nur die
+Formreferenzen; deren Versionen müssen im Spiel vorhanden sein.
 
+Alle sechs Operationen sind im Gebäudegraphen für beide Wertfamilien vorhanden:
 
-## Segmenttransformationen und 2D-Anordnungsraster (Entwicklungszweig)
+| Operation | Copycat | Segment |
+| --- | --- | --- |
+| Rotieren | `COPYCAT_ROTATE` | `SEGMENT_ROTATE` |
+| Spiegeln | `COPYCAT_MIRROR` | `SEGMENT_MIRROR` |
+| Vereinigung | `COPYCAT_UNION` | `SEGMENT_UNION` |
+| Schnitt | `COPYCAT_INTERSECTION` | `SEGMENT_INTERSECTION` |
+| Differenz A − B | `COPYCAT_DIFFERENCE` | `SEGMENT_DIFFERENCE` |
+| Symmetrische Differenz | `COPYCAT_SYMMETRIC_DIFFERENCE` | `SEGMENT_SYMMETRIC_DIFFERENCE` |
 
-Dieser Zweig ergänzt **Segment rotieren** und **Segment spiegeln** im Browser
-und unterstützt damit 17 Gebäudeknotentypen. Der bestehende gemeinsame Fachkern
-berechnet die Transformationen; es werden keine neuen Mod-Knotentypen eingeführt.
-Spiegelung kann nur die Positionen oder zusätzlich die Copycat-Geometrien ändern.
+Rotation und Spiegelung bieten im Browser X/Y/Z; Segmentspiegelung kann
+wahlweise nur Positionen oder Positionen samt Zellgeometrie spiegeln.
+Die booleschen Knoten akzeptieren 2–16 geordnete Eingänge, Differenz genau zwei.
+Copycat-Ergebnisse bleiben mit Copycat-Eingängen verbindbar, Segmentergebnisse
+mit Segmenteingängen. Leere Zwischenergebnisse bleiben verwendbar.
+
+Die gemeinsame Auswertung schneidet Copycat-Teilformen je Blockposition.
+Teilumwandlungen normaler Vollblöcke und semantische Segmentmetadaten werden
+ausdrücklich abgewiesen. Für die acht neuen booleschen Operator-IDs ist beim
+Spielimport ein aktualisierter Mod-Build erforderlich; Modrelease 0.6.0
+enthält sie noch nicht.
+
+## 2D-Anordnungsraster
 
 Das 2D-Raster im Inspektor ordnet Segmente am Wandmuster (X/Y, X/Z, Z/Y) und
 Rauminstanzen am Geschoss (X/Z) an. Ziehen und Pfeiltasten verwenden ganze
@@ -113,6 +144,5 @@ Blöcke. Segmentinstanzen besitzen zusätzlich Drehachse und Vierteldrehung.
 Verwerfen lässt das Dokument unverändert. Native `transforms`, `patternAxis`
 und `offsets` bleiben beim JSON-Austausch erhalten.
 
-Die Änderungen sind lokal implementiert und noch nicht in master integriert oder im Live-Graphstudio bereitgestellt.
-Der Vorschau-Auswahldialog und boolesche Copycat-Gebäudeknoten aus dem separaten
-Erweiterungspaket gehören nicht zu diesem Codezweig.
+
+Der gesamte hier beschriebene Stand ist auf diesem Entwicklungszweig implementiert, aber noch nicht in master integriert oder live bereitgestellt.

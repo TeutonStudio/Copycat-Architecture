@@ -9,7 +9,8 @@ const colors = {
   'minecraft:glass': '#a6dceb', 'minecraft:stone': '#a1a6ad',
   'minecraft:spruce_planks': '#846247', 'minecraft:bricks': '#aa6557'
 }
-function color(id) {
+function color(value) {
+  const id = value.split('[')[0]
   if (colors[id]) return colors[id]
   let hash = 0
   for (const char of id) hash = Math.imul(hash, 31) + char.charCodeAt(0) | 0
@@ -95,7 +96,7 @@ function updateReferenceFrame(group, camera, height) {
   }
 }
 
-function Viewer({ plan, blockFrame, catalog }) {
+export function Viewer({ plan, blockFrame, catalog }) {
   const container = useRef(null)
   const viewer = useRef(null)
   const [error, setError] = useState('')
@@ -130,12 +131,23 @@ function Viewer({ plan, blockFrame, catalog }) {
     scene.add(model)
     const guides = new THREE.Group()
     scene.add(guides)
+    let measured = false
     const resize = new ResizeObserver(() => {
       const { clientWidth: width, clientHeight: height } = element
       if (!width || !height) return
+      const previousAspect = camera.aspect
       camera.aspect = width / height
       camera.updateProjectionMatrix()
       renderer.setSize(width, height, false)
+      if (!measured) {
+        measured = true
+        fit()
+      } else {
+        // Preserve the viewing direction and zoom when a narrow panel changes
+        // the limiting field of view, including a phone rotated sideways.
+        camera.position.sub(controls.target).multiplyScalar(Math.min(1, previousAspect) / Math.min(1, camera.aspect)).add(controls.target)
+        controls.update()
+      }
       render()
     })
     resize.observe(element)
@@ -146,6 +158,7 @@ function Viewer({ plan, blockFrame, catalog }) {
       dispose(model)
       dispose(guides)
       renderer.dispose()
+      renderer.forceContextLoss()
       renderer.domElement.remove()
       viewer.current = null
     }
@@ -281,7 +294,7 @@ export default function Preview({ mode, document, library, selected, previewMode
   const [result, setResult] = useState({})
   const target = previewMode === 'selected' ? selected : ''
   const missingSelection = previewMode === 'selected' && !selected
-  const blockFrame = mode === 'form' || (previewMode === 'selected' && document.graph.nodes.find(node => node.id === selected)?.kind === 'COPYCAT')
+  const blockFrame = mode === 'form' || (previewMode === 'selected' && document.graph.nodes.find(node => node.id === selected)?.kind?.startsWith('COPYCAT'))
   const latest = useRef(document)
   latest.current = document
   useEffect(() => { setResult({}) }, [mode, target, previewMode])

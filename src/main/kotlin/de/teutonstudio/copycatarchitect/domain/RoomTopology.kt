@@ -46,6 +46,11 @@ object RoomTopology {
                     }
                     BuildingKind.SEGMENT_MIRROR -> source(n.inputs.single()).copy(cells=emptyList())
                     BuildingKind.SEGMENT_ROTATE -> source(n.inputs.single()).let { SegmentGeometry.rotated(it.copy(air=false),n.rotationAxis,n.quarterTurns).copy(air=it.air) }
+                    BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE -> {
+                        require(n.inputs.all(String::isNotEmpty)) { "Connect every segment operation input" }
+                        val dimensions=SegmentBooleans.dimensions(n,n.inputs.map(::source))
+                        FixedSegment(dimensions.x,dimensions.y,emptyList(),depth=dimensions.z)
+                    }
                     BuildingKind.PATTERN -> {
                         require(n.inputs.isNotEmpty() && n.inputs.all(String::isNotEmpty)) { "Connect every segment pattern input" }
                         val values=n.inputs.map(::source)

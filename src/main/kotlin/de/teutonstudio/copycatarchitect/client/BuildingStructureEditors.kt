@@ -43,8 +43,8 @@ object BuildingStructureEditors {
     }
     fun roofTemplates(node:BuildingNode,graph:()->BuildingGraph,commit:(BuildingNode)->Unit) {
         var c=node.roofConfig ?: RoofConfig()
-        val sources=graph().nodes.filter { it.kind in setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE) }
-        val walls=graph().nodes.filter { it.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE) }
+        val sources=graph().nodes.filter { it.kind in CopycatBooleans.sourceKinds }
+        val walls=graph().nodes.filter { it.kind in (setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds) }
         StructurePropertyScreen.open(tr("roof_templates"),{
             choice(ui("roof_family"),c.family,listOf("builtin")+c.families.map { it.id },{ id -> if(id=="builtin") ui("structure_builtin") else c.families.firstOrNull { it.id==id }?.name ?: id }) { c=c.copy(family=it) }
             action(ui("roof_add_family")) { family(RoofTemplateFamily(id=UUID.randomUUID().toString(),name=ui("roof_new_family"))) { value -> c=c.copy(families=c.families+value,family=value.id) } }
@@ -84,7 +84,7 @@ object BuildingStructureEditors {
     fun core(node:BuildingNode,graph:()->BuildingGraph,commit:(BuildingNode)->Unit) {
         var s=node.stairwell ?: StairwellConfig();var e=node.elevatorShaft ?: ElevatorShaftConfig();var v=node.serviceShaft ?: ServiceShaftConfig()
         fun StructurePropertyScreen.template(key:String,value:String,set:(String)->Unit) {
-            val sources=graph().nodes.filter { it.kind in setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE) }
+            val sources=graph().nodes.filter { it.kind in CopycatBooleans.sourceKinds }
             choice(ui(key),value,listOf("")+sources.map { it.id },{ id -> if(id.isEmpty()) ui("structure_builtin") else sources.firstOrNull { it.id==id }?.name ?: id },set)
         }
         StructurePropertyScreen.open(tr("bg_"+node.kind.name.lowercase()),{

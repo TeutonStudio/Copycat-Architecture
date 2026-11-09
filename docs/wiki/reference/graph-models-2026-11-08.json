@@ -351,8 +351,8 @@
       {"key": "semantic:room:partition", "path": ["roomConfig", "defaultPartition"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"]},
       {"key": "semantic:facade:source", "path": ["facade", "source"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"]},
       {"key": "semantic:facade:filler", "path": ["facade", "filler"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"]},
-      {"key": "semantic:opening:*:mask", "path": ["features", "openings", "*", "maskSource"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]},
-      {"key": "semantic:opening:*:inset", "path": ["features", "openings", "*", "insetSource"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]},
+      {"key": "semantic:opening:*:mask", "path": ["features", "openings", "*", "maskSource"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"]},
+      {"key": "semantic:opening:*:inset", "path": ["features", "openings", "*", "insetSource"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"]},
       {"key": "semantic:column:*:profile", "path": ["features", "extensions", "*", "profileSource"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"]}
     ],
     "nodes": {
@@ -412,8 +412,8 @@
         "defaults": {"assembly": true, "module": ""},
         "ports": [
           {"key": "layout", "path": ["layout"], "accepts": ["SEGMENT_LAYOUT"], "when": {"assembly": true, "id": {"not": "empty_wall"}}, "labelKey": "bg_segment_layout"},
-          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "when": {"id": {"not": "empty_wall"}}, "max": 16, "expand": true},
-          {"key": "region:*", "path": ["regionCopies", "key"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "when": {"assembly": true, "id": {"not": "empty_wall"}}, "dynamic": "segmentRegions"}
+          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"], "when": {"id": {"not": "empty_wall"}}, "max": 16, "expand": true},
+          {"key": "region:*", "path": ["regionCopies", "key"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"], "when": {"assembly": true, "id": {"not": "empty_wall"}}, "dynamic": "segmentRegions"}
         ],
         "fields": {
           "length": {
@@ -493,7 +493,7 @@
         "defaults": {},
         "legacyOnly": true,
         "ports": [
-          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "max": 16, "expand": true}
+          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"], "max": 16, "expand": true}
         ],
         "fields": {
           "form": {},
@@ -515,7 +515,7 @@
         "defaults": {},
         "legacyOnly": true,
         "ports": [
-          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "max": 16, "expand": true}
+          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"], "max": 16, "expand": true}
         ],
         "fields": {
           "form": {},
@@ -545,7 +545,7 @@
           {"key": "floor", "path": ["floor"], "accepts": ["FLOOR"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}, "assembly": {"not": true}}, "labelKey": "bg_floor"},
           {"key": "ceiling", "path": ["ceiling"], "accepts": ["CEILING", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}, "assembly": true}, "labelKey": "bg_ceiling"},
           {"key": "ceiling", "path": ["ceiling"], "accepts": ["CEILING"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}, "assembly": {"not": true}}, "labelKey": "bg_ceiling"},
-          {"key": "corner", "path": ["corner"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}}, "labelKey": "bg_corner_copycat"},
+          {"key": "corner", "path": ["corner"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}}, "labelKey": "bg_corner_copycat"},
           {"key": "edge:*", "path": ["verticalEdges", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"], "when": {"roomConfig.mode": {"not": "SEGMENTS"}}, "dynamic": "roomEdges"}
         ],
         "fields": {
@@ -571,7 +571,7 @@
           {"key": "floor", "path": ["floor"], "accepts": ["FLOOR"], "when": {"storeyMode": "walls", "assembly": {"not": true}}, "labelKey": "bg_floor"},
           {"key": "ceiling", "path": ["ceiling"], "accepts": ["CEILING", "SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"], "when": {"storeyMode": "walls", "assembly": true}, "labelKey": "bg_ceiling"},
           {"key": "ceiling", "path": ["ceiling"], "accepts": ["CEILING"], "when": {"storeyMode": "walls", "assembly": {"not": true}}, "labelKey": "bg_ceiling"},
-          {"key": "corner", "path": ["corner"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "when": {"storeyMode": "walls"}, "labelKey": "bg_corner_copycat"},
+          {"key": "corner", "path": ["corner"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"], "when": {"storeyMode": "walls"}, "labelKey": "bg_corner_copycat"},
           {"key": "in:*", "path": ["inputs", "*"], "accepts": ["ROOM"], "when": {"storeyMode": {"not": "walls"}}, "max": 16, "min": 1, "expand": true}
         ],
         "fields": {
@@ -624,7 +624,7 @@
         "ports": [
           {"key": "layout", "path": ["layout"], "accepts": ["ROOF_LAYOUT"], "when": {"assembly": true}, "labelKey": "bg_roof_layout"},
           {"key": "in:*", "path": ["inputs", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"], "when": {"assembly": true}, "max": 6, "expand": true},
-          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "when": {"assembly": {"not": true}}, "max": 16, "expand": true},
+          {"key": "in:*", "path": ["inputs", "*"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"], "when": {"assembly": {"not": true}}, "max": 16, "expand": true},
           {"key": "wall:*", "path": ["walls", "*"], "accepts": ["SEGMENT", "PATTERN", "SEGMENT_MIRROR", "SEGMENT_ROTATE", "SEGMENT_UNION", "SEGMENT_INTERSECTION", "SEGMENT_DIFFERENCE", "SEGMENT_SYMMETRIC_DIFFERENCE"], "when": {"assembly": {"not": true}}, "dynamic": "roofWalls"}
         ],
         "fields": {
@@ -651,9 +651,9 @@
         "output": "STAIRWELL",
         "defaults": {"stairwell": {"layout": "U", "width": 2, "landingDepth": 2, "headroom": 2, "clockwise": true, "enclosed": true, "tread": "", "landing": "", "enclosure": ""}},
         "ports": [
-          {"key": "tread", "path": ["stairwell", "tread"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]},
-          {"key": "landing", "path": ["stairwell", "landing"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]},
-          {"key": "enclosure", "path": ["stairwell", "enclosure"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]}
+          {"key": "tread", "path": ["stairwell", "tread"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"]},
+          {"key": "landing", "path": ["stairwell", "landing"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"]},
+          {"key": "enclosure", "path": ["stairwell", "enclosure"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"]}
         ],
         "fields": {
           "stairwell": {},
@@ -667,7 +667,7 @@
         "output": "ELEVATOR_SHAFT",
         "defaults": {"elevatorShaft": {"width": 2, "depth": 2, "headroom": 2, "enclosed": true, "enclosure": ""}},
         "ports": [
-          {"key": "enclosure", "path": ["elevatorShaft", "enclosure"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]}
+          {"key": "enclosure", "path": ["elevatorShaft", "enclosure"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"]}
         ],
         "fields": {
           "elevatorShaft": {}
@@ -678,7 +678,7 @@
         "output": "SERVICE_SHAFT",
         "defaults": {"serviceShaft": {"width": 1, "depth": 1, "enclosed": true, "enclosure": ""}},
         "ports": [
-          {"key": "enclosure", "path": ["serviceShaft", "enclosure"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]}
+          {"key": "enclosure", "path": ["serviceShaft", "enclosure"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"]}
         ],
         "fields": {
           "serviceShaft": {}
@@ -708,7 +708,7 @@
         "alwaysExplicit": true,
         "ports": [
           {"key": "geometry", "path": ["geometry"], "accepts": ["AREA"], "labelKey": "bg_area"},
-          {"key": "floor", "path": ["floor"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "labelKey": "bg_floor"}
+          {"key": "floor", "path": ["floor"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"], "labelKey": "bg_floor"}
         ],
         "fields": {
           "block": {
@@ -732,7 +732,7 @@
         "defaults": {"block": "minecraft:gravel", "coordinates": [{"x": 0, "y": 0, "z": 0}, {"x": 0, "y": 0, "z": 4}]},
         "alwaysExplicit": true,
         "ports": [
-          {"key": "floor", "path": ["floor"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"], "labelKey": "bg_floor"}
+          {"key": "floor", "path": ["floor"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"], "labelKey": "bg_floor"}
         ],
         "fields": {
           "block": {
@@ -778,7 +778,7 @@
         "defaults": {"inputs": [""], "mirror": {"plane": "X"}},
         "alwaysExplicit": true,
         "ports": [
-          {"key": "in:0", "path": ["inputs", "0"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]}
+          {"key": "in:0", "path": ["inputs", "0"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"]}
         ],
         "fields": {
           "mirror.plane": {
@@ -814,7 +814,7 @@
         "defaults": {"inputs": [""], "quarterTurns": 1},
         "alwaysExplicit": true,
         "ports": [
-          {"key": "in:0", "path": ["inputs", "0"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE"]}
+          {"key": "in:0", "path": ["inputs", "0"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"]}
         ],
         "fields": {
           "rotationAxis": {
@@ -849,6 +849,7 @@
             ""
           ]
         },
+        "legacyDefaults": {"inputs": ["", ""]},
         "ports": [
           {
             "key": "in:*",
@@ -892,6 +893,7 @@
             ""
           ]
         },
+        "legacyDefaults": {"inputs": ["", ""]},
         "ports": [
           {
             "key": "in:*",
@@ -935,6 +937,7 @@
             ""
           ]
         },
+        "legacyDefaults": {"inputs": ["", ""]},
         "ports": [
           {
             "key": "in:*",
@@ -978,6 +981,7 @@
             ""
           ]
         },
+        "legacyDefaults": {"inputs": ["", ""]},
         "ports": [
           {
             "key": "in:*",
@@ -994,6 +998,198 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE"
+            ],
+            "min": 2,
+            "max": 16
+          }
+        ],
+        "fields": {
+          "materialMode": {
+            "labelKey": "material_mode",
+            "choices": [
+              "SEPARATED",
+              "GROUPED"
+            ]
+          },
+          "role": {
+            "labelKey": "role"
+          }
+        }
+      },
+      "COPYCAT_UNION": {
+        "labelKey": "copycat_union",
+        "output": "COPYCAT_UNION",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "legacyDefaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "ports": [
+          {
+            "key": "in:*",
+            "path": [
+              "inputs",
+              "*"
+            ],
+            "accepts": [
+              "COPYCAT",
+              "COPYCAT_MIRROR",
+              "COPYCAT_ROTATE",
+              "COPYCAT_UNION",
+              "COPYCAT_INTERSECTION",
+              "COPYCAT_DIFFERENCE",
+              "COPYCAT_SYMMETRIC_DIFFERENCE"
+            ],
+            "min": 2,
+            "max": 16
+          }
+        ],
+        "fields": {
+          "materialMode": {
+            "labelKey": "material_mode",
+            "choices": [
+              "SEPARATED",
+              "GROUPED"
+            ]
+          },
+          "role": {
+            "labelKey": "role"
+          }
+        }
+      },
+      "COPYCAT_INTERSECTION": {
+        "labelKey": "copycat_intersection",
+        "output": "COPYCAT_INTERSECTION",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "legacyDefaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "ports": [
+          {
+            "key": "in:*",
+            "path": [
+              "inputs",
+              "*"
+            ],
+            "accepts": [
+              "COPYCAT",
+              "COPYCAT_MIRROR",
+              "COPYCAT_ROTATE",
+              "COPYCAT_UNION",
+              "COPYCAT_INTERSECTION",
+              "COPYCAT_DIFFERENCE",
+              "COPYCAT_SYMMETRIC_DIFFERENCE"
+            ],
+            "min": 2,
+            "max": 16
+          }
+        ],
+        "fields": {
+          "materialMode": {
+            "labelKey": "material_mode",
+            "choices": [
+              "SEPARATED",
+              "GROUPED"
+            ]
+          },
+          "role": {
+            "labelKey": "role"
+          }
+        }
+      },
+      "COPYCAT_DIFFERENCE": {
+        "labelKey": "copycat_difference",
+        "output": "COPYCAT_DIFFERENCE",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "legacyDefaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "ports": [
+          {
+            "key": "in:*",
+            "path": [
+              "inputs",
+              "*"
+            ],
+            "accepts": [
+              "COPYCAT",
+              "COPYCAT_MIRROR",
+              "COPYCAT_ROTATE",
+              "COPYCAT_UNION",
+              "COPYCAT_INTERSECTION",
+              "COPYCAT_DIFFERENCE",
+              "COPYCAT_SYMMETRIC_DIFFERENCE"
+            ],
+            "min": 2,
+            "max": 2
+          }
+        ],
+        "fields": {
+          "materialMode": {
+            "labelKey": "material_mode",
+            "choices": [
+              "SEPARATED",
+              "GROUPED"
+            ]
+          },
+          "role": {
+            "labelKey": "role"
+          }
+        }
+      },
+      "COPYCAT_SYMMETRIC_DIFFERENCE": {
+        "labelKey": "copycat_symmetric_difference",
+        "output": "COPYCAT_SYMMETRIC_DIFFERENCE",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "legacyDefaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "ports": [
+          {
+            "key": "in:*",
+            "path": [
+              "inputs",
+              "*"
+            ],
+            "accepts": [
+              "COPYCAT",
+              "COPYCAT_MIRROR",
+              "COPYCAT_ROTATE",
+              "COPYCAT_UNION",
+              "COPYCAT_INTERSECTION",
+              "COPYCAT_DIFFERENCE",
+              "COPYCAT_SYMMETRIC_DIFFERENCE"
             ],
             "min": 2,
             "max": 16

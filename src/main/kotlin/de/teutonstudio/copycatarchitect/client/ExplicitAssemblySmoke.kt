@@ -191,8 +191,8 @@ internal object ExplicitAssemblySmoke {
         for(target in g.nodes) for((index,port) in BuildingPorts.of(target,g,true).withIndex()) {
             val input=checkNotNull(native.inputPortType(target.id,index)) { "The native graph must expose every graph-aware socket" }
             val expected=port.accepts.map { kind -> when(kind) {
-                BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE -> ui("port_copycat")
-                BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE -> ui("bg_segment")
+                BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE -> ui("port_copycat")
+                BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE -> ui("bg_segment")
                 else -> ui("bg_"+kind.name.lowercase())
             } }.toSet()
             check(input.friendlyName.split(" / ").toSet()==expected) { "The native ${target.id}:${port.key} socket must expose all accepted semantic types" }

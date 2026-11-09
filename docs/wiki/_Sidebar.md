@@ -21,9 +21,9 @@
 - [Formknoten](Knoten-Formgraph.md)
 - [Gebäudeknoten](Knoten-Gebaeudegraph.md)
 - [Inspektoreigenschaften](Knoten-Eigenschaften.md)
-- [Geplante Segmentoperatoren](Geplante-Segmentoperatoren.md)
+- [Boolesche Segmentoperatoren](Geplante-Segmentoperatoren.md)
 - [Einheiten und Ausrichtung](Einheiten-und-Ausrichtung.md)
 - [Lua-API](Lua-API.md)
 - [Versionsmatrix](Versionsmatrix.md)
 
-Stand **08.11.2026** · lokale Mod **0.5.1** · Graphstudio **0.3**
+Stand **08.11.2026** · Modrelease **0.6.0** plus dokumentierte Quellstanderweiterungen · Graphstudio **0.4**

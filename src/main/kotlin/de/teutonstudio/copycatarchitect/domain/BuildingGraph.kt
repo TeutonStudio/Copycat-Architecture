@@ -2,7 +2,7 @@ package de.teutonstudio.copycatarchitect.domain
 
 import java.util.concurrent.ConcurrentHashMap
 
-enum class BuildingKind { AREA, COPYCAT, SEGMENT_LAYOUT, SEGMENT, PATTERN, ROOM_GEOMETRY, FLOOR, CEILING, ROOM, STOREY, ROOF_LEVEL, ROOF_LAYOUT, ROOF, STAIRWELL, ELEVATOR_SHAFT, SERVICE_SHAFT, BUILDING, GARDEN, PATH, SEGMENT_MIRROR, COPYCAT_MIRROR, SEGMENT_ROTATE, COPYCAT_ROTATE, ROOM_LAYOUT, SEGMENT_UNION, SEGMENT_INTERSECTION, SEGMENT_DIFFERENCE, SEGMENT_SYMMETRIC_DIFFERENCE }
+enum class BuildingKind { AREA, COPYCAT, SEGMENT_LAYOUT, SEGMENT, PATTERN, ROOM_GEOMETRY, FLOOR, CEILING, ROOM, STOREY, ROOF_LEVEL, ROOF_LAYOUT, ROOF, STAIRWELL, ELEVATOR_SHAFT, SERVICE_SHAFT, BUILDING, GARDEN, PATH, SEGMENT_MIRROR, COPYCAT_MIRROR, SEGMENT_ROTATE, COPYCAT_ROTATE, ROOM_LAYOUT, SEGMENT_UNION, SEGMENT_INTERSECTION, SEGMENT_DIFFERENCE, SEGMENT_SYMMETRIC_DIFFERENCE, COPYCAT_UNION, COPYCAT_INTERSECTION, COPYCAT_DIFFERENCE, COPYCAT_SYMMETRIC_DIFFERENCE }
 data class SegmentLayoutCell(val x:Int=0,val y:Int=0,val sourceIndex:Int=0,val turn:Int=0)
 data class BuildingNode(
     val id:String="",val kind:BuildingKind=BuildingKind.SEGMENT,val name:String="",val x:Int=0,val y:Int=0,
@@ -243,7 +243,7 @@ object BuildingPorts {
         BuildingKind.GARDEN -> listOf(port(n,"geometry",n.geometry),port(n,"floor",n.floor))
         BuildingKind.PATH -> listOf(port(n,"floor",n.floor))
         BuildingKind.SEGMENT_LAYOUT,BuildingKind.ROOM_GEOMETRY -> listOf(port(n,"geometry",n.geometry))
-        BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.PATTERN,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.ROOM_LAYOUT,BuildingKind.ROOF_LAYOUT -> inputs(n,expanding)
+        BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.PATTERN,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE,BuildingKind.ROOM_LAYOUT,BuildingKind.ROOF_LAYOUT -> inputs(n,expanding)
         BuildingKind.ROOM -> if(n.roomConfig?.mode==RoomMode.SEGMENTS) listOf(port(n,"layout",n.layout),port(n,"floor",n.floor),port(n,"ceiling",n.ceiling))
             else (if(n.assembly) listOf(port(n,"geometry",n.geometry)) else emptyList())+enclosure(n)
         BuildingKind.STOREY -> if(n.storeyMode=="walls") enclosure(n) else inputs(n,expanding)
@@ -332,6 +332,7 @@ object BuildingGraphCompiler {
                 require(n.layoutCells.all { it.x in 0 until resolved.length && it.y in 0 until resolved.height && it.sourceIndex in 0..15 && it.turn in 0..3 }) { "Invalid segment arrangement cell" }
             }
             if(n.kind in SegmentBooleans.kinds) require(n.inputs.size in 2..if(n.kind==BuildingKind.SEGMENT_DIFFERENCE) 2 else 16) { "A segment operation needs 2–16 inputs (difference exactly two)" }
+            if(n.kind in CopycatBooleans.kinds) require(n.inputs.size in 2..if(n.kind==BuildingKind.COPYCAT_DIFFERENCE) 2 else 16) { "A Copycat operation needs 2–16 inputs (difference exactly two)" }
             if(n.kind==BuildingKind.PATTERN) {
                 require(n.inputs.size in 2..16) { "A pattern needs 2–16 ordered segment inputs" }
                 require(n.patternAxis in listOf("horizontal","vertical","depth","transform")) { "Invalid wall pattern axis" }
@@ -360,8 +361,8 @@ object BuildingGraphCompiler {
             require(n.roofConfig==null || n.kind==BuildingKind.ROOF) { "Roof templates belong to a roof" }
             if(n.roofConfig!=null) {
                 val refs=n.roofConfig.variants.values+n.roofConfig.families.flatMap { it.variants.values }
-                refs.filter(String::isNotEmpty).forEach { require(nodes[it]?.kind in setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE)) { "Roof templates require a connected Copycat source" } }
-                if(n.roofConfig.wall.isNotEmpty()) require(nodes[n.roofConfig.wall]?.kind in setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)) { "Roof walls require a Copycat or wall segment source" }
+                refs.filter(String::isNotEmpty).forEach { require(nodes[it]?.kind in CopycatBooleans.sourceKinds) { "Roof templates require a connected Copycat source" } }
+                if(n.roofConfig.wall.isNotEmpty()) require(nodes[n.roofConfig.wall]?.kind in (CopycatBooleans.sourceKinds+setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE))) { "Roof walls require a Copycat or wall segment source" }
             }
             if(n.kind==BuildingKind.ROOF_LEVEL) Roofs.validate(n.roofLevel ?: RoofLevelConfig())
             require(n.levelIds.isEmpty() || n.kind==BuildingKind.BUILDING && n.levelIds.keys.all { it in n.levels } && n.levelIds.values.distinct().size==n.levelIds.size) { "Invalid storey instance identities" }
@@ -437,17 +438,22 @@ object BuildingGraphCompiler {
         private val semanticRooms=mutableMapOf<String,SemanticRoom>()
         private val roofContacts=mutableListOf<RoofContact>()
         private val previews=mutableMapOf<String,Plan>()
+        private val copycatResults=mutableMapOf<String,SegmentCell>()
         private data class RoofPreviewArea(val footprint:Set<P>,val sample:Boolean)
         private val roofPreviewAreas=mutableMapOf<String,RoofPreviewArea>()
         init { structure(graph) }
         fun node(id:String,kind:BuildingKind?=null):BuildingNode { val n=nodes[id] ?: error("Connect the missing input");require(kind==null || n.kind==kind);return n }
-        fun copycat(id:String)=node(id).also { require(it.kind in setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE)) { "Connect a Copycat source" } }
+        fun copycat(id:String)=node(id).also { require(it.kind in CopycatBooleans.sourceKinds) { "Connect a Copycat source" } }
         private fun copycats(n:BuildingNode):List<BuildingNode> {
             require(n.inputs.all { it.isNotEmpty() }) { "Connect every Copycat input" }
             return n.inputs.map { copycat(it) }
         }
         /** Local Copycat orientation precedes layout turns and mounting on walls or roofs. */
         private fun sourceCell(pos:P,source:BuildingNode,turn:Int=0):Cell {
+            if(source.kind in CopycatBooleans.kinds) {
+                val cell=copycatResult(source).cell
+                return cell.copy(pos=pos,rotations=cell.rotations+if(turn==0) emptyList() else listOf(SegmentRotation(RotationAxis.Y,turn)))
+            }
             if(source.kind==BuildingKind.COPYCAT_ROTATE) {
                 require(source.inputs.single().isNotEmpty()) { "Connect the Copycat to rotate" }
                 val cell=sourceCell(pos,copycat(source.inputs.single()))
@@ -474,8 +480,18 @@ object BuildingGraphCompiler {
                 turn=if(source.quarterTurns==0 || source.rotationAxis==RotationAxis.Y) Math.floorMod(source.quarterTurns+turn,4) else 0,
                 rotations=if(source.quarterTurns==0 || source.rotationAxis==RotationAxis.Y) emptyList() else rotations,surfaces=source.surfaces)
         }
-        private fun sourceOverride(source:BuildingNode):String = if(source.kind !in setOf(BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE)) "" else
-            if(source.materialMode==MaterialMode.GROUPED) source.role else sourceOverride(copycat(source.inputs.single()))
+        private fun copycatResult(source:BuildingNode):SegmentCell=copycatResults.getOrPut(source.id) {
+            require(source.inputs.all(String::isNotEmpty)) { "Connect every Copycat operation input" }
+            CopycatBooleans.evaluate(source,source.inputs.map { id ->
+                val input=copycat(id);SegmentCell(sourceCell(P(),input),sourceOverride(input))
+            },forms,palette)
+        }
+        private fun sourceOverride(source:BuildingNode):String = when {
+            source.kind in CopycatBooleans.kinds -> copycatResult(source).overrideRole
+            source.kind !in setOf(BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE) -> ""
+            source.materialMode==MaterialMode.GROUPED -> source.role
+            else -> sourceOverride(copycat(source.inputs.single()))
+        }
         private fun sourceIsAir(source:BuildingNode)=sourceCell(P(),source).empty
         fun segment(id:String):FixedSegment=segments.getOrPut(id) { val n=node(id);BuildingSemantics.annotate(segmentRecipe(id),id,n.features,if(n.materialMode==MaterialMode.GROUPED) n.role else "") }
         private fun segmentRecipe(id:String):FixedSegment=run {
@@ -613,7 +629,7 @@ object BuildingGraphCompiler {
             val n=node(id)
             when(n.kind) {
                 BuildingKind.BUILDING -> building().plan
-                BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE -> Resolver().apply { if(sourceIsAir(n)) clear(P()) else add(sourcePlacement(P(),n,"wall")) }.plan(emptyList())
+                BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE -> Resolver().apply { if(sourceIsAir(n)) clear(P()) else add(sourcePlacement(P(),n,"wall")) }.plan(emptyList())
                 BuildingKind.FLOOR,BuildingKind.CEILING -> {
                     val copies=copycats(n);validateCarpet(n,copies)
                     val sample=(0..2).flatMap { x -> (0..2).map { z -> P(x,0,z) } }.toSet()

@@ -11,7 +11,13 @@ import kotlin.js.json
 // These are the lossless browser authoring capabilities; native-only fields must
 // be rejected before a preview or export can silently discard them.
 private val browserFormKinds=listOf(NodeKind.INPUT,NodeKind.UNION,NodeKind.INTERSECTION,NodeKind.DIFFERENCE,NodeKind.SYMMETRIC_DIFFERENCE,NodeKind.ROTATE,NodeKind.ROTATION,NodeKind.OUTPUT,NodeKind.SAVED,NodeKind.MIRROR)
-private val browserBuildingKinds=listOf(BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.COPYCAT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.ROOM,BuildingKind.STOREY,BuildingKind.ROOF,BuildingKind.BUILDING,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)
+private val browserBuildingKinds=listOf(
+    BuildingKind.COPYCAT,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_MIRROR,
+    BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE,
+    BuildingKind.SEGMENT,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR,
+    BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,
+    BuildingKind.PATTERN,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.ROOM,BuildingKind.STOREY,BuildingKind.ROOF,BuildingKind.BUILDING
+)
 private val browserFormFields=setOf("id","kind","inputs","part","x","y","materialMode","materialGroup","previewGroup","inputGroups","rotationAxis","quarterTurns","savedCopycat","mirror")
 private val browserBuildingFields=setOf("id","kind","name","x","y","inputs","module","block","length","height","rectangles","walls","floor","ceiling","offsets","form","thickness","occupied","finish","levels","roof","roofType","ridge","overhang","materialMode","role","preview","storeyMode","corner","surfaces","rotationAxis","quarterTurns","mirror","mirrorPositionsOnly","patternAxis","transforms")
 private fun browserNode(value:dynamic,isBuilding:Boolean):dynamic {
@@ -168,6 +174,12 @@ fun graphModels(): Json = json(
     "form" to browserFormKinds.map { kind -> json("kind" to kind.name,
         "min" to GraphModels.inputs(kind).first, "max" to GraphModels.inputs(kind).last) }.toTypedArray(),
     "building" to browserBuildingKinds.map { it.name }.toTypedArray(),
+    "buildingInputs" to json(*browserBuildingKinds.mapNotNull { kind ->
+        val ports=GraphModels.building.nodes.getValue(kind.name).ports
+        ports.firstOrNull { it.key=="in:*" && it.conditions==null && it.min!=null }?.let {
+            kind.name to json("min" to it.min,"max" to (it.max ?: GraphModels.SOCKETS))
+        }
+    }.toTypedArray()),
     "shapes" to Adapters.all.values.map { json("id" to it.source, "name" to it.name, "max" to it.max, "tiltable" to it.tiltable) }.toTypedArray(),
     "rotationAxes" to RotationAxis.entries.map { it.name }.toTypedArray(),
     "materialModes" to MaterialMode.entries.map { it.name }.toTypedArray(),
@@ -216,7 +228,10 @@ fun newNode(isBuilding: Boolean, kind: String, id: String, x: Int, y: Int): Json
         require(type in browserBuildingKinds) { "Use the native editor for $kind" }
         val inputs = List(GraphModels.requiredBuildingInputs(type, "rooms")) { "" }
         val node = BuildingNode(id = id, kind = type, x = x, y = y, inputs = inputs,
-            module = "", role = if (type == BuildingKind.ROOF) "roof" else "wall")
+            module = "", role = if (type == BuildingKind.ROOF) "roof" else "wall",
+            rotationAxis=if(type==BuildingKind.SEGMENT_MIRROR) RotationAxis.X else RotationAxis.Y,
+            quarterTurns=if(type in setOf(BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT_ROTATE)) 1 else 0,
+            mirror=if(type==BuildingKind.COPYCAT_MIRROR) CopycatMirror() else null)
         return node.jsNode()
     }
     val type = NodeKind.valueOf(kind)
@@ -324,8 +339,10 @@ fun mountSource(value:dynamic,normal:String):Json {
 @JsExport
 fun insertSavedCopycat(document:dynamic,source:dynamic,nodeId:String):Json {
     val target=form(document)
-    val inserted=SavedCopycats.insert(target,form(source),replaceId=nodeId).form
+    val result=SavedCopycats.insert(target,form(source),replaceId=nodeId)
+    val inserted=result.form
     return json("groups" to inserted.groups.map { json("id" to it.id,"name" to it.name,"role" to it.role,"priority" to it.priority) }.toTypedArray(),
+        "groupMapping" to result.groups.asJson(),"nodeId" to result.nodeId,
         "nodes" to inserted.graph!!.nodes.map { it.jsNode() }.toTypedArray())
 }
 

@@ -8,7 +8,8 @@ import { DocumentFields, Field, names, NodeFields, portName } from './Inspector.
 import './style.css'
 import { SplitHandle } from './SplitHandle.jsx'
 import { Workspace, useWorkspace } from './Workspace.jsx'
-import { loadBuildingCopycat, loadFormCopycat } from './copycat-library.js'
+import { loadBuildingCopycat, loadFormCopycatWithMaterials } from './copycat-library.js'
+import { applyCopycatOption } from './copycat-selection.js'
 import { insertNodeGroup, mergeLibraries, saveNodeGroup } from './node-groups.js'
 import baseLibrary from '../../examples/library.json'
 import formExample from '../../examples/nodegraph-form.json'
@@ -19,6 +20,7 @@ import buildingAssembly from '../../examples/building-graph-assembly.json'
 import buildingBasements from '../../examples/building-graph-basements.json'
 
 const Preview = lazy(() => import('./Preview.jsx'))
+const CopycatPicker = lazy(() => import('./CopycatPicker.jsx'))
 const wiki = 'https://github.com/TeutonStudio/copycat-architect/wiki'
 const examples = {
   form: [
@@ -84,6 +86,8 @@ function Studio({ mode, active }) {
   const document = history.current
   const [library, setLibrary] = useState(draft?.library ?? baseLibrary)
   const [materials, setMaterials] = useState(draft?.materials ?? {})
+  // A source change also changes material mappings and library snapshots.
+  const historyContext = useRef(new WeakMap())
   const [selectedIds, setSelectedIds] = useState([])
   const onSelectionChange = useCallback(({ nodes }) => setSelectedIds(previous => {
     const next = nodes.map(node => node.id)
@@ -109,6 +113,7 @@ function Studio({ mode, active }) {
   const [previewCollapsed, setPreviewCollapsed] = useState(false)
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false)
   const [previewMode, setPreviewMode] = useState('graph')
+  const [copycatPicker, setCopycatPicker] = useState(null)
   const graphInput = useRef(null)
   const libraryInput = useRef(null)
   const copycatInput = useRef(null)
@@ -141,7 +146,19 @@ function Studio({ mode, active }) {
   }
   const commit = next => {
     inspect(mode, next)
-    if (JSON.stringify(next) !== JSON.stringify(document)) history.push(next)
+    if (JSON.stringify(next) !== JSON.stringify(document)) {
+      historyContext.current.set(document, { library, materials })
+      // Reopening the same example must create a distinct history entry.
+      history.push(structuredClone(next))
+    }
+  }
+  const travelHistory = direction => {
+    const next = direction === 'undo' ? history.past.at(-1) : history.future[0]
+    if (!next) return
+    historyContext.current.set(document, { library, materials })
+    const context = historyContext.current.get(next)
+    if (context) { setLibrary(context.library); setMaterials(context.materials) }
+    history[direction]()
   }
   const patchNode = patch => transact(() => {
     const { node } = visibleNode
@@ -222,14 +239,26 @@ function Studio({ mode, active }) {
       const result = loadBuildingCopycat(document, library, entry, nodeId)
       commit(result.document); setLibrary(result.library); setSelected(result.nodeId)
     } else {
-      commit(loadFormCopycat(document, entry, nodeId))
+      const result = loadFormCopycatWithMaterials(document, entry, nodeId, materials)
+      commit(result.document); setMaterials(result.materials); setSelected(result.nodeId)
     }
   }
-  const savedForms = savedData.graphs.filter(entry => entry.mode === 'form')
+  const savedForms = useMemo(() => savedData.graphs.filter(entry => entry.mode === 'form'), [savedData.graphs])
+  const chooseCopycat = nodeId => {
+    const node = entries.find(entry => entry.node.id === nodeId)?.node
+    const initialId = node?.kind === 'INPUT' ? `base:${node.part.source}` : node?.kind === 'COPYCAT' ? `library:${node.form}` : null
+    setCopycatPicker({ nodeId, initialId, initialCategory: node && node.kind !== 'INPUT' ? 'saved' : 'basic' })
+  }
+  const applyCopycat = option => {
+    const result = applyCopycatOption({ mode, document, library, materials, nodeId: copycatPicker.nodeId, option })
+    commit(result.document)
+    setLibrary(result.library); setMaterials(result.materials); setSelected(result.nodeId); setSelectedIds([result.nodeId])
+    setSelectedWire(null); setMessage(null)
+  }
   const count = entries.length
   const maxNodes = mode === 'form' ? model.formNodes : model.buildingNodes
   const portLimits = mode === 'form' ? model.form.find(type => type.kind === visibleNode.node.kind)
-    : visibleNode.node.kind === 'PATTERN' || visibleNode.node.kind.startsWith('SEGMENT_') ? { min: 2, max: visibleNode.node.kind === 'SEGMENT_DIFFERENCE' ? 2 : model.sockets } : null
+    : model.buildingInputs[visibleNode.node.kind] ?? null
   const isFormSourceLimit = ['INPUT', 'SAVED'].includes(kind) && entries.filter(({ node }) => ['INPUT', 'SAVED'].includes(node.kind)).length >= model.formSources
   const previewSelected = current?.node.id ?? ''
   const exportFile = () => transact(() => downloadJson(writeGraph(mode, document), mode))
@@ -246,8 +275,8 @@ function Studio({ mode, active }) {
     if (event.target.closest('input, textarea, select, [contenteditable=true]')) return
     if ((event.ctrlKey || event.metaKey) && ['z', 'y'].includes(event.key.toLowerCase())) {
       event.preventDefault()
-      if (event.shiftKey || event.key.toLowerCase() === 'y') history.redo()
-      else history.undo()
+      if (event.shiftKey || event.key.toLowerCase() === 'y') travelHistory('redo')
+      else travelHistory('undo')
     }
     if (['Delete', 'Backspace'].includes(event.key) && (selected || selectedWire)) {
       event.preventDefault()
@@ -264,6 +293,7 @@ function Studio({ mode, active }) {
         { schema: 3, name: 'Neue Form', parts: [{ source: 'copycats:copycat_slice' }] }))}>Neu</button>
       <button type="button" onClick={() => graphInput.current.click()}>JSON öffnen</button>
       <input hidden ref={graphInput} type="file" accept=".json,application/json" onChange={event => importFile(event, false)} />
+      <button type="button" onClick={() => chooseCopycat(['INPUT', 'SAVED', 'COPYCAT'].includes(current?.node.kind) ? current.node.id : undefined)}>Copycat auswählen</button>
       {mode === 'building' && <>
         <button type="button" onClick={() => copycatInput.current.click()}>Copycat laden</button>
         <input hidden ref={copycatInput} type="file" accept=".json,application/json" onChange={async event => {
@@ -280,8 +310,8 @@ function Studio({ mode, active }) {
       <button type="button" className="primary" onClick={exportFile}>JSON exportieren</button>
       <button type="button" onClick={copyJson}>Minecraft-JSON kopieren</button>
       <span className="toolbar-spacer" />
-      <button type="button" aria-label="Rückgängig" title="Rückgängig" disabled={!history.past.length} onClick={history.undo}>↶</button>
-      <button type="button" aria-label="Wiederholen" title="Wiederholen" disabled={!history.future.length} onClick={history.redo}>↷</button>
+      <button type="button" aria-label="Rückgängig" title="Rückgängig" disabled={!history.past.length} onClick={() => travelHistory('undo')}>↶</button>
+      <button type="button" aria-label="Wiederholen" title="Wiederholen" disabled={!history.future.length} onClick={() => travelHistory('redo')}>↷</button>
     </div>
 
     <div className="personal-library-bar">
@@ -374,8 +404,9 @@ function Studio({ mode, active }) {
                   })}>Letzten Eingang entfernen</button>
               </div>}
             </details>}
-            <NodeFields {...{ mode, node: visibleNode.node, document, edit: patchNode, library, savedForms }}
-              onLoadCopycat={id => transact(() => loadCopycat(savedForms.find(entry => entry.id === id)))} />
+            <NodeFields {...{ mode, node: visibleNode.node, document, edit: patchNode, library }}
+              onChooseCopycat={() => chooseCopycat(visibleNode.node.id)}
+              onImportCopycat={() => copycatInput.current.click()} />
             {(selectedWire || current && !protectedNode(current.node)) &&
               <button className="danger" type="button" onClick={removeSelection}>{selectedWire ? 'Verbindung trennen' : 'Knoten löschen'}</button>}
             <DocumentFields {...{ mode, document, library, materials, setMaterials }} edit={next => transact(() => commit(next))} />
@@ -383,6 +414,10 @@ function Studio({ mode, active }) {
         </section>
       </div>
     </div>
+    {copycatPicker && <Suspense fallback={<p className="copycat-loading" role="status">Copycat-Auswahl wird geladen …</p>}>
+      <CopycatPicker {...copycatPicker} mode={mode} savedForms={savedForms} library={library}
+        onChoose={applyCopycat} onClose={() => setCopycatPicker(null)} />
+    </Suspense>}
   </div>
 }
 

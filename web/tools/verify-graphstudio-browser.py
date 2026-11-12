@@ -39,7 +39,7 @@ with sync_playwright() as p:
   expect(studio.locator('.react-flow__node[data-id="output"]')).to_be_visible()
  original=download()
  assert all('measured' not in n for n in original['graph']['nodes'])
- dialog=open_picker();expect(dialog.locator('.copycat-card')).to_have_count(19)
+ dialog=open_picker();expect(dialog.locator('.copycat-card')).to_have_count(20)
  expect(dialog.locator('.copycat-thumbnail img').first).to_be_visible(timeout=30000)
  # Search and real geometry preview, cancel and Escape never mutate the source.
  dialog.get_by_role('searchbox').fill('Dachvorlage')
@@ -91,6 +91,47 @@ with sync_playwright() as p:
   rect=dialog.bounding_box();assert rect['x']>=0 and rect['x']+rect['width']<=width+1
   page.screenshot(path=str(args.artifacts/f'copycat-picker-{label}.png'),full_page=True)
   page.keyboard.press('Escape');expect(dialog).not_to_be_visible()
+ # Typed count paths and real wall-Copycat arrangement commit atomically.
+ page.set_viewport_size({'width':1440,'height':1000})
+ graph={'schema':2,'name':'Anzahl und Raster','palette':{'wall':'minecraft:stone'},'graph':{'schema':1,'nodes':[
+  {'id':'empty_wall','kind':'SEGMENT','block':'minecraft:air','length':1,'height':1,'x':0,'y':0},
+  {'id':'building','kind':'BUILDING','x':780,'y':100},
+  {'id':'two','kind':'INT','countValue':2,'x':0,'y':100},
+  {'id':'three','kind':'INT','countValue':3,'x':0,'y':240},
+  {'id':'sum','kind':'INT_ADD','inputs':['two','three'],'x':220,'y':100},
+  {'id':'stone','kind':'COPYCAT','block':'minecraft:stone','x':220,'y':300},
+  {'id':'glass','kind':'COPYCAT','block':'minecraft:glass','x':220,'y':440},
+  {'id':'positioned','kind':'SEGMENT','inputs':['stone','glass'],'length':4,'height':3,'depth':2,'dimensions':{'length':'sum'},'x':480,'y':200}]}}
+ import_file('JSON öffnen',graph,'count-arrangement.json')
+ wall=studio.locator('.react-flow__node[data-id="positioned"] .node-heading')
+ wall.click(force=True)
+ studio.get_by_label('Vorschauziel',exact=True).select_option('selected')
+ grid=studio.get_by_role('application',name='2D-Anordnungsraster');expect(grid).to_be_visible()
+ before=download()
+ studio.get_by_label('Anordnungseingang',exact=True).select_option('1')
+ grid.focus();grid.press('ArrowRight');grid.press('ArrowRight');grid.press('ArrowUp')
+ expect(studio.get_by_label('Anordnung X',exact=True)).to_have_value('3')
+ expect(studio.get_by_label('Anordnung Y',exact=True)).to_have_value('1')
+ studio.get_by_role('button',name='Anordnung übernehmen',exact=True).click()
+ arranged=download();node=next(n for n in arranged['graph']['nodes'] if n['id']=='positioned')
+ assert node['copycatArrangement'] and node['offsets'][1]=={'x':3,'y':1,'z':0} and node['length']==4
+ studio.get_by_role('button',name='Rückgängig',exact=True).click();assert download()==before
+ studio.get_by_role('button',name='Wiederholen',exact=True).click();assert download()==arranged
+ wall.click(force=True)
+ studio.get_by_label('Tiefe · Z',exact=True).select_option('two')
+ expect(studio.locator('.react-flow__node[data-id="two"] .diagram-node')).to_have_css('border-color','rgb(171, 183, 189)')
+ expect(studio.locator('.react-flow__node[data-id="sum"] .diagram-node')).to_have_css('border-color','rgb(239, 102, 102)')
+ page.screenshot(path=str(args.artifacts/'count-arrangement-desktop.png'),full_page=True)
+ # Removing a count operand keeps its downstream connections repairable.
+ before_delete=download()
+ studio.locator('.react-flow__node[data-id="two"] .node-heading').click(force=True)
+ page.keyboard.press('Delete')
+ wall.click(force=True)
+ expect(studio.get_by_role('alert').filter(has_text='Connect both Anzahl inputs')).to_be_visible()
+ incomplete=download()
+ assert all(n['id']!='two' for n in incomplete['graph']['nodes'])
+ assert next(n for n in incomplete['graph']['nodes'] if n['id']=='positioned')['dimensions']=={'length':'sum'}
+ studio.get_by_role('button',name='Rückgängig',exact=True).click();assert download()==before_delete
  assert not errors,errors
  browser.close()
-print('Complete Graphstudio browser checks passed: 19 shapes/3D thumbnails, preview, cancel/Escape, saved forms, 12 operators, undo/redo, reload, invalid source rejection, desktop/tablet/mobile, focus isolation.')
+print('Complete Graphstudio browser checks passed: 19 shapes plus empty Copycat/3D thumbnails, preview, cancel/Escape, saved forms, 12 operators, undo/redo, reload, invalid source rejection, desktop/tablet/mobile, focus isolation, typed count axes, shared-path neutral color, wall grid keyboard placement and atomic undo/redo, repairable count operand removal.')

@@ -24,6 +24,14 @@ private fun KilaGraphData.withPositionsFrom(layout:KilaGraphData):KilaGraphData 
         if(node.x==position.x && node.y==position.y) node else node.copy(x=position.x,y=position.y)
     })
 
+/** Every dimension inspector exposes the effective value, its source, and its unchanged fallback. */
+internal fun countDimensionLabel(graph:BuildingGraph,n:BuildingNode,key:String):String {
+    fun value(node:BuildingNode)=when(key) { "length"->node.length;"height"->node.height;else->node.depth }
+    val effective=runCatching { BuildingCounts.resolve(graph,n,strict=true);value(graph.resolvedNode(n)).toString() }.getOrDefault("?")
+    val source=n.dimensions.orEmpty()[key]?.takeIf(String::isNotEmpty)?.let { id -> " ← "+(graph.nodes.firstOrNull { it.id==id }?.name?.takeIf(String::isNotBlank) ?: id) }.orEmpty()
+    return ui("bg_dimension_"+key)+" $effective"+source+" · "+ui("bg_dimension_fallback",value(n))
+}
+
 abstract class EditorScreen(title:Component):Screen(title) {
     var yaw=35f
     private var dropdown:EditorDropdown?=null
@@ -969,7 +977,7 @@ class BuildingScreen:EditorScreen(tr("building_editor")) {
         }
         val ports=graph.nodes.associate { it.id to BuildingPorts.of(it,graph,true) }
         return KilaGraphData(graph.nodes.mapIndexed { index,n ->
-            KilaNode(n.id,"${index+1} · ${if(n.id=="empty_wall") ui("empty_wall") else if(n.kind==BuildingKind.BUILDING) ui("bg_table_building") else ui(GraphModels.building(n.kind).labelKey)}",n.x,n.y,ports.getValue(n.id).map { p -> buildingPortLabel(p,n) },n.kind!=BuildingKind.BUILDING,n.kind!=BuildingKind.BUILDING && n.id!="empty_wall",inputTypes=ports.getValue(n.id).map { it.accepts.map(::buildingDiagramType).distinct().joinToString("|") },outputType=buildingDiagramType(n.kind),accent=when(n.kind) {
+            KilaNode(n.id,"${index+1} · ${if(n.id=="empty_wall") ui("empty_wall") else if(n.kind==BuildingKind.BUILDING) ui("bg_table_building") else ui(GraphModels.building(n.kind).labelKey)}",n.x,n.y,ports.getValue(n.id).map { p -> buildingPortLabel(p,n) },n.kind!=BuildingKind.BUILDING,n.kind!=BuildingKind.BUILDING && n.id!="empty_wall",inputTypes=ports.getValue(n.id).map { p -> if(p.accepts.any { it in BuildingCounts.kinds }) countDiagramType(graph,p.source) else p.accepts.map(::buildingDiagramType).distinct().joinToString("|") },outputType=if(n.kind in BuildingCounts.kinds) countDiagramType(graph,n.id) else buildingDiagramType(n.kind),accent=if(n.kind in BuildingCounts.kinds) when(BuildingCounts.axisUsage(graph)[n.id]?.singleOrNull()) { "length"->0xffef6666.toInt();"height"->0xff66cf85.toInt();"depth"->0xff739fff.toInt();else->0xffabb7bd.toInt() } else when(n.kind) {
                 BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.SEGMENT_LAYOUT -> 0xffff8a27.toInt()
                 BuildingKind.ROOM,BuildingKind.GARDEN -> 0xff21b15b.toInt()
                 BuildingKind.PATH -> 0xffc8a46a.toInt()
@@ -981,7 +989,11 @@ class BuildingScreen:EditorScreen(tr("building_editor")) {
         },graph.nodes.flatMap { n -> ports.getValue(n.id).mapIndexedNotNull { i,p -> p.source.takeIf { it.isNotEmpty() }?.let { KilaLink(it,n.id,i) } } },graph.nodeGroups)
             .also { buildingDiagramCache=graph to it }
     }
+    private fun countDiagramType(graph:BuildingGraph,id:String)=when(BuildingCounts.axisUsage(graph)[id]?.singleOrNull()) {
+        "length"->"COUNT_X";"height"->"COUNT_Y";"depth"->"COUNT_Z";else->"COUNT"
+    }
     private fun buildingDiagramType(kind:BuildingKind)=when(kind) {
+        BuildingKind.INT,BuildingKind.INT_ADD,BuildingKind.INT_SUBTRACT,BuildingKind.INT_MULTIPLY,BuildingKind.INT_DIVIDE,BuildingKind.INT_MIN,BuildingKind.INT_MAX->"COUNT"
         BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE->"WALL"
         BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE->"COPYCAT"
         else->kind.name
@@ -995,6 +1007,7 @@ class BuildingScreen:EditorScreen(tr("building_editor")) {
         if(point==null) buildingGraphCanvas?.add(kind) else buildingGraphCanvas?.addAt(kind,point.first.toDouble(),point.second.toDouble())
     }
     private fun buildingPortLabel(p:BuildingPort,owner:BuildingNode):String=when {
+        p.key in BuildingCounts.axes -> countDimensionLabel(buildingDisplayGraph(),owner,p.key)
         p.key.startsWith("semantic:") -> SemanticPropertyEditors.portLabel(p.key)
         p.key.startsWith("wall:") -> if(p.length>0) ui("bg_wall_port",ui(listOf("north","east","south","west")[p.key.removePrefix("wall:").substringBefore(':').toInt()]),p.length,p.height) else ui("bg_roof_wall_port",ui(listOf("north","east","south","west")[p.key.removePrefix("wall:").toInt()]))
         p.key.startsWith("access:") -> ui("structure_port",p.key.substringAfter(':').toInt()+1)

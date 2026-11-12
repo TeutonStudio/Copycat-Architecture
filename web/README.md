@@ -176,3 +176,29 @@ python3 tools/verify-graphstudio-browser.py --url http://127.0.0.1:4173
 Verzeichnis für die Screenshots (Standard: `/tmp/graphstudio-browser-check`).
 Gemessene Knotengrößen bleiben ausschließlich Ansichtsstatus; der Test prüft,
 dass diese Daten nicht im Minecraft-JSON landen.
+
+## Entwicklung für 0.7.0: Anzahl und Copycat-Anordnung
+
+Der gemeinsame Fachkern enthält die Anzahl-Knoten Konstante, Addition,
+Subtraktion, Multiplikation, Ganzzahldivision, Minimum und Maximum. Die Division
+rundet gegen null; Überlauf und Division durch null erzeugen Fehler. Länge (X),
+Höhe (Y) und Tiefe (Z) akzeptieren jeweils eine Anzahl-Quelle. Unverbundene
+Anschlüsse verwenden die unveränderten manuellen Maße. Eindeutige Zahlenpfade
+sind X rot, Y grün oder Z blau; mehrfach verwendete Pfade bleiben neutral.
+
+Wandsegmente können ihre verbundenen Copycats im 2D-Raster einzeln anordnen.
+Drei Ansichten und numerische XYZ-Werte erhalten die jeweils verdeckte Achse.
+Übernehmen erzeugt einen Undo-Schritt, Verwerfen erhält den vorherigen Entwurf.
+Vorhandene Wände behalten ihre wiederholte Füllung, bis eine explizite Anordnung
+übernommen wird. Die tatsächliche Geometrie berücksichtigt die gespeicherten
+Positionen. Leere Quellen räumen ausschließlich ihre eigene Blockzelle.
+
+Flächengebiete und Segmentlayouts einschließlich Rasterzuweisungen und
+Maßeingängen sind verlustfrei lesbar. Bei angeschlossenem Layout werden Maße
+am Layout gesetzt. Eine widersprüchliche Flächengeometrie wird abgewiesen.
+Die Tischreferenz bleibt beim Austausch erhalten. Andere bislang nicht
+unterstützte native Einstellungen werden weiterhin ausdrücklich abgewiesen.
+
+Dies ist ein Entwicklungsstand. Versionierte Untergraphen (#13), Züge (#14),
+Bewegungsmittel (#15) und Contraptions (#16) sind noch nicht implementiert;
+es wurde kein Release 0.7.0 veröffentlicht.

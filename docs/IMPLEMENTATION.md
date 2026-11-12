@@ -306,3 +306,30 @@ Die bestehenden Größenlimits gelten weiterhin. Eigene Geometrie und Modelle we
 `BuildingNode.verticalEdges` ist eine optionale Zuordnung stabiler Kontur-Eckpunkte (`x:z`) zu Segmentquellen. `RoomVerticalEdges` liefert konvexe und konkave Kanten; `edge:x:z` ist ein eigener typisierter Raumanschluss für Segmente, Zusammensetzungen und Segmenttransformationen. Der Compiler prüft die Raumhöhe und den aus beiden Wandtiefen abgeleiteten Querschnitt. Explizite Räume montieren vorhandene Wandsegmente überlappend an ihren Endreihen. `RoomWallJoints` legt die äußeren Wandreihen auf die Konturzellen; lokales +Z zeigt nach innen. Beide Wandbeiträge werden an gemeinsamen Eckzellen mit ihren tatsächlichen Geometrien und Verkleidungen vereinigt. Es entstehen keine zusätzlichen Eckspalten. Die Wandtiefen verkleinern das freie Innenmaß. An einspringenden Ecken umfasst der Wandanschluss auch die gemeinsame Endzelle; seine angezeigte Sollbreite berücksichtigt diese. Eigene Kantensegmente liegen im gemeinsamen Querschnitt und haben dort Materialvorrang, ohne die übrigen Wandteile zu löschen. Leere Kantensegmente fordern dort Freiraum. Der globale Eck-Copycat bleibt als optionaler Ersatz erhalten. `joinWallEnds=false` erhält für ausdrücklich historische Beispiele und Prüfungen die frühere Montage um das freie Innenraster. Ältere explizite Dokumente ohne dieses Feld erhalten die korrigierte gemeinsame Montage. Größere horizontale Segmentquellen werden mittig auf die neue Raumhülle zugeschnitten; kleinere Quellen werden mit einer Größenfehlermeldung abgelehnt. Geometrieänderungen erhalten unveränderte Eckpunkte und entfernen entfallene Zuordnungen. Diagrammänderungen, Löschung und Knotengruppen behandeln Kantenreferenzen wie andere echte Eingänge.
 
 Bei der Wandmontage zeigt lokales +Z ins Rauminnere. Deshalb wird die Tiefenreihenfolge der Zellen beim Platzieren von außen nach innen abgebildet, passend zur Drehung ihrer lokalen Geometrie. Bodenmontage kehrt die zweite Anordnungskoordinate um; Deckenmontage kehrt die Schichtreihenfolge um. Damit bildet jeder Einbau eine gemeinsame räumliche Transformation von Zellpositionen, Ausschnitten und Materialgeometrie. Die bisherige gegenläufige Abbildung konnte zwei in der Segmentvorschau verbundene 3/16-Schichten durch einen 26/16-Spalt trennen.
+
+## Entwicklung 0.7.0: typisierte Anzahl und explizite Copycat-Anordnung
+
+`BuildingCounts` wertet signierte 32-Bit-Integer mit geprüfter Arithmetik aus.
+`BuildingNode.dimensions` speichert ausschließlich Referenzen für `length`,
+`height` und `depth`; die bisherigen Maße bleiben Fallbacks. Anzahl-Knoten
+verwenden `countValue` und zwei Eingänge bei binären Operationen. Gemeinsame
+Portdefinitionen, Diagrammänderungen und Gruppenumbenennungen erhalten diese
+Referenzen. Wirksame Maße und das gemeinsame Volumenbudget werden vor der
+Geometrieerzeugung geprüft. Achsenverwendung ist abgeleiteter Ansichtsstatus.
+
+`copycatArrangement` aktiviert ausdrücklich gespeicherte Eingangspositionen in
+`offsets`. Ohne diese Option bleibt die bisherige wiederholte Wandfüllung aktiv.
+`CopycatArrangement` und `SegmentArrangement` erhalten Koordinaten, Materialien,
+Lufträume und deklarierte Segmentmaße. Die Oberflächen übernehmen eine komplette
+Anordnung atomar. Explizite Layoutflächen und bestehende Rasterzuweisungen dürfen
+nicht widersprüchlich überschrieben werden.
+
+Alle produktiven Unterdialoge verwenden `ArchitectTheme`: den nativen Rahmen des
+fortgeschrittenen CC-Computers, dieselbe dunkle Inhaltsfläche wie das Hauptfenster,
+abgestimmte Metallflächen und goldene Auswahlakzente. Das gilt für Anordnungs-
+und Definitionskarten, Werteingaben, Formauswahl und eigenständigen Druckerspeicher.
+Status- und Fachfarben behalten ihre Bedeutung. Die bestehende kompakte
+Bediengeometrie bleibt erhalten; ein schmaler CC-Rahmen hält ihre Ränder frei.
+
+Die Erweiterungen #13–16 und ihre tatsächlichen Montageadapter fehlen noch.
+Dieser Entwicklungsstand erfüllt daher nicht die Freigabebedingungen für 0.7.0.

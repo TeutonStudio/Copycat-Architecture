@@ -28,6 +28,10 @@ object ClientSmoke {
             if(frames>lastFrame && InspectorSectionsSmoke.tick()) lastFrame=frames+1
             return
         }
+        if(java.lang.Boolean.getBoolean("architect.countArrangementSmoke")) {
+            if(frames>lastFrame && CountArrangementSmoke.tick()) lastFrame=frames+1
+            return
+        }
         if(java.lang.Boolean.getBoolean("architect.segmentArrangementSmoke")) {
             if(frames>lastFrame && SegmentArrangementSmoke.tick()) lastFrame=frames+1
             return

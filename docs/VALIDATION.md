@@ -1,5 +1,46 @@
 # Tatsächlich ausgeführte Abnahme
 
+## Entwicklungsstand für 0.7.0: Raster, Anzahl und CC-Unterdialoge, 12.11.2026
+
+Dieser Stand ist **kein veröffentlichtes Release 0.7.0**. Implementiert sind die
+Copycat-Anordnung im Wandsegment (#11), Anzahl-Eingänge (#12) und die gemeinsame
+CC-Gestaltung der Unterdialoge. Versionierte Untergraphen (#13), Züge (#14),
+Bewegungsmittel (#15) und Contraptions (#16) fehlen; diese Issues bleiben offen.
+
+- Abschließender einzelner Java-21-`build` erfolgreich: **542 Tests, 540 bestanden,
+  zwei bestehende optionale Snapshot-Tests übersprungen, keine Fehler**.
+- Alle **62 verpflichtenden Minecraft-GameTests** bestanden. Der reale Turtle-Lauf
+  baut 603 Platzierungen mit Kellern, mehreren Räumen, Nachversorgung und Neustart.
+- Browser-Fachtests und Produktionsbuild erfolgreich. Playwright/Chromium prüft
+  Desktop, Tablet und Mobilgerät sowie tatsächliche Rasterbedienung, Zahlenpfade,
+  neutrale Mehrfachverwendung, Undo/Redo und gelöschte Zahlenquellen.
+- Die nativen Clientabnahmen `countArrangementSmoke` und `workshopSmoke` melden
+  jeweils `PASSED`. Geprüft sind zwei GUI-Größen, echtes Ziehen und Tastaturbewegung,
+  unveränderte Fallback-Maße, atomare Übernahme, Abbrechen, Undo/Redo, Modul- und
+  Plattenansichten, Materialien, Bauansichten, Werteingaben und Katalogfilter.
+- Ressourcen-, Sprachschlüssel-, ROM-Lua-Prüfung und `git diff --check` erfolgreich.
+
+Die Fachtests decken außerdem Überlauf, Division durch null, Rundung gegen null,
+Zyklen, Typfehler, Dimensions- und Flächenkonflikte, das Volumenlimit, alle 128
+Segmentspalten, lokale Materialien, explizite Luftzellen und JSON-Rundläufe ab.
+Gelöschte Anzahl-Operanden hinterlassen reparierbare Entwürfe mit erhaltenen
+Verbindungen; die tatsächliche Planberechnung bleibt bis zur Reparatur gesperrt.
+
+Die Unterdialoge verwenden die native CC-Rahmentextur und dieselben dunklen
+Inhaltsflächen wie die Hauptfenster. Die normalen und kompakten Aufnahmen wurden
+visuell geprüft: [Raster](release-0.7.0/images/architect-count-arrangement-normal.png),
+[kompaktes Raster](release-0.7.0/images/architect-count-arrangement-compact.png),
+[Werteingabe](release-0.7.0/images/architect-workshop-compact-number-valid.png),
+[Katalog](release-0.7.0/images/architect-workshop-compact-catalog.png) und
+[Graphstudio](release-0.7.0/images/count-arrangement-desktop.png).
+
+Der ursprüngliche lokale Arbeitsstand wurde vor dem Abgleich mit Master als
+Binärpatch und Archiv neuer Dateien gesichert. Seine nativen Quellen entsprechen
+weitgehend dem integrierten Release 0.6.0; spätere Browser-Erweiterungen aus Master
+bleiben erhalten. Die lokale CC:Tweaked-Kompatibilität bis 1.120.2 wurde übernommen.
+Die ursprüngliche Arbeitskopie und ihre ungesicherten Dateien wurden nicht ersetzt.
+
+
 ## Release-Integration 0.6.0, 08.11.2026
 
 Der lokale Mod-Stand wurde in einer getrennten Arbeitskopie mit GitHub-Master

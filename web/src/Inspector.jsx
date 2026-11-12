@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { TransformValues } from './TransformValues.jsx'
 import { ArrangementGrid } from './ArrangementGrid.jsx'
-import { sourceMounting, mountSource } from './generated/engine.mjs'
+import { sourceMounting, mountSource, evaluateCount, inspectGraph } from './generated/engine.mjs'
 import { formGroups, model } from './model.js'
 import { MaterialField } from './Workspace.jsx'
 import { copycatShapeNames } from './copycat-options.js'
 
 export const names = {
+  INT:'Anzahl', INT_ADD:'Anzahl addieren', INT_SUBTRACT:'Anzahl subtrahieren', INT_MULTIPLY:'Anzahl multiplizieren', INT_DIVIDE:'Anzahl dividieren', INT_MIN:'Anzahl Minimum', INT_MAX:'Anzahl Maximum',
   INPUT: 'Grundform', UNION: 'Vereinigung', INTERSECTION: 'Schnitt', DIFFERENCE: 'Differenz',
   SYMMETRIC_DIFFERENCE: 'Symmetrische Differenz', ROTATE: 'Copycat rotieren', ROTATION: 'Rotation', OUTPUT: 'Ergebnis',
   SAVED: 'Gespeicherter Copycat', MIRROR: 'Copycat spiegeln',
@@ -14,11 +15,16 @@ export const names = {
   COPYCAT_UNION: 'Copycat-Vereinigung', COPYCAT_INTERSECTION: 'Copycat-Schnitt', COPYCAT_DIFFERENCE: 'Copycat-Differenz', COPYCAT_SYMMETRIC_DIFFERENCE: 'Symmetrische Copycat-Differenz',
   SEGMENT_MIRROR: 'Segment spiegeln', SEGMENT_ROTATE: 'Segment rotieren',
   SEGMENT_UNION: 'Segment-Vereinigung', SEGMENT_INTERSECTION: 'Segment-Schnitt', SEGMENT_DIFFERENCE: 'Segment-Differenz', SEGMENT_SYMMETRIC_DIFFERENCE: 'Symmetrische Segment-Differenz',
-  COPYCAT: 'Copycat-Referenz', SEGMENT: 'Wandsegment', PATTERN: 'Wandmuster', FLOOR: 'Boden', CEILING: 'Decke',
+  AREA:'Flächengebiet', SEGMENT_LAYOUT:'Segmentanordnung', COPYCAT: 'Copycat-Referenz', SEGMENT: 'Wandsegment', PATTERN: 'Wandmuster', FLOOR: 'Boden', CEILING: 'Decke',
   ROOM: 'Raum', STOREY: 'Geschoss', ROOF: 'Dach', BUILDING: 'Gebäude'
 }
 
 export function portName(port, node) {
+  if (['length','height','depth'].includes(port.id)) return ({length:'Länge · X',height:'Höhe · Y',depth:'Tiefe · Z'})[port.id]
+  if (node.kind.startsWith('INT') && port.id.startsWith('in:')) return `Anzahl ${Number(port.id.slice(3))+1}`
+  if (port.id === 'geometry') return 'Flächengeometrie'
+  if (port.id === 'layout') return 'Segmentanordnung'
+  if (port.id.startsWith('region:')) return port.id.replace('region:','Bereich ')
   if (port.id === 'rotation') return 'Rotationen'
   if (port.id === 'mirroring') return 'Spiegelungen'
   const [kind, key] = port.id.split(':')
@@ -127,8 +133,15 @@ export function NodeFields({ mode, node, document, edit, library, onChooseCopyca
     </>
   }
 
+  if (node.kind.startsWith('INT')) {
+    let result
+    try { result = evaluateCount(document, node.id) } catch (error) { result = error.message }
+    return <>{field('name', 'Knotenname')}{node.kind === 'INT' && number('countValue','Anzahl',-2147483648,2147483647)}<p role="status">{result}</p><p className="hint">Ganzzahldivision rundet gegen null.</p></>
+  }
   if (['ROTATION', 'MIRRORING'].includes(node.kind)) return <>{field('name', 'Knotenname')}<TransformValues node={node} edit={edit} /></>
 
+  if (node.kind === 'AREA') return <AreaFields node={node} edit={edit} />
+  if (node.kind === 'SEGMENT_LAYOUT') return <>{field('name','Knotenname')}{number('length','Länge · Fallback X',1,128)}{number('height','Höhe · Fallback Y',1,128)}{number('depth','Tiefe · Fallback Z',1,128)}<DimensionInfo node={node} document={document} /><p className="hint">Verbundene Anzahl-Quellen steuern die Maße. Flächengeometrie muss dieselbe Länge und Höhe besitzen.</p></>
   if (node.id === 'empty_wall') return <p className="hint">Standardquelle für eine freie Wandöffnung.</p>
   const enclosure = node.kind === 'ROOM' || (node.kind === 'STOREY' && node.storeyMode === 'walls')
   const references = key => Object.keys(library[key] ?? {})
@@ -157,10 +170,12 @@ export function NodeFields({ mode, node, document, edit, library, onChooseCopyca
     {['COPYCAT', 'SEGMENT', 'FLOOR', 'CEILING', 'ROOF'].includes(node.kind) && ref('form', 'Form aus Bibliothek', 'library-forms')}
     {node.kind === 'SEGMENT' && <>
       {ref('module', 'Modul aus Bibliothek', 'library-modules')}
+      <DimensionInfo node={node} document={document} />
       {field('block', 'Vollblock-ID')}
       {number('length', 'Länge', 1, 128)}
+      {number('depth', 'Tiefe', 1, 128)}
     </>}
-    {(enclosure || ['SEGMENT', 'PATTERN'].includes(node.kind)) && number('height', 'Höhe', 1, 16)}
+    {(enclosure || ['SEGMENT', 'PATTERN'].includes(node.kind)) && number('height', 'Höhe', 1, node.kind === 'SEGMENT' ? 128 : 16)}
     {['FLOOR', 'CEILING', 'ROOF'].includes(node.kind) && number('thickness', 'Dicke', 1, 4)}
     {['FLOOR', 'CEILING'].includes(node.kind) && field('occupied', 'Raumhöhe belegen', undefined, 'checkbox')}
     {node.kind === 'FLOOR' && field('finish', 'Bodenbelag', [['', 'Kein Belag'], ...model.carpets])}
@@ -181,7 +196,7 @@ export function NodeFields({ mode, node, document, edit, library, onChooseCopyca
           onClick={() => edit({ rectangles: node.rectangles.slice(0, -1) })}>Letzte entfernen</button>
       </div>
     </details>}
-    {(node.kind === 'PATTERN' || node.kind === 'SEGMENT_UNION' || node.kind === 'STOREY' && !enclosure) && <ArrangementGrid key={node.id} {...{ node, document, library, edit }} />}
+    {(node.kind === 'SEGMENT' && node.inputs?.some(Boolean) || node.kind === 'PATTERN' || node.kind === 'SEGMENT_UNION' || node.kind === 'STOREY' && !enclosure) && <ArrangementGrid key={node.id} {...{ node, document, library, edit }} />}
     {node.kind === 'STOREY' && !enclosure && <details><summary>Raumversatz</summary>
       <NumberGrid entries={node.inputs.map((_, i) => node.offsets[i] ?? { x: 0, y: 0, z: 0 })}
         keys={['x', 'z']} ranges={{ x: [-64, 64], z: [-64, 64] }} prefix="Raumversatz" scale={16} unit="hB · Raster 16" update={(index, offset) =>
@@ -233,4 +248,18 @@ export function DocumentFields({ mode, document, edit, library, materials, setMa
       <p className="hint">{Object.keys(library.forms ?? {}).length} Formen · {Object.keys(library.modules ?? {}).length} Module geladen</p>
     </>}
   </details>
+}
+
+function AreaFields({node,edit}) {
+  const [text,setText]=useState(JSON.stringify(node.coordinates ?? []))
+  const [error,setError]=useState('')
+  return <><label>Rasterpunkte (JSON: x, y=0, z)<textarea value={text} onChange={e=>setText(e.target.value)} /></label>
+    <button type="button" onClick={()=>{try {const coordinates=JSON.parse(text);if(!Array.isArray(coordinates)) throw Error('Eine Liste von Rasterpunkten eingeben.');edit({coordinates});setError('')}catch(error){setError(error.message)}}}>Fläche übernehmen</button>
+    {error && <p role="alert">{error}</p>}</>
+}
+
+function DimensionInfo({node,document}) {
+  const entry=inspectGraph(true,document).find(entry=>entry.node.id===node.id)
+  const dimensions=entry?.effectiveDimensions ?? {}
+  return <>{entry?.dimensionError && <p role="alert">{entry.dimensionError}</p>}<p className="hint">{Object.entries(dimensions).map(([key,value]) => `${({length:'X',height:'Y',depth:'Z'})[key]} ${value}${node.dimensions?.[key] ? ` ← ${node.dimensions[key]}` : ''} (manuell ${node[key]})`).join(' · ')}</p></>
 }

@@ -33,20 +33,23 @@ const examples = {
 const query = new URLSearchParams(window.location.search)
 const initialMode = query.get('editor') === 'form' || query.get('graph') === 'copycat' ? 'form' : 'building'
 
-function DiagramNode({ id, data: { node, ports }, selected }) {
+const axisColors = {length:"#ef6666",height:"#66cf85",depth:"#739fff"}
+const countColor = axes => axes?.length === 1 ? axisColors[axes[0]] : "#abb7bd"
+
+function DiagramNode({ id, data: { node, ports, axes }, selected }) {
   const updateInternals = useUpdateNodeInternals()
   const signature = ports.map(port => port.id).join('|')
   useEffect(() => updateInternals(id), [id, signature, updateInternals])
   const source = !['BUILDING', 'OUTPUT'].includes(node.kind)
-  return <div className={`diagram-node ${selected ? 'selected' : ''} ${source ? '' : 'result-node'}`}>
+  return <div style={node.kind.startsWith("INT") ? {borderColor:countColor(axes)} : undefined} className={`diagram-node ${selected ? 'selected' : ''} ${source ? '' : 'result-node'}`}>
     <div className="node-heading">
       <span className="node-symbol">{source ? '◇' : '◆'}</span>
-      <div><strong>{node.name || names[node.kind]}</strong><small>{node.name ? names[node.kind] : node.id}</small></div>
+      <div><strong>{node.name || names[node.kind]}</strong><small>{node.name ? names[node.kind] : node.id}{axes?.length ? ` · ${axes.map(axis => ({length:'X',height:'Y',depth:'Z'})[axis]).join(' / ')}` : ''}</small></div>
       {source && <Handle type="source" position={Position.Right} id="out" aria-label="Ausgang" />}
     </div>
     {ports.length > 0 && <div className="ports">{ports.map(port => <div className="port" key={port.id}>
       <Handle type="target" position={Position.Left} id={port.id} title={portName(port, node)} />
-      <span>{portName(port, node)}</span>
+      <span style={{color:axisColors[port.id]}}>{portName(port, node)}</span>
       <span className={`port-status ${port.source ? 'connected' : ''}`}>{port.source ? '●' : '○'}</span>
     </div>)}</div>}
   </div>
@@ -150,11 +153,12 @@ function Studio({ mode, active }) {
       return changed ? next : previous
     })
   }, [entries])
+  const axisUsage = useMemo(() => Object.fromEntries(entries.map(e => [e.node.id,e.axes])), [entries])
   const edges = useMemo(() => wires.map(wire => ({
     id: edgeId(wire), source: wire.source, sourceHandle: 'out', target: wire.target, targetHandle: wire.port,
-    style: wire.source === 'empty_wall' ? { ...edgeStyle, opacity: 0.38 } : edgeStyle,
+    style: wire.source === 'empty_wall' ? { ...edgeStyle, opacity: 0.38 } : {...edgeStyle,...(axisUsage[wire.source] ? {stroke:countColor(axisUsage[wire.source])} : {})},
     selected: edgeId(wire) === selectedWire
-  })), [wires, selectedWire])
+  })), [wires, selectedWire, axisUsage])
 
   const transact = callback => {
     try {

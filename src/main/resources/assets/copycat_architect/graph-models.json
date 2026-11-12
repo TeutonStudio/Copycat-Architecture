@@ -268,6 +268,8 @@
     "maxNodes": 96,
     "maxInputs": 16,
     "nodeDefaults": {
+      "countValue":0,"dimensions":{},
+      "copycatArrangement": false,
       "id": "",
       "kind": "SEGMENT",
       "name": "",
@@ -389,7 +391,10 @@
         "defaults": {"module": ""},
         "alwaysExplicit": true,
         "ports": [
-          {"key": "geometry", "path": ["geometry"], "accepts": ["AREA"], "labelKey": "bg_area"}
+          {"key": "geometry", "path": ["geometry"], "accepts": ["AREA"], "labelKey": "bg_area"},
+          {"key":"length","path":["dimensions","length"],"accepts":["INT","INT_ADD","INT_SUBTRACT","INT_MULTIPLY","INT_DIVIDE","INT_MIN","INT_MAX"],"labelKey":"bg_dimension_length"},
+          {"key":"height","path":["dimensions","height"],"accepts":["INT","INT_ADD","INT_SUBTRACT","INT_MULTIPLY","INT_DIVIDE","INT_MIN","INT_MAX"],"labelKey":"bg_dimension_height"},
+          {"key":"depth","path":["dimensions","depth"],"accepts":["INT","INT_ADD","INT_SUBTRACT","INT_MULTIPLY","INT_DIVIDE","INT_MIN","INT_MAX"],"labelKey":"bg_dimension_depth"}
         ],
         "fields": {
           "length": {
@@ -417,7 +422,10 @@
         "ports": [
           {"key": "layout", "path": ["layout"], "accepts": ["SEGMENT_LAYOUT"], "when": {"assembly": true, "id": {"not": "empty_wall"}}, "labelKey": "bg_segment_layout"},
           {"key": "in:*", "path": ["inputs", "*"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"], "when": {"id": {"not": "empty_wall"}}, "max": 16, "expand": true},
-          {"key": "region:*", "path": ["regionCopies", "key"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"], "when": {"assembly": true, "id": {"not": "empty_wall"}}, "dynamic": "segmentRegions"}
+          {"key": "region:*", "path": ["regionCopies", "key"], "accepts": ["COPYCAT", "COPYCAT_MIRROR", "COPYCAT_ROTATE", "COPYCAT_UNION", "COPYCAT_INTERSECTION", "COPYCAT_DIFFERENCE", "COPYCAT_SYMMETRIC_DIFFERENCE"], "when": {"assembly": true, "id": {"not": "empty_wall"}}, "dynamic": "segmentRegions"},
+          {"key":"length","path":["dimensions","length"],"accepts":["INT","INT_ADD","INT_SUBTRACT","INT_MULTIPLY","INT_DIVIDE","INT_MIN","INT_MAX"],"labelKey":"bg_dimension_length"},
+          {"key":"height","path":["dimensions","height"],"accepts":["INT","INT_ADD","INT_SUBTRACT","INT_MULTIPLY","INT_DIVIDE","INT_MIN","INT_MAX"],"labelKey":"bg_dimension_height"},
+          {"key":"depth","path":["dimensions","depth"],"accepts":["INT","INT_ADD","INT_SUBTRACT","INT_MULTIPLY","INT_DIVIDE","INT_MIN","INT_MAX"],"labelKey":"bg_dimension_depth"}
         ],
         "fields": {
           "length": {
@@ -1393,7 +1401,14 @@
         "fields": {
           "mirrors": {}
         }
-      }
+      },
+      "INT":{"labelKey":"bg_int","output":"COUNT","defaults":{"inputs":[]},"ports":[],"fields":{"countValue":{"labelKey":"bg_int","min":-2147483648,"max":2147483647}}},
+      "INT_ADD":{"labelKey":"bg_int_add","output":"COUNT","defaults":{"inputs":["",""]},"ports":[{"key":"in:*","accepts":["INT","INT_ADD","INT_SUBTRACT","INT_MULTIPLY","INT_DIVIDE","INT_MIN","INT_MAX"],"min":2,"max":2,"expand":false,"path":["inputs","*"],"labelKey":"bg_int"}]},
+      "INT_SUBTRACT":{"labelKey":"bg_int_subtract","output":"COUNT","defaults":{"inputs":["",""]},"ports":[{"key":"in:*","accepts":["INT","INT_ADD","INT_SUBTRACT","INT_MULTIPLY","INT_DIVIDE","INT_MIN","INT_MAX"],"min":2,"max":2,"expand":false,"path":["inputs","*"],"labelKey":"bg_int"}]},
+      "INT_MULTIPLY":{"labelKey":"bg_int_multiply","output":"COUNT","defaults":{"inputs":["",""]},"ports":[{"key":"in:*","accepts":["INT","INT_ADD","INT_SUBTRACT","INT_MULTIPLY","INT_DIVIDE","INT_MIN","INT_MAX"],"min":2,"max":2,"expand":false,"path":["inputs","*"],"labelKey":"bg_int"}]},
+      "INT_DIVIDE":{"labelKey":"bg_int_divide","output":"COUNT","defaults":{"inputs":["",""]},"ports":[{"key":"in:*","accepts":["INT","INT_ADD","INT_SUBTRACT","INT_MULTIPLY","INT_DIVIDE","INT_MIN","INT_MAX"],"min":2,"max":2,"expand":false,"path":["inputs","*"],"labelKey":"bg_int"}]},
+      "INT_MIN":{"labelKey":"bg_int_min","output":"COUNT","defaults":{"inputs":["",""]},"ports":[{"key":"in:*","accepts":["INT","INT_ADD","INT_SUBTRACT","INT_MULTIPLY","INT_DIVIDE","INT_MIN","INT_MAX"],"min":2,"max":2,"expand":false,"path":["inputs","*"],"labelKey":"bg_int"}]},
+      "INT_MAX":{"labelKey":"bg_int_max","output":"COUNT","defaults":{"inputs":["",""]},"ports":[{"key":"in:*","accepts":["INT","INT_ADD","INT_SUBTRACT","INT_MULTIPLY","INT_DIVIDE","INT_MIN","INT_MAX"],"min":2,"max":2,"expand":false,"path":["inputs","*"],"labelKey":"bg_int"}]}
     }
   }
 }

@@ -188,11 +188,11 @@ test('native-only nodes, schemas and geometry are rejected before browser import
   const groups = { ...original, graph: { ...original.graph, nodeGroups: [{ id: 'group' }] } }
   assert.throws(() => readGraph(groups, 'form'), /native editor/)
   const graph = fixture('building-graph')
-  for (const change of [{ assembly: true }, { depth: 2 }]) {
+  for (const change of [{ roomConfig: {mode:"SEGMENTS"} }, { roofConfig: {mode:"FLAT"} }]) {
     const document = replaceNodes(graph, graph.graph.nodes.map((node, index) => index === 0 ? { ...node, ...change } : node))
     assert.throws(() => writeGraph('building', document), /native editor/)
   }
-  assert.throws(() => readGraph({ ...graph, graph: { ...graph.graph, schema: 3 } }, 'building'), /schema/)
+  assert.throws(() => readGraph({ ...graph, graph: { ...graph.graph, schema: 55 } }, 'building'), /schema/)
   assert.equal(newNode(false, 'MIRROR', 'mirror', 0, 0).kind, 'MIRROR')
   assert.throws(() => newNode(true, 'ROOM_LAYOUT', 'layout', 0, 0), /native editor/)
 })

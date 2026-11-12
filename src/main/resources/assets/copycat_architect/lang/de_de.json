@@ -792,5 +792,18 @@
   "gui.copycat_architect.copycat_difference": "Copycat-Differenz",
   "gui.copycat_architect.copycat_symmetric_difference": "Symmetrische Copycat-Differenz",
   "gui.copycat_architect.bg_rotation": "Rotation",
-  "gui.copycat_architect.bg_mirroring": "Spiegelungen"
+  "gui.copycat_architect.bg_mirroring": "Spiegelungen",
+  "gui.copycat_architect.bg_copycat_arrange": "Copycats im 2D-Raster anordnen",
+  "gui.copycat_architect.bg_int": "Anzahl",
+  "gui.copycat_architect.bg_int_add": "Anzahl addieren",
+  "gui.copycat_architect.bg_int_subtract": "Anzahl subtrahieren",
+  "gui.copycat_architect.bg_int_multiply": "Anzahl multiplizieren",
+  "gui.copycat_architect.bg_int_divide": "Anzahl dividieren",
+  "gui.copycat_architect.bg_int_min": "Anzahl Minimum",
+  "gui.copycat_architect.bg_int_max": "Anzahl Maximum",
+  "gui.copycat_architect.bg_count_value": "Anzahl: %s",
+  "gui.copycat_architect.bg_dimension_length": "X · Länge",
+  "gui.copycat_architect.bg_dimension_height": "Y · Höhe",
+  "gui.copycat_architect.bg_dimension_depth": "Z · Tiefe",
+  "gui.copycat_architect.bg_dimension_fallback": "manuell %s"
 }

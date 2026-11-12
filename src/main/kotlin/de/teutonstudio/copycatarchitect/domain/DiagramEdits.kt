@@ -58,6 +58,7 @@ object DiagramEdits {
                 if(source.isNotEmpty()) require(original.nodes.first { it.id==source }.kind in port.accepts) { "Incompatible building connection" }
                 when {
                     port.key.startsWith("semantic:") -> next=BuildingSemantics.remapReferences(next) { key,ref -> if("semantic:$key"==port.key) source else ref }
+                    port.key in BuildingCounts.axes -> next=next.copy(dimensions=if(source.isEmpty()) next.dimensions.orEmpty()-port.key else next.dimensions.orEmpty()+(port.key to source))
                     port.key=="rotation" -> next=next.copy(rotation=source.takeIf(String::isNotEmpty))
                     port.key=="mirroring" -> next=next.copy(mirroring=source.takeIf(String::isNotEmpty))
                     port.key=="layout" -> next=next.copy(layout=source,assembly=true)

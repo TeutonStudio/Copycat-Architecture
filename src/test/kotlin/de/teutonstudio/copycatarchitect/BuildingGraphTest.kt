@@ -194,7 +194,7 @@ class BuildingGraphTest {
         val copy=BuildingNode("copy",BuildingKind.COPYCAT,form="full@1")
         val second=copy.copy(id="second",role="frame")
         var g=BuildingGraph.starter().copy(nodes=BuildingGraph.starter().nodes+copy+second)
-        assertEquals(setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE),BuildingPorts.of(g.nodes.first { it.id=="wall" },true).single().accepts)
+        assertEquals(setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE),BuildingPorts.of(g.nodes.first { it.id=="wall" },true).single { it.key=="in:0" }.accepts)
         g=g.connect("wall","in:0","copy").connect("wall","in:1","second")
         val segment=eval(g).segment("wall")
         assertEquals(12,segment.cells.size)

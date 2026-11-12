@@ -12,14 +12,14 @@ import kotlin.js.json
 // be rejected before a preview or export can silently discard them.
 private val browserFormKinds=listOf(NodeKind.INPUT,NodeKind.UNION,NodeKind.INTERSECTION,NodeKind.DIFFERENCE,NodeKind.SYMMETRIC_DIFFERENCE,NodeKind.ROTATE,NodeKind.ROTATION,NodeKind.OUTPUT,NodeKind.SAVED,NodeKind.MIRROR)
 private val browserBuildingKinds=listOf(
-    BuildingKind.ROTATION,BuildingKind.MIRRORING,BuildingKind.COPYCAT,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_MIRROR,
+    BuildingKind.INT,BuildingKind.INT_ADD,BuildingKind.INT_SUBTRACT,BuildingKind.INT_MULTIPLY,BuildingKind.INT_DIVIDE,BuildingKind.INT_MIN,BuildingKind.INT_MAX,BuildingKind.ROTATION,BuildingKind.MIRRORING,BuildingKind.COPYCAT,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_MIRROR,
     BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE,
     BuildingKind.SEGMENT,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR,
     BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,
-    BuildingKind.PATTERN,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.ROOM,BuildingKind.STOREY,BuildingKind.ROOF,BuildingKind.BUILDING
+    BuildingKind.AREA,BuildingKind.SEGMENT_LAYOUT,BuildingKind.PATTERN,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.ROOM,BuildingKind.STOREY,BuildingKind.ROOF,BuildingKind.BUILDING
 )
 private val browserFormFields=setOf("id","kind","inputs","part","x","y","materialMode","materialGroup","previewGroup","inputGroups","rotationAxis","quarterTurns","savedCopycat","mirror")
-private val browserBuildingFields=setOf("id","kind","name","x","y","inputs","module","block","length","height","rectangles","walls","floor","ceiling","offsets","form","thickness","occupied","finish","levels","roof","roofType","ridge","overhang","materialMode","role","preview","storeyMode","corner","surfaces","rotationAxis","quarterTurns","mirror","mirrorPositionsOnly","patternAxis","transforms","rotation","mirroring","rotations","mirrors")
+private val browserBuildingFields=setOf("id","kind","name","x","y","inputs","module","block","length","height","rectangles","walls","floor","ceiling","offsets","form","thickness","occupied","finish","levels","roof","roofType","ridge","overhang","materialMode","role","preview","storeyMode","corner","surfaces","rotationAxis","quarterTurns","mirror","mirrorPositionsOnly","patternAxis","transforms","copycatArrangement","depth","countValue","dimensions","assembly","layout","geometry","coordinates","layoutCells","regionCopies","rotation","mirroring","rotations","mirrors")
 private fun browserNode(value:dynamic,isBuilding:Boolean):dynamic {
     val kind=string(value,"kind",if(isBuilding) "SEGMENT" else "INPUT")
     require(if(isBuilding) browserBuildingKinds.any { it.name==kind } else browserFormKinds.any { it.name==kind }) { "$kind requires the native editor" }
@@ -28,8 +28,8 @@ private fun browserNode(value:dynamic,isBuilding:Boolean):dynamic {
 }
 private fun browserGraph(value:dynamic,isBuilding:Boolean):dynamic {
     val schema=int(value,"schema",if(isBuilding) 1 else 2)
-    require(if(isBuilding) schema==1 else schema in 1..2) { "Unsupported browser graph schema; use the native editor" }
-    require(array(value,"nodeGroups").isNullOrEmpty() && value.projection==null) { "Graph groups and projections require the native editor" }
+    require(if(isBuilding) schema in 1..3 else schema in 1..2) { "Unsupported browser graph schema; use the native editor" }
+    require(array(value,"nodeGroups").isNullOrEmpty()) { "Graph groups require the native editor" }
     return value
 }
 
@@ -138,14 +138,22 @@ private fun buildingNode(raw: dynamic): BuildingNode {
     rotations=array(v,"rotations")?.map { SegmentRotation(RotationAxis.valueOf(string(it,"axis","Y")),int(it,"quarterTurns",0)) },
     mirrors=array(v,"mirrors")?.map { requireNotNull(mirror(it)) },
     mirrorPositionsOnly=if(v.mirrorPositionsOnly==null) null else bool(v,"mirrorPositionsOnly"),
+    assembly=bool(v,"assembly"),layout=string(v,"layout"),geometry=string(v,"geometry"),
+    coordinates=array(v,"coordinates")?.map(::point).orEmpty(),regionCopies=map(v.regionCopies) { obj,key -> string(obj,key) },
+    layoutCells=array(v,"layoutCells")?.map { SegmentLayoutCell(int(it,"x",0),int(it,"y",0),int(it,"sourceIndex",0),int(it,"turn",0)) }.orEmpty(),
+    countValue=int(v,"countValue",0),dimensions=map(v.dimensions) { obj,key -> string(obj,key) },
+    depth=int(v,"depth",1),copycatArrangement=bool(v,"copycatArrangement"),
     patternAxis=string(v,"patternAxis","horizontal"),transforms=array(v,"transforms")?.map { t ->
         SegmentTransform(if(t.offset==null) P() else point(t.offset),RotationAxis.valueOf(string(t,"axis","Y")),int(t,"quarterTurns",0))
     }.orEmpty()
 )
 }
 private fun BuildingNode.jsNode() = json(
+    "assembly" to assembly,"layout" to layout,"geometry" to geometry,"coordinates" to coordinates.map { it.jsPoint() }.toTypedArray(),
+    "regionCopies" to regionCopies.asJson(),"layoutCells" to layoutCells.map { json("x" to it.x,"y" to it.y,"sourceIndex" to it.sourceIndex,"turn" to it.turn) }.toTypedArray(),
+    "countValue" to (countValue ?: 0),"dimensions" to dimensions.orEmpty().asJson(),
     "id" to id, "kind" to kind.name, "name" to name, "x" to x, "y" to y, "inputs" to inputs.toTypedArray(),
-    "module" to module, "block" to block, "length" to length, "height" to height,
+    "module" to module, "block" to block, "length" to length, "height" to height,"depth" to depth,"copycatArrangement" to copycatArrangement,
     "rectangles" to rectangles.map { it.jsRect() }.toTypedArray(), "walls" to walls.asJson(), "floor" to floor,
     "ceiling" to ceiling, "offsets" to offsets.map { it.jsPoint() }.toTypedArray(), "form" to form,
     "thickness" to thickness, "occupied" to occupied, "finish" to finish,
@@ -160,7 +168,7 @@ private fun BuildingNode.jsNode() = json(
         json("offset" to it.offset.jsPoint(),"axis" to it.axis.name,"quarterTurns" to it.quarterTurns)
     }.toTypedArray()
 )
-private fun buildingGraph(raw:dynamic):BuildingGraph { val v=browserGraph(raw,true);return BuildingGraph(int(v,"schema",1),array(v,"nodes")?.map(::buildingNode).orEmpty()) }
+private fun buildingGraph(raw:dynamic):BuildingGraph { val v=browserGraph(raw,true);return BuildingGraph(int(v,"schema",1),array(v,"nodes")?.map(::buildingNode).orEmpty(),projection=if(v.projection==null) BuildingProjection() else BuildingProjection(if(v.projection.table==null) P(-5,0,-5) else point(v.projection.table),int(v.projection,"turn",0))) }
 private fun building(v: dynamic) = Building(
     schema = int(v, "schema", 2), id = string(v, "id"), version = int(v, "version", 1), name = string(v, "name", "L House"),
     palette = if (v.palette == null) Building().palette else map(v.palette) { obj, key -> string(obj, key) },
@@ -202,7 +210,7 @@ fun inspectGraph(isBuilding: Boolean, document: dynamic): Array<Json> {
         val graph = buildingGraph(document.graph)
         BuildingGraphCompiler.structure(graph)
         return graph.nodes.map { n ->
-            json("node" to n.jsNode(), "ports" to BuildingPorts.of(n, true).map {
+            json("node" to n.jsNode(),"dimensionError" to runCatching { BuildingCounts.resolve(graph,n,strict=true) }.exceptionOrNull()?.message,"axes" to BuildingCounts.axisUsage(graph)[n.id].orEmpty().toTypedArray(),"effectiveDimensions" to graph.resolvedNode(n).let { json("length" to it.length,"height" to it.height,"depth" to it.depth) }, "ports" to BuildingPorts.of(n, graph, true).map {
                 json("id" to it.key, "source" to it.source, "accepts" to it.accepts.map { kind -> kind.name }.toTypedArray(),
                     "length" to it.length, "height" to it.height)
             }.toTypedArray())
@@ -305,6 +313,18 @@ fun previewGraph(isBuilding: Boolean, document: dynamic, library: dynamic, selec
     val modules = map(library.modules) { obj, key -> module(obj[key]) }
     val graph = requireNotNull(b.graph)
     val selectedNode=graph.nodes.firstOrNull { it.id==selected }
+    if(selectedNode?.kind in setOf(BuildingKind.AREA,BuildingKind.SEGMENT_LAYOUT)) {
+        BuildingGraphCompiler.structure(graph)
+        val boxes=BuildingNodePreviewGeometry.boxes(graph,selectedNode!!)
+        val n=graph.resolvedNode(selectedNode)
+        return json("count" to 0,"raw" to 0,"value" to "${n.length} × ${n.height} × ${n.depth}","meshes" to arrayOf(json(
+            "material" to "wall","boxes" to boxes.map { intArrayOf(it.x*16,it.y*16,it.z*16,it.maxX*16,it.maxY*16,it.maxZ*16) }.toTypedArray(),
+            "positions" to arrayOf(intArrayOf(0,0,0)),"component" to "layout")))
+    }
+    if(selectedNode?.kind in BuildingCounts.kinds) {
+        BuildingGraphCompiler.structure(graph)
+        return json("count" to 0,"raw" to 0,"meshes" to emptyArray<Json>(),"value" to BuildingCounts.Evaluation(graph).value(selected).toString())
+    }
     if(selectedNode?.kind in setOf(BuildingKind.ROTATION,BuildingKind.MIRRORING)) {
         BuildingGraphCompiler.structure(graph)
         val value=if(selectedNode!!.kind==BuildingKind.ROTATION) selectedNode.rotations.orEmpty().joinToString(" → ") { "${it.axis}: ${it.quarterTurns*90}°" } else selectedNode.mirrors.orEmpty().joinToString(" → ") { it.plane.name }
@@ -371,8 +391,8 @@ fun arrangementGraph(document:dynamic,library:dynamic,selected:String,view:Strin
     val modules=map(library.modules) { obj,key -> module(obj[key]) }
     val evaluation=BuildingGraphCompiler.Evaluation(graph,b.palette,forms,modules)
     val plane=SegmentView.valueOf(view)
-    if(node.kind==BuildingKind.PATTERN) {
-        val draft=SegmentArrangement(node.inputs.map(evaluation::segment),node)
+    if(node.kind==BuildingKind.PATTERN || node.kind==BuildingKind.SEGMENT) {
+        val draft=SegmentArrangement(if(node.kind==BuildingKind.SEGMENT) evaluation.copycatInputSegments(node) else node.inputs.map(evaluation::segment),graph.resolvedNode(node))
         return json("transforms" to draft.transforms.map { json("offset" to it.offset.jsPoint(),"axis" to it.axis.name,"quarterTurns" to it.quarterTurns) }.toTypedArray(),
             "items" to node.inputs.mapIndexed { i,id -> json("id" to id,"label" to graph.nodes.first { it.id==id }.let { it.name.ifBlank { id } },
                 "cells" to draft.projected(i,plane).map { arrayOf(it.x,it.z) }.toTypedArray()) }.toTypedArray())
@@ -390,3 +410,6 @@ fun arrangementGraph(document:dynamic,library:dynamic,selected:String,view:Strin
             "cells" to plan.placements.map { plane.project(it.pos+offset) }.toSet().map { arrayOf(it.x,it.z) }.toTypedArray())
     }.toTypedArray())
 }
+
+@JsExport
+fun evaluateCount(document:dynamic,id:String):Int=BuildingCounts.Evaluation(buildingGraph(document.graph)).value(id)

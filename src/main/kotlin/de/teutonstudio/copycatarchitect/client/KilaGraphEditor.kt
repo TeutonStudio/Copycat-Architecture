@@ -109,12 +109,18 @@ private object KilaPortTypes {
     fun of(key:String):TypeHandle=handles.getOrPut(key) {
         val label=key.split('|').joinToString(" / ") { type -> when(type) {
             "shape","COPYCAT" -> ui("port_copycat")
+            "COUNT" -> ui("bg_int")
+            "COUNT_X","COUNT_Y","COUNT_Z" -> ui("bg_int")+" · "+type.substringAfter('_')
             "rotation" -> ui("port_rotation")
             "WALL" -> ui("bg_segment")
             else -> ui("bg_"+type.lowercase())
         } }
         TypeHandleHelpers.customType(Any::class.java,"copycat_architect:$key",label).also {
             TypeHandleHelpers.setCustomColor(it,when(key) {
+                "COUNT_X" -> 0xffef6666.toInt()
+                "COUNT_Y" -> 0xff66cf85.toInt()
+                "COUNT_Z" -> 0xff739fff.toInt()
+                "COUNT" -> 0xffabb7bd.toInt()
                 "rotation" -> ArchitectTheme.brass
                 "WALL","FLOOR","CEILING","SEGMENT_LAYOUT" -> 0xffff8a27.toInt()
                 "ROOM_GEOMETRY" -> 0xff74b4cf.toInt()
@@ -278,12 +284,14 @@ class KilaGraphEditor(x:Int,y:Int,w:Int,h:Int,screen:Screen,private val state:Ki
     private inner class ViewGraph:Graph() {
         override fun createGraphModel():CustomGraphModelImpl = object:CustomGraphModelImpl(this) {
             override fun canAssignTo(destination:PortModel,source:PortModel):Boolean {
-                if(!super.canAssignTo(destination,source)) return false
-                val from=((source.nodeModel as? ICustomNodeModel)?.node as? ViewNode)?.projection ?: return false
+                                val from=((source.nodeModel as? ICustomNodeModel)?.node as? ViewNode)?.projection ?: return false
                 val to=((destination.nodeModel as? ICustomNodeModel)?.node as? ViewNode)?.projection ?: return false
                 val slot=destination.portId.removePrefix("in").toIntOrNull() ?: return false
                 val sourceSlot=outputPortSlot(source.portId) ?: return false
-                return from.outputPorts().getOrNull(sourceSlot)?.type in (to.inputTypes.getOrNull(slot) ?: "shape").split('|')
+                val output=from.outputPorts().getOrNull(sourceSlot)?.type ?: return false
+                val input=to.inputTypes.getOrNull(slot) ?: "shape"
+                if(output.startsWith("COUNT") && input.startsWith("COUNT")) return true
+                return super.canAssignTo(destination,source) && output in input.split('|')
             }
         }
         override fun getSupportNodes():List<Class<out Node>> = emptyList()

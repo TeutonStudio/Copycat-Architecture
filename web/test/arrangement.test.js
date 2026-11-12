@@ -76,3 +76,23 @@ test('2D dragging keeps the hidden coordinate and respects native bounds', () =>
   assert.equal(arrangementPath([[0, 0], [1, 0], [4, 0]]), 'M0,0h2v1h-2zM4,0h1v1h-1z')
   assert.deepEqual(fitArrangement([{ cells: [[0, 0], [3, 1]] }]), [-2, -3, 8, 8])
 })
+
+test('wall segment grid arranges connected Copycats and retains depth, materials and legacy repetition', () => {
+  const d = document()
+  d.graph.nodes.push({...newNode(true, 'COPYCAT', 'stone', 0, 0), block:'minecraft:stone'},
+    {...newNode(true, 'COPYCAT', 'glass', 0, 0), block:'minecraft:glass'})
+  const wall = d.graph.nodes.find(n => n.id === 'a')
+  wall.inputs = ['stone','glass']; wall.length=4; wall.height=3; wall.depth=2
+  assert.equal(previewGraph(true,d,library,'a').count,24)
+  const initial=arrangementGraph(d,library,'a','Z')
+  assert.deepEqual(initial.transforms.map(t=>t.offset),[{x:0,y:0,z:0},{x:1,y:0,z:0}])
+  wall.copycatArrangement=true; wall.offsets=[{x:1,y:0,z:0},{x:3,y:2,z:1}]
+  assert.deepEqual(arrangementGraph(d,library,'a','Y').items.map(i=>i.cells),[[[1,0]],[[3,1]]])
+  const arranged=previewGraph(true,d,library,'a')
+  assert.equal(arranged.count,2)
+  const round=readGraph(JSON.parse(JSON.stringify(writeGraph('building',d))),'building')
+  assert.deepEqual(previewGraph(true,round,library,'a'),arranged)
+  assert.equal(round.graph.nodes.find(n=>n.id==='a').depth,2)
+  wall.offsets[1].x=4
+  assert.throws(()=>previewGraph(true,d,library,'a'),/segment dimensions/)
+})

@@ -158,12 +158,24 @@ class ShapeScreen(private val parent:BuildingScreen?=null,private val printerSes
     }
     private fun shapeGraphRevision():NodeGraph=shapeDisplayGraph()
     fun shapeNodePreview(id:String)=shapeNodePreviews.get(id)
+    private fun openVersionedShapeGraph() {
+        val bundle=form.versionedGraph
+        val root=bundle?.root ?: VersionedGraphs.fromShape(form.id.ifEmpty { UUID.randomUUID().toString() },form.name,shapeDisplayGraph(),form.groups)
+        minecraft?.setScreen(VersionedGraphScreen(this,root,if(bundle==null) kilaGraphState.selection else emptySet(),ClientState.snapshot.library.graphs+bundle?.graphs.orEmpty(),onApply={ source ->
+            val checked=Geometry.validate(form.copy(name=source.root.name,graph=null,groups=source.root.materialGroups,versionedGraph=source))
+            edit { checked }
+        },initialResources=bundle))
+    }
     fun shapeDisplayGraph():NodeGraph {
         form.graph?.let { return it }
+        form.versionedGraph?.let { source ->
+            if(shapeProjectionKey!=form) { shapeProjectionKey=form;shapeProjection=VersionedGraphs.resolve(source.root,source.graphs).shape }
+            return requireNotNull(shapeProjection)
+        }
         if(shapeProjectionKey!=form) { shapeProjectionKey=form;shapeProjection=GraphPresentation.shape(form) }
         return shapeProjection!!
     }
-    fun displayShape():Form=if(form.graph!=null) form else form.copy(graph=shapeDisplayGraph())
+    fun displayShape():Form=if(form.graph!=null) form else form.copy(graph=shapeDisplayGraph(),versionedGraph=null)
     fun selectShapeNode(id:String) {
         graphView.selected=id;graphView.inspectorScroll=0
         if(printerSession!=null || parent!=null) {
@@ -197,7 +209,7 @@ class ShapeScreen(private val parent:BuildingScreen?=null,private val printerSes
             return
         }
         val graph=original.copy(nodeGroups=data.nodeGroups.map { group -> original.nodeGroups.firstOrNull { it.id==group.id }?.let { group.copy(nodes=it.nodes) } ?: group })
-        commitShapeGraph(DiagramEdits.shape(graph,form.groups,data.nodes.map { DiagramPosition(it.id,it.x,it.y) },data.links.map { DiagramConnection(it.source,it.target,it.slot.toString()) }))
+        commitShapeGraph(DiagramEdits.shape(graph,form.groups,data.nodes.map { DiagramPosition(it.id,it.x,it.y) },data.links.map { DiagramConnection(it.source,it.target,it.slot.toString(),if(it.sourceSlot==0) "out" else it.sourceSlot.toString()) }))
     }
     private fun instantiateShapeGroup(id:String) { safe { commitShapeGraph(GraphGroups.instantiate(shapeDisplayGraph(),id)) } }
     private fun shapeInsertions():List<KilaInsertion> = BaseShapes.all.map { shape ->
@@ -216,6 +228,7 @@ class ShapeScreen(private val parent:BuildingScreen?=null,private val printerSes
         if(point==null) graphCanvas?.add(kind,source,discCut) else graphCanvas?.addAt(kind,source,point.first,point.second,discCut)
     }
     fun commitShapeGraph(value:NodeGraph) {
+        if(form.versionedGraph!=null) { openVersionedShapeGraph();return }
         val original=shapeDisplayGraph()
         val graph=GraphGroups.synchronize(original,value.copy(nodeGroups=GraphGroups.prune(value.nodeGroups,value.nodes.map { it.id }.toSet())))
         if(graph==original) return
@@ -474,7 +487,7 @@ class ShapeScreen(private val parent:BuildingScreen?=null,private val printerSes
             button(336,51,24,Component.literal("?")) {}.setTooltip(Tooltip.create(tr("graph_controls")))
             val side=if(!graphInspector && width>=700) minOf(340,width/3) else width-16
             val left=if(!graphInspector && width>=700) width-side-8 else 8
-            val legacy=form.graph==null && form.parts.any { it.cutMask.isNotEmpty() || it.recipeSource.isNotEmpty() }
+            val legacy=form.versionedGraph!=null || form.graph==null && form.parts.any { it.cutMask.isNotEmpty() || it.recipeSource.isNotEmpty() }
             graphCanvas=NodeGraphCanvas(left,75,side,height-133,{displayShape()},{assignments()},graphView,::commitShapeGraph,{ message -> ClientState.snapshot=ClientState.snapshot.copy(message=message) },true,onCreateGroup={ value,node,material,slot -> safe { createGroup(value,node,material,slot) } },preview=if(legacy) ({ Result.success(form) }) else null,readOnly=legacy,onSavedSource=::openSavedCopycatSource,onSelectNode={ id -> selectShapeNode(id);kilaGraph?.selectNode(id,true) })
             addRenderableWidget(graphCanvas!!.apply { visible=shapeInspectorVisible })
             if(!graphInspector) kilaGraph=addRenderableWidget(KilaGraphEditor(8,75,if(width>=700) left-12 else width-16,height-133,this,kilaGraphState,::shapeDiagram,::selectShapeNode,::commitShapeDiagram,{ message -> ClientState.snapshot=ClientState.snapshot.copy(message=message) },legacy,insertions=shapeInsertions(),selectSource={ node -> graphCanvas?.openSourceSelection(node) },rotateSource={ node,axis,turns -> graphCanvas?.rotateSource(node,axis,turns) },nodePreview=::shapeThumbnail,previewGroups={ form.groups },previewSurfaces=::assignments,instantiateGroup=::instantiateShapeGroup,dataRevision=::shapeGraphRevision))
@@ -530,6 +543,9 @@ class ShapeScreen(private val parent:BuildingScreen?=null,private val printerSes
         if(!kilaGraphState.selected.startsWith("@group:") || shapeDisplayGraph().nodeGroups.none { "@group:${it.id}"==kilaGraphState.selected }) kilaGraphState.selected=kilaGraphState.selection.singleOrNull().orEmpty()
         graphView.selected=kilaGraphState.selected
         val l=printerLayout
+        addRenderableWidget(PrinterEdgeTab(l.left-17,l.top+84,tr("versioned_graphs"),"R",selected={ false }) { safe {
+            openVersionedShapeGraph()
+        } })
         parent?.createTopTabs(width,height,true)?.forEach { addRenderableWidget(it) }
         addRenderableWidget(PrinterEdgeTab(l.left-17,l.top+12,tr("node_graph"),"G",selected={ false }) { minecraft?.setScreen(parent) })
         addRenderableWidget(PrinterEdgeTab(l.left-17,l.top+36,tr("copycat_graph"),"C",selected={ true }) {})
@@ -554,7 +570,7 @@ class ShapeScreen(private val parent:BuildingScreen?=null,private val printerSes
         addRenderableWidget(PrinterEdgeTab(l.left+l.width,l.top+108,tr("select_material"),"M",true,{ false }) { openMaterialSelection() })
         addRenderableWidget(PrinterEdgeTab(l.left+l.width,l.top+132,tr("material_preview"),"V",true,{ materialPreview }) { materialPreview=!materialPreview;rebuildWidgets() })
         addRenderableWidget(PrinterEdgeTab(l.left+l.width,l.top+l.height-24,tr("close"),"×",true,{ false }) { onClose() })
-        val legacy=form.graph==null && form.parts.any { it.cutMask.isNotEmpty() || it.recipeSource.isNotEmpty() }
+        val legacy=form.versionedGraph!=null || form.graph==null && form.parts.any { it.cutMask.isNotEmpty() || it.recipeSource.isNotEmpty() }
         graphCanvas=NodeGraphCanvas(l.panelX,l.graphY,l.panelWidth,l.graphHeight,{displayShape()},{assignments()},graphView,::commitShapeGraph,
             { message -> ClientState.snapshot=ClientState.snapshot.copy(message=message) },true,
             onCreateGroup={ value,node,material,slot -> safe { createGroup(value,node,material,slot) } },
@@ -567,6 +583,10 @@ class ShapeScreen(private val parent:BuildingScreen?=null,private val printerSes
             nodePreview=::shapeThumbnail,previewGroups={ form.groups },previewSurfaces=::assignments,instantiateGroup=::instantiateShapeGroup,previewMaterials={ materialPreview },dataRevision=::shapeGraphRevision))
     }
     private fun initPrinterWorkspace() {
+        val referenceLayout=printerLayout
+        addRenderableWidget(PrinterEdgeTab(referenceLayout.left-17,referenceLayout.top+156,tr("versioned_graphs"),"R",selected={ false }) { safe {
+            openVersionedShapeGraph()
+        } })
         graphMode=true;groupMode=false;printerInspectorDirty=false
         printerHistoryPanel=null;printerInventoryPanel=null;graphCanvas=null
         observedPrinterLibrary=ClientState.snapshot.library
@@ -611,7 +631,7 @@ class ShapeScreen(private val parent:BuildingScreen?=null,private val printerSes
             printerHistory=!printerHistory;rebuildWidgets()
         })
         if(printerHistory) { initPrinterHistory();return }
-        val legacy=form.graph==null && form.parts.any { it.cutMask.isNotEmpty() || it.recipeSource.isNotEmpty() }
+        val legacy=form.versionedGraph!=null || form.graph==null && form.parts.any { it.cutMask.isNotEmpty() || it.recipeSource.isNotEmpty() }
         graphCanvas=NodeGraphCanvas(l.panelX,l.graphY,l.panelWidth,l.graphHeight,{displayShape()},{assignments()},graphView,::commitShapeGraph,
             { message -> ClientState.snapshot=ClientState.snapshot.copy(message=message) },true,
             onCreateGroup={ value,node,material,slot -> safe { createGroup(value,node,material,slot) } },preview=if(legacy) ({ Result.success(form) }) else null,readOnly=legacy,
@@ -917,7 +937,7 @@ class BuildingScreen:EditorScreen(tr("building_editor")) {
     private var storeyProperties=false
     val kilaBuildingGraphState=KilaGraphState()
     var kilaBuildingGraph:KilaGraphEditor?=null;private set
-    private val buildingNodePreviews=BuildingNodePreviews({displayBuilding()},{ClientState.snapshot.library})
+    private val buildingNodePreviews=BuildingNodePreviews({displayBuilding()},{lib})
     private var copycatWorkspace:ShapeScreen?=null
     fun openCopycatGraph() {
         val screen=copycatWorkspace ?: ShapeScreen(this).also { copycatWorkspace=it }
@@ -945,8 +965,24 @@ class BuildingScreen:EditorScreen(tr("building_editor")) {
             if(fromCopycat) minecraft?.setScreen(this)
         })
     }
+    private fun openVersionedBuildingGraph() {
+        val source=building.versionedGraph
+        val root=source?.root?.let { VersionedGraphs.withPalette(it,building.palette) } ?: VersionedGraphs.fromBuilding(building.id.ifEmpty { UUID.randomUUID().toString() },building.name,building.graph ?: error("Open a building graph"),building.palette)
+        minecraft?.setScreen(VersionedGraphScreen(this,root,if(source==null) kilaBuildingGraphState.selection else emptySet(),ClientState.snapshot.library.graphs+source?.graphs.orEmpty(),onApply={ bundle ->
+            val next=building.copy(schema=2,name=bundle.root.name,graph=null,versionedGraph=bundle,palette=bundle.root.palette)
+            Generator.generate(next,lib.forms,lib.modules);update(next);graphMode=true;tab=0
+        },initialResources=source))
+    }
     fun buildingDisplayGraph():BuildingGraph {
         building.graph?.let { return it }
+        building.versionedGraph?.let { source ->
+            if(buildingProjectionKey!=building) {
+                buildingProjectionKey=building
+                val graph=VersionedGraphs.resolve(source.root,source.graphs).building!!
+                buildingProjection=building.graphProjection?.let { graph.copy(projection=it) } ?: graph
+            }
+            return requireNotNull(buildingProjection)
+        }
         if(buildingProjectionKey!=building) { buildingProjectionKey=building;buildingProjection=GraphPresentation.building(building) }
         return buildingProjection!!
     }
@@ -958,7 +994,7 @@ class BuildingScreen:EditorScreen(tr("building_editor")) {
             RoomSegmentLayoutScreen.open(layout,graph,evaluation) { changed -> commitBuildingGraph(graph.replace(changed)) }
         }
     }
-    fun displayBuilding():Building=if(building.graph!=null) building else building.copy(graph=buildingDisplayGraph())
+    fun displayBuilding():Building=if(building.graph!=null) building else building.copy(graph=buildingDisplayGraph(),versionedGraph=null)
     fun selectBuildingNode(id:String) {
         if(building.graph==null) { id.removePrefix("classic_").toIntOrNull()?.let { lastClassicTab=if(it==6) 0 else it };return }
         buildingGraphView.selected=id;buildingGraphView.inspectorScroll=0.0
@@ -1044,7 +1080,7 @@ class BuildingScreen:EditorScreen(tr("building_editor")) {
         }
         val graph=original.copy(nodeGroups=data.nodeGroups.map { group -> original.nodeGroups.firstOrNull { it.id==group.id }?.let { group.copy(nodes=it.nodes) } ?: group })
         val ports=graph.nodes.associate { it.id to BuildingPorts.of(it,graph,true) }
-        val wires=data.links.map { link -> DiagramConnection(link.source,link.target,ports.getValue(link.target).getOrNull(link.slot)?.key ?: error("Unknown building input")) }
+        val wires=data.links.map { link -> DiagramConnection(link.source,link.target,ports.getValue(link.target).getOrNull(link.slot)?.key ?: error("Unknown building input"),if(link.sourceSlot==0) "out" else link.sourceSlot.toString()) }
         commitBuildingGraph(DiagramEdits.building(graph,data.nodes.map { DiagramPosition(it.id,it.x,it.y) },wires))
     }
     private fun instantiateBuildingGroup(id:String) { safe { commitBuildingGraph(GraphGroups.instantiate(buildingDisplayGraph(),id)) } }
@@ -1189,14 +1225,14 @@ class BuildingScreen:EditorScreen(tr("building_editor")) {
     }
     private fun buildingGraphRevision():Any=building.graph ?: building
     private var coordinateFields=emptyList<EditBox>()
-    private val lib get()=ClientState.snapshot.library
+    private val lib get()=ClientState.snapshot.library.let { base -> building.versionedGraph?.let { source -> base.copy(forms=(base.forms+source.forms).toMutableMap(),modules=(base.modules+source.modules).toMutableMap()) } ?: base }
     /** A sync refreshes the table binding without replacing the unsaved editor document or inputs. */
     fun refreshProjectionBinding() {
         val next=ClientState.snapshot.table
         val changed=next!=boundTable
         boundTable=next
         if(changed && next!=null) {
-            building.graph?.projection?.let { origin=it.origin(next);rotation=it.turn;lastProjection=it }
+            (building.graph?.projection ?: building.graphProjection)?.let { origin=it.origin(next);rotation=it.turn;lastProjection=it }
             coordinateFields.take(3).zip(listOf(origin.x,origin.y,origin.z)).forEach { (field,value) -> field.value=value.toString() }
         }
         eyeButton?.active=next!=null
@@ -1205,7 +1241,7 @@ class BuildingScreen:EditorScreen(tr("building_editor")) {
         updateWorldPreview()
     }
     private fun synchronizeProjection() {
-        val projection=building.graph?.projection
+        val projection=building.graph?.projection ?: building.graphProjection
         if(projection!=null && projection!=lastProjection) {
             boundTable?.let { origin=projection.origin(it) }
             rotation=projection.turn
@@ -1213,14 +1249,14 @@ class BuildingScreen:EditorScreen(tr("building_editor")) {
         lastProjection=projection
     }
     private fun placementChanged() {
-        val graph=building.graph
+        val graph=building.graph ?: building.versionedGraph?.let { buildingDisplayGraph() }
         val table=boundTable
         if(graph!=null && table!=null) {
             val offset=P(table.x-origin.x,table.y-origin.y,table.z-origin.z).turn(-rotation)
             val projection=runCatching { BuildingProjection(offset,rotation).validate() }.getOrNull()
             if(projection!=null && projection!=graph.projection) {
                 buildingUndo.addLast(building);if(buildingUndo.size>64) buildingUndo.removeFirst();buildingRedo.clear()
-                building=building.copy(graph=graph.copy(projection=projection))
+                building=if(building.versionedGraph!=null) building.copy(graphProjection=projection) else building.copy(graph=graph.copy(projection=projection))
             }
             // Incomplete or distant manual coordinates remain a transient build override.
             lastProjection=projection ?: graph.projection
@@ -1366,7 +1402,9 @@ class BuildingScreen:EditorScreen(tr("building_editor")) {
                 buildingGraphView.selected="room";buildingGraphView.inspectorScroll=0.0;kilaBuildingGraphState.selected="room"
                 update(Building(schema=2,id=UUID.randomUUID().toString(),name=ui("new_graph_document"),graph=BuildingGraph.explicitStarter()))
             })
-        return create+listOf(ui("copy") to {
+        return create+listOf(ui("versioned_graphs") to { safe {
+            openVersionedBuildingGraph()
+        } },ui("copy") to {
             if(tab==1) modUpdate(module.copy(id=UUID.randomUUID().toString(),version=1,name=module.name+" copy"))
             else update(building.copy(id=UUID.randomUUID().toString(),version=1,name=building.name+" copy"))
         },ui("export") to {

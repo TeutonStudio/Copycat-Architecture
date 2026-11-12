@@ -331,5 +331,57 @@ und Definitionskarten, Werteingaben, Formauswahl und eigenständigen Druckerspei
 Status- und Fachfarben behalten ihre Bedeutung. Die bestehende kompakte
 Bediengeometrie bleibt erhalten; ein schmaler CC-Rahmen hält ihre Ränder frei.
 
-Die Erweiterungen #13–16 und ihre tatsächlichen Montageadapter fehlen noch.
+Für #13 existieren jetzt versionierte Dokumente und Referenzeditoren; die noch offenen Abnahmepunkte sind unten benannt. Die Modi #14–16 und ihre tatsächlichen Montageadapter fehlen weiterhin.
 Dieser Entwicklungsstand erfüllt daher nicht die Freigabebedingungen für 0.7.0.
+
+
+## Entwicklung 0.7.0: versionierte Untergraphen und ausführbare Referenzpakete
+
+`GraphDocument` trennt native Mitglieder von `GraphReferenceNode`-Instanzen.
+`GraphVersion` pinnt eine konkrete `graphId@version`; Version 0 bezeichnet einen
+bearbeitbaren Entwurf. Schnittstellen haben stabile IDs, Namen, Typen und Richtung.
+Eingangsbindungen können mehrere interne Ziele und eine interne Standardquelle
+besitzen. Kanten speichern neben dem Zielport ausdrücklich `sourcePort`; alte
+Kanten erhalten beim Gson-Laden durch den Default-Konstruktor `out`.
+
+`VersionedGraphs` konvertiert bestehende Form-/Gebäudegraphen in diesen Vertrag,
+lagert eine Auswahl mit ihren Grenzverbindungen aus und löst Referenzen nur zur
+Auswertung auf. Gemeinsame Instanzen derselben Version mit denselben Argumenten
+teilen ihre Auswertung. Die gespeicherten Eltern enthalten keine kopierten
+Referenzmitglieder. Schema-, Typ-, Rekursions- und Instanzzyklen werden geprüft;
+maximal 16 Verschachtelungsebenen, 128 Definitionen und die vorhandenen aufgelösten
+Knotengrenzen gelten weiterhin. Versionswechsel vergleichen Ports und erhalten
+veraltete Kanten. Solche Ports erscheinen mit `?` als Reparaturstellen.
+
+`GraphPackage` enthält Root, transitive Definitionen sowie tatsächlich benötigte
+Form- und Modulversionen einschließlich impliziter Form-Fallbacks. Import prüft
+zuerst alle Identitätskonflikte und Speichergrenzen. `GraphLibrary` übernimmt erst
+danach den vollständigen Kandidaten. Veröffentlichungen werden als neue Version
+gespeichert; Entwürfe bleiben davon getrennt. `GraphPackageTransfers` begrenzt
+wiederaufnehmbare, bestätigte Uploads pro Besitzer und insgesamt, prüft SHA-256,
+erhält Unicode-Zeichenpaare und verwirft abgelaufene Übertragungen. Die bestehende
+Bibliotheksgrenze von 500000 JSON-Zeichen wird nicht erhöht.
+
+Form und Gebäude können ein `versionedGraph`-Paket als kanonische Quelle tragen.
+Das bisherige `graph`-Feld bleibt dabei leer. Druck und Bau werten das Paket erneut
+aus; die eventuell gespeicherten Formteile sind kein Ausführungsnachweis. Der Server
+prüft Versionskonflikte unmittelbar vor Druck, kreativem Bau und Auftragserstellung.
+Druckerhistorie, zurückgegebener Drucker und Tisch-Baunachweis erhalten das Paket.
+Die Tischprojektion bleibt eine lokale Gebäudeüberschreibung und verändert keine
+veröffentlichte Definition. Lokale Paletten werden beim Wiederöffnen ebenfalls
+als Entwurfsüberschreibung erhalten; sie verändern keine Veröffentlichung.
+
+Der native Referenzeditor ist über den R-Reiter beider Formarbeitsplätze und über
+das Dokumentmenü des Gebäudegraphen erreichbar. Er nutzt `EditorScreen`,
+`ArchitectTheme` und echte KilaGraph-Ausgangsslots. Das Dokumentmenü bietet die
+Übernahme in den Druck-/Gebäudeentwurf. Graphstudio verwendet dieselben Kotlin-
+Verträge und eine eigene Referenzansicht mit React Flow, Portvergleich, Vorschau,
+Undo/Redo und Browserbibliothek. Reguläre Editorprojektionen sind Ansichten;
+Export schreibt die kanonische Referenzquelle zurück.
+
+**Noch keine vollständige Issue-/Release-Abnahme:** Der Browser lehnt weiterhin
+native Einstellungen außerhalb seines bestehenden Geometrie- und Parameter-Codecs
+ab, insbesondere exakte Formdaten und mehrere erweiterte Gebäudekonfigurationen.
+Die vollständige Abdeckung dieser Daten, sämtlicher Knoteneigenschaften und
+Fehler-/Reparaturabläufe bleibt für #13 erforderlich. Die neuen technischen Modi
+#14–16 sind noch nicht implementiert. Version 0.7.0 wird deshalb nicht freigegeben.

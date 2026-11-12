@@ -75,7 +75,7 @@ internal fun directionName(direction:P):String = when(direction) {
 data class MaterialGroup(val id:String="body",val name:String="Body",val role:String="surface",val priority:Int=0)
 val DEFAULT_GROUPS:List<MaterialGroup> = listOf(MaterialGroup())
 data class Form(val schema: Int = 3, val id: String = "", val version: Int = 1, val name: String = "Form",
-                val parts: List<Part> = listOf(Part()), val groups:List<MaterialGroup> = DEFAULT_GROUPS, val graph:NodeGraph? = null)
+                val parts: List<Part> = listOf(Part()), val groups:List<MaterialGroup> = DEFAULT_GROUPS, val graph:NodeGraph? = null,val versionedGraph:GraphPackage?=null)
 data class Box(val x: Int, val y: Int, val z: Int, val maxX: Int, val maxY: Int, val maxZ: Int)
 data class Adapter(val source: String, val name: String, val max: Int, val output: Int, val layered: Boolean = false, val tiltable:Boolean = false,
                    val boxes: (Int) -> List<Box>)
@@ -271,6 +271,14 @@ object Geometry {
     }
     fun validate(f:Form):Form {
         validateMetadata(f)
+        if(f.versionedGraph!=null) {
+            require(f.graph==null && f.versionedGraph.root.mode==GraphMode.FORM && f.groups==f.versionedGraph.root.materialGroups) { "Form graph source and material groups disagree" }
+            GraphPackages.validate(f.versionedGraph)
+            val root=f.versionedGraph.root
+            require(root.shape!!.nodes.count { it.kind==NodeKind.OUTPUT }==1 || root.ports.count { it.direction==GraphPortDirection.OUTPUT && it.type=="shape" }==1) { "Choose one form result before printing a multi-output subgraph" }
+            val parts=VersionedGraphs.compileShape(f.versionedGraph.root,f.versionedGraph.graphs)
+            return f.copy(schema=if(parts.any(ExactGeometry::usesExact)) 4 else 3,parts=parts)
+        }
         if(f.graph!=null) {
             val parts=GraphCompiler.compile(f.graph,f.groups)
             val exact=parts.any(ExactGeometry::usesExact) || f.graph.nodes.any { GraphCompiler.sourceParts(it).any(ExactGeometry::usesExact) }

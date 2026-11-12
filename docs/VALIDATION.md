@@ -1,3 +1,53 @@
+## Entwicklung 0.7.0: versionierte Referenzen und Druck-/Bauübernahme (2026-11-12)
+
+Dieser Stand erweitert #13, ist aber **keine vollständige Abnahme von #13–16 und
+kein Release 0.7.0**. Die noch fehlende Browserabdeckung ist in
+[IMPLEMENTATION.md](IMPLEMENTATION.md) benannt; die technischen Modi fehlen weiter.
+
+- Vollständiger Java-21-Build: **563 JUnit-Tests, 561 bestanden, zwei bestehende
+  optionale Snapshot-Skips, keine Fehler**. Geprüft sind mehrere benannte Ausgänge,
+  Grenzbindungen, Versionspinning, parallele Versionen, Verschachtelung und Limits,
+  defekte Ports, unveränderte alte Kanten, Konfliktprüfung, atomare Bibliotheksimporte,
+  wiederaufnehmbare Übertragung und Unicode/SHA-256. Druck-/Gebäudevorlagen erhalten
+  ihre Referenzpakete über JSON; ungültige gespeicherte Formteile werden vor dem
+  Druck neu berechnet. Mehrdeutige Druckausgänge werden abgewiesen.
+- `runGameTestServer -PgraphWorldSmoke`: **alle 64 erforderlichen GameTests
+  bestanden**, einschließlich tatsächlichem Druck und Bau referenzierter Quellen,
+  Konfliktverweigerung vor Materialverbrauch/Weltänderungen, Drucker-NBT,
+  Druckerhistorie und Tisch-Eigentumsnachweisen. Der Graph-Turtle führt **603 reale
+  Platzierungen** einschließlich Nachladen, Reboot, Unter-/Erd-/Obergeschoss und
+  Teppichböden aus.
+- Die große klassische Turtle-Prüfung wird mit `-PclassicWorldSmoke` getrennt von
+  der Graph-Turtle ausgeführt. Die beiden Optionen schließen sich aus; jede Option
+  führt den jeweiligen Weltlauf tatsächlich aus und überspringt den anderen.
+  Ein zusätzlicher kombinierter Lauf blieb bei der klassischen Turtle stehen und
+  wurde beendet. Die ursprünglichen Default-Tests werden nicht abgeschwächt.
+  Der getrennte klassische Lauf besteht ebenfalls **alle 64 erforderlichen
+  GameTests** und baut mit Reboot, Pause/Fortsetzung und Materialnachladen
+  **1115 reale Positionen**. Beide Varianten prüfen die fertige Welt vollständig.
+- `runClient -PversionedGraphSmoke`: echter KilaGraph, Auswahl auslagern, zwei
+  Ausgangsslots, identische Geometrie, atomare Undo/Redo-Schritte, expliziter
+  Portvergleich, erhaltene inkompatible Kante, reparierbares Paket und Menüübernahme
+  in eine ausführbare Druckquelle. Die Quelle lässt sich vom Architektentisch aus
+  wieder als Referenzdokument öffnen. Beide GUI-Skalierungen wurden bedient.
+- Browser-Fachtests und Produktionsbuild bestanden. Die bestehende Playwright-
+  Prüfung besteht einschließlich Raster, Anzahlfarben, Quellenreparatur und
+  gespeicherter Formauswahl. Die neue Prüfung bedient echte React-Flow-Auswahl,
+  Auslagerung mit zwei Ausgängen, Veröffentlichung von Version 2, unveränderte
+  Version-1-Instanz, bewussten Wechsel, Undo, Speichern/Neuladen sowie Übernahme,
+  Export und erneutes Öffnen der ausführbaren Quelle. Desktop, Tablet und Mobilgerät
+  wurden geprüft; keine Browser-Laufzeitfehler.
+- Ressourcen, Sprachschlüssel, ROM-Lua und `git diff --check` ohne Befund. Der
+  ursprüngliche lokale Änderungsstand stimmt weiterhin bytegenau mit seiner
+  Sicherung überein.
+
+Aufnahmen: [native Ansicht](release-0.7.0/images/architect-versioned-normal.png),
+[kompakte Ansicht](release-0.7.0/images/architect-versioned-compact.png),
+[CC-Versionsdialog](release-0.7.0/images/architect-versioned-version-compact.png),
+[Browser](release-0.7.0/images/subgraph-desktop.png),
+[Tablet](release-0.7.0/images/subgraph-tablet.png),
+[Mobilgerät](release-0.7.0/images/subgraph-mobile.png).
+
 # Tatsächlich ausgeführte Abnahme
 
 ## Entwicklungsstand für 0.7.0: Raster, Anzahl und CC-Unterdialoge, 12.11.2026

@@ -25,7 +25,7 @@ data class PrintSettings(val surfaces:Map<String,String> = emptyMap(),val turn:I
     }
 }
 data class Library(val forms:MutableMap<String,Form> = linkedMapOf(),val modules:MutableMap<String,Module> = linkedMapOf(),val buildings:MutableMap<String,Building> = linkedMapOf(),val history:MutableList<PrintRecord> = mutableListOf(),
-    val printSettings:MutableMap<String,PrintSettings> = linkedMapOf()) {
+    val printSettings:MutableMap<String,PrintSettings> = linkedMapOf(),val graphs:MutableMap<String,GraphDocument> = linkedMapOf(),val graphDrafts:MutableMap<String,GraphDocument> = linkedMapOf()) {
     companion object { const val MAX_JSON_CHARS=500000 }
     /** Versioned building documents share this bounded persistent library. */
     fun validateStorageSize() {

@@ -285,3 +285,15 @@ button.primary:hover:not(:disabled) { background: #cef6e9; }
 .transform-value-row { display: flex; gap: 4px; align-items: end; margin: 8px 0; }
 .transform-value-row label { flex: 1; min-width: 0; }
 .transform-value-row button { padding: 6px; }
+
+.versioned-dialog { position: fixed; inset: 1rem; z-index: 30; display: flex; flex-direction: column; background: var(--panel, #171e24); border: 2px solid #9b854e; padding: .75rem; overflow: auto; }
+.versioned-dialog > header { display: flex; align-items: center; justify-content: space-between; }
+.versioned-dialog h2 { margin: 0 0 .5rem; }
+.versioned-workspace { flex: 1; min-height: 320px; display: grid; grid-template-columns: minmax(240px, 2fr) minmax(180px, 1fr); grid-template-rows: minmax(200px, 2fr) minmax(180px, 1fr); gap: .75rem; }
+.versioned-canvas { min-height: 240px; }
+.versioned-workspace > aside { overflow: auto; grid-column: 2; grid-row: 1 / 3; padding: .5rem; }
+.versioned-workspace > aside label { display: flex; flex-direction: column; margin-bottom: .6rem; }
+.versioned-preview { min-height: 180px; overflow: hidden; }
+.versioned-preview > section { height: 100%; }
+.versioned-confirm { position: absolute; inset: 20% 15%; background: #202a32; border: 2px solid #baa66b; padding: 1rem; overflow: auto; z-index: 40; }
+@media (max-width: 700px) { .versioned-dialog { inset: .25rem; } .versioned-workspace { display: flex; flex-direction: column; } .versioned-canvas { height: 300px; flex: none; } .versioned-workspace > aside { max-height: 250px; } .versioned-preview { height: 260px; flex: none; } .versioned-confirm { inset: 10% 5%; } }

@@ -20,6 +20,7 @@ internal object GraphModels {
     const val BUILDING_NODES=96
     const val SOCKETS=16
     const val LEVELS=8
+    fun building(kind:BuildingKind)=building.nodes.getValue(kind.name)
     fun shape(kind:NodeKind)=copycat.nodes.getValue(kind.name)
     fun inputs(kind:NodeKind)=checkNotNull(shape(kind).inputs).let { it.min..it.max }
     fun accepts(target:NodeKind,slot:Int,source:NodeKind)=shape(source).output?.let { it==shape(target).inputs?.type(slot) } ?: false

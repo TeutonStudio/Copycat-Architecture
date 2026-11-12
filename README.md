@@ -224,6 +224,7 @@ Der Entwicklungsstand ergänzt die Copycat-Anordnung im Wandsegment und typisier
 Anzahl-Eingänge für Segmentmaße in beiden Editoren. Die nativen Unterdialoge
 verwenden denselben CC-Rahmen und abgestimmte dunkle Flächen wie Drucker und
 Architektentisch. [Prüfstand und Aufnahmen](docs/VALIDATION.md) dokumentieren die
-Abnahme. Die Versionsnummer bleibt bis zur vollständigen Release-Abnahme bei
-0.6.0; versionierte Untergraphen sowie die Zug-, Bewegungsmittel- und
-Contraption-Modi sind noch nicht implementiert. Es ist kein Release 0.7.0 verfügbar.
+bisherigen Prüfungen. Die Versionsnummer bleibt bis zur vollständigen Release-Abnahme bei
+0.6.0. Versionierte Untergraphen sind als geprüfter Entwicklungsstand verfügbar,
+einschließlich Referenzpaketen für Druck- und Bauvorlagen. Die vollständige
+Browserabdeckung und die Zug-, Bewegungsmittel- und Contraption-Modi fehlen noch. Es ist kein Release 0.7.0 verfügbar.

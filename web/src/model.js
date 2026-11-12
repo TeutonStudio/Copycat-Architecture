@@ -1,4 +1,4 @@
-import { applyDiagram, compileForm, graphModels, inspectGraph, prepareForm } from './generated/engine.mjs'
+import { applyDiagram, compileForm, graphModels, inspectGraph, prepareForm, resolveVersionedGraph, validateGraphBundle } from './generated/engine.mjs'
 
 export const model = graphModels()
 export const defaults = [{ id: 'body', name: 'Body', role: 'surface', priority: 0 }]
@@ -12,6 +12,12 @@ export function replaceNodes(document, nodes) {
 
 export function readGraph(raw, mode) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Eine Graphdatei muss ein JSON-Objekt sein.')
+  if (raw.versionedGraph) {
+    validateGraphBundle(raw.versionedGraph)
+    if ((raw.versionedGraph.root.mode === 'BUILDING') !== (mode === 'building')) throw new Error('Die Datei gehört zum anderen Editor.')
+    const view = resolveVersionedGraph(raw.versionedGraph.root, raw.versionedGraph.graphs)
+    return { ...raw, schema: raw.schema || view.schema, graph: view.graph, groups: raw.groups || view.groups }
+  }
   const bare = Array.isArray(raw.nodes)
   if (!bare && !raw.graph && !Array.isArray(raw.parts) && !raw.wings && !raw.patterns && !raw.palette) {
     throw new Error('Die Datei enthält weder einen Copycat-Graphen noch eine Form.')
@@ -31,6 +37,10 @@ export function readGraph(raw, mode) {
 
 export function writeGraph(mode, document) {
   inspect(mode, document)
+  if (document.versionedGraph) {
+    validateGraphBundle(document.versionedGraph)
+    return { ...document, graph: null, ...(mode === 'form' ? { schema: 3, parts: compileForm(document) } : { schema: 2 }) }
+  }
   if (mode === 'form') return { ...document, schema: 3, parts: compileForm(document) }
   return { ...document, schema: 2 }
 }

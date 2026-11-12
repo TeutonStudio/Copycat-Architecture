@@ -2,7 +2,7 @@ import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState
 import { createRoot } from 'react-dom/client'
 import { Background, Controls, Handle, MiniMap, Position, ReactFlow, useUpdateNodeInternals } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { adaptRectangles, newNode, starterBuilding } from './generated/engine.mjs'
+import { adaptRectangles, createVersionedGraph, newNode, starterBuilding } from './generated/engine.mjs'
 import { applyWires, connections, formGroups, inspect, model, position, protectedNode, readGraph, replaceNodes, validateLibrary, writeGraph } from './model.js'
 import { DocumentFields, Field, names, NodeFields, portName } from './Inspector.jsx'
 import './style.css'
@@ -20,6 +20,7 @@ import buildingAssembly from '../../examples/building-graph-assembly.json'
 import buildingBasements from '../../examples/building-graph-basements.json'
 
 const Preview = lazy(() => import('./Preview.jsx'))
+const VersionedGraphs = lazy(() => import('./VersionedGraphs.jsx'))
 const CopycatPicker = lazy(() => import('./CopycatPicker.jsx'))
 const wiki = 'https://github.com/TeutonStudio/copycat-architect/wiki'
 const examples = {
@@ -119,6 +120,7 @@ function Studio({ mode, active }) {
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false)
   const [previewMode, setPreviewMode] = useState('graph')
   const [copycatPicker, setCopycatPicker] = useState(null)
+  const [versioned, setVersioned] = useState(null)
   const graphInput = useRef(null)
   const libraryInput = useRef(null)
   const copycatInput = useRef(null)
@@ -169,6 +171,7 @@ function Studio({ mode, active }) {
     }
   }
   const commit = next => {
+    if (document.versionedGraph && next.versionedGraph === document.versionedGraph && JSON.stringify(next.graph) !== JSON.stringify(document.graph)) throw new Error('Diesen Entwurf über „Versionierte Untergraphen“ bearbeiten.')
     inspect(mode, next)
     if (JSON.stringify(next) !== JSON.stringify(document)) {
       historyContext.current.set(document, { library, materials })
@@ -213,6 +216,7 @@ function Studio({ mode, active }) {
   }
   const open = raw => {
     commit(readGraph(raw, mode))
+    if (raw.versionedGraph) setLibrary(current => ({ ...current, forms: { ...current.forms, ...raw.versionedGraph.forms }, modules: { ...current.modules, ...raw.versionedGraph.modules } }))
     setSelected(null)
     setSelectedWire(null)
     setSelectedIds([])
@@ -340,6 +344,8 @@ function Studio({ mode, active }) {
     </div>
 
     <div className="personal-library-bar">
+      <button onClick={() => transact(() => setVersioned(createVersionedGraph(mode === 'building', document, crypto.randomUUID())))}>Versionierte Untergraphen</button>
+      <select aria-label="Versionierten Entwurf öffnen" value="" onChange={event => setVersioned(savedData.versionedDrafts[event.target.value])}><option value="" disabled>Untergraph-Entwürfe</option>{Object.values(savedData.versionedDrafts).filter(d => d.mode === (mode === 'form' ? 'FORM' : 'BUILDING')).map(d => <option key={d.graphId} value={d.graphId}>{d.name}</option>)}</select>
       <label>Name für Bibliothek<input aria-label="Name für Bibliothek" placeholder={document.name || 'Mein Entwurf'} maxLength={64} value={saveName} onChange={event => setSaveName(event.target.value)} /></label>
       <button onClick={() => transact(() => {
         const name = saveName.trim() || document.name || 'Graph'
@@ -439,6 +445,9 @@ function Studio({ mode, active }) {
         </section>
       </div>
     </div>
+    {versioned && <Suspense fallback={<p role="status">Untergraphen werden geladen …</p>}><VersionedGraphs initial={versioned} initialSelection={document.versionedGraph ? [] : selectedIds} definitions={{ ...savedData.versionedGraphs, ...document.versionedGraph?.graphs }} library={library} materials={materials} onClose={() => setVersioned(null)}
+      onApply={bundle => { const next = readGraph({ ...document, name: bundle.root.name, versionedGraph: bundle, graph: null, ...(mode === 'form' ? { groups: bundle.root.materialGroups } : { palette: bundle.root.palette }) }, mode); commit(next); setLibrary(current => ({ ...current, forms: { ...current.forms, ...bundle.forms }, modules: { ...current.modules, ...bundle.modules } })); setSelected(null); setSelectedIds([]); setVersioned(null) }}
+      onSave={state => { updateWorkspace(data => ({ ...data, versionedGraphs: { ...data.versionedGraphs, ...state.definitions }, versionedDrafts: { ...data.versionedDrafts, [state.document.graphId]: state.document } })); setLibrary(state.library) }} /></Suspense>}
     {copycatPicker && <Suspense fallback={<p className="copycat-loading" role="status">Copycat-Auswahl wird geladen …</p>}>
       <CopycatPicker {...copycatPicker} mode={mode} savedForms={savedForms} library={library}
         onChoose={applyCopycat} onClose={() => setCopycatPicker(null)} />

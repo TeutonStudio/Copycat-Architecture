@@ -805,5 +805,18 @@
   "gui.copycat_architect.bg_dimension_length": "X · Length",
   "gui.copycat_architect.bg_dimension_height": "Y · Height",
   "gui.copycat_architect.bg_dimension_depth": "Z · Depth",
-  "gui.copycat_architect.bg_dimension_fallback": "manual %s"
+  "gui.copycat_architect.bg_dimension_fallback": "manual %s",
+  "gui.copycat_architect.versioned_graphs": "Versioned subgraphs",
+  "gui.copycat_architect.subgraph": "Subgraph",
+  "gui.copycat_architect.graph_publish": "Publish new version",
+  "gui.copycat_architect.graph_extract": "Extract",
+  "gui.copycat_architect.graph_reference": "Reference",
+  "gui.copycat_architect.graph_draft": "Draft",
+  "gui.copycat_architect.graph_version": "Change version",
+  "gui.copycat_architect.graph_definition": "Definition",
+  "gui.copycat_architect.graph_ports_unchanged": "The interface is unchanged. Existing connections are retained.",
+  "gui.copycat_architect.graph_port_name": "Port name",
+  "gui.copycat_architect.graph_expose_input": "Expose input",
+  "gui.copycat_architect.graph_expose_output": "Expose output",
+  "gui.copycat_architect.graph_name": "Graph name"
 }

@@ -30,6 +30,10 @@ neoForge {
                 systemProperty("architect.roomMountingSmoke", "true")
                 programArguments.addAll("--width", "854", "--height", "480")
             }
+            if(project.hasProperty("versionedGraphSmoke")) {
+                systemProperty("architect.versionedGraphSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
             if(project.hasProperty("countArrangementSmoke")) {
                 systemProperty("architect.countArrangementSmoke", "true")
                 programArguments.addAll("--width", "854", "--height", "480")
@@ -141,7 +145,9 @@ neoForge {
         create("server") { server(); programArgument("--nogui") }
         create("gameTestServer") {
             type = "gameTestServer"; systemProperty("neoforge.enabledGameTestNamespaces", "copycat_architect")
+            check(!(project.hasProperty("graphWorldSmoke") && project.hasProperty("classicWorldSmoke"))) { "Run the two large turtle world checks separately" }
             if(project.hasProperty("graphWorldSmoke")) systemProperty("architect.graphWorldSmoke", "true")
+            if(project.hasProperty("classicWorldSmoke")) systemProperty("architect.classicWorldSmoke", "true")
         }
     }
     mods { create("copycat_architect") { sourceSet(sourceSets.main.get()) } }

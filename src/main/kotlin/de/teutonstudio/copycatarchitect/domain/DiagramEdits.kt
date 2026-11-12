@@ -2,7 +2,7 @@ package de.teutonstudio.copycatarchitect.domain
 
 /** A presentation change contains references, never a replacement geometry or building recipe. */
 data class DiagramPosition(val id:String,val x:Int,val y:Int)
-data class DiagramConnection(val source:String,val target:String,val port:String)
+data class DiagramConnection(val source:String="",val target:String="",val port:String="",val sourcePort:String="out")
 
 object DiagramEdits {
     private fun roomPlacementFootprint(graph:BuildingGraph,room:BuildingNode):Set<P> = if(room.roomConfig?.mode==RoomMode.SEGMENTS)
@@ -24,6 +24,7 @@ object DiagramEdits {
     private fun validate(known:Set<String>,positions:List<DiagramPosition>,connections:List<DiagramConnection>) {
         val ids=positions.map { it.id }
         require(ids.size==ids.toSet().size && ids.all { it in known }) { "Unknown or duplicated diagram node" }
+        require(connections.all { it.sourcePort=="out" }) { "Named outputs require a versioned graph document" }
         require(connections.all { it.source in ids && it.target in ids }) { "Unknown diagram connection" }
         require(connections.map { it.target to it.port }.distinct().size==connections.size) { "An input accepts one connection" }
     }
@@ -58,6 +59,7 @@ object DiagramEdits {
                 if(source.isNotEmpty()) require(original.nodes.first { it.id==source }.kind in port.accepts) { "Incompatible building connection" }
                 when {
                     port.key.startsWith("semantic:") -> next=BuildingSemantics.remapReferences(next) { key,ref -> if("semantic:$key"==port.key) source else ref }
+                    port.key in BuildingCounts.axes -> next=next.copy(dimensions=if(source.isEmpty()) next.dimensions.orEmpty()-port.key else next.dimensions.orEmpty()+(port.key to source))
                     port.key=="rotation" -> next=next.copy(rotation=source.takeIf(String::isNotEmpty))
                     port.key=="mirroring" -> next=next.copy(mirroring=source.takeIf(String::isNotEmpty))
                     port.key=="layout" -> next=next.copy(layout=source,assembly=true)

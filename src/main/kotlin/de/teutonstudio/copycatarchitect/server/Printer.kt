@@ -262,6 +262,7 @@ object PrinterService {
     fun record(library:Library,form:Form,surfaces:Map<String,String>,turn:Int)=record(library,prepareRecord(library,form,surfaces,turn))
     fun print(player:ServerPlayer,c:Command,library:Library):Boolean {
         val (be,draft)=checkedUpdate(player,c);val form=Geometry.validate(draft)
+        form.versionedGraph?.let { GraphPackages.checkConflicts(it,library.graphs,library.forms,library.modules) }
         val snapshot=prepareRecord(library,form,c.surfaces,c.turn)
         val stack=printDirect(player.serverLevel(),be,player.inventory,player,form,snapshot.surfaces,snapshot.turn)
         give(player,be,stack);record(library,snapshot);return true

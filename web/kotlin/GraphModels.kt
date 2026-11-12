@@ -20,11 +20,12 @@ internal object GraphModels {
     const val BUILDING_NODES=96
     const val SOCKETS=16
     const val LEVELS=8
+    fun building(kind:BuildingKind)=building.nodes.getValue(kind.name)
     fun shape(kind:NodeKind)=copycat.nodes.getValue(kind.name)
     fun inputs(kind:NodeKind)=checkNotNull(shape(kind).inputs).let { it.min..it.max }
     fun accepts(target:NodeKind,slot:Int,source:NodeKind)=shape(source).output?.let { it==shape(target).inputs?.type(slot) } ?: false
     fun requiredBuildingInputs(kind:BuildingKind,mode:String)=when(kind) {
-        BuildingKind.PATTERN,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,
+        BuildingKind.INT_ADD,BuildingKind.INT_SUBTRACT,BuildingKind.INT_MULTIPLY,BuildingKind.INT_DIVIDE,BuildingKind.INT_MIN,BuildingKind.INT_MAX,BuildingKind.PATTERN,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,
         BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE->2
         BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE->1
         BuildingKind.STOREY->if(mode=="rooms") 1 else 0

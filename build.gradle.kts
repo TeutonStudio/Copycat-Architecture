@@ -30,6 +30,14 @@ neoForge {
                 systemProperty("architect.roomMountingSmoke", "true")
                 programArguments.addAll("--width", "854", "--height", "480")
             }
+            if(project.hasProperty("versionedGraphSmoke")) {
+                systemProperty("architect.versionedGraphSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("countArrangementSmoke")) {
+                systemProperty("architect.countArrangementSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
             if(project.hasProperty("segmentArrangementSmoke")) {
                 systemProperty("architect.segmentArrangementSmoke", "true")
                 programArguments.addAll("--width", "854", "--height", "480")
@@ -137,11 +145,15 @@ neoForge {
         create("server") { server(); programArgument("--nogui") }
         create("gameTestServer") {
             type = "gameTestServer"; systemProperty("neoforge.enabledGameTestNamespaces", "copycat_architect")
+            check(!(project.hasProperty("graphWorldSmoke") && project.hasProperty("classicWorldSmoke"))) { "Run the two large turtle world checks separately" }
             if(project.hasProperty("graphWorldSmoke")) systemProperty("architect.graphWorldSmoke", "true")
+            if(project.hasProperty("classicWorldSmoke")) systemProperty("architect.classicWorldSmoke", "true")
         }
     }
     mods { create("copycat_architect") { sourceSet(sourceSets.main.get()) } }
 }
+// Keep the locally verified CC:Tweaked compatibility while compiling against the oldest API.
+val ccTweakedVersion = providers.gradleProperty("ccTweakedVersion").getOrElse("1.120.0")
 dependencies {
     compileOnly("maven.modrinth:create:6.0.10+mc1.21.1") { isTransitive = false }
     compileOnly("net.createmod.ponder:ponder-neoforge:1.0.82+mc1.21.1") { isTransitive = false }
@@ -151,7 +163,7 @@ dependencies {
     implementation("com.lowdragmc.ldlib2:ldlib2-neoforge-1.21.1:2.2.44:all")
     implementation("com.lowdragmc.kilagraph:kilagraph-neoforge-1.21.1:21.1.0.16")
     implementation("thedarkcolour:kotlinforforge-neoforge:5.10.0")
-    implementation("cc.tweaked:cc-tweaked-1.21.1-forge:1.120.0")
+    implementation("cc.tweaked:cc-tweaked-1.21.1-forge:$ccTweakedVersion")
     runtimeOnly("maven.modrinth:create:6.0.10+mc1.21.1") { isTransitive = false }
     runtimeOnly("maven.modrinth:LDuJMNS2:dCzZU1My") { isTransitive = false } // Molten Metals - Neoforged 1.0.1
     runtimeOnly("maven.modrinth:copycats:3.0.9+mc.1.21.1-neoforge") { isTransitive = false }

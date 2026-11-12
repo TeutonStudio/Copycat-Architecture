@@ -306,3 +306,82 @@ Die bestehenden Größenlimits gelten weiterhin. Eigene Geometrie und Modelle we
 `BuildingNode.verticalEdges` ist eine optionale Zuordnung stabiler Kontur-Eckpunkte (`x:z`) zu Segmentquellen. `RoomVerticalEdges` liefert konvexe und konkave Kanten; `edge:x:z` ist ein eigener typisierter Raumanschluss für Segmente, Zusammensetzungen und Segmenttransformationen. Der Compiler prüft die Raumhöhe und den aus beiden Wandtiefen abgeleiteten Querschnitt. Explizite Räume montieren vorhandene Wandsegmente überlappend an ihren Endreihen. `RoomWallJoints` legt die äußeren Wandreihen auf die Konturzellen; lokales +Z zeigt nach innen. Beide Wandbeiträge werden an gemeinsamen Eckzellen mit ihren tatsächlichen Geometrien und Verkleidungen vereinigt. Es entstehen keine zusätzlichen Eckspalten. Die Wandtiefen verkleinern das freie Innenmaß. An einspringenden Ecken umfasst der Wandanschluss auch die gemeinsame Endzelle; seine angezeigte Sollbreite berücksichtigt diese. Eigene Kantensegmente liegen im gemeinsamen Querschnitt und haben dort Materialvorrang, ohne die übrigen Wandteile zu löschen. Leere Kantensegmente fordern dort Freiraum. Der globale Eck-Copycat bleibt als optionaler Ersatz erhalten. `joinWallEnds=false` erhält für ausdrücklich historische Beispiele und Prüfungen die frühere Montage um das freie Innenraster. Ältere explizite Dokumente ohne dieses Feld erhalten die korrigierte gemeinsame Montage. Größere horizontale Segmentquellen werden mittig auf die neue Raumhülle zugeschnitten; kleinere Quellen werden mit einer Größenfehlermeldung abgelehnt. Geometrieänderungen erhalten unveränderte Eckpunkte und entfernen entfallene Zuordnungen. Diagrammänderungen, Löschung und Knotengruppen behandeln Kantenreferenzen wie andere echte Eingänge.
 
 Bei der Wandmontage zeigt lokales +Z ins Rauminnere. Deshalb wird die Tiefenreihenfolge der Zellen beim Platzieren von außen nach innen abgebildet, passend zur Drehung ihrer lokalen Geometrie. Bodenmontage kehrt die zweite Anordnungskoordinate um; Deckenmontage kehrt die Schichtreihenfolge um. Damit bildet jeder Einbau eine gemeinsame räumliche Transformation von Zellpositionen, Ausschnitten und Materialgeometrie. Die bisherige gegenläufige Abbildung konnte zwei in der Segmentvorschau verbundene 3/16-Schichten durch einen 26/16-Spalt trennen.
+
+## Entwicklung 0.7.0: typisierte Anzahl und explizite Copycat-Anordnung
+
+`BuildingCounts` wertet signierte 32-Bit-Integer mit geprüfter Arithmetik aus.
+`BuildingNode.dimensions` speichert ausschließlich Referenzen für `length`,
+`height` und `depth`; die bisherigen Maße bleiben Fallbacks. Anzahl-Knoten
+verwenden `countValue` und zwei Eingänge bei binären Operationen. Gemeinsame
+Portdefinitionen, Diagrammänderungen und Gruppenumbenennungen erhalten diese
+Referenzen. Wirksame Maße und das gemeinsame Volumenbudget werden vor der
+Geometrieerzeugung geprüft. Achsenverwendung ist abgeleiteter Ansichtsstatus.
+
+`copycatArrangement` aktiviert ausdrücklich gespeicherte Eingangspositionen in
+`offsets`. Ohne diese Option bleibt die bisherige wiederholte Wandfüllung aktiv.
+`CopycatArrangement` und `SegmentArrangement` erhalten Koordinaten, Materialien,
+Lufträume und deklarierte Segmentmaße. Die Oberflächen übernehmen eine komplette
+Anordnung atomar. Explizite Layoutflächen und bestehende Rasterzuweisungen dürfen
+nicht widersprüchlich überschrieben werden.
+
+Alle produktiven Unterdialoge verwenden `ArchitectTheme`: den nativen Rahmen des
+fortgeschrittenen CC-Computers, dieselbe dunkle Inhaltsfläche wie das Hauptfenster,
+abgestimmte Metallflächen und goldene Auswahlakzente. Das gilt für Anordnungs-
+und Definitionskarten, Werteingaben, Formauswahl und eigenständigen Druckerspeicher.
+Status- und Fachfarben behalten ihre Bedeutung. Die bestehende kompakte
+Bediengeometrie bleibt erhalten; ein schmaler CC-Rahmen hält ihre Ränder frei.
+
+Für #13 existieren jetzt versionierte Dokumente und Referenzeditoren; die noch offenen Abnahmepunkte sind unten benannt. Die Modi #14–16 und ihre tatsächlichen Montageadapter fehlen weiterhin.
+Dieser Entwicklungsstand erfüllt daher nicht die Freigabebedingungen für 0.7.0.
+
+
+## Entwicklung 0.7.0: versionierte Untergraphen und ausführbare Referenzpakete
+
+`GraphDocument` trennt native Mitglieder von `GraphReferenceNode`-Instanzen.
+`GraphVersion` pinnt eine konkrete `graphId@version`; Version 0 bezeichnet einen
+bearbeitbaren Entwurf. Schnittstellen haben stabile IDs, Namen, Typen und Richtung.
+Eingangsbindungen können mehrere interne Ziele und eine interne Standardquelle
+besitzen. Kanten speichern neben dem Zielport ausdrücklich `sourcePort`; alte
+Kanten erhalten beim Gson-Laden durch den Default-Konstruktor `out`.
+
+`VersionedGraphs` konvertiert bestehende Form-/Gebäudegraphen in diesen Vertrag,
+lagert eine Auswahl mit ihren Grenzverbindungen aus und löst Referenzen nur zur
+Auswertung auf. Gemeinsame Instanzen derselben Version mit denselben Argumenten
+teilen ihre Auswertung. Die gespeicherten Eltern enthalten keine kopierten
+Referenzmitglieder. Schema-, Typ-, Rekursions- und Instanzzyklen werden geprüft;
+maximal 16 Verschachtelungsebenen, 128 Definitionen und die vorhandenen aufgelösten
+Knotengrenzen gelten weiterhin. Versionswechsel vergleichen Ports und erhalten
+veraltete Kanten. Solche Ports erscheinen mit `?` als Reparaturstellen.
+
+`GraphPackage` enthält Root, transitive Definitionen sowie tatsächlich benötigte
+Form- und Modulversionen einschließlich impliziter Form-Fallbacks. Import prüft
+zuerst alle Identitätskonflikte und Speichergrenzen. `GraphLibrary` übernimmt erst
+danach den vollständigen Kandidaten. Veröffentlichungen werden als neue Version
+gespeichert; Entwürfe bleiben davon getrennt. `GraphPackageTransfers` begrenzt
+wiederaufnehmbare, bestätigte Uploads pro Besitzer und insgesamt, prüft SHA-256,
+erhält Unicode-Zeichenpaare und verwirft abgelaufene Übertragungen. Die bestehende
+Bibliotheksgrenze von 500000 JSON-Zeichen wird nicht erhöht.
+
+Form und Gebäude können ein `versionedGraph`-Paket als kanonische Quelle tragen.
+Das bisherige `graph`-Feld bleibt dabei leer. Druck und Bau werten das Paket erneut
+aus; die eventuell gespeicherten Formteile sind kein Ausführungsnachweis. Der Server
+prüft Versionskonflikte unmittelbar vor Druck, kreativem Bau und Auftragserstellung.
+Druckerhistorie, zurückgegebener Drucker und Tisch-Baunachweis erhalten das Paket.
+Die Tischprojektion bleibt eine lokale Gebäudeüberschreibung und verändert keine
+veröffentlichte Definition. Lokale Paletten werden beim Wiederöffnen ebenfalls
+als Entwurfsüberschreibung erhalten; sie verändern keine Veröffentlichung.
+
+Der native Referenzeditor ist über den R-Reiter beider Formarbeitsplätze und über
+das Dokumentmenü des Gebäudegraphen erreichbar. Er nutzt `EditorScreen`,
+`ArchitectTheme` und echte KilaGraph-Ausgangsslots. Das Dokumentmenü bietet die
+Übernahme in den Druck-/Gebäudeentwurf. Graphstudio verwendet dieselben Kotlin-
+Verträge und eine eigene Referenzansicht mit React Flow, Portvergleich, Vorschau,
+Undo/Redo und Browserbibliothek. Reguläre Editorprojektionen sind Ansichten;
+Export schreibt die kanonische Referenzquelle zurück.
+
+**Noch keine vollständige Issue-/Release-Abnahme:** Der Browser lehnt weiterhin
+native Einstellungen außerhalb seines bestehenden Geometrie- und Parameter-Codecs
+ab, insbesondere exakte Formdaten und mehrere erweiterte Gebäudekonfigurationen.
+Die vollständige Abdeckung dieser Daten, sämtlicher Knoteneigenschaften und
+Fehler-/Reparaturabläufe bleibt für #13 erforderlich. Die neuen technischen Modi
+#14–16 sind noch nicht implementiert. Version 0.7.0 wird deshalb nicht freigegeben.

@@ -5,7 +5,7 @@ import de.teutonstudio.copycatarchitect.domain.BuildingKind
 /** Every building node appears once in the native Add node submenu. */
 object BuildingInsertionCategories {
     fun key(kind:BuildingKind):String=when(kind) {
-        BuildingKind.ROTATION,BuildingKind.MIRRORING -> "node_category_geometry"
+        BuildingKind.INT,BuildingKind.INT_ADD,BuildingKind.INT_SUBTRACT,BuildingKind.INT_MULTIPLY,BuildingKind.INT_DIVIDE,BuildingKind.INT_MIN,BuildingKind.INT_MAX,BuildingKind.ROTATION,BuildingKind.MIRRORING -> "node_category_geometry"
         BuildingKind.AREA,BuildingKind.ROOM_GEOMETRY,BuildingKind.ROOM_LAYOUT -> "node_category_geometry"
         BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE -> "node_category_copycats"
         BuildingKind.SEGMENT_UNION, BuildingKind.SEGMENT_INTERSECTION, BuildingKind.SEGMENT_DIFFERENCE, BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.SEGMENT_LAYOUT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.FLOOR,BuildingKind.CEILING -> "node_category_segments"

@@ -176,3 +176,52 @@ python3 tools/verify-graphstudio-browser.py --url http://127.0.0.1:4173
 Verzeichnis für die Screenshots (Standard: `/tmp/graphstudio-browser-check`).
 Gemessene Knotengrößen bleiben ausschließlich Ansichtsstatus; der Test prüft,
 dass diese Daten nicht im Minecraft-JSON landen.
+
+## Entwicklung für 0.7.0: Anzahl und Copycat-Anordnung
+
+Der gemeinsame Fachkern enthält die Anzahl-Knoten Konstante, Addition,
+Subtraktion, Multiplikation, Ganzzahldivision, Minimum und Maximum. Die Division
+rundet gegen null; Überlauf und Division durch null erzeugen Fehler. Länge (X),
+Höhe (Y) und Tiefe (Z) akzeptieren jeweils eine Anzahl-Quelle. Unverbundene
+Anschlüsse verwenden die unveränderten manuellen Maße. Eindeutige Zahlenpfade
+sind X rot, Y grün oder Z blau; mehrfach verwendete Pfade bleiben neutral.
+
+Wandsegmente können ihre verbundenen Copycats im 2D-Raster einzeln anordnen.
+Drei Ansichten und numerische XYZ-Werte erhalten die jeweils verdeckte Achse.
+Übernehmen erzeugt einen Undo-Schritt, Verwerfen erhält den vorherigen Entwurf.
+Vorhandene Wände behalten ihre wiederholte Füllung, bis eine explizite Anordnung
+übernommen wird. Die tatsächliche Geometrie berücksichtigt die gespeicherten
+Positionen. Leere Quellen räumen ausschließlich ihre eigene Blockzelle.
+
+Flächengebiete und Segmentlayouts einschließlich Rasterzuweisungen und
+Maßeingängen sind verlustfrei lesbar. Bei angeschlossenem Layout werden Maße
+am Layout gesetzt. Eine widersprüchliche Flächengeometrie wird abgewiesen.
+Die Tischreferenz bleibt beim Austausch erhalten. Andere bislang nicht
+unterstützte native Einstellungen werden weiterhin ausdrücklich abgewiesen.
+
+Dies ist ein Entwicklungsstand. Versionierte Untergraphen (#13) sind in Entwicklung; Züge (#14),
+Bewegungsmittel (#15) und Contraptions (#16) sind noch nicht implementiert;
+es wurde kein Release 0.7.0 veröffentlicht.
+
+
+### Versionierte Untergraphen (Entwicklung 0.7.0)
+
+„Versionierte Untergraphen“ öffnet den Referenzeditor für den aktuellen Entwurf.
+Eine mit Umschalt ausgewählte Knotenauswahl lässt sich ausdrücklich auslagern.
+Die Eltern speichern einzelne Referenzknoten mit exakter Version und benannten
+Ausgängen. Definitionen werden separat geöffnet; neue Veröffentlichungen ändern
+vorhandene Referenzen nicht. Versionswechsel zeigen Portunterschiede und behalten
+inkompatible Verbindungen als Reparaturstellen. Paketexport umfasst die benötigten
+Definitionen sowie Form- und Modulversionen. Browserbibliothek und Sicherungen
+behalten alte Versionen und Referenzentwürfe.
+
+„In Entwurf übernehmen“ erhält das Paket als kanonische `versionedGraph`-Quelle.
+Normales JSON-Exportieren schreibt diese Quelle zurück und entfernt die reine
+Ansichtsprojektion. Der native Druck-/Baupfad wertet das Paket erneut aus.
+Die Referenzquelle wird über den Untergrapheditor weiterbearbeitet.
+
+Prüfwerkzeug: `tools/verify-versioned-graphs-browser.py` testet tatsächliche Auswahl,
+zwei Ausgänge, Versionspinning, bewussten Wechsel, Undo, dauerhafte Speicherung,
+Desktop/Tablet/Mobilgerät sowie die Übernahme und den Export als Druckvorlage.
+Native Daten außerhalb der unterstützten Browser-Codecs werden weiterhin
+abgewiesen. Diese Einschränkung und #14–16 verhindern die Release-Freigabe.

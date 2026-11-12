@@ -1,24 +1,26 @@
 package de.teutonstudio.copycatarchitect.client
 
+import dan200.computercraft.client.gui.GuiSprites
+import dan200.computercraft.shared.computer.core.ComputerFamily
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 
-/** Shared pixel-built machine casing. All dimensions are GUI pixels, with no filtered artwork. */
+/** Shared CC-derived surfaces for printer/table dialogs, inspectors, and controls. */
 object ArchitectTheme {
-    val backdrop=0xff272923.toInt()
-    val casing=0xff858575.toInt()
-    val panel=0xff454c40.toInt()
-    val raised=0xff666c59.toInt()
-    val highlight=0xffc5c3aa.toInt()
-    val shadow=0xff1b211a.toInt()
-    val well=0xff17241c.toInt()
-    val blueprint=0xff1c3028.toInt()
-    val grid=0xff2a4133.toInt()
-    val brass=0xffd5b56c.toInt()
-    val brassDark=0xff85663c.toInt()
-    val text=0xfff0ead2.toInt()
-    val muted=0xffb0b79b.toInt()
-    val disabled=0xff838b76.toInt()
+    val backdrop=0xff101820.toInt()
+    val casing=0xff616c75.toInt()
+    val panel=0xff26313a.toInt()
+    val raised=0xff35434f.toInt()
+    val highlight=0xff8a929b.toInt()
+    val shadow=0xff080c10.toInt()
+    val well=0xff111820.toInt()
+    val blueprint=0xff17232d.toInt()
+    val grid=0xff253642.toInt()
+    val brass=0xffd4b055.toInt()
+    val brassDark=0xff88733c.toInt()
+    val text=0xffece9df.toInt()
+    val muted=0xffaeb8c1.toInt()
+    val disabled=0xff6d7882.toInt()
     val green=0xffa4cf78.toInt()
     val danger=0xffed9a76.toInt()
     private val font get()=Minecraft.getInstance().font
@@ -45,7 +47,7 @@ object ArchitectTheme {
     }
     fun inset(g:GuiGraphics,x:Int,y:Int,w:Int,h:Int,fill:Int=well) = bevel(g,x,y,w,h,fill,true)
     fun button(g:GuiGraphics,x:Int,y:Int,w:Int,h:Int,hovered:Boolean=false,selected:Boolean=false,enabled:Boolean=true) {
-        bevel(g,x,y,w,h,when { !enabled->panel;selected->0xff625c3e.toInt();hovered->0xff808166.toInt();else->raised },selected)
+        bevel(g,x,y,w,h,when { !enabled->panel;selected->0xff534d35.toInt();hovered->0xff50606d.toInt();else->raised },selected)
         if(selected || hovered && enabled) {
             g.fill(x+2,y+h-3,x+w-2,y+h-2,brass)
             if(selected) g.fill(x+3,y+4,x+5,y+h-4,green)
@@ -53,7 +55,7 @@ object ArchitectTheme {
         if(hovered && enabled) g.renderOutline(x,y,w,h,brass)
     }
     fun slot(g:GuiGraphics,x:Int,y:Int,w:Int,h:Int,hovered:Boolean=false,selected:Boolean=false,enabled:Boolean=true) {
-        inset(g,x,y,w,h,if(enabled) 0xff626957.toInt() else 0xff3e473b.toInt())
+        inset(g,x,y,w,h,if(enabled) 0xff3f4b55.toInt() else 0xff222d36.toInt())
         if(selected) g.renderOutline(x,y,w,h,brass)
         if(hovered && enabled) g.fill(x+2,y+2,x+w-2,y+h-2,0x408bd082)
     }
@@ -63,7 +65,7 @@ object ArchitectTheme {
         for(px in x until x+w step step) g.fill(px,y,px+1,y+h,grid)
         for(py in y until y+h step step) g.fill(x,py,x+w,py+1,grid)
         for(px in x until x+w step step*4) for(py in y until y+h step step*4) {
-            g.fill(px,py,px+3,py+1,0xff43563d.toInt());g.fill(px,py,px+1,py+3,0xff43563d.toInt())
+            g.fill(px,py,px+3,py+1,0xff3d5060.toInt());g.fill(px,py,px+1,py+3,0xff3d5060.toInt())
         }
     }
     fun viewport(g:GuiGraphics,x:Int,y:Int,w:Int,h:Int) {
@@ -73,24 +75,24 @@ object ArchitectTheme {
             g.fill(px,py,px+7,py+1,brassDark);g.fill(px,py,px+1,py+7,brassDark)
         }
     }
+    /** Compact native CC casing leaves the existing eight-pixel dialog content margin intact. */
     fun background(g:GuiGraphics,w:Int,h:Int,peek:Boolean=false) {
-        g.fill(0,0,w,h,if(peek) 0x30272923 else backdrop)
-        if(!peek) {
-            for(y in 24 until h-16 step 32) g.fill(0,y,w,y+1,0xff2d3028.toInt())
-            g.fill(0,24,3,h-16,casing);g.fill(w-3,24,w,h-16,shadow)
-        }
+        if(peek) { g.fill(0,0,w,h,0x30101820);return }
+        g.fill(0,0,w,h,backdrop)
+        g.pose().pushPose()
+        g.pose().scale(0.5f,0.5f,1f)
+        g.blitSprite(GuiSprites.getComputerTextures(ComputerFamily.ADVANCED).border(),0,0,w*2,h*2)
+        g.pose().popPose()
+        g.fill(6,6,w-6,h-6,backdrop)
     }
     fun header(g:GuiGraphics,w:Int,title:String,available:Int) {
-        bevel(g,0,0,w,24,0xff555b49.toInt())
-        g.fill(0,22,w,24,brassDark)
-        rivet(g,5,5)
-        // A small copper maker's mark leaves the title legible at the smallest supported size.
-        g.fill(12,6,22,16,shadow);g.renderOutline(13,7,8,8,brass);g.fill(16,10,18,12,green)
-        g.drawString(font,font.plainSubstrByWidth(title,(available-20).coerceAtLeast(1)),28,8,text,false)
+        g.fill(8,7,w-8,24,well)
+        g.fill(10,23,w-10,24,brassDark)
+        g.drawString(font,font.plainSubstrByWidth(title,(available-16).coerceAtLeast(1)),14,11,text,false)
     }
     fun footer(g:GuiGraphics,w:Int,h:Int,message:String) {
-        inset(g,4,h-16,w-8,14)
-        g.fill(9,h-11,12,h-8,if(message.isBlank()) brassDark else green)
-        g.drawString(font,font.plainSubstrByWidth(message,(w-28).coerceAtLeast(1)),17,h-12,muted,false)
+        g.fill(8,h-12,w-8,h-4,well)
+        g.fill(10,h-10,12,h-7,if(message.isBlank()) brassDark else green)
+        g.drawString(font,font.plainSubstrByWidth(message,(w-32).coerceAtLeast(1)),17,h-12,muted,false)
     }
 }

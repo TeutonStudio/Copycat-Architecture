@@ -30,7 +30,7 @@ private fun Collection<P>.orderedCoordinates()=sortedWith(compareBy({ it.z },{ i
 
 /** Resolve connected sources for display. Incomplete drafts retain their local preview until connected. */
 fun BuildingGraph.resolvedNode(node:BuildingNode):BuildingNode {
-    var resolved=node
+    var resolved=BuildingCounts.resolve(this,node)
     if(node.kind==BuildingKind.SEGMENT && node.layout.isNotEmpty()) {
         nodes.firstOrNull { it.id==node.layout && it.kind==BuildingKind.SEGMENT_LAYOUT }?.let {
             val geometry=resolvedNode(it)
@@ -42,7 +42,9 @@ fun BuildingGraph.resolvedNode(node:BuildingNode):BuildingNode {
             resolved=resolved.copy(coordinates=emptyList())
         areaOf(node)?.let { area ->
             resolved=if(node.kind==BuildingKind.SEGMENT_LAYOUT) {
-                SegmentVolume(area,node.depth)
+                SegmentVolume(area,resolved.depth)
+                if(runCatching { BuildingCounts.resolve(this,node,strict=true) }.exceptionOrNull() !is BuildingCounts.IncompleteCount)
+                    BuildingCounts.checkDerived(node,resolved,area.width,area.length)
                 resolved.copy(length=area.width,height=area.length)
             } else {
                 RoomVolume(area,node.height)

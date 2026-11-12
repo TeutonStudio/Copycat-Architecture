@@ -30,7 +30,7 @@ Der Gradle-Wrapper benötigt zum Start Java 21 (`JAVA_HOME` bei Bedarf setzen). 
 - Create 6.0.10 für 1.21.1
 - [Create: Molten Metals – Neoforged 1.0.1](https://modrinth.com/mod/create-molten-metals-neoforged) für 1.21.1 (Pflicht auf Client und Server)
 - Copycats+ 3.0.9 für NeoForge 1.21.1
-- CC:Tweaked 1.120.0 für 1.21.1
+- CC:Tweaked 1.120.0–1.120.2 für 1.21.1
 - KotlinForForge NeoForge 5.10.0
 
 Auf dem **Client** sind zusätzlich **KilaGraph 21.1.0.16** und **LDLib2 2.2.44** für NeoForge 1.21.1 erforderlich. Beide werden als separate Mod-JARs installiert; der dedizierte Server benötigt sie nicht. `runClient` lädt die gepinnten Versionen automatisch. Create liefert seine Begleitbibliotheken verschachtelt mit. Copycat Architect bündelt keine dieser Abhängigkeiten. Kleine Client-Mixins ordnen die Kreativinventarliste; die ursprünglichen Copycat-Registrierungen und Rezepte bleiben erhalten.
@@ -217,3 +217,14 @@ Die vollständige API und Installation stehen in [LUA_API.md](docs/LUA_API.md). 
 Verkleidungen können zulässige normale Vollblockitems einschließlich Glas verwenden; zehn bisherige Vanilla-Materialien bleiben als Vorschläge erhalten. Bis zu acht Gruppen pro Form sind möglich. Der Formgraph erzeugt geometrische Kompositblöcke und keine funktionsfähigen Türen oder Maschinen; solche nativen funktionalen Copycats bleiben im Katalog „Häufige“ verfügbar. Texturen werden seitenrichtig vom Materialmodell übernommen; Create-/Copycats-Connected-Textures zwischen benachbarten Kompositblöcken fehlen noch. Der klassische Generator verwendet für L-Grundrisse die dokumentierte bündige Zwei-Flügel-Konfiguration; der Gebäudegraph unterstützt die beschriebenen orthogonalen Rechteckvereinigungen. Wände sind eine Zelle dick; die Baufolge benötigt den ausgewiesenen freien Arbeitsraum. Diese Grenzen sind keine stillen Fallbacks: Unzulässige Referenzen und Konfigurationen werden geprüft.
 
 Graphstudio 0.3: [Materialbibliothek, Faithful-Texturen und persönliche Browserbibliotheken](https://github.com/TeutonStudio/copycat-architect/wiki/Materialbibliothek). Minecraft-Texturen von [Faithful Resource Pack](https://faithfulpack.net), [Lizenz](https://faithfulpack.net/license).
+
+## Entwicklungszweig für 0.7.0
+
+Der Entwicklungsstand ergänzt die Copycat-Anordnung im Wandsegment und typisierte
+Anzahl-Eingänge für Segmentmaße in beiden Editoren. Die nativen Unterdialoge
+verwenden denselben CC-Rahmen und abgestimmte dunkle Flächen wie Drucker und
+Architektentisch. [Prüfstand und Aufnahmen](docs/VALIDATION.md) dokumentieren die
+bisherigen Prüfungen. Die Versionsnummer bleibt bis zur vollständigen Release-Abnahme bei
+0.6.0. Versionierte Untergraphen sind als geprüfter Entwicklungsstand verfügbar,
+einschließlich Referenzpaketen für Druck- und Bauvorlagen. Die vollständige
+Browserabdeckung und die Zug-, Bewegungsmittel- und Contraption-Modi fehlen noch. Es ist kein Release 0.7.0 verfügbar.

@@ -36,7 +36,7 @@ export async function saveWorkspace(data, expectedRevision) {
       : 'Speichern fehlgeschlagen. Bitte eine Sicherung exportieren; der letzte gespeicherte Stand bleibt erhalten.'))
   })
 }
-export const emptyWorkspace = () => ({ schema: 1, drafts: {}, graphs: [], nodeGroups: [], mods: [] })
+export const emptyWorkspace = () => ({ schema: 1, drafts: {}, graphs: [], nodeGroups: [], mods: [], versionedGraphs: {}, versionedDrafts: {} })
 export function validateWorkspace(value) {
   if (!value || value.schema !== 1 || !value.drafts || typeof value.drafts !== 'object' || Array.isArray(value.drafts) ||
     !['graphs', 'nodeGroups', 'mods'].every(key => Array.isArray(value[key]))) throw new Error('Keine gültige Graphstudio-Sicherung (Schema 1).')
@@ -48,6 +48,15 @@ export function validateWorkspace(value) {
     value.mods.some(entry => !/^[\w.-]+\/[\w.-]+$/.test(entry.repo) || !/^[a-f0-9]{40}$/.test(entry.commit) || !entry.blocks || !entry.models || !entry.textures || !Array.isArray(entry.ids) || !Array.isArray(entry.dependencies))) throw new Error('Die Sicherung enthält unvollständige Einträge.')
   for (const mod of value.mods) for (const values of [mod.blocks, mod.models, mod.textures]) for (const url of Object.values(values)) {
     if (typeof url !== 'string' || !url.startsWith(`https://raw.githubusercontent.com/${mod.repo}/${mod.commit}/`)) throw new Error('Die Sicherung enthält ungültige Ressourcen-Adressen.')
+  }
+  for (const field of ['versionedGraphs', 'versionedDrafts']) {
+    value[field] ??= {}
+    if (typeof value[field] !== 'object' || Array.isArray(value[field]) || Object.keys(value[field]).length > 500) throw new Error('Ungültige Untergraph-Bibliothek.')
+    for (const [id, entry] of Object.entries(value[field])) {
+      if (!entry || entry.schema !== 1 || !['FORM', 'BUILDING'].includes(entry.mode) || !Number.isInteger(entry.version) || entry.version < 0 ||
+        (field === 'versionedGraphs' ? entry.version < 1 || id !== `${entry.graphId}@${entry.version}` : id !== entry.graphId) ||
+        !Array.isArray(entry.references) || !Array.isArray(entry.connections) || !Array.isArray(entry.ports)) throw new Error('Unvollständiger Untergraph in der Sicherung.')
+    }
   }
   return value
 }

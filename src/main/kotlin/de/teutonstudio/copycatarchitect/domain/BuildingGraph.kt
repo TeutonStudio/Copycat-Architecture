@@ -2,7 +2,7 @@ package de.teutonstudio.copycatarchitect.domain
 
 import java.util.concurrent.ConcurrentHashMap
 
-enum class BuildingKind { AREA, COPYCAT, SEGMENT_LAYOUT, SEGMENT, PATTERN, ROOM_GEOMETRY, FLOOR, CEILING, ROOM, STOREY, ROOF_LEVEL, ROOF_LAYOUT, ROOF, STAIRWELL, ELEVATOR_SHAFT, SERVICE_SHAFT, BUILDING, GARDEN, PATH, SEGMENT_MIRROR, COPYCAT_MIRROR, SEGMENT_ROTATE, COPYCAT_ROTATE, ROOM_LAYOUT, SEGMENT_UNION, SEGMENT_INTERSECTION, SEGMENT_DIFFERENCE, SEGMENT_SYMMETRIC_DIFFERENCE, COPYCAT_UNION, COPYCAT_INTERSECTION, COPYCAT_DIFFERENCE, COPYCAT_SYMMETRIC_DIFFERENCE, ROTATION, MIRRORING }
+enum class BuildingKind { INT,INT_ADD,INT_SUBTRACT,INT_MULTIPLY,INT_DIVIDE,INT_MIN,INT_MAX, AREA, COPYCAT, SEGMENT_LAYOUT, SEGMENT, PATTERN, ROOM_GEOMETRY, FLOOR, CEILING, ROOM, STOREY, ROOF_LEVEL, ROOF_LAYOUT, ROOF, STAIRWELL, ELEVATOR_SHAFT, SERVICE_SHAFT, BUILDING, GARDEN, PATH, SEGMENT_MIRROR, COPYCAT_MIRROR, SEGMENT_ROTATE, COPYCAT_ROTATE, ROOM_LAYOUT, SEGMENT_UNION, SEGMENT_INTERSECTION, SEGMENT_DIFFERENCE, SEGMENT_SYMMETRIC_DIFFERENCE, COPYCAT_UNION, COPYCAT_INTERSECTION, COPYCAT_DIFFERENCE, COPYCAT_SYMMETRIC_DIFFERENCE, ROTATION, MIRRORING }
 data class SegmentLayoutCell(val x:Int=0,val y:Int=0,val sourceIndex:Int=0,val turn:Int=0)
 data class BuildingNode(
     val id:String="",val kind:BuildingKind=BuildingKind.SEGMENT,val name:String="",val x:Int=0,val y:Int=0,
@@ -29,6 +29,8 @@ data class BuildingNode(
     val joinWallEnds:Boolean?=null,
     val roomLayout:RoomLayoutConfig?=null,val roomConfig:RoomConfig?=null,val facade:FacadeConfig?=null,
     val features:SegmentFeatures?=null,val attachments:List<AttachmentSpec>?=null,
+    val countValue:Int?=null,val dimensions:Map<String,String>?=null,
+    val copycatArrangement:Boolean?=null,
     val rotation:String?=null,val mirroring:String?=null,val rotations:List<SegmentRotation>?=null,val mirrors:List<CopycatMirror>?=null
 )
 /** Optional Copycat and outdoor sequences grow through spare ports; unused tails are not required inputs. */
@@ -44,7 +46,7 @@ data class BuildingGraph(val schema:Int=1,val nodes:List<BuildingNode> = emptyLi
     internal fun removeLocal(id:String):BuildingGraph {
         require(id!="empty_wall" && nodes.first { it.id==id }.kind!=BuildingKind.BUILDING) { "Keep the result and Empty wall source" }
         return copy(nodeGroups=GraphGroups.prune(nodeGroups,nodes.map { it.id }.toSet()-id),nodes=nodes.filter { it.id!=id }.map { original -> val n=BuildingSemantics.remapReferences(original) { _,ref->if(ref==id) "" else ref };n.copy(
-            inputs=n.inputs.map { if(it==id) "" else it },walls=n.walls.filterValues { it!=id },verticalEdges=n.verticalEdges?.filterValues { it!=id },
+            dimensions=n.dimensions?.filterValues { it!=id },inputs=n.inputs.map { if(it==id) "" else it },walls=n.walls.filterValues { it!=id },verticalEdges=n.verticalEdges?.filterValues { it!=id },
             floor=if(n.floor==id) "" else n.floor,ceiling=if(n.ceiling==id) "" else n.ceiling,corner=if(n.corner==id) "" else n.corner,
             roof=if(n.roof==id) "" else n.roof,
             rotation=if(n.rotation==id) null else n.rotation,mirroring=if(n.mirroring==id) null else n.mirroring,
@@ -60,6 +62,7 @@ data class BuildingGraph(val schema:Int=1,val nodes:List<BuildingNode> = emptyLi
         val n=nodes.first { it.id==target }
         require(BuildingPorts.of(n,this,true).any { it.key==key }) { "Unknown building socket" }
         var changed=when {
+            key in BuildingCounts.axes -> n.copy(dimensions=if(source.isEmpty()) n.dimensions.orEmpty()-key else n.dimensions.orEmpty()+(key to source))
             key=="rotation" -> n.copy(rotation=source.takeIf(String::isNotEmpty))
             key=="mirroring" -> n.copy(mirroring=source.takeIf(String::isNotEmpty))
             key=="layout" -> n.copy(layout=source,assembly=true,roomConfig=if(n.kind==BuildingKind.ROOM) (n.roomConfig ?: RoomConfig()).copy(mode=RoomMode.SEGMENTS) else n.roomConfig)
@@ -238,6 +241,8 @@ object BuildingPorts {
 
     fun of(n:BuildingNode,graph:BuildingGraph,expanding:Boolean=false)=of(graph.resolvedNode(n),expanding)
     fun of(n:BuildingNode,expanding:Boolean=false):List<BuildingPort> = (when(n.kind) {
+        BuildingKind.INT -> emptyList()
+        BuildingKind.INT_ADD,BuildingKind.INT_SUBTRACT,BuildingKind.INT_MULTIPLY,BuildingKind.INT_DIVIDE,BuildingKind.INT_MIN,BuildingKind.INT_MAX -> inputs(n,expanding)
         BuildingKind.SEGMENT -> if(n.id=="empty_wall") emptyList() else {
             val assigned=n.effectiveRegionCopies()
             (if(n.assembly) listOf(port(n,"layout",n.layout)) else emptyList())+inputs(n,expanding)+
@@ -268,7 +273,7 @@ object BuildingPorts {
                 levels.filter { it in checkNotNull(levelModel.min)..checkNotNull(levelModel.max) }.sortedDescending().map { i -> port(n,"level:$i",n.levels[i].orEmpty(),i) }+inputs(n,expanding)
         }
         else -> emptyList()
-    })+semanticPorts(n)
+    })+semanticPorts(n)+(if(BuildingCounts.hasDimensions(n)) BuildingCounts.axes.map { port(n,it,n.dimensions.orEmpty()[it].orEmpty()) } else emptyList())
 
     private fun semanticPorts(n:BuildingNode):List<BuildingPort> {
         val refs=linkedMapOf<String,String>()
@@ -301,6 +306,8 @@ object BuildingGraphCompiler {
         require(nodes["empty_wall"]?.let { it.kind==BuildingKind.SEGMENT && it.block=="minecraft:air" && it.inputs.isEmpty() }==true) { "Keep the standard Empty wall source" }
         for(n in graph.nodes) {
             BuildingTransformValues.validate(n)
+            BuildingCounts.validate(n)
+            require(n.copycatArrangement!=true || n.kind==BuildingKind.SEGMENT && n.regionCopies.isEmpty()) { "Copycat arrangement belongs to a segment without region overrides" }
             BuildingSemantics.validate(n,nodes)
             require(n.roomLayout==null || n.kind==BuildingKind.ROOM_LAYOUT) { "Room arrangements belong to a room layout" }
             require(n.roomConfig==null || n.kind==BuildingKind.ROOM) { "Room settings belong to a room" }
@@ -311,13 +318,13 @@ object BuildingGraphCompiler {
             require(n.name.length<=64 && n.x in -8192..8192 && n.y in -8192..8192 && n.materialMode in MaterialMode.entries) { "Invalid building node" }
             require(n.role.matches(Regex("[a-zA-Z0-9_-]{1,32}"))) { "Invalid node material role" }
             require(n.rotationAxis in listOf(RotationAxis.X,RotationAxis.Y,RotationAxis.Z) && n.quarterTurns in 0..3) { "Invalid Copycat rotation" }
-            val maximumHeight=if(n.kind in setOf(BuildingKind.SEGMENT_LAYOUT,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE) || n.assembly && n.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN)) 128 else 16
+            val maximumHeight=if(n.kind in setOf(BuildingKind.SEGMENT,BuildingKind.SEGMENT_LAYOUT,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE) || n.assembly && n.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN)) 128 else 16
             require(n.depth in 1..128 && n.length.toLong()*n.height*n.depth<=262144 && n.length in 1..128 && n.height in 1..maximumHeight && n.thickness in 1..4 && n.offsets.size<=GraphModels.building.maxInputs && n.inputs.size<=GraphModels.building.maxInputs) { "Invalid fixed dimensions" }
             require(n.regionCopies.isEmpty() || n.kind==BuildingKind.SEGMENT && n.regionCopies.size<=27 && n.regionCopies.keys.all { it.matches(Regex("region:x[01ib]_y[01ib]_z[01ib]")) }) { "Invalid segment region" }
             require(n.transforms.size<=n.inputs.size && n.transforms.all { it.quarterTurns in 0..3 && it.axis in listOf(RotationAxis.X,RotationAxis.Y,RotationAxis.Z) && listOf(it.offset.x,it.offset.y,it.offset.z).all { c -> c in -128..128 } }) { "Invalid segment transformation" }
             require(n.transforms.isEmpty() || n.kind==BuildingKind.PATTERN) { "Only segment composition accepts transformations" }
-            val offsetBound=if(n.kind==BuildingKind.BUILDING) 128 else 64
-            require(n.offsets.all { (it.y==0 || n.kind==BuildingKind.SEGMENT_UNION && it.y in -64..64) && it.x in -offsetBound..offsetBound && it.z in -offsetBound..offsetBound }) { "Placement offset exceeds bounds" }
+            val offsetBound=if(n.kind==BuildingKind.BUILDING || n.kind==BuildingKind.SEGMENT && n.copycatArrangement==true) 128 else 64
+            require(n.offsets.all { (it.y==0 || (n.kind==BuildingKind.SEGMENT_UNION || n.kind==BuildingKind.SEGMENT && n.copycatArrangement==true) && it.y in -offsetBound..offsetBound) && it.x in -offsetBound..offsetBound && it.z in -offsetBound..offsetBound }) { "Placement offset exceeds bounds" }
             if(n.kind==BuildingKind.BUILDING) BuildingSite.validate(graph,n)
             else require(n.sitePaths.isEmpty()) { "Path placement belongs to the building node" }
             require(n.layout.isEmpty() || n.assembly && n.kind in setOf(BuildingKind.SEGMENT,BuildingKind.ROOF,BuildingKind.ROOM) || n.kind==BuildingKind.ROOM && n.roomConfig?.mode==RoomMode.SEGMENTS) { "Only an explicit segment, room or roof accepts an arrangement source" }
@@ -335,7 +342,8 @@ object BuildingGraphCompiler {
                 if(n.geometry.isNotEmpty()) graph.areaOf(n)?.let { SegmentVolume(it,n.depth) }
                 val resolved=graph.resolvedNode(n)
                 require(n.layoutCells.size<=16384 && n.layoutCells.map { it.x to it.y }.distinct().size==n.layoutCells.size) { "Segment arrangement cells must be unique" }
-                require(n.layoutCells.all { it.x in 0 until resolved.length && it.y in 0 until resolved.height && it.sourceIndex in 0..15 && it.turn in 0..3 }) { "Invalid segment arrangement cell" }
+                val incomplete=runCatching { BuildingCounts.resolve(graph,n,strict=true) }.exceptionOrNull() is BuildingCounts.IncompleteCount
+                require(n.layoutCells.all { it.x in 0 until (if(incomplete) 128 else resolved.length) && it.y in 0 until (if(incomplete) 128 else resolved.height) && it.sourceIndex in 0..15 && it.turn in 0..3 }) { "Invalid segment arrangement cell" }
             }
             if(n.kind in SegmentBooleans.kinds) require(n.inputs.size in 2..if(n.kind==BuildingKind.SEGMENT_DIFFERENCE) 2 else 16) { "A segment operation needs 2–16 inputs (difference exactly two)" }
             if(n.kind in CopycatBooleans.kinds) require(n.inputs.size in 2..if(n.kind==BuildingKind.COPYCAT_DIFFERENCE) 2 else 16) { "A Copycat operation needs 2–16 inputs (difference exactly two)" }
@@ -432,7 +440,7 @@ object BuildingGraphCompiler {
     }
     class Evaluation(val graph:BuildingGraph,val palette:Map<String,String>,forms:Map<String,Form>,val modules:Map<String,Module>) {
         val forms:MutableMap<String,Form> = forms.toMutableMap()
-        private val nodes=graph.nodes.associateBy { it.id }
+        private val nodes=graph.nodes.associate { it.id to BuildingCounts.resolve(graph,it,strict=true) }
         private var activeAccess:AccessCompilation?=null
         private var activeStoreyId=""
         private var activeStoreyBase=0
@@ -499,6 +507,9 @@ object BuildingGraphCompiler {
         }
         private fun sourceIsAir(source:BuildingNode)=sourceCell(P(),source).empty
         fun segment(id:String):FixedSegment=segments.getOrPut(id) { val n=node(id);BuildingSemantics.annotate(segmentRecipe(id),id,n.features,if(n.materialMode==MaterialMode.GROUPED) n.role else "") }
+        fun copycatInputSegments(n:BuildingNode):List<FixedSegment> = copycats(n).map { source ->
+            FixedSegment(1,1,listOf(SegmentCell(sourceCell(P(),source),if(n.materialMode==MaterialMode.GROUPED) n.role else sourceOverride(source))))
+        }
         private fun segmentRecipe(id:String):FixedSegment=run {
             val n=node(id);require(n.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE))
             if(n.kind in SegmentBooleans.kinds) {
@@ -518,6 +529,17 @@ object BuildingGraphCompiler {
                 }
             }
             if(n.kind==BuildingKind.SEGMENT) {
+                if(n.copycatArrangement==true) {
+                    val result=CopycatArrangement.compose(copycatInputSegments(n),graph.resolvedNode(n))
+                    if(n.layout.isNotEmpty()) {
+                        val layout=node(n.layout,BuildingKind.SEGMENT_LAYOUT)
+                        require(layout.layoutCells.isEmpty()) { "Choose Copycat positions or layout cell assignments" }
+                        graph.areaOf(layout)?.segmentCells()?.map { it.x to it.y }?.toSet()?.let { occupied ->
+                            require(result.cells.all { it.cell.pos.x to it.cell.pos.y in occupied }) { "Copycat positions lie outside layout geometry" }
+                        }
+                    }
+                    return@run result
+                }
                 if(n.assembly) {
                     require(n.layout.isNotEmpty()) { "Connect a segment arrangement source" }
                     val layout=graph.resolvedNode(node(n.layout,BuildingKind.SEGMENT_LAYOUT))
@@ -633,6 +655,7 @@ object BuildingGraphCompiler {
         fun preview(id:String):Plan=previews.getOrPut(id) {
             val n=node(id)
             when(n.kind) {
+                BuildingKind.INT,BuildingKind.INT_ADD,BuildingKind.INT_SUBTRACT,BuildingKind.INT_MULTIPLY,BuildingKind.INT_DIVIDE,BuildingKind.INT_MIN,BuildingKind.INT_MAX -> { BuildingCounts.Evaluation(graph).value(n.id);Plan(emptyList(),emptyList(),emptyList(),0,emptyMap()) }
                 BuildingKind.BUILDING -> building().plan
                 BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE -> Resolver().apply { if(sourceIsAir(n)) clear(P()) else add(sourcePlacement(P(),n,"wall")) }.plan(emptyList())
                 BuildingKind.FLOOR,BuildingKind.CEILING -> {

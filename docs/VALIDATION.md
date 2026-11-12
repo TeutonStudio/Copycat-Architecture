@@ -1,4 +1,95 @@
+## Entwicklung 0.7.0: versionierte Referenzen und Druck-/Bauübernahme (2026-11-12)
+
+Dieser Stand erweitert #13, ist aber **keine vollständige Abnahme von #13–16 und
+kein Release 0.7.0**. Die noch fehlende Browserabdeckung ist in
+[IMPLEMENTATION.md](IMPLEMENTATION.md) benannt; die technischen Modi fehlen weiter.
+
+- Vollständiger Java-21-Build: **563 JUnit-Tests, 561 bestanden, zwei bestehende
+  optionale Snapshot-Skips, keine Fehler**. Geprüft sind mehrere benannte Ausgänge,
+  Grenzbindungen, Versionspinning, parallele Versionen, Verschachtelung und Limits,
+  defekte Ports, unveränderte alte Kanten, Konfliktprüfung, atomare Bibliotheksimporte,
+  wiederaufnehmbare Übertragung und Unicode/SHA-256. Druck-/Gebäudevorlagen erhalten
+  ihre Referenzpakete über JSON; ungültige gespeicherte Formteile werden vor dem
+  Druck neu berechnet. Mehrdeutige Druckausgänge werden abgewiesen.
+- `runGameTestServer -PgraphWorldSmoke`: **alle 64 erforderlichen GameTests
+  bestanden**, einschließlich tatsächlichem Druck und Bau referenzierter Quellen,
+  Konfliktverweigerung vor Materialverbrauch/Weltänderungen, Drucker-NBT,
+  Druckerhistorie und Tisch-Eigentumsnachweisen. Der Graph-Turtle führt **603 reale
+  Platzierungen** einschließlich Nachladen, Reboot, Unter-/Erd-/Obergeschoss und
+  Teppichböden aus.
+- Die große klassische Turtle-Prüfung wird mit `-PclassicWorldSmoke` getrennt von
+  der Graph-Turtle ausgeführt. Die beiden Optionen schließen sich aus; jede Option
+  führt den jeweiligen Weltlauf tatsächlich aus und überspringt den anderen.
+  Ein zusätzlicher kombinierter Lauf blieb bei der klassischen Turtle stehen und
+  wurde beendet. Die ursprünglichen Default-Tests werden nicht abgeschwächt.
+  Der getrennte klassische Lauf besteht ebenfalls **alle 64 erforderlichen
+  GameTests** und baut mit Reboot, Pause/Fortsetzung und Materialnachladen
+  **1115 reale Positionen**. Beide Varianten prüfen die fertige Welt vollständig.
+- `runClient -PversionedGraphSmoke`: echter KilaGraph, Auswahl auslagern, zwei
+  Ausgangsslots, identische Geometrie, atomare Undo/Redo-Schritte, expliziter
+  Portvergleich, erhaltene inkompatible Kante, reparierbares Paket und Menüübernahme
+  in eine ausführbare Druckquelle. Die Quelle lässt sich vom Architektentisch aus
+  wieder als Referenzdokument öffnen. Beide GUI-Skalierungen wurden bedient.
+- Browser-Fachtests und Produktionsbuild bestanden. Die bestehende Playwright-
+  Prüfung besteht einschließlich Raster, Anzahlfarben, Quellenreparatur und
+  gespeicherter Formauswahl. Die neue Prüfung bedient echte React-Flow-Auswahl,
+  Auslagerung mit zwei Ausgängen, Veröffentlichung von Version 2, unveränderte
+  Version-1-Instanz, bewussten Wechsel, Undo, Speichern/Neuladen sowie Übernahme,
+  Export und erneutes Öffnen der ausführbaren Quelle. Desktop, Tablet und Mobilgerät
+  wurden geprüft; keine Browser-Laufzeitfehler.
+- Ressourcen, Sprachschlüssel, ROM-Lua und `git diff --check` ohne Befund. Der
+  ursprüngliche lokale Änderungsstand stimmt weiterhin bytegenau mit seiner
+  Sicherung überein.
+
+Aufnahmen: [native Ansicht](release-0.7.0/images/architect-versioned-normal.png),
+[kompakte Ansicht](release-0.7.0/images/architect-versioned-compact.png),
+[CC-Versionsdialog](release-0.7.0/images/architect-versioned-version-compact.png),
+[Browser](release-0.7.0/images/subgraph-desktop.png),
+[Tablet](release-0.7.0/images/subgraph-tablet.png),
+[Mobilgerät](release-0.7.0/images/subgraph-mobile.png).
+
 # Tatsächlich ausgeführte Abnahme
+
+## Entwicklungsstand für 0.7.0: Raster, Anzahl und CC-Unterdialoge, 12.11.2026
+
+Dieser Stand ist **kein veröffentlichtes Release 0.7.0**. Implementiert sind die
+Copycat-Anordnung im Wandsegment (#11), Anzahl-Eingänge (#12) und die gemeinsame
+CC-Gestaltung der Unterdialoge. Versionierte Untergraphen (#13), Züge (#14),
+Bewegungsmittel (#15) und Contraptions (#16) fehlen; diese Issues bleiben offen.
+
+- Abschließender einzelner Java-21-`build` erfolgreich: **542 Tests, 540 bestanden,
+  zwei bestehende optionale Snapshot-Tests übersprungen, keine Fehler**.
+- Alle **62 verpflichtenden Minecraft-GameTests** bestanden. Der reale Turtle-Lauf
+  baut 603 Platzierungen mit Kellern, mehreren Räumen, Nachversorgung und Neustart.
+- Browser-Fachtests und Produktionsbuild erfolgreich. Playwright/Chromium prüft
+  Desktop, Tablet und Mobilgerät sowie tatsächliche Rasterbedienung, Zahlenpfade,
+  neutrale Mehrfachverwendung, Undo/Redo und gelöschte Zahlenquellen.
+- Die nativen Clientabnahmen `countArrangementSmoke` und `workshopSmoke` melden
+  jeweils `PASSED`. Geprüft sind zwei GUI-Größen, echtes Ziehen und Tastaturbewegung,
+  unveränderte Fallback-Maße, atomare Übernahme, Abbrechen, Undo/Redo, Modul- und
+  Plattenansichten, Materialien, Bauansichten, Werteingaben und Katalogfilter.
+- Ressourcen-, Sprachschlüssel-, ROM-Lua-Prüfung und `git diff --check` erfolgreich.
+
+Die Fachtests decken außerdem Überlauf, Division durch null, Rundung gegen null,
+Zyklen, Typfehler, Dimensions- und Flächenkonflikte, das Volumenlimit, alle 128
+Segmentspalten, lokale Materialien, explizite Luftzellen und JSON-Rundläufe ab.
+Gelöschte Anzahl-Operanden hinterlassen reparierbare Entwürfe mit erhaltenen
+Verbindungen; die tatsächliche Planberechnung bleibt bis zur Reparatur gesperrt.
+
+Die Unterdialoge verwenden die native CC-Rahmentextur und dieselben dunklen
+Inhaltsflächen wie die Hauptfenster. Die normalen und kompakten Aufnahmen wurden
+visuell geprüft: [Raster](release-0.7.0/images/architect-count-arrangement-normal.png),
+[kompaktes Raster](release-0.7.0/images/architect-count-arrangement-compact.png),
+[Werteingabe](release-0.7.0/images/architect-workshop-compact-number-valid.png),
+[Katalog](release-0.7.0/images/architect-workshop-compact-catalog.png) und
+[Graphstudio](release-0.7.0/images/count-arrangement-desktop.png).
+
+Der ursprüngliche lokale Arbeitsstand wurde vor dem Abgleich mit Master als
+Binärpatch und Archiv neuer Dateien gesichert. Seine nativen Quellen entsprechen
+weitgehend dem integrierten Release 0.6.0; spätere Browser-Erweiterungen aus Master
+bleiben erhalten. Die lokale CC:Tweaked-Kompatibilität bis 1.120.2 wurde übernommen.
+Die ursprüngliche Arbeitskopie und ihre ungesicherten Dateien wurden nicht ersetzt.
+
 
 ## Release-Integration 0.6.0, 08.11.2026
 

@@ -164,7 +164,7 @@ object GraphGroups {
                 require(connection.isEmpty() || buildingGraphType(nodes.getValue(connection).kind)==input.type) { "Incompatible building group instance connection" }
                 input.targets.forEach { target ->
                     val node=nodes.getValue(group.nodes[target.member])
-                    val port=BuildingPorts.of(node,graph,true).firstOrNull { it.key==target.port }
+                    val port=BuildingPorts.of(node,graph,true,includeInactive=true).firstOrNull { it.key==target.port }
                     require(port!=null && port.accepts.any { buildingGraphType(it)==input.type }) { "Incompatible building group input" }
                     require(port.source==connection) { "Connect named group inputs on the instance node" }
                 }
@@ -319,6 +319,7 @@ object GraphGroups {
         walls=node.walls.mapValues { (key,ref) -> reference("wall:$key",ref) },
         verticalEdges=node.verticalEdges?.mapValues { (key,ref) -> reference("edge:$key",ref) },
         floor=reference("floor",node.floor),ceiling=reference("ceiling",node.ceiling),corner=reference("corner",node.corner),
+        roofPeak=node.roofPeak?.let { reference("roofPeak",it) },
         roof=reference("roof",node.roof),layout=reference("layout",node.layout),geometry=reference("geometry",node.geometry),
         levels=node.levels.mapValues { (key,ref) -> reference("level:$key",ref) },
         regionCopies=node.regionCopies.mapValues { (key,ref) -> reference(key,ref) },

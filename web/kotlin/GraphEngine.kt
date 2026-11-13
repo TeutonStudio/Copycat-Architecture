@@ -135,8 +135,12 @@ fun applyGraphDiagram(isBuilding:Boolean,document:dynamic,positions:Array<dynami
     return if(isBuilding) {
         val original=buildingGraph(document.graph)
         val captured=GraphGroups.captureLayouts(original.nodeGroups,original.nodes.associate { it.id to GraphGroupPosition(it.x,it.y) })
-        val ports=original.nodes.associate { n -> n.id to BuildingPorts.of(n,original,true).associate { it.key to it.source } }
-        val (groups,expanded)=namedWires(captured,connections,retained) { id,port -> ports[id]?.get(port).orEmpty() }
+        val ports=original.nodes.associate { n -> n.id to BuildingPorts.of(n,original,true,includeInactive=true).associate { it.key to it.source } }
+        val dormant=original.nodes.flatMap { n ->
+            val visible=BuildingPorts.of(n,original,true).map { it.key }.toSet()
+            ports.getValue(n.id).filter { (key,source)->key !in visible && source in retained && n.id in retained && connections.none { it.target==n.id && it.port==key } }.map { (key,source)->DiagramConnection(source,n.id,key) }
+        }
+        val (groups,expanded)=namedWires(captured,connections+dormant,retained) { id,port -> ports[id]?.get(port).orEmpty() }
         encodeBuildingGraph(DiagramEdits.building(original.copy(nodeGroups=groups),layout,expanded))
     } else {
         val original=formGraph(document.graph)

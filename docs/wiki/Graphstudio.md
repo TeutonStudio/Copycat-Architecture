@@ -4,7 +4,7 @@
 
 [**Gebäudegraph öffnen**](https://teutonstudio.github.io/Copycat-Architecture/?editor=building) · [**Formgraph öffnen**](https://teutonstudio.github.io/Copycat-Architecture/?editor=form)
 
-Graphstudio **0.6.2** ist der Browsereditor für Copycat-Formen und Gebäudegraphen. Er bietet **10 Formknotentypen und 36 Gebäudeknotentypen** und verwendet die gemeinsame Berechnungslogik des Mods. Die Links öffnen eine eigene interaktive Webseite. In der [Knotenreferenz](Knotenreferenz.md) steht für jeden Typ, ob er im Browser vorhanden ist; Mod und Browser verwenden denselben Modellstand.
+Graphstudio **0.6.3** ist der Browsereditor für Copycat-Formen und Gebäudegraphen. Er bietet **10 Formknotentypen und 36 Gebäudeknotentypen** und verwendet die gemeinsame Berechnungslogik des Mods. Die Links öffnen eine eigene interaktive Webseite. In der [Knotenreferenz](Knotenreferenz.md) steht für jeden Typ, ob er im Browser vorhanden ist; Mod und Browser verwenden denselben Modellstand.
 
 Beim Sattel- und Pultdach bedeutet **Dachverlängerung / Überhang** eine Verlängerung entlang des Firsts über die Giebelseiten hinaus. Die Dachbreite und Firsthöhe bleiben unverändert; Giebelmauern stehen weiterhin am Gebäudegrundriss. Beim älteren Dachknoten behalten angeschlossene Wandsegmente ihre feste Länge.
 

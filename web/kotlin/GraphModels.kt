@@ -46,7 +46,7 @@ internal object GraphModels {
             matches && (rule.conditions==null || names(rule.conditions).all { field ->
                 val actual=when(field) {
                     "assembly"->node.assembly.toString();"id"->node.id
-                    "roomConfig.mode"->node.roomConfig?.mode?.name;"storeyMode"->node.storeyMode
+                    "roomConfig.mode"->node.roomConfig?.mode?.name;"storeyMode"->node.storeyMode;"roofType"->node.roofType
                     else->error("Unknown graph port condition $field")
                 }
                 val value=rule.conditions[field]

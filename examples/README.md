@@ -27,3 +27,5 @@ Für einen Einzelentwurf die entsprechende JSON-Datei kopieren und im passenden 
 - `t-building/`: dreigeschossiges T-Testhaus mit acht Materialien, 214 Fensterzellen, erhabenen Quarzmustern, vollständigen Formen und Gebäudegraph. Die [Anleitung](t-building/README.md) beschreibt auch die tatsächlich gebaute Testwelt und ihre erneute Prüfung nach dem Laden.
 
 - `modular-roofs-and-access.json`: zwei unterschiedlich breite Geschosse mit eigenem unterem Teildach und oberem Satteldach, exakter Steigung 1:2, U-Treppenhaus, vorbereitetem Aufzugsschacht und Versorgungsschacht. Verwendet die integrierten Formen `full@1` und `stair@1`. Im Gebäudeeditor importieren; unter **Dach** die Dachebenen und unter **Erschließung** die Kerne bearbeiten. **Gebäude/Außenanlagen platzieren** zeigt die einzeln verschiebbaren Kernflächen.
+
+- `building-roof-peak.json`: einfaches Satteldach mit separater optionaler Copycat-Dachspitze bei ungerader Breite. In Graphstudio als Beispiel auswählbar; Dachspitze im Inspektor auf **Offen** setzen und per Undo vergleichen. Verwendet `full@1` und `bar@1` aus `library.json`. Dachebenen nutzen weiterhin ihre vorhandene First-Segmentvorlage.

@@ -1,4 +1,4 @@
-# Copycat Architect Graphstudio 0.6.2
+# Copycat Architect Graphstudio 0.6.3
 
 Browsereditor für Form- und Gebäudegraphen. Die Beispieldateien stammen aus
 [`examples/`](../examples). Die beiden Editoren verwalten getrennte Entwürfe.
@@ -197,3 +197,31 @@ Inspektorfelder einschließlich Typen, Auswahlwerten und Grenzen. Referenzfelder
 bieten passende native Quellknoten an. Abgeleitete Maße öffnen ihre gemeinsame
 Quelle. Benannte Gruppenschnittstellen verwenden denselben Adapter wie der
 Architektentisch; Eingänge, Ausgänge, Typen und Bindungen lassen sich bearbeiten.
+
+## Optionale Dachspitze
+
+Bei einfachen Satteldächern (`assembly: false`) nimmt **Dachspitze (optional)**
+eine eigene Copycat-Quelle an. Sie ersetzt ausschließlich die mittlere Firstreihe,
+wenn die lokale Dachbreite quer zur Firstachse ungerade ist. Die Vorlage ist
+standardmäßig entlang Z ausgerichtet und dreht für einen First entlang X um 90°.
+Überhang und jede Deckungsschicht werden berücksichtigt. Ohne Anschluss sowie
+bei gerader Breite oder Flachdächern bleibt die bestehende Deckung erhalten.
+Die neueren Dächer aus Dachebenen verwenden weiterhin ihre sechs Segmentvorlagen
+einschließlich **First**.
+
+Unter **Beispiel öffnen → Dachspitze bei ungerader Breite** ist ein vollständiger
+Entwurf zum Vergleichen verfügbar. Am Dach im Inspektor die Dachspitze auf
+**Offen** setzen und mit **Rückgängig** vergleichen. Die Referenz `bar@1` stammt
+aus `examples/library.json`; beim Spielimport muss diese Bibliotheksversion
+vorhanden sein. Ältere Mod-Builds kennen das neue Feld `roofPeak` noch nicht.
+
+`python3 tools/verify-roof-peak-browser.py --url http://127.0.0.1:4186` prüft
+Beispiel, Anschluss, Vorschau, Trennen, Undo/Redo und JSON-Export im
+Produktionsbuild. `--chromium` wählt den Browserpfad.
+
+Beim Wechsel zwischen Flach- und Satteldach aktualisieren sich nach **Übernehmen**
+Knotenanschlüsse, Kanten und Inspektor. Die Dachspitze erscheint nur am Satteldach;
+dessen Giebelanschlüsse folgen der Firstachse (Z: Nord/Süd, X: Ost/West).
+Beim Flachdach stehen die vier Dachränder für Rand-/Attikavorlagen bereit.
+Ausgeblendete Verbindungen bleiben für einen späteren Rückwechsel erhalten und
+werden beim Löschen ihrer Quellen bereinigt. Typ- und Gruppenprüfung bleiben aktiv.

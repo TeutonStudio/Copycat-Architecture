@@ -2,7 +2,7 @@ plugins {
     kotlin("jvm") version "2.2.20"
     id("net.neoforged.moddev") version "2.0.143"
 }
-version = "0.6.2"
+version = "0.6.3"
 group = "de.teutonstudio.copycatarchitect"
 base { archivesName.set("copycat_architect") }
 java { toolchain.languageVersion.set(JavaLanguageVersion.of(21)) }

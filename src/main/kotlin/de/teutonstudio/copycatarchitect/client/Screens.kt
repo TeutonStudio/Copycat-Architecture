@@ -1019,6 +1019,7 @@ class BuildingScreen:EditorScreen(tr("building_editor")) {
         owner.kind==BuildingKind.ROOF && owner.assembly && p.key.startsWith("in:") && p.number<6 -> ui("roof_variant_"+listOf("slope","eave","edge","ridge","hip","valley")[p.number])
         p.key.startsWith("level:") -> if(p.number==0) ui("bg_ground") else ui(if(p.number>0) "bg_upper" else "bg_lower",kotlin.math.abs(p.number))
         p.key in listOf("floor","ceiling","roof") -> ui("bg_"+p.key)
+        p.key=="roofPeak" -> ui("bg_roof_peak")
         p.key=="corner" -> ui("bg_corner_copycat")
         p.key.startsWith("edge:") -> ui("bg_vertical_edge_port",p.key.removePrefix("edge:").substringBefore(':'),p.key.substringAfterLast(':'),p.height)
         p.key=="geometry" -> ui(if(BuildingKind.AREA in p.accepts) "bg_area" else "bg_room_geometry")

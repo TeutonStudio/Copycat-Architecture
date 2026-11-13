@@ -363,7 +363,10 @@ Keine zusätzlichen typspezifischen Eingabefelder im Knotenvertrag. Verbindungen
 | `layout` | `ROOF_LAYOUT` | `assembly` gleich `true` |
 | `in:*` | [Segmentwerte](#wertfamilien) | `assembly` gleich `true`; höchstens 6; zusätzlicher leerer Anschluss wächst bei Belegung |
 | `in:*` | [Copycat-Werte](#wertfamilien) | `assembly` ungleich `true`; höchstens 16; zusätzlicher leerer Anschluss wächst bei Belegung |
+| `roofPeak` | [Copycat-Werte](#wertfamilien) | `assembly` ungleich `true`; optional, eigene Dachspitze bei ungerader Breite |
 | `wall:*` | [Segmentwerte](#wertfamilien) | `assembly` ungleich `true`; dynamisch: `roofWalls` |
+
+**Dachspitze (optional):** Bei direkten Satteldächern ersetzt diese Copycat ausschließlich die mittlere Firstreihe, falls die lokale Dachbreite quer zum First ungerade ist. Überhang zählt zur Breite. Die Vorlage verläuft entlang Z und dreht bei First entlang X um 90°. Ohne Verbindung, bei gerader Breite und beim Flachdach bleibt das bisherige Ergebnis erhalten. Dachebenen verwenden weiterhin ihre eigene First-Segmentvorlage. Das Graphstudio-Beispiel **Dachspitze bei ungerader Breite** zeigt den Vergleich. Der neue Anschluss benötigt auch im Spiel einen aktualisierten Mod-Build.
 
 Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen erscheinen als [semantische Anschlüsse](Knoten-Eigenschaften.md#semantische-anschluesse), sofern die jeweilige Konfiguration sie verwendet. Zieloberflächen werden teils erst im Gebäudekontext aufgelöst.
 

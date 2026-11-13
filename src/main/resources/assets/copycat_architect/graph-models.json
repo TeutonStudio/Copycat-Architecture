@@ -1902,6 +1902,27 @@
             "expand": true
           },
           {
+            "key": "roofPeak",
+            "path": [
+              "roofPeak"
+            ],
+            "accepts": [
+              "COPYCAT",
+              "COPYCAT_MIRROR",
+              "COPYCAT_ROTATE",
+              "COPYCAT_UNION",
+              "COPYCAT_INTERSECTION",
+              "COPYCAT_DIFFERENCE",
+              "COPYCAT_SYMMETRIC_DIFFERENCE"
+            ],
+            "when": {
+              "assembly": {
+                "not": true
+              }
+            },
+            "labelKey": "bg_roof_peak"
+          },
+          {
             "key": "wall:*",
             "path": [
               "walls",

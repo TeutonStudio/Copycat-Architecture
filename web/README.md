@@ -27,6 +27,20 @@ gemeinsamen Domänenlogik. Der Browser wird aus dem Fachkern desselben
 Repository-Stands gebaut. Seine Oberfläche gibt nur Knoten und Einstellungen
 frei, die der Browser verlustfrei lesen, bearbeiten und exportieren kann.
 
+## Vorschau-HUD
+
+Die 3D-Vorschau besitzt zwei seitliche Panels: links die sechs Seitenansichten
+und **Einpassen**, rechts Status, Achsenlegende, Warnungen und Materialbedarf.
+Die Zeichenfläche nutzt dazwischen die volle Höhe; beide Panels scrollen bei
+Bedarf unabhängig. Das gilt auch bei schmaler Seitenleiste. Im Kopf schaltet
+**Graph / Selektiert** direkt zwischen Gesamtergebnis und ausgewähltem Knoten
+um. Der aktive Knopf ist hervorgehoben; Tab und Enter bzw. Leertaste bedienen
+den Schalter per Tastatur.
+
+`python3 tools/verify-preview-hud-browser.py --url http://127.0.0.1:4186`
+prüft die Panelgeometrie, schmale Splitterstellung, Tastaturumschaltung,
+Materialbedarf, Ein-/Ausklappen sowie Tablet, Handy und Copycat-Auswahldialog.
+
 ## Austausch mit Minecraft
 
 Form- und Gebäudedokumente verwenden die JSON-Felder des Mods. React Flow

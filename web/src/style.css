@@ -121,14 +121,15 @@ button.primary:hover:not(:disabled) { background: #cef6e9; }
   align-items: stretch;
 }
 .canvas-panel { height: 100%; }
-.side { display: grid; grid-template-columns: minmax(0, 1fr); height: 100%; min-height: 0; gap: 0; }
+.side { display: grid; grid-template-columns: minmax(0, 1fr); height: 100%; min-height: 0; gap: 0; align-items: stretch; }
 .side.both-collapsed { height: auto; align-self: start; gap: 8px; }
+.preview-panel { container-type: inline-size; }
 .inspector, .preview-panel { display: flex; flex-direction: column; min-height: 0; }
 .panel-heading { flex: 0 0 auto; }
 .panel-heading button, .panel-heading select { min-height: 27px; font-size: 12px; padding: 3px 6px; }
 .panel-heading .button-row { align-items: center; }
 .inspector-body { flex: 1; min-height: 0; max-height: none; overflow: auto; }
-.preview-body { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: auto; }
+.preview-body { display: flex; flex: 1; min-height: 0; overflow: hidden; container-type: inline-size; }
 .viewer { flex: 1 0 100px; height: auto; min-height: 100px; }
 .axis-legend { margin: 0; padding: 0 10px 7px; color: var(--muted); font-size: 10px; }
 .preview-meta { flex: 0 0 auto; }
@@ -276,10 +277,37 @@ button.primary:hover:not(:disabled) { background: #cef6e9; }
   .copycat-dialog-footer { padding: 10px 16px; }
 }
 
-.viewer-with-sides { display: flex; flex-direction: column; flex: 1 0 190px; min-height: 190px; }
-.preview-sides { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 6px 8px; background: #15232c; }
-.preview-sides button { min-width: 0; padding: 4px 6px; font-size: 11px; }
-.preview-sides button[aria-pressed=true] { background: #345752; border-color: #90c8ba; }
+/* Side HUDs share the canvas height; only their contents scroll. */
+.viewer-with-sides { display: grid; grid-template-rows: minmax(0, 1fr); grid-template-columns: 66px minmax(0, 1fr); flex: 1; min-width: 0; min-height: 0; overflow: hidden; }
+.viewer-with-sides.has-details { grid-template-columns: 66px minmax(0, 1fr) minmax(104px, 28%); }
+.viewer-with-sides > .viewer { height: 100%; min-width: 0; min-height: 0; overflow: hidden; }
+.preview-hud { min-width: 0; min-height: 0; overflow: auto; scrollbar-width: thin; background: var(--panel); }
+.preview-hud-left { display: flex; flex-direction: column; gap: 8px; padding: 6px; border-right: 1px solid var(--line); }
+.preview-hud-right { padding: 8px; border-left: 1px solid var(--line); overflow-wrap: anywhere; }
+.preview-sides { display: grid; gap: 4px; }
+.preview-sides button { min-width: 0; min-height: 29px; padding: 4px 2px; font-size: 11px; }
+.preview-sides button[aria-pressed=true] { color: var(--mint); background: #3e4943; border-color: var(--mint); }
+.preview-hud .fit3d { position: static; flex: 0 0 auto; min-height: 31px; margin-top: auto; padding: 4px 2px; font-size: 10px; }
+.preview-hud .preview-meta, .preview-hud .preview-error, .preview-hud .texture-warning { position: static; margin: 0 0 10px; padding: 0; font-size: 11px; }
+.preview-hud .axis-legend { display: grid; gap: 5px; padding: 0; margin-bottom: 10px; font-size: 10px; }
+.preview-hud .materials { padding: 0; max-height: none; overflow: visible; font-size: 10px; }
+.preview-hud .materials summary { font-size: 11px; }
+.preview-hud .materials div { align-items: start; }
+.preview-target-switch { display: flex; border: 1px solid var(--line); padding: 2px; gap: 2px; }
+.preview-target-switch button { border: 0; background: transparent; color: var(--muted); }
+.preview-panel .preview-target-switch button[aria-pressed=true] { background: var(--mint); color: #171717; font-weight: 750; }
+.copycat-preview-stage { container-type: inline-size; }
+@container (max-width: 380px) {
+  .viewer-with-sides { grid-template-columns: 52px minmax(0, 1fr); }
+  .viewer-with-sides.has-details { grid-template-columns: 52px minmax(0, 1fr) 98px; }
+  .preview-panel > .panel-heading { padding: 6px; gap: 4px; font-size: 12px; }
+  .preview-panel > .panel-heading .button-row { gap: 3px; }
+  .preview-panel .preview-target-switch button { font-size: 10px; padding: 3px 4px; }
+  .preview-hud-left { padding: 4px; }
+  .preview-hud-right { padding: 6px; }
+  .preview-sides button { font-size: 10px; }
+  .preview-hud .fit3d { font-size: 9px; padding: 4px 0; }
+}
 
 .transform-values { min-width: 0; margin: 10px 0; border: 1px solid var(--line); }
 .transform-value-row { display: flex; gap: 4px; align-items: end; margin: 8px 0; }

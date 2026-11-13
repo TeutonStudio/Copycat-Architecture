@@ -27,6 +27,7 @@ object BuildingStructureEditors {
             else blocks(ui("roof_knee_height"),c.knee16,0..2048) { c=c.copy(knee16=it) }
             hint(ui(if(c.mode==RoofMode.HEIGHT) "roof_height_mode_hint" else "roof_angle_mode_hint"))
             blocks(ui("roof_overhang"),c.overhang16,0..128) { c=c.copy(overhang16=it) }
+            if(c.form in setOf(RoofForm.GABLE,RoofForm.CROSS,RoofForm.PENT)) hint(ui("roof_overhang_hint"))
             choice(ui("roof_area"),c.area,listOf("")+graph().nodes.filter { it.kind==BuildingKind.AREA }.map { it.id },{ id -> if(id.isEmpty()) ui("roof_exposed_area") else graph().nodes.first { it.id==id }.name }) { c=c.copy(area=it) }
             val context=graph()
             val layouts=context.nodes.filter { it.kind==BuildingKind.ROOF_LAYOUT && node.id in it.inputs }.map { it.id }.toSet()

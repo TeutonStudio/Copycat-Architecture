@@ -131,13 +131,14 @@ object Roofs {
             require(c.slope.reduced() in family.slopes.map(RoofSlope::reduced) && (c.form!=RoofForm.MANSARD || c.upperSlope.reduced() in family.slopes.map(RoofSlope::reduced)) && family.thickness16 in 1..16) { "Roof family does not support this ratio" }
             val patches=patches(mask,c)
             val structuralRise=mask.flatMap { p->listOf(p.x*16 to p.z*16,(p.x+1)*16 to p.z*16,p.x*16 to (p.z+1)*16,(p.x+1)*16 to (p.z+1)*16,p.x*16+8 to p.z*16+8) }.maxOf { (x,z)->patches.maxOf { it.exactHeight(x,z) } }
-            val rise=if(c.form==RoofForm.PENT) structuralRise+Ratio(c.slope.p.toLong()*c.overhang16,c.slope.q.toLong()) else structuralRise
+            val rise=structuralRise
             val finished=rise+Ratio(family.thickness16.toLong())
             val knee=if(c.mode==RoofMode.HEIGHT) Ratio(c.height16.toLong())-finished else Ratio(c.knee16.toLong())
             require(knee.n>=0) { "Roof height needs at least ${ceil(finished.value())/16} blocks for this ratio and span" }
             require((knee+finished)<=Ratio(2048)) { "Roof exceeds 128 blocks above its storey" }
-            val e=ceil(c.overhang16/16.0).toInt()
-            val coverage=buildSet { for(p in mask) for(dx in -e..e) for(dz in -e..e) if(p+P(dx,0,dz) !in blocked) add(p+P(dx,0,dz)) }
+            val (overhangX,overhangZ)=overhangAxes(c)
+            val ex=ceil(overhangX/16.0).toInt();val ez=ceil(overhangZ/16.0).toInt()
+            val coverage=buildSet { for(p in mask) for(dx in -ex..ex) for(dz in -ez..ez) if(p+P(dx,0,dz) !in blocked) add(p+P(dx,0,dz)) }
             require(coverage.size<=8192) { "Roof exceeds 8192 cells" }
             Level(n,c,support,mask,coverage,patches,Ratio(support.ceiling16.toLong())+knee+Ratio(family.thickness16.toLong()),family,blocked,maximalRectangles(mask),Ratio(support.ceiling16.toLong())+knee+finished)
         }
@@ -530,17 +531,21 @@ object Roofs {
     }
     private fun clippedBody(l:Level,block:P,shift:Int=0):ExactVolume {
         var body=l.body(block,shift)
-        // Fractional eaves use the original wall line, not a rounded block dilation.
-        val e=l.c.overhang16
+        // Fractional extensions use the original wall line, not a rounded block dilation.
         val coverage=coverageVolume(l,block)
         body=body.intersect(coverage)
         return body
     }
+    /** Gabled and pent roofs extend parallel to the ridge, beyond their gable ends. */
+    private fun overhangAxes(c:RoofLevelConfig):Pair<Int,Int> = when(c.form) {
+        RoofForm.GABLE,RoofForm.CROSS,RoofForm.PENT -> if(c.axis%2==0) 0 to c.overhang16 else c.overhang16 to 0
+        else -> c.overhang16 to c.overhang16
+    }
     private fun coverageVolume(l:Level,block:P):ExactVolume {
-        val e=l.c.overhang16
-        return l.rectangles.filter { r->r.x*16-e<(block.x+1)*16+2 && (r.x+r.width)*16+e>block.x*16-2 && r.z*16-e<(block.z+1)*16+2 && (r.z+r.length)*16+e>block.z*16-2 }.fold(ExactVolume()) { v,r->
+        val (ex,ez)=overhangAxes(l.c)
+        return l.rectangles.filter { r->r.x*16-ex<(block.x+1)*16+2 && (r.x+r.width)*16+ex>block.x*16-2 && r.z*16-ez<(block.z+1)*16+2 && (r.z+r.length)*16+ez>block.z*16-2 }.fold(ExactVolume()) { v,r->
             val x=r.x*16-block.x*16;val z=r.z*16-block.z*16
-            v.union(ExactVolume.box(x-e,0,z-e,x+r.width*16+e,16,z+r.length*16+e))
+            v.union(ExactVolume.box(x-ex,0,z-ez,x+r.width*16+ex,16,z+r.length*16+ez))
         }
     }
 

@@ -3,7 +3,7 @@ loaderVersion="[5.10,6)"
 license="MIT"
 [[mods]]
 modId="copycat_architect"
-version="0.6.1"
+version="0.6.2"
 displayName="Create: Copycat Architect"
 authors="TeutonStudio"
 description='''Composite copycat shapes, building plans and survival turtle construction.'''

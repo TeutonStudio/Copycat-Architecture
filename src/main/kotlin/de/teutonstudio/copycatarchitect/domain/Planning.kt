@@ -191,7 +191,8 @@ object Generator {
             // Union the roof height field before creating the skin: no overlapping independent roofs.
             val heights=mutableMapOf<P,Int>()
             for(r in b.wings) {
-                for(x in r.x-b.overhang until r.x+r.width+b.overhang) for(z in r.z-b.overhang until r.z+r.length+b.overhang) {
+                val ex=if(b.ridge==0) 0 else b.overhang;val ez=if(b.ridge==0) b.overhang else 0
+                for(x in r.x-ex until r.x+r.width+ex) for(z in r.z-ez until r.z+r.length+ez) {
                     // Internal wing overhang is clipped at the shared footprint boundary.
                     if(b.wings.size==2 && z>=r.z+r.length && footprint(x,z)) continue
                     if(b.wings.size==2 && z<r.z && footprint(x,z)) continue
@@ -206,16 +207,16 @@ object Generator {
                 val a=if(b.ridge==0) p.x-r.x else p.z-r.z;val w=if(b.ridge==0) r.width else r.length
                 val ridge=a==w/2 && w%2==1
                 val rotation=if(b.ridge==0) (if(a<w/2) 3 else 1) else (if(a<w/2) 0 else 2)
-                for(t in 0 until b.roofThickness) resolver.add(Placement(P(p.x,eave+b.overhang+h+t,p.z),listOf(Part(if(ridge) "copycats:copycat_slab" else "copycats:copycat_stairs",rotation)),b.palette.getValue("roof"),component="roof"))
+                for(t in 0 until b.roofThickness) resolver.add(Placement(P(p.x,eave+h+t,p.z),listOf(Part(if(ridge) "copycats:copycat_slab" else "copycats:copycat_stairs",rotation)),b.palette.getValue("roof"),component="roof"))
                 // Seal the exposed vertical joint of the union height field between L wings.
                 if(p !in boundary && footprint(p.x,p.z)) for(d in dirs) {
                     val neighbor=heights[p+d] ?: continue
-                    if(footprint(p.x+d.x,p.z+d.z) && neighbor<h-1) for(y in eave+b.overhang+neighbor+1 until eave+b.overhang+h) {
+                    if(footprint(p.x+d.x,p.z+d.z) && neighbor<h-1) for(y in eave+neighbor+1 until eave+h) {
                         resolver.add(Placement(P(p.x,y,p.z),shape("full@1"),b.palette.getValue("roof"),component="roof"),true)
                     }
                 }
                 // Close exterior gables and the step at unequal wing widths with solid wall material.
-                if(p in boundary) for(y in eave until eave+b.overhang+h) put(P(p.x,y,p.z),"full@1","gable","gable")
+                if(p in boundary) for(y in eave until eave+h) put(P(p.x,y,p.z),"full@1","gable","gable")
             }
         }
         // Trim is mounted on the outside of boundary cells and cannot close openings.

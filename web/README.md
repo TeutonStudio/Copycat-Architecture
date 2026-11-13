@@ -1,4 +1,4 @@
-# Copycat Architect Graphstudio 0.6.1
+# Copycat Architect Graphstudio 0.6.2
 
 Browsereditor für Form- und Gebäudegraphen. Die Beispieldateien stammen aus
 [`examples/`](../examples). Die beiden Editoren verwalten getrennte Entwürfe.

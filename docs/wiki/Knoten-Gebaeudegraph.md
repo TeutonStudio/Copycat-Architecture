@@ -374,7 +374,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | `role` | Materialrolle der Gebäudepalette, etwa wall oder roof. | Vom Typ / Quellwert abhängig |
 | `roofType` | Älteres direktes Dach: flat oder gable; keine Dachlevel-Konfiguration. | `flat`, `gable` |
 | `ridge` | Ältere Firstrichtung: 0 entlang Z (Nord/Süd), 1 entlang X (Ost/West). | 0…1 |
-| `overhang` | Älterer Dachüberhang in ganzen Blöcken. | 0…2 |
+| `overhang` | Dachverlängerung in ganzen Blöcken. Beim Satteldach entlang des Firsts über die Giebelseiten; Mauern bleiben am Gebäudegrundriss. | 0…2 |
 | `roofConfig` | Deckungsfamilien, Varianten und Wandfüllung; [Unterfelder](Knoten-Eigenschaften.md#roofconfig). | Vom Typ / Quellwert abhängig |
 
 Weitere native Inspektoreinstellungen: `materialMode`.

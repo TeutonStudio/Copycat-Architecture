@@ -1238,7 +1238,9 @@ object BuildingGraphCompiler {
             requireDefinedRoof(roof)
             if(roof.assembly) return explicitRoof(roof)
             val r=Resolver()
-            val coverage=buildSet { for(p in footprint) for(dx in -roof.overhang..roof.overhang) for(dz in -roof.overhang..roof.overhang) add(p+P(dx,0,dz)) }
+            val ex=if(roof.roofType=="gable" && roof.ridge==0) 0 else roof.overhang
+            val ez=if(roof.roofType=="gable" && roof.ridge==1) 0 else roof.overhang
+            val coverage=buildSet { for(p in footprint) for(dx in -ex..ex) for(dz in -ez..ez) add(p+P(dx,0,dz)) }
             require(coverage.size<=8192) { "Roof exceeds 8192 cells" }
             val copies=copycats(roof)
             val ordered=coverage.sortedWith(compareBy({it.z},{it.x}))
@@ -1266,11 +1268,14 @@ object BuildingGraphCompiler {
                             else sourcePlacement(p+P(0,roofBase+h+t,0),source,"roof",turn.coerceAtLeast(0),if(roof.materialMode==MaterialMode.GROUPED) roof.role else ""))
                     }
                     val lowest=RoomGeometry.directions.minOf { heights[p+it]?.first ?: -1 }
-                    val explicitWall=RoomGeometry.directions.indices.any { q -> p+RoomGeometry.directions[q] !in coverage && roof.walls[q.toString()].orEmpty().isNotEmpty() }
-                    if(!explicitWall) for(y in (lowest+1).coerceAtLeast(0) until h) r.add(placement(p+P(0,roofBase+y,0),"full@1",if(lowest<0) "gable" else roof.role,if(lowest<0) "gable" else "roof"))
+                    val boundary=p in footprint && RoomGeometry.directions.any { p+it !in footprint }
+                    val explicitWall=RoomGeometry.directions.indices.any { q -> p+RoomGeometry.directions[q] !in footprint && roof.walls[q.toString()].orEmpty().isNotEmpty() }
+                    // Gable walls stay on the building perimeter; only the roof extends past them.
+                    if(boundary && !explicitWall) for(y in 0 until h) r.add(placement(p+P(0,roofBase+y,0),"full@1","gable","gable"))
+                    else if(!boundary && lowest>=0) for(y in lowest+1 until h) r.add(placement(p+P(0,roofBase+y,0),"full@1",roof.role,"roof"))
                 }
             }
-            for(edge in RoomGeometry.boundary(coverage)) {
+            for(edge in RoomGeometry.boundary(footprint)) {
                 val source=roof.walls[edge.direction.toString()].orEmpty();if(source.isEmpty()) continue
                 val s=segment(source);val normal=RoomGeometry.directions[edge.direction]
                 val cells=edge.cells.map { it+P(-normal.x,0,-normal.z) }

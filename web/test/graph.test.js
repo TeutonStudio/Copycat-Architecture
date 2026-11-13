@@ -191,3 +191,26 @@ test('plate previews use the connected footprint while independent room branches
     ? { ...node, rectangles: node.rectangles.map(rect => ({ ...rect, width: rect.width + 2 })), ceiling: '' } : node))
   assert.ok(previewGraph(true, altered, library, room.floor).count > full.count)
 })
+
+
+test('roof extension grows toward gables while fixed wall sources stay on the building', () => {
+  for (const ridge of [0, 1]) {
+    const doc = fixture('building-graph-assembly')
+    const roof = doc.graph.nodes.find(node => node.kind === 'ROOF')
+    Object.assign(roof, { ridge, overhang: 0, walls: Object.fromEntries((ridge === 0 ? ['0', '2'] : ['1', '3']).map(side => [side, 'gable_wall'])) })
+    const positions = plan => plan.meshes.filter(mesh => mesh.component === 'roof').flatMap(mesh => mesh.positions)
+    const gables = plan => plan.meshes.filter(mesh => mesh.component === 'gable')
+    const before = previewGraph(true, doc, library, '')
+    roof.overhang = 2
+    const exported = writeGraph('building', readGraph(doc, 'building'))
+    const after = previewGraph(true, exported, library, '')
+    const across = ridge === 0 ? 0 : 2
+    const along = ridge === 0 ? 2 : 0
+    const a = positions(before), b = positions(after)
+    assert.deepEqual(new Set(a.map(p => p[across])), new Set(b.map(p => p[across])))
+    assert.equal(Math.min(...b.map(p => p[along])), Math.min(...a.map(p => p[along])) - 2)
+    assert.equal(Math.max(...b.map(p => p[along])), Math.max(...a.map(p => p[along])) + 2)
+    assert.equal(Math.max(...b.map(p => p[1])), Math.max(...a.map(p => p[1])))
+    assert.deepEqual(gables(after), gables(before))
+  }
+})

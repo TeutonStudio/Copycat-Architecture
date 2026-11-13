@@ -244,8 +244,9 @@ object BuildingPorts {
             port(n,"edge:${e.id}",n.verticalEdges.orEmpty()[e.id].orEmpty(),i,1,n.height)
         } else emptyList()
 
-    fun of(n:BuildingNode,graph:BuildingGraph,expanding:Boolean=false)=of(graph.resolvedNode(n),expanding)
-    fun of(n:BuildingNode,expanding:Boolean=false):List<BuildingPort> = (when(n.kind) {
+    fun of(n:BuildingNode,graph:BuildingGraph,expanding:Boolean=false,includeInactive:Boolean=false)=of(graph.resolvedNode(n),expanding,includeInactive)
+    /** Inactive roof references remain stored and validated when the roof type or axis changes. */
+    fun of(n:BuildingNode,expanding:Boolean=false,includeInactive:Boolean=false):List<BuildingPort> = (when(n.kind) {
         BuildingKind.SEGMENT -> if(n.id=="empty_wall") emptyList() else {
             val assigned=n.effectiveRegionCopies()
             (if(n.assembly) listOf(port(n,"layout",n.layout)) else emptyList())+inputs(n,expanding)+
@@ -265,7 +266,9 @@ object BuildingPorts {
         BuildingKind.ELEVATOR_SHAFT -> listOf(port(n,"enclosure",n.elevatorShaft?.enclosure.orEmpty()))
         BuildingKind.SERVICE_SHAFT -> listOf(port(n,"enclosure",n.serviceShaft?.enclosure.orEmpty()))
         BuildingKind.ROOF -> if(n.assembly) listOf(port(n,"layout",n.layout))+inputs(n,expanding)
-            else inputs(n,expanding)+port(n,"roofPeak",n.roofPeak.orEmpty())+(0..3).map { port(n,"wall:$it",n.walls[it.toString()].orEmpty(),it) }
+            else inputs(n,expanding)+
+                (if(includeInactive || n.roofType=="gable") listOf(port(n.copy(roofType="gable"),"roofPeak",n.roofPeak.orEmpty())) else emptyList())+
+                (0..3).filter { includeInactive || n.roofType=="flat" || it%2==n.ridge }.map { port(n,"wall:$it",n.walls[it.toString()].orEmpty(),it) }
         BuildingKind.BUILDING -> {
             val levels=n.levels.keys+0+(if(expanding) setOf((n.levels.keys.maxOrNull() ?: 0)+1,(n.levels.keys.minOrNull() ?: 0)-1) else emptySet())
             val levelModel=GraphModels.buildingPort(n,"level:0")
@@ -384,13 +387,13 @@ object BuildingGraphCompiler {
             require(n.levelIds.isEmpty() || n.kind==BuildingKind.BUILDING && n.levelIds.keys.all { it in n.levels } && n.levelIds.values.distinct().size==n.levelIds.size) { "Invalid storey instance identities" }
             if(n.kind==BuildingKind.ROOF) require(n.roofType in listOf("flat","gable") && n.ridge in 0..1 && n.overhang in 0..2 && n.walls.keys.all { it in setOf("0","1","2","3") })
             require(n.finish.isEmpty() || n.kind==BuildingKind.FLOOR && n.finish in CARPETS && n.thickness>=2) { "Carpet floors need a structural layer below the carpet" }
-            for(p in BuildingPorts.of(n,graph)) if(p.source.isNotEmpty()) {
+            for(p in BuildingPorts.of(n,graph,includeInactive=true)) if(p.source.isNotEmpty()) {
                 val source=nodes[p.source] ?: error("Missing source for ${n.name.ifEmpty { n.kind.name }}")
                 require(source.kind in p.accepts) { "Incompatible ${source.kind} → ${n.kind} socket ${p.key}" }
             }
         }
         val done=mutableSetOf<String>();val active=mutableSetOf<String>()
-        fun visit(id:String) { if(id in done) return;require(active.add(id)) { "Cycle in building graph" };BuildingPorts.of(nodes.getValue(id),graph).filter { it.source.isNotEmpty() }.forEach { visit(it.source) };active.remove(id);done+=id }
+        fun visit(id:String) { if(id in done) return;require(active.add(id)) { "Cycle in building graph" };BuildingPorts.of(nodes.getValue(id),graph,includeInactive=true).filter { it.source.isNotEmpty() }.forEach { visit(it.source) };active.remove(id);done+=id }
         nodes.keys.forEach { visit(it) }
     }
     val CARPETS=listOf("white","orange","magenta","light_blue","yellow","lime","pink","gray","light_gray","cyan","purple","blue","brown","green","red","black").map { "minecraft:${it}_carpet" }
@@ -1275,6 +1278,7 @@ object BuildingGraphCompiler {
                 }
             }
             for(edge in RoomGeometry.boundary(coverage)) {
+                if(roof.roofType=="gable" && edge.direction%2!=roof.ridge) continue
                 val source=roof.walls[edge.direction.toString()].orEmpty();if(source.isEmpty()) continue
                 val s=segment(source);val normal=RoomGeometry.directions[edge.direction]
                 val cells=edge.cells.map { it+P(-normal.x,0,-normal.z) }

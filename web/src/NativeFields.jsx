@@ -12,7 +12,7 @@ const contextCarpets = model.carpets
 const Context = createContext({})
 const choiceLabels = { SEPARATED: 'Separiert', GROUPED: 'Gruppiert', NORMAL: 'Lokale Normale', FOOTPRINT: 'Aus Grundriss', SEGMENTS: 'Aus Segmenten', FLAT: 'Flachdach', PENT: 'Pultdach', GABLE: 'Satteldach', HIP: 'Walmdach', MANSARD: 'Mansarddach', HEIGHT: 'Firsthöhe', ANGLE: 'Dachneigung', rooms: 'Aus Räumen', walls: 'Aus Wänden', horizontal: 'Horizontal', vertical: 'Vertikal', depth: 'Tiefe', transform: 'Frei anordnen', flat: 'Flachdach', gable: 'Satteldach', AUTO: 'Automatisch', EXPLICIT: 'Explizit', OPEN: 'Offen', BOUNDARY: 'Raumgrenze', OPENING: 'Öffnung', STRUCTURE: 'Tragwerk', DECORATION: 'Dekoration' }
 const labels = {
-  coordinates: 'Koordinaten', layoutCells: 'Zellenbelegung', assembly: 'Expliziter Aufbau', depth: 'Tiefe',
+  roofType: 'Dachart', ridge: 'Firstrichtung', overhang: 'Dachüberhang', coordinates: 'Koordinaten', layoutCells: 'Zellenbelegung', assembly: 'Expliziter Aufbau', depth: 'Tiefe',
   regionCopies: 'Copycats je Bereich', roofLevel: 'Dachebene', roofConfig: 'Dachaufbau', levelIds: 'Geschosskennungen',
   stairwell: 'Treppenhaus', elevatorShaft: 'Aufzugsschacht', serviceShaft: 'Installationsschacht',
   accessInstances: 'Vertikale Erschließung', roomLayout: 'Raumanordnung', roomConfig: 'Raumaufbau', facade: 'Fassade',
@@ -73,6 +73,7 @@ function Value({ type, value, change, title, path = '', settings = {} }) {
     return pick((context.members[member]?.ports || []).filter(port => port.types.includes(type)).map(port => port.key))
   }
   if (base === 'Int' && path.endsWith('.sourceIndex') && context.node) return pick(context.node.kind === 'SEGMENT_LAYOUT' ? Array.from({ length: 16 }, (_, index) => ({ value: index, label: `Copycat ${index + 1}` })) : context.node.inputs.map((source, index) => ({ value: index, label: `${index + 1}: ${source || 'Nicht verbunden'}` })))
+  if (base === 'Int' && path === 'ridge') return pick([{ value: 0, label: 'Nord–Süd (Z)' }, { value: 1, label: 'Ost–West (X)' }])
   if (base === 'Int' && (path.endsWith('quarterTurns') || path === 'part.turn' || path === 'part.spin')) return pick([0, 1, 2, 3].map(value => ({ value, label: `${value * 90}°` })))
   if (choices && !optional) return pick(context.references?.[path] ? [{ value: '', label: 'Nicht verbunden' }, ...choices] : choices)
   if (base === 'String' && context.mode === 'building') {

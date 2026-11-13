@@ -44,9 +44,14 @@ object DiagramEdits {
         validate(original.nodes.map { it.id }.toSet(),positions,connections)
         val byId=positions.associateBy { it.id }
         require(original.resultNode().id in byId && "empty_wall" in byId) { "Keep the result and Empty wall source" }
-        val ports=original.nodes.associate { it.id to BuildingPorts.of(it,original,true).associateBy(BuildingPort::key) }
+        val ports=original.nodes.associate { it.id to BuildingPorts.of(it,original,true,includeInactive=true).associateBy(BuildingPort::key) }
         require(connections.all { it.port in ports.getValue(it.target) }) { "Unknown building input" }
-        val wires=connections.associateBy { it.target to it.port }
+        val wires=connections.associateBy { it.target to it.port }.toMutableMap()
+        for(n in original.nodes.filter { it.id in byId }) {
+            val visible=BuildingPorts.of(n,original,true).map { it.key }.toSet()
+            for(port in ports.getValue(n.id).values) if(port.key !in visible && port.source in byId && (n.id to port.key) !in wires)
+                wires[n.id to port.key]=DiagramConnection(port.source,n.id,port.key)
+        }
         val changed=GraphGroups.synchronize(original,original.copy(nodeGroups=GraphGroups.prune(original.nodeGroups,byId.keys),nodes=original.nodes.filter { it.id in byId }.map { n ->
             val p=byId.getValue(n.id);var next=n.copy(x=p.x,y=p.y)
             val changedPorts=ports.getValue(n.id).values.filter { port ->

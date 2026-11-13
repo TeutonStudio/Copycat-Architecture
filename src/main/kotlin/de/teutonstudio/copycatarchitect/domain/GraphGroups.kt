@@ -164,7 +164,7 @@ object GraphGroups {
                 require(connection.isEmpty() || buildingGraphType(nodes.getValue(connection).kind)==input.type) { "Incompatible building group instance connection" }
                 input.targets.forEach { target ->
                     val node=nodes.getValue(group.nodes[target.member])
-                    val port=BuildingPorts.of(node,graph,true).firstOrNull { it.key==target.port }
+                    val port=BuildingPorts.of(node,graph,true,includeInactive=true).firstOrNull { it.key==target.port }
                     require(port!=null && port.accepts.any { buildingGraphType(it)==input.type }) { "Incompatible building group input" }
                     require(port.source==connection) { "Connect named group inputs on the instance node" }
                 }

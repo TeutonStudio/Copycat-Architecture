@@ -54,4 +54,24 @@ class RoofPeakTest {
         assertNotEquals("peak",duplicated.roofPeak)
         assertEquals(BuildingKind.COPYCAT,copy.nodes.first { it.id==duplicated.roofPeak }.kind)
     }
+
+    @Test fun `roof type and ridge axis control visible sockets while inactive references stay validated`() {
+        val g=graph();val roof=g.nodes.first { it.id=="roof" }
+        fun keys(n:BuildingNode)=BuildingPorts.of(n,true).map { it.key }.toSet()
+        assertTrue("roofPeak" in keys(roof))
+        assertEquals(setOf("wall:0","wall:2"),keys(roof).filter { it.startsWith("wall:") }.toSet())
+        assertEquals(setOf("wall:1","wall:3"),keys(roof.copy(ridge=1)).filter { it.startsWith("wall:") }.toSet())
+        val flat=roof.copy(roofType="flat")
+        assertFalse("roofPeak" in keys(flat))
+        assertEquals(4,keys(flat).count { it.startsWith("wall:") })
+        assertTrue(BuildingPorts.of(flat,includeInactive=true).any { it.key=="roofPeak" })
+        assertFails { BuildingGraphCompiler.structure(g.replace(flat.copy(roofPeak="wall"))) }
+        val original=g.replace(flat)
+        val positions=original.nodes.map { DiagramPosition(it.id,it.x+10,it.y) }
+        val wires=original.nodes.flatMap { n->BuildingPorts.of(n,original).filter { it.source.isNotEmpty() }.map { DiagramConnection(it.source,n.id,it.key) } }
+        val moved=DiagramEdits.building(original,positions,wires)
+        assertEquals("peak",moved.nodes.first { it.id=="roof" }.roofPeak)
+        val deleted=DiagramEdits.building(original,positions.filter { it.id!="peak" },wires.filter { it.source!="peak" })
+        assertNull(deleted.nodes.first { it.id=="roof" }.roofPeak)
+    }
 }

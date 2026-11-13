@@ -20,3 +20,8 @@ Minecraft 1.21.1 · NeoForge 21.1.251 · Java 21.
 Enthält außerdem die inzwischen auf master hinzugekommenen optionalen
 Copycat-Dachspitzen und die nach Dachform und Firstachse wechselnden Anschlüsse.
 Gespeicherte, vorübergehend ausgeblendete Quellen bleiben dabei erhalten.
+
+Validierung: 572 Modprüfungen (2 übersprungen), 130 Browserprüfungen,
+aktualisierte native Quartiersreferenz und acht JVM–Browser–JVM-Austauschfälle.
+Der Rückimport wurde nach Erneuerung der Austauschdateien erfolgreich geprüft.
+Mod-JAR und Graphstudio-Produktionsbuild erfolgreich erstellt.

@@ -39,6 +39,7 @@ export function portName(port, node) {
     const family = node.kind === 'BUILDING' ? 'Außenanlage' : node.kind === 'ROOF_LAYOUT' ? 'Dachebene' : node.kind === 'ROOM_LAYOUT' || node.kind === 'PATTERN' || node.kind.startsWith('SEGMENT_') ? 'Segment' : node.kind === 'STOREY' ? 'Raum' : 'Copycat'
     return `${family} ${Number(key) + 1}`
   }
+  if (kind === 'wall' && node.kind === 'ROOF') return `${node.roofType === 'gable' ? 'Giebel' : 'Dachrand'} · ${['Nord', 'Ost', 'Süd', 'West'][Number(key)]}`
   if (kind === 'wall') return `Wand ${port.id.slice(5)}${port.length ? ` · ${port.length} B` : ''}`
   if (kind === 'level') return Number(key) === 0 ? 'Erdgeschoss' : `Geschoss ${Number(key) > 0 ? '+' : ''}${key}`
   if (kind === 'access') return `Zugang ${Number(key) + 1}`

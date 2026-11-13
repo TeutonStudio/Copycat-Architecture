@@ -1916,6 +1916,7 @@
               "COPYCAT_SYMMETRIC_DIFFERENCE"
             ],
             "when": {
+              "roofType": "gable",
               "assembly": {
                 "not": true
               }
@@ -1958,6 +1959,7 @@
             ]
           },
           "ridge": {
+            "when": { "roofType": "gable" },
             "min": 0,
             "max": 1
           },

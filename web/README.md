@@ -218,3 +218,10 @@ vorhanden sein. Ältere Mod-Builds kennen das neue Feld `roofPeak` noch nicht.
 `python3 tools/verify-roof-peak-browser.py --url http://127.0.0.1:4186` prüft
 Beispiel, Anschluss, Vorschau, Trennen, Undo/Redo und JSON-Export im
 Produktionsbuild. `--chromium` wählt den Browserpfad.
+
+Beim Wechsel zwischen Flach- und Satteldach aktualisieren sich nach **Übernehmen**
+Knotenanschlüsse, Kanten und Inspektor. Die Dachspitze erscheint nur am Satteldach;
+dessen Giebelanschlüsse folgen der Firstachse (Z: Nord/Süd, X: Ost/West).
+Beim Flachdach stehen die vier Dachränder für Rand-/Attikavorlagen bereit.
+Ausgeblendete Verbindungen bleiben für einen späteren Rückwechsel erhalten und
+werden beim Löschen ihrer Quellen bereinigt. Typ- und Gruppenprüfung bleiben aktiv.

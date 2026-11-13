@@ -57,6 +57,38 @@ with sync_playwright() as p:
     studio.get_by_role('button', name='Rückgängig', exact=True).click()
     expect(port).to_have_value('peak_copycat')
     expect(status).to_contain_text('Zinkeinheiten')
+    settings = studio.locator('.inspector .native-fields')
+    def apply_setting(label, value):
+        settings.get_by_label(label, exact=True).select_option(value)
+        settings.get_by_role('button', name='Übernehmen', exact=True).click()
+    apply_setting('Dachart', 'flat')
+    expect(port).to_have_count(0)
+    expect(roof.locator('[data-handleid="roofPeak"]')).to_have_count(0)
+    expect(settings.get_by_label('Firstrichtung', exact=True)).to_have_count(0)
+    for direction in ['Nord', 'Ost', 'Süd', 'West']:
+        expect(studio.get_by_label('Dachrand · ' + direction, exact=True)).to_be_visible()
+    assert peak(exported()) == 'peak_copycat'
+    # An unrelated edit must preserve the now hidden connection.
+    name = studio.get_by_label('Knotenname', exact=True)
+    name.fill('Dach nach Typwechsel')
+    name.press('Tab')
+    assert peak(exported()) == 'peak_copycat'
+    apply_setting('Dachart', 'gable')
+    expect(port).to_have_value('peak_copycat')
+    expect(roof.locator('[data-handleid="roofPeak"]')).to_have_count(1)
+    expect(studio.get_by_label('Giebel · Nord', exact=True)).to_be_visible()
+    expect(studio.get_by_label('Giebel · Süd', exact=True)).to_be_visible()
+    expect(studio.get_by_label('Giebel · Ost', exact=True)).to_have_count(0)
+    apply_setting('Firstrichtung', '1')
+    expect(studio.get_by_label('Giebel · Ost', exact=True)).to_be_visible()
+    expect(studio.get_by_label('Giebel · West', exact=True)).to_be_visible()
+    expect(studio.get_by_label('Giebel · Nord', exact=True)).to_have_count(0)
+    studio.get_by_role('button', name='Rückgängig', exact=True).click()
+    expect(studio.get_by_label('Giebel · Nord', exact=True)).to_be_visible()
+    studio.get_by_role('button', name='Wiederholen', exact=True).click()
+    expect(studio.get_by_label('Giebel · Ost', exact=True)).to_be_visible()
+    assert peak(exported()) == 'peak_copycat'
+    page.screenshot(path=str(args.artifacts / 'roof-type-axis.png'), full_page=True)
     assert not errors, errors
-    print('PASS: example, visible typed port, 3D preview, disconnect, Undo/Redo and JSON export')
+    print('PASS: roof type/axis update handles and inspector, hidden connections survive edits, Undo/Redo and export')
     browser.close()

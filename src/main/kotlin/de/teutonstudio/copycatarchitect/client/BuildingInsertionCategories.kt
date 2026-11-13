@@ -12,6 +12,8 @@ object BuildingInsertionCategories {
         BuildingKind.ROOM,BuildingKind.STOREY,BuildingKind.BUILDING -> "node_category_assembly"
         BuildingKind.ROOF_LEVEL,BuildingKind.ROOF_LAYOUT,BuildingKind.ROOF -> "node_category_roofs"
         BuildingKind.STAIRWELL,BuildingKind.ELEVATOR_SHAFT,BuildingKind.SERVICE_SHAFT -> "node_category_access"
+        BuildingKind.BAY_WINDOW -> "node_category_special_rooms"
+        BuildingKind.DORMER -> "node_category_roofs"
         BuildingKind.GARDEN,BuildingKind.PATH -> "node_category_landscape"
     }
 }

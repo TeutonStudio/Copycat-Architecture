@@ -93,8 +93,8 @@ class PrinterStorageScreen(private val parent:Screen?=null,private val storage:P
         if(values.none { it.key==selected }) selected=values.firstOrNull()?.key.orEmpty()
         first=first.coerceIn(0,(values.size-rows).coerceAtLeast(0))
         clearWidgets();resetDropdown()
-        button(width-76,3,68,"close") { onClose() }
-        if(view?.placed==true) button(width-157,3,77,"ps_graph") { ClientState.send(Command("printerGraph")) }
+        button(width-76,5,68,"close") { onClose() }
+        if(view?.placed==true) button(width-157,5,77,"ps_graph") { ClientState.send(Command("printerGraph")) }
         val a=archive
         val half=(a.w-24)/2
         (button(a.x+10,a.y+28,half,"ps_history") { if(saved) { saved=false;selected="";first=0;refresh() } } as EditorButton).selected=!saved
@@ -208,7 +208,7 @@ class PrinterStorageScreen(private val parent:Screen?=null,private val storage:P
             val entry=values.getOrNull(first+row) ?: break;val top=area.y+row*rowHeight
             val hovered=mx in area.x until area.x+area.w && my in top until top+rowHeight
             val isSelected=entry.key==selected
-            g.fill(area.x,top,area.x+area.w,top+rowHeight-1,when { isSelected->0xff46533b.toInt();hovered->0xff354631.toInt();row%2==0->0xff233425.toInt();else->ArchitectTheme.well })
+            g.fill(area.x,top,area.x+area.w,top+rowHeight-1,when { isSelected->ArchitectTheme.selected;hovered->ArchitectTheme.hovered;row%2==0->ArchitectTheme.alternate;else->ArchitectTheme.well })
             if(isSelected) { g.fill(area.x,top,area.x+2,top+rowHeight-1,ArchitectTheme.brass);g.fill(area.x+area.w-4,top+4,area.x+area.w-2,top+7,ArchitectTheme.green) }
             val textX=area.x+if(compact) 7 else 32
             if(!compact) label(g,(first+row+1).toString().padStart(2,'0'),area.x+8,top+9,if(isSelected) ArchitectTheme.brass else ArchitectTheme.disabled)

@@ -60,17 +60,6 @@ import org.lwjgl.glfw.GLFW
 import kotlin.math.roundToInt
 
 /** A view projection only. The editor's domain objects remain the sole saved document. */
-data class KilaNode(val id:String,val title:String,val x:Int,val y:Int,val inputs:List<String>,
-                    val output:Boolean=true,val deletable:Boolean=true,
-                    val inputTypes:List<String> = emptyList(),val outputType:String="shape",val source:String="",val discCut:Int=0,val part:Part?=null,
-                    val rotatable:Boolean=false,val rotationAxis:RotationAxis=RotationAxis.NORMAL,val accent:Int?=null,
-                    val previewExpandedByDefault:Boolean=false,val outputs:List<KilaOutput> = emptyList(),val sourceLabel:String="")
-data class KilaOutput(val label:String,val type:String)
-fun KilaNode.outputPorts():List<KilaOutput> = outputs.ifEmpty { if(output) listOf(KilaOutput(" ",outputType)) else emptyList() }
-private fun outputPortId(slot:Int)=if(slot==0) "out" else "out$slot"
-private fun outputPortSlot(id:String)=if(id=="out") 0 else id.removePrefix("out").toIntOrNull()
-data class KilaLink(val source:String,val target:String,val slot:Int,val sourceSlot:Int=0)
-data class KilaGraphData(val nodes:List<KilaNode>,val links:List<KilaLink>,val nodeGroups:List<GraphGroup> = emptyList())
 data class KilaInsertion(val label:String,val category:String="",val icon:String="",val insert:(Int,Int)->Unit)
 
 /** Native LDLib surfaces use the same integer-pixel casing as the surrounding Minecraft widgets. */
@@ -118,8 +107,8 @@ private object KilaPortTypes {
                 "rotation" -> ArchitectTheme.brass
                 "WALL","FLOOR","CEILING","SEGMENT_LAYOUT" -> 0xffff8a27.toInt()
                 "ROOM_GEOMETRY" -> 0xff74b4cf.toInt()
-                "ROOF_LAYOUT","ROOF" -> 0xffb77865.toInt()
-                "ROOM" -> 0xff21b15b.toInt()
+                "ROOF_LAYOUT","ROOF","DORMER" -> 0xffb77865.toInt()
+                "ROOM","BAY_WINDOW" -> 0xff21b15b.toInt()
                 "STOREY" -> 0xffeeeeee.toInt()
                 else -> ArchitectTheme.green
             })
@@ -143,7 +132,8 @@ class KilaGraphState {
 
 /**
  * Embeds KilaGraph's real canvas in the existing Minecraft screen. Only supported domain
- * operations are offered; unsupported LDLib variables, subgraphs and resource saving are absent.
+ * operations are offered; group graphs use typed domain interfaces, while LDLib variables
+ * and its resource saving remain absent.
  * Every completed command is projected back to the screen's existing validation/undo path.
  */
 class KilaGraphEditor(x:Int,y:Int,w:Int,h:Int,screen:Screen,private val state:KilaGraphState,
@@ -158,7 +148,8 @@ class KilaGraphEditor(x:Int,y:Int,w:Int,h:Int,screen:Screen,private val state:Ki
                       private val previewSurfaces:()->Map<String,String> ={ emptyMap() },
                       private val buildingNodePreview:((String)->BuildingNodePreview?)?=null,
                       private val instantiateGroup:(String)->Unit={},private val previewMaterials:()->Boolean={true},
-                      private val dataRevision:(()->Any?)?=null,private val previewAvailable:(String)->Boolean={true})
+                      private val dataRevision:(()->Any?)?=null,private val previewAvailable:(String)->Boolean={true},
+                      private val openGroup:((String)->Unit)?=null,private val groupScope:String?=null)
     :AbstractWidget(x,y,w,h,Component.literal("KilaGraph")) {
     private var loadedRevision=dataRevision?.invoke()
     private var loaded=data()
@@ -170,7 +161,9 @@ class KilaGraphEditor(x:Int,y:Int,w:Int,h:Int,screen:Screen,private val state:Ki
     private var pendingPreview:String?=null
     private var pendingGroupAction:(()->Unit)?=null
     private var groupToggleAnchor:Pair<String,Pair<Double,Double>>?=null
-    private lateinit var projection:KilaGroupProjection
+    private lateinit var projection:KilaProjection
+    private fun project(value:KilaGraphData):KilaProjection=if(groupScope!=null) KilaGroupGraphProjection(value,groupScope)
+        else KilaGroupProjection(value,if(openGroup==null) state.expandedGroups else emptySet())
     private var forceReload=false
     private var refreshAfterCommand=false
     private val models=linkedMapOf<String,NodeModel>()
@@ -235,7 +228,7 @@ class KilaGraphEditor(x:Int,y:Int,w:Int,h:Int,screen:Screen,private val state:Ki
     init {
         canvas.layout { it.positionType(TaffyPosition.ABSOLUTE).left(x.toFloat()).top(y.toFloat()).width(w.toFloat()).height(h.toFloat()) }
         // Our bounded documents remain editable at overview zoom; keep their titles and sockets visible.
-        canvas.graphView.graphViewStyle { it.lodEnabled(false).gridSize(24f).gridLineWidth(1f).gridLineColor(ArchitectTheme.grid).gridAccentColor(0xff43563d.toInt()) }
+        canvas.graphView.graphViewStyle { it.lodEnabled(false).gridSize(24f).gridLineWidth(1f).gridLineColor(ArchitectTheme.grid).gridAccentColor(ArchitectTheme.gridAccent) }
         Style.importantPipeline(canvas.style) { it.backgroundTexture(ColorRectTexture(ArchitectTheme.blueprint)) }
         Style.importantPipeline(canvas.graphView.style) { it.backgroundTexture(ColorRectTexture(ArchitectTheme.blueprint)) }
         canvas.header.setDisplay(false)
@@ -304,7 +297,7 @@ class KilaGraphEditor(x:Int,y:Int,w:Int,h:Int,screen:Screen,private val state:Ki
         models.clear();ids.clear();sourceButtons.clear();rotationButtons.clear();previewElements.clear();previewButtons.clear();groupButtons.clear()
         loaded=value
         loadedNodes=value.nodes.associateBy(KilaNode::id)
-        projection=KilaGroupProjection(value,state.expandedGroups)
+        projection=project(value)
         val visible=projection.display
         val graph=ViewGraph()
         visible.nodes.forEach { n ->
@@ -338,11 +331,11 @@ class KilaGraphEditor(x:Int,y:Int,w:Int,h:Int,screen:Screen,private val state:Ki
             }
             if(element!=null && projection.groupForView(n.id)!=null) {
                 val group=checkNotNull(projection.groupForView(n.id))
-                val toggle=KilaButton().setText(ui(if(group.id in state.expandedGroups) "collapse_node_group" else "expand_node_group"))
+                val toggle=KilaButton().setText(ui(if(openGroup!=null) "open_group_graph" else if(group.id in state.expandedGroups) "collapse_node_group" else "expand_node_group"))
                 toggle.layout { it.height(20f).marginHorizontal(5f).marginVertical(4f) }
                 machineButton(toggle,true)
                 toggle.style { it.tooltips(Component.literal("${group.name} · ${ui("group_definition")}")) }
-                toggle.setOnClick { event -> pendingGroupAction={ toggleGroup(group.id) };event.stopPropagation() }
+                toggle.setOnClick { event -> pendingGroupAction={ if(openGroup!=null) openGroup.invoke(group.id) else toggleGroup(group.id) };event.stopPropagation() }
                 element.addChild(toggle);groupButtons[group.id]=toggle
             }
             if(element!=null && (n.source.isNotEmpty() || n.sourceLabel.isNotEmpty())) {
@@ -372,7 +365,7 @@ class KilaGraphEditor(x:Int,y:Int,w:Int,h:Int,screen:Screen,private val state:Ki
                 }
                 element.addChild(rotations)
             }
-            if(element!=null && projection.groupForView(n.id)==null && (nodePreview!=null || buildingNodePreview!=null) && previewAvailable(n.id)) {
+            if(element!=null && !n.id.startsWith("@") && projection.groupForView(n.id)==null && (nodePreview!=null || buildingNodePreview!=null) && previewAvailable(n.id)) {
                 val toggle=KilaButton().setText(previewLabel(n.id))
                 toggle.layout { it.height(18f).marginHorizontal(5f).marginBottom(3f) }
                 machineButton(toggle,true)
@@ -436,7 +429,7 @@ class KilaGraphEditor(x:Int,y:Int,w:Int,h:Int,screen:Screen,private val state:Ki
         }) return false
 
         // Group proxies are derived positions, so update them along with their visible members.
-        projection=KilaGroupProjection(value,state.expandedGroups)
+        projection=project(value)
         loaded=value
         loadedNodes=value.nodes.associateBy(KilaNode::id)
         for(node in projection.display.nodes) {
@@ -461,13 +454,14 @@ class KilaGraphEditor(x:Int,y:Int,w:Int,h:Int,screen:Screen,private val state:Ki
     }
 
     private fun appendGroupMenu(menu:TreeBuilder.Menu) {
+        if(groupScope!=null) return
         if(!readOnly && groupableSelection().isNotEmpty()) {
             menu.leaf(tr("create_node_group")) { pendingGroupAction={ createGroup() } }
         }
         selectedGroups().forEach { group ->
             menu.branch(Component.literal(group.name)) { branch ->
-                branch.leaf(tr(if(group.id in state.expandedGroups) "collapse_node_group" else "expand_node_group")) {
-                    pendingGroupAction={ toggleGroup(group.id) }
+                branch.leaf(tr(if(openGroup!=null) "open_group_graph" else if(group.id in state.expandedGroups) "collapse_node_group" else "expand_node_group")) {
+                    pendingGroupAction={ if(openGroup!=null) openGroup.invoke(group.id) else toggleGroup(group.id) }
                 }
                 if(!readOnly) {
                     branch.leaf(tr("rename_node_group")) { pendingGroupAction={ renameGroup(group) } }
@@ -492,7 +486,8 @@ class KilaGraphEditor(x:Int,y:Int,w:Int,h:Int,screen:Screen,private val state:Ki
         val members=groupableSelection()
         if(readOnly || members.isEmpty()) return
         EditorValueInput.text(tr("node_group_name"),ui("node_group"),48) { name ->
-            commitGroups(loaded.nodeGroups+GraphGroup(UUID.randomUUID().toString(),name,members))
+            val group=GraphGroup(UUID.randomUUID().toString(),name,members)
+            commitGroups(loaded.nodeGroups+GroupGraphInterfaces.initialize(loaded,group))
         }
     }
     private fun renameGroup(group:GraphGroup) {
@@ -627,7 +622,8 @@ class KilaGraphEditor(x:Int,y:Int,w:Int,h:Int,screen:Screen,private val state:Ki
     fun selectNode(id:String,reveal:Boolean=false) {
         state.inspectorSelection=id
         // Selecting a member from the inspector reveals it instead of selecting its folded proxy.
-        if(reveal && !id.startsWith("@group:")) projection.groupForView(projection.viewIdForNode(id))?.let { group ->
+        if(reveal && openGroup!=null && groupScope==null) projection.groupForView(projection.viewIdForNode(id))?.let { group -> openGroup.invoke(group.id);return }
+        if(reveal && openGroup==null && !id.startsWith("@group:")) projection.groupForView(projection.viewIdForNode(id))?.let { group ->
             state.expandedGroups.add(group.id);load(loaded)
         }
         val viewId=projection.viewIdForNode(id)
@@ -809,9 +805,7 @@ class KilaGraphEditor(x:Int,y:Int,w:Int,h:Int,screen:Screen,private val state:Ki
             restoreNavigation=false
         }
         styleMenus()
-        GraphPreviewThumbnails.beginFrame()
         ui.widget.render(graphics,mouseX,mouseY,partialTick)
-        GraphPreviewThumbnails.endFrame(graphics)
         groupToggleAnchor?.let { (id,anchor) ->
             groupTogglePoint(id)?.let { point ->
                 // Keep the navigation button under the pointer when the expanded header
@@ -834,6 +828,7 @@ class KilaGraphEditor(x:Int,y:Int,w:Int,h:Int,screen:Screen,private val state:Ki
     }
 
     private fun drawGroupFrames(graphics:GuiGraphics) {
+        if(openGroup!=null || groupScope!=null) return
         loaded.nodeGroups.filter { it.id in state.expandedGroups }.forEach { group ->
             val elements=(group.nodes+projection.groupViewId(group.id)).mapNotNull { id -> models[id]?.let { canvas.getModelElement(it) } }
             if(elements.isEmpty()) return@forEach

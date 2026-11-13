@@ -26,6 +26,24 @@ class BuildingGraphView {
     val previewYaws=mutableMapOf<String,Float>()
 }
 object BuildingScene {
+    private data class PreviewStyle(val yaw:Float,val filter:String)
+
+    internal fun drawCached(g:GuiGraphics,plan:Plan,x:Int,y:Int,w:Int,h:Int,yaw:Float,filter:String="all") {
+        GraphPreviewThumbnails.draw(g,x,y,w,h,plan,PreviewStyle(yaw,filter)) {
+            val shown=if(filter=="all") plan else plan.copy(placements=plan.placements.filter {
+                if(filter=="walls") it.component in listOf("wall","corner","trim","gable") else it.component==filter
+            })
+            val renderScene=if(shown.placements.isEmpty()) null
+                else thumbnail(shown,BuildingPreviewViewport(0,0,w,h),yaw,neighbors=plan.placements.associateBy { it.pos })
+            var first=true
+            val render:(GuiGraphics)->Boolean={ target ->
+                if(first) { ArchitectTheme.inset(target,0,0,w,h,ArchitectTheme.blueprint);first=false }
+                renderScene?.invoke(target) ?: true
+            }
+            render
+        }
+    }
+
     fun draw(g:GuiGraphics,plan:Plan,x:Int,y:Int,w:Int,h:Int,yaw:Float,filter:String="all",projection:String="3d") {
         val cells=if(filter=="all") plan.placements else plan.placements.filter {
             if(filter=="walls") it.component in listOf("wall","corner","trim","gable") else it.component==filter
@@ -40,14 +58,14 @@ object BuildingScene {
         else -> Quaternionf().rotationX(Math.toRadians(25.0).toFloat()).rotateY(Math.toRadians(yaw.toDouble()).toFloat())
     }
 
-    internal fun thumbnail(plan:Plan,viewport:BuildingPreviewViewport): (GuiGraphics)->Boolean {
-        val rotation=orientation(35f,"3d")
+    internal fun thumbnail(plan:Plan,viewport:BuildingPreviewViewport,yaw:Float=35f,projection:String="3d",neighbors:Map<P,Placement> = plan.placements.associateBy { it.pos }): (GuiGraphics)->Boolean {
+        val rotation=orientation(yaw,projection)
         val x=rotation.transform(Vector3f(1f,0f,0f)).z
         val y=rotation.transform(Vector3f(0f,1f,0f)).z
         val z=rotation.transform(Vector3f(0f,0f,1f)).z
         // Paint from back to front across batches. The full neighbor index remains available for CT.
         val cells=plan.placements.sortedBy { x*it.pos.x+y*it.pos.y+z*it.pos.z }
-        val scene=Scene(cells,plan.placements.associateBy { it.pos },rotation)
+        val scene=Scene(cells,neighbors,rotation)
         var next=0
         return { graphics ->
             next=scene.draw(graphics,viewport,next,thumbnail=true)
@@ -103,7 +121,7 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
     private val onCreateRole:(String)->Unit={},private val preview:(()->Result<CompiledBuilding>?)?=null,
     private val readOnly:Boolean=false,private val definitionKinds:Set<BuildingKind>?=null,
     private val onSelectDefinition:((String)->Unit)?=null,
-    private val onSelectMaterial:((String,String)->Unit)?=null):AbstractWidget(x,y,w,h,tr("building_graph")) {
+    private val onSelectMaterial:((String,String)->Unit)?=null,private val allowedNodes:(()->Set<String>)?=null):AbstractWidget(x,y,w,h,tr("building_graph")) {
     private val font get()=Minecraft.getInstance().font
     private val graph get()=definition().graph!!
     private var oldBuilding:Building?=null;private var oldLibrary:Library?=null;private var oldRecipes=0;private var evaluator:Result<BuildingGraphCompiler.Evaluation>?=null;private var compiled:Result<CompiledBuilding>?=null
@@ -115,7 +133,7 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
         set(value) { view.inspectorScroll=value }
     private var pointerX=Double.NEGATIVE_INFINITY;private var pointerY=Double.NEGATIVE_INFINITY
     private val selected get()=graph.nodes.firstOrNull { it.id==view.selected } ?: graph.nodes.first()
-    private val nodePreview get()=inspector && selected.kind in (SegmentBooleans.kinds+CopycatBooleans.kinds) || inspector && selected.kind in setOf(BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.ROOM_LAYOUT,BuildingKind.ROOM,BuildingKind.STOREY,BuildingKind.ROOF,BuildingKind.ROOF_LAYOUT,BuildingKind.ROOF_LEVEL,BuildingKind.STAIRWELL,BuildingKind.ELEVATOR_SHAFT,BuildingKind.SERVICE_SHAFT,BuildingKind.GARDEN,BuildingKind.PATH)
+    private val nodePreview get()=inspector && selected.kind in (SegmentBooleans.kinds+CopycatBooleans.kinds+setOf(BuildingKind.BAY_WINDOW,BuildingKind.DORMER,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.ROOM_LAYOUT,BuildingKind.ROOM,BuildingKind.STOREY,BuildingKind.ROOF,BuildingKind.ROOF_LAYOUT,BuildingKind.ROOF_LEVEL,BuildingKind.STAIRWELL,BuildingKind.ELEVATOR_SHAFT,BuildingKind.SERVICE_SHAFT,BuildingKind.GARDEN,BuildingKind.PATH))
     private val previewHeader get()=35
     private val inspectorWidth get()=width
     private val scale get()=if(inspector) minOf(1.0,(inspectorWidth-28.0)/nodeWidth(selected)).coerceAtLeast(0.2) else view.zoom
@@ -174,9 +192,9 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
     private fun drawNodePreview(g:GuiGraphics,mx:Int,my:Int) {
         for(mode in listOf("2d","3d")) previewViewport(mode)?.let { viewport ->
             if(viewport.y+viewport.height<=y+previewHeader || viewport.y>=y+height) return@let
-            val sample=selected.kind==BuildingKind.ROOF && evaluation().getOrNull()?.let { runCatching { it.roofPreviewUsesSample(selected.id) }.getOrDefault(false) }==true
+            val sample=selected.kind in setOf(BuildingKind.BAY_WINDOW,BuildingKind.DORMER) || selected.kind==BuildingKind.ROOF && evaluation().getOrNull()?.let { runCatching { it.roofPreviewUsesSample(selected.id) }.getOrDefault(false) }==true
             val footprint=if(selected.kind==BuildingKind.ROOM && mode=="2d") evaluation().getOrNull()?.let { runCatching { it.room(selected.id).footprint }.getOrNull() }.orEmpty() else emptySet()
-            BuildingPreviewRenderer.draw(g,viewport,selected,previewPlan(),mode,previewYaw(),sample,footprint)
+            BuildingPreviewRenderer.drawCached(g,viewport,selected,previewPlan(),mode,previewYaw(),sample,footprint)
         }
     }
     private fun shown(n:BuildingNode):BuildingNode { val actual=moving?.takeIf { it.id==n.id } ?: n;return if(inspector) actual.copy(x=0,y=0) else actual }
@@ -190,7 +208,7 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
     private fun body(n:BuildingNode)=(if(mapFirst(n) || ports(n).isEmpty()) 29 else 45+ports(n).size*19)+(if(n.kind==BuildingKind.STOREY) 22 else 0)
     private fun copycatGroups(n:BuildingNode)=library().forms[n.form]?.groups ?: DEFAULT_GROUPS
     private fun copycatMaterialEnd(n:BuildingNode)=44+22*copycatGroups(n).size
-    private fun details(n:BuildingNode)=when(layoutKind(n)) { BuildingKind.ROTATION,BuildingKind.MIRRORING->72; BuildingKind.GARDEN->440;BuildingKind.PATH->396;BuildingKind.COPYCAT->copycatMaterialEnd(n)+(if(n.surfaces.isNullOrEmpty()) 68 else 90);BuildingKind.COPYCAT_ROTATE->160;BuildingKind.SEGMENT_ROTATE->187;BuildingKind.COPYCAT_MIRROR->140;BuildingKind.SEGMENT_LAYOUT->252;BuildingKind.ROOM_LAYOUT->136;BuildingKind.AREA->246;BuildingKind.ROOM_GEOMETRY->272;BuildingKind.ROOF_LAYOUT->90;BuildingKind.ROOF_LEVEL->160;BuildingKind.STAIRWELL,BuildingKind.ELEVATOR_SHAFT,BuildingKind.SERVICE_SHAFT->120;BuildingKind.SEGMENT->209;BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE->120;BuildingKind.PATTERN->181;BuildingKind.SEGMENT_MIRROR->206;BuildingKind.FLOOR,BuildingKind.CEILING->158;BuildingKind.ROOM->if(n.kind==BuildingKind.STOREY) 444 else 341;BuildingKind.STOREY->392;BuildingKind.ROOF->160;BuildingKind.BUILDING->332 }
+    private fun details(n:BuildingNode)=when(layoutKind(n)) { BuildingKind.ROTATION,BuildingKind.MIRRORING->72;BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE->120; BuildingKind.BAY_WINDOW,BuildingKind.DORMER->120; BuildingKind.GARDEN->440;BuildingKind.PATH->396;BuildingKind.COPYCAT->copycatMaterialEnd(n)+(if(n.surfaces.isNullOrEmpty()) 68 else 90);BuildingKind.COPYCAT_ROTATE->160;BuildingKind.SEGMENT_ROTATE->187;BuildingKind.COPYCAT_MIRROR->140;BuildingKind.SEGMENT_LAYOUT->252;BuildingKind.ROOM_LAYOUT->136;BuildingKind.AREA->246;BuildingKind.ROOM_GEOMETRY->272;BuildingKind.ROOF_LAYOUT->90;BuildingKind.ROOF_LEVEL->198;BuildingKind.STAIRWELL,BuildingKind.ELEVATOR_SHAFT,BuildingKind.SERVICE_SHAFT->120;BuildingKind.SEGMENT->209;BuildingKind.PATTERN->181;BuildingKind.SEGMENT_MIRROR->206;BuildingKind.FLOOR,BuildingKind.CEILING->158;BuildingKind.ROOM->if(n.kind==BuildingKind.STOREY) 444 else 389;BuildingKind.STOREY->392;BuildingKind.ROOF->160;BuildingKind.BUILDING->332 }
     fun nodeHeight(n:BuildingNode)=body(n)+details(n)+(if(mapFirst(n)) ports(n).size*19 else 0)
     private fun nx(mx:Double)=(mx-x-panX)/scale
     private fun ny(my:Double)=(my-y-panY)/scale
@@ -210,7 +228,7 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
         text(g,font.plainSubstrByWidth(if(marker) s.dropLast(2) else s,w-if(dropdown) 19 else 9),x+5,y+5,if(readOnly) ArchitectTheme.disabled else ArchitectTheme.text)
         if(dropdown) text(g,"▾",x+w-11,y+5,ArchitectTheme.brass)
     }
-    private fun color(k:BuildingKind)=when(k) { BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.SEGMENT_LAYOUT->0xffff8a27.toInt();BuildingKind.AREA,BuildingKind.ROOM_GEOMETRY,BuildingKind.ROOM_LAYOUT->0xff74b4cf.toInt();BuildingKind.ROOF_LAYOUT->0xffb77865.toInt();BuildingKind.ROOM,BuildingKind.GARDEN->0xff21b15b.toInt();BuildingKind.PATH->0xffc8a46a.toInt();BuildingKind.STOREY->0xffeeeeee.toInt();BuildingKind.ROOF->0xffb77865.toInt();else->ArchitectTheme.green }
+    private fun color(k:BuildingKind)=when(k) { BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.SEGMENT_LAYOUT->0xffff8a27.toInt();BuildingKind.AREA,BuildingKind.ROOM_GEOMETRY,BuildingKind.ROOM_LAYOUT->0xff74b4cf.toInt();BuildingKind.ROOF_LAYOUT,BuildingKind.DORMER->0xffb77865.toInt();BuildingKind.ROOM,BuildingKind.GARDEN->0xff21b15b.toInt();BuildingKind.PATH->0xffc8a46a.toInt();BuildingKind.STOREY->0xffeeeeee.toInt();BuildingKind.ROOF->0xffb77865.toInt();else->ArchitectTheme.green }
     fun fit() {
         if(inspector) { inspectorScroll=0.0;return }
         val a=graph.nodes.minOf { it.x };val b=graph.nodes.minOf { it.y };val width=graph.nodes.maxOf { it.x+nodeWidth(it) }-a+50;val height=graph.nodes.maxOf { it.y+nodeHeight(it) }-b+50
@@ -239,6 +257,10 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
         }
     }
     private fun safe(action:()->Unit) { try { action() } catch(e:Exception) { failure(e.message ?: "Invalid building graph") } }
+    private fun openSpecialPlacement(n:BuildingNode) {
+        val lib=library();val palette=definition().palette
+        SpecialPlacementScreen.open(n,graph,{ context -> BuildingGraphCompiler.Evaluation(context,palette,lib.forms,lib.modules) }) { edit(it) }
+    }
     private fun edit(n:BuildingNode) { if(readOnly) return;val original=graph.nodes.first { it.id==n.id };val changed=graph.replace(if(inspector) n.copy(x=original.x,y=original.y) else n);BuildingGraphCompiler.structure(changed);commit(changed) }
     fun connect(source:String,target:String,key:String):Boolean = if(readOnly) false else try {
         var changed=graph.connect(target,key,source)
@@ -503,6 +525,10 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
                     layoutMap(g,n,by+92)
                     font.split(tr("bg_layout_cell_format"),w-16).forEachIndexed { i,line -> g.drawString(font,line,n.x+8,by+226+i*11,ArchitectTheme.muted,false) }
                 }
+                BuildingKind.BAY_WINDOW,BuildingKind.DORMER -> {
+                    row(g,ui("special_definition_settings"),n.x+8,by,w-16)
+                    text(g,ui("special_sample_hint"),n.x+8,by+28,ArchitectTheme.muted)
+                }
                 BuildingKind.ROOM_LAYOUT -> {
                     row(g,ui("semantic_layout_edit"),n.x+8,by,w-16)
                     row(g,"+ ${ui("input")}",n.x+8,by+22,94);row(g,"− ${ui("input")}",n.x+108,by+22,94)
@@ -533,6 +559,8 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
                     font.split(Component.literal(BuildingStructureEditors.slopeLabel(c.slope)),w-16).forEachIndexed { i,line -> g.drawString(font,line,n.x+8,by+44+i*12,ArchitectTheme.text,false) }
                     text(g,ui("roof_repeat",c.slope.q,c.slope.p),n.x+8,by+76,ArchitectTheme.muted)
                     text(g,ui("roof_mode_"+c.mode.name.lowercase()),n.x+8,by+96,ArchitectTheme.text)
+                    row(g,ui("dormer_instances"),n.x+8,by+132,w-16)
+                    row(g,ui("special_place_instances"),n.x+8,by+154,w-16)
                     font.split(Component.literal(BuildingStructureEditors.storeyLabel(graph,c.storey)),w-16).forEachIndexed { i,line -> g.drawString(font,line,n.x+8,by+115+i*12,ArchitectTheme.muted,false) }
                 }
                 BuildingKind.STAIRWELL,BuildingKind.ELEVATOR_SHAFT,BuildingKind.SERVICE_SHAFT -> {
@@ -607,6 +635,10 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
                     }
                 }
                 BuildingKind.ROOM -> {
+                    if(n.kind==BuildingKind.ROOM) {
+                        row(g,ui("bay_instances"),n.x+8,by+340,w-16)
+                        row(g,ui("special_place_instances"),n.x+8,by+362,w-16)
+                    }
                     if(n.kind==BuildingKind.ROOM && n.roomConfig?.mode==RoomMode.SEGMENTS) {
                         row(g,ui("semantic_room_settings"),n.x+8,by,w-16)
                         row(g,ui("semantic_layout_edit"),n.x+8,by+22,w-16)
@@ -661,9 +693,9 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
                     row(g,ui("bg_site_edit"),n.x+8,by,w-16)
                     row(g,ui("bg_filter_"+n.preview)+" ▾",n.x+8,by+22,w-16)
                     ArchitectTheme.viewport(g,n.x+8,by+45,w-16,150)
-                    val ready=if(preview!=null) preview.invoke() else result()
+                    val ready=if(n.id!=graph.resultNode().id) runCatching { CompiledBuilding(evaluation().getOrThrow().preview(n.id),emptyList()) } else if(preview!=null) preview.invoke() else result()
                     if(ready==null) text(g,ui("preview_calculating"),n.x+10,by+55,ArchitectTheme.muted)
-                    else ready.getOrNull()?.let { b -> BuildingScene.draw(g,b.plan,n.x+8,by+45,w-16,150,view.yaw,n.preview);text(g,ui("bg_plan_cost",b.plan.placements.size,b.plan.raw),n.x+8,by+202,ArchitectTheme.brass) }
+                    else ready.getOrNull()?.let { b -> BuildingScene.drawCached(g,b.plan,n.x+8,by+45,w-16,150,view.yaw,n.preview);text(g,ui("bg_plan_cost",b.plan.placements.size,b.plan.raw),n.x+8,by+202,ArchitectTheme.brass) }
                         ?: font.split(Component.literal(ready.exceptionOrNull()?.message.orEmpty()),w-20).take(12).forEachIndexed { i,line -> g.drawString(font,line,n.x+10,by+55+i*11,ArchitectTheme.danger,false) }
                     text(g,ui("bg_site_hint"),n.x+8,by+221,ArchitectTheme.muted);text(g,ui("node_preview_hint"),n.x+8,by+235,ArchitectTheme.muted);materialRows(g,n,by+257)
                     row(g,ui("structure_instances")+" · ${n.accessInstances.size}",n.x+8,by+306,w-16)
@@ -704,10 +736,10 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
         val n=graph.nodes.firstOrNull { it.id==m.node }
         return when(m.type) {
             "insert" -> insertionKinds().map { it.name to kindName(it) }
-            "nodes" -> graph.nodes.filter { definitionKinds==null || it.kind in definitionKinds }.map { it.id to (name(it)+" · "+kindName(it.kind)) }
+            "nodes" -> graph.nodes.filter { (allowedNodes==null || it.id in allowedNodes.invoke()) && (definitionKinds==null || it.kind in definitionKinds) }.map { it.id to (name(it)+" · "+kindName(it.kind)) }
             "input" -> {
                 val port=n?.let { ports(it).firstOrNull { p -> p.key==m.socket } }
-                listOf("" to ui(if(m.socket=="roof") if(explicitAssembly) "bg_roof_pending_connection" else "panel_flat_roof" else "bg_no_connection"))+graph.nodes.filter { candidate -> candidate.id!=m.node && candidate.kind in port?.accepts.orEmpty() && runCatching { graph.connect(m.node,m.socket,candidate.id) }.isSuccess }.map { it.id to name(it) }
+                listOf("" to ui(if(m.socket=="roof") if(explicitAssembly) "bg_roof_pending_connection" else "panel_flat_roof" else "bg_no_connection"))+graph.nodes.filter { candidate -> (allowedNodes==null || candidate.id in allowedNodes.invoke()) && candidate.id!=m.node && candidate.kind in port?.accepts.orEmpty() && runCatching { graph.connect(m.node,m.socket,candidate.id) }.isSuccess }.map { it.id to name(it) }
             }
             "source" -> listOf("_solid" to ui("bg_solid_wall"),"_air" to ui("empty_wall"))+library().modules.map { it.key to it.value.name }
             "form" -> (if(n?.kind==BuildingKind.COPYCAT) listOf(BuildingSourceEditors.AIR_SOURCE to ui("bg_air_source")) else emptyList())+library().forms.map { it.key to it.value.name }
@@ -941,8 +973,13 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
                             areaStroke=AreaStroke(graph,n.id,graph.resolvedNode(n).coordinates.toSet(),cell,cell,button,p)
                         }
                     }
+                    BuildingKind.BAY_WINDOW,BuildingKind.DORMER -> if(inside(0)) SpecialRoomEditors.definition(n,graph) { edit(it) }
                     BuildingKind.ROOF_LAYOUT -> Unit
-                    BuildingKind.ROOF_LEVEL -> if(inside(0)) BuildingStructureEditors.roofLevel(n,{graph}) { edit(it) }
+                    BuildingKind.ROOF_LEVEL -> when {
+                        inside(0)->BuildingStructureEditors.roofLevel(n,{graph}) { edit(it) }
+                        inside(132)->SpecialRoomEditors.instances(n,graph) { edit(it) }
+                        inside(154)->openSpecialPlacement(n)
+                    }
                     BuildingKind.STAIRWELL,BuildingKind.ELEVATOR_SHAFT,BuildingKind.SERVICE_SHAFT -> if(inside(0)) BuildingStructureEditors.core(n,{graph}) { edit(it) }
                     BuildingKind.GARDEN,BuildingKind.PATH -> when {
                         inside(0)->openSourceCoordinates(n.id)
@@ -1014,6 +1051,8 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
                         inside(116) && n.kind==BuildingKind.CEILING->SemanticPropertyEditors.attachments(n,graph) { edit(it) }
                     }
                     BuildingKind.ROOM -> {
+                        if(n.kind==BuildingKind.ROOM && inside(340)) { SpecialRoomEditors.instances(n,graph) { edit(it) };return@safe }
+                        if(n.kind==BuildingKind.ROOM && inside(362)) { openSpecialPlacement(n);return@safe }
                         if(n.kind==BuildingKind.ROOM && n.roomConfig?.mode==RoomMode.SEGMENTS) {
                             if(inside(0)) SemanticPropertyEditors.room(n,graph) { edit(it) }
                             else if(inside(22)) {

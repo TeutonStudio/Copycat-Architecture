@@ -164,7 +164,7 @@ class MaterialSelectionScreen private constructor(
         return false
     }
     override fun renderWorkspace(g:GuiGraphics) {
-        ArchitectTheme.panel(g,left,top,panelWidth,panelHeight,ui("material_group")+": "+group.name)
+        ArchitectTheme.dialog(g,left,top,panelWidth,panelHeight,ui("material_group")+": "+group.name)
         ArchitectTheme.viewport(g,gridX,gridY,gridWidth,gridHeight)
         if(filtered.isEmpty()) g.drawWordWrap(font,tr("catalog_empty"),gridX+6,gridY+8,gridWidth-12,ArchitectTheme.muted)
         val count="${filtered.size} / ${entries.size}"

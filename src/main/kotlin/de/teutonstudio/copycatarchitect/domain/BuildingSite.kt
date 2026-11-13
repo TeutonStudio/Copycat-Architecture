@@ -33,7 +33,7 @@ object BuildingSite {
     fun footprint(graph:BuildingGraph,part:Part,segment:((String)->FixedSegment)?=null):Set<P> = if(part.isBody)
         LandscapeGeometry.buildingFootprint(graph,segment).map { it+part.position }.toSet()
     else if(part.isAccess) {
-        val building=graph.nodes.single { it.kind==BuildingKind.BUILDING };val instance=building.accessInstances[part.index]
+        val building=graph.resultNode();val instance=building.accessInstances[part.index]
         val kind=when(part.source.kind) { BuildingKind.STAIRWELL->VerticalAccessKind.STAIRWELL;BuildingKind.ELEVATOR_SHAFT->VerticalAccessKind.ELEVATOR_SHAFT;else->VerticalAccessKind.SERVICE_SHAFT }
         val definition=AccessDefinition(part.source.id,kind,part.source.stairwell ?: StairwellConfig(),part.source.elevatorShaft ?: ElevatorShaftConfig(),part.source.serviceShaft ?: ServiceShaftConfig())
         VerticalAccess.previewFootprint(definition).map { it.turn(instance.quarterTurns)+part.position }.toSet()

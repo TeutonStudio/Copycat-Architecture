@@ -1,12 +1,10 @@
 # Graphstudio
 
-> **Stand dieses Entwicklungszweigs:** Diese Anleitung beschreibt die vollständige Überarbeitung mit Vorschau-Auswahldialog, allen sechs Copycat- und Segmentoperationen sowie dem 2D-Anordnungsraster. Der Browser unterstützt hier 10 Form- und 21 Gebäudeknotentypen. Die Änderungen sind noch nicht in master integriert oder im Live-Graphstudio bereitgestellt. Das Modrelease 0.6.0 bleibt unverändert.
 
-> Stand: **9. November 2026**. Beschreibt **Graphstudio 0.4** und den zugehörigen gemeinsamen Fachkern. Die neuen booleschen Gebäudeknoten benötigen im Spiel einen aktualisierten Mod-Build; das veröffentlichte Modrelease **0.6.0** enthält sie noch nicht. [Entwicklungsstand](Entwicklungsstand.md)
 
 [**Gebäudegraph öffnen**](https://teutonstudio.github.io/copycat-architect/?editor=building) · [**Formgraph öffnen**](https://teutonstudio.github.io/copycat-architect/?editor=form)
 
-Graphstudio **0.4** ist der Browsereditor für Copycat-Formen und Gebäudegraphen. Er bietet **10 Formknotentypen und 21 Gebäudeknotentypen** und verwendet die gemeinsame Berechnungslogik des Mods. Die Links öffnen eine eigene interaktive Webseite. In der [Knotenreferenz](Knotenreferenz.md) steht für jeden Typ, ob er im Browser vorhanden ist; der native Editor besitzt zusätzliche Knoten und Einstellungen.
+Graphstudio **0.6.1** ist der Browsereditor für Copycat-Formen und Gebäudegraphen. Er bietet **10 Formknotentypen und 36 Gebäudeknotentypen** und verwendet die gemeinsame Berechnungslogik des Mods. Die Links öffnen eine eigene interaktive Webseite. In der [Knotenreferenz](Knotenreferenz.md) steht für jeden Typ, ob er im Browser vorhanden ist; Mod und Browser verwenden denselben Modellstand.
 
 ## Einen Entwurf bearbeiten
 
@@ -61,7 +59,7 @@ Im Gebäudegraphen gibt es je einen passenden Knotentyp für beide Wertarten:
 
 Copycat-Operatoren bearbeiten die Geometrie innerhalb einer Blockzelle und liefern wieder Copycat-Werte. Segmentoperatoren bearbeiten ein vollständiges Bauteil und liefern wieder Segmentwerte. Beide Familien lassen sich jeweils weiter verbinden: etwa **Copycat-Referenz → Copycat rotieren → Copycat-Differenz → Wandsegment → Segment spiegeln**.
 
-Rotation verwendet die Weltachsen **X, Y oder Z** und **0°, 90°, 180° oder 270°**. Spiegelung verwendet eine mittige Ebene mit X, Y oder Z als Normale. Beim Segment wählt **Nur Blockpositionen spiegeln**, ob nur die Blockanordnung oder zusätzlich die Copycat-Geometrie in jeder Zelle gespiegelt wird; standardmäßig wird beides gespiegelt. Die diagonalen Spiegelebenen des nativen Editors sind im Browser nicht freigeschaltet.
+Rotation verwendet die Weltachsen **X, Y oder Z** und **0°, 90°, 180° oder 270°**. Spiegelung verwendet eine mittige Ebene mit X, Y oder Z als Normale. Beim Segment wählt **Nur Blockpositionen spiegeln**, ob nur die Blockanordnung oder zusätzlich die Copycat-Geometrie in jeder Zelle gespiegelt wird; standardmäßig wird beides gespiegelt. Alle 13 nativen Copycat-Spiegelebenen stehen zur Verfügung; ungültige Blockgrenzen werden wie im Mod abgewiesen.
 
 Vereinigung, Schnitt und symmetrische Differenz erlauben **2–16 Eingänge**, die Differenz genau **A und B**. **A / B tauschen** kehrt die Abzugsrichtung um. Symmetrische Differenz verwendet ungerade Überdeckung: Zwei identische Eingänge verschwinden, drei identische Eingänge bleiben erhalten. Leere Zwischenergebnisse können weiterverarbeitet werden. **Separiert** erhält die Materialherkunft; **Gruppiert** verwendet die gewählte gemeinsame Gebäuderolle.
 
@@ -69,7 +67,7 @@ Vereinigung, Schnitt und symmetrische Differenz erlauben **2–16 Eingänge**, d
 
 ## Segmente rotieren und spiegeln
 
-**Status:** Im nativen Fachkern vorhanden. Die Bedienung dieser beiden Knoten im Graphstudio-Browser ist auf diesem Entwicklungszweig implementiert; sie ist noch nicht in master integriert oder im Live-Graphstudio bereitgestellt. Die folgende Anleitung gilt für diesen erweiterten Browserstand.
+**Status:** In Mod und Graphstudio 0.6.1 verfügbar.
 
 1. Ein **Wandsegment** (`SEGMENT`), **Wandmuster** (`PATTERN`) oder das Ergebnis einer booleschen Segmentoperation als Quelle verwenden.
 2. **Segment rotieren** (`SEGMENT_ROTATE`) oder **Segment spiegeln** (`SEGMENT_MIRROR`) einfügen und die Quelle mit `in:0` verbinden.
@@ -123,8 +121,33 @@ Beide Bereiche sind einzeln einklappbar. Ein offener Bereich übernimmt den frei
 
 ## Kompatibilität
 
-Unterstützt: **Formgraph-Schema 1–2**, **Gebäudegraph-Schema 1** und die ausdrücklich als Browserknoten markierten Typen. Zusätzliche Knoten, neuere Schemata, native exakte Geometriedaten und nicht unterstützte Einstellungen werden ausdrücklich abgewiesen. Die neuen Copycat- und Segment-Mengenoperationen benötigen auch im Spiel einen Mod-Build mit diesen IDs. Referenzbibliotheken und die Grenzen der Texturvorschau sind im [Entwicklungsstand](Entwicklungsstand.md) erläutert.
+Unterstützt: **Formdokumente 1–4**, **Formgraphen 1–3**, **Gebäudegraphen 1–4**, alle zehn Form- und 36 Gebäudeknotentypen. Native Gruppen, exakte Geometrie und Sonderraumeinstellungen bleiben erhalten. Künftige Schemata und unbekannte Knotentypen werden abgewiesen.
 
 ## Materialien und eigene Bibliotheken
 
 Die [Materialbibliothek](Materialbibliothek.md) stellt Minecraft- und Mod-Materialien für die Vorschau bereit. **Meine Bibliotheken** verwaltet verlinkte Mod-Repositories und Sicherungen. Graphen und Knotengruppen können über die Leiste oberhalb des Editors gespeichert und wiederverwendet werden; der letzte Entwurf wird automatisch im Browser aufbewahrt.
+
+## Modellstand 0.6.1 und native Eigenschaften
+
+Der Browser importiert jetzt auch Projektionen, native Knotengruppen und Graphschema 4.
+Unter **Knoteneinstellungen** stehen die Einstellungen für Grundrisse, Zellenanordnungen,
+Dächer, Treppenhäuser, Schächte, Garten, Wege, Erker und Gauben bereit. Listen bearbeiten
+und anschließend gemeinsam mit **Übernehmen** bestätigen. Die Verbindungsauswahl zeigt
+auch dynamische Bereichs- und semantische Anschlüsse.
+
+Unter **Architektentisch** werden Tischposition und Drehung gespeichert. **Knotengruppen
+im Graphen** verwaltet echte native Gruppen und gemeinsame Instanzen. Benannte Eingänge
+bleiben beim Neuverbinden und Löschen konsistent. Die aktuelle Version und die
+Modellfingerabdrücke stehen im [Kompatibilitätsmanifest](https://teutonstudio.github.io/Copycat-Architecture/compatibility.json).
+
+Die 3D-Vorschau stellt exakte Schrägflächen konservativ im 16er-Raster dar. Der Export
+bewahrt die vollständige rationale Geometrie. Referenzformen und Module müssen für
+den Gebäudeimport weiterhin unter denselben Versionsschlüsseln in der Spielbibliothek vorliegen.
+
+
+Ein- und Ausgangstypen werden direkt aus den nativen Anschlüssen übernommen.
+Die Paritätsprüfung vergleicht alle 72 Gebäudeknotenvarianten und sämtliche
+Inspektorfelder einschließlich Typen, Auswahlwerten und Grenzen. Referenzfelder
+bieten passende native Quellknoten an. Abgeleitete Maße öffnen ihre gemeinsame
+Quelle. Benannte Gruppenschnittstellen verwenden denselben Adapter wie der
+Architektentisch; Eingänge, Ausgänge, Typen und Bindungen lassen sich bearbeiten.

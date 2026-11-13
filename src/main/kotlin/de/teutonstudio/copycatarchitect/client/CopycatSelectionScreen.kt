@@ -156,7 +156,7 @@ class CopycatSelectionScreen private constructor(
     override fun render(g:GuiGraphics,mx:Int,my:Int,delta:Float) {
         ArchitectTheme.background(g,width,height)
         ArchitectTheme.header(g,width,title.string,width-16)
-        ArchitectTheme.panel(g,left,top,panelWidth,panelHeight,ui("catalog_title"))
+        ArchitectTheme.dialog(g,left,top,panelWidth,panelHeight,ui("catalog_title"))
         val count="${visibleIndices.size} / ${entries.size}"
         g.drawString(font,count,left+panelWidth-12-font.width(count),top+10,ArchitectTheme.muted,false)
         ArchitectTheme.inset(g,left+10,top+28,panelWidth-20,22)

@@ -112,6 +112,13 @@ object SemanticPropertyEditors {
     fun portLabel(key:String):String {
         val ref=key.removePrefix("semantic:")
         val label=when {
+            ref.startsWith("bay:") && ref.endsWith(":source") -> "bg_bay_window"
+            ref.startsWith("dormer:") && ref.endsWith(":source") -> "bg_dormer"
+            ref=="bay:wall" || ref=="dormer:wall" -> "special_wall_source"
+            ref=="bay:front" || ref=="dormer:front" -> "special_front_source"
+            ref=="bay:floor" -> "bg_floor"
+            ref=="bay:ceiling" -> "bg_ceiling"
+            ref=="dormer:roof" -> "special_roof_source"
             ref=="room:filler" || ref=="facade:filler" -> "semantic_filler_source"
             ref=="room:interior" -> "semantic_interior_source"
             ref=="room:partition" -> "semantic_partition_source"

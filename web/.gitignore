@@ -1,3 +1,7 @@
 /node_modules/
 /dist/
 /src/generated/
+
+/.tools/
+
+/public/compatibility.json

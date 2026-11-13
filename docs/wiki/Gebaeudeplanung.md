@@ -1,6 +1,6 @@
 # Gebäude am Architektentisch planen
 
-> Stand: **8. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
+> Stand: **13. November 2026**. Diese Spielanleitung beschreibt die **lokale Mod 0.5.1**. Der kleinere Funktionsumfang des **Graphstudio 0.3** ist im [Entwicklungsstand](Entwicklungsstand.md) getrennt ausgewiesen.
 
 [Knoten und Anschlüsse](Knoten-Gebaeudegraph.md) · [Raumaufbau, Fassaden und Anschlüsse](Raumaufbau-und-Fassaden.md) · [Älteren Gebäudegraph im Browser öffnen](Graphstudio.md)
 [Wiki-Start](Home.md) · [Formeditor](Formeditor.md) · [Beispiele und Import](Beispiele-und-Import.md) · [Turtle-Bau](Turtle-Bau.md) · [Fehlerhilfe](Fehlerhilfe.md)
@@ -148,3 +148,27 @@ Unter **Material** weist du Rollen wie Wand oder Dach ihre Verkleidungsblöcke z
 Pro Gebäude sind **96 Graphknoten**, **16 Materialrollen**, **16 Räume je Stockwerk** sowie Erdgeschoss und jeweils **acht Ober-/Untergeschosse** möglich. Räume unterstützen bis zu **4.096 Innenzellen** zwischen −32 und 63 sowie höchstens 64 Wandläufe. Fehlende Quellen oder falsche Segmentmaße müssen vor dem Auftrag behoben werden; die [Fehlerhilfe](Fehlerhilfe.md) erklärt typische Meldungen.
 
 Speichere den geprüften Entwurf. Ursprung und Drehung im Reiter **Bauen** übernehmen die Tischausrichtung. Depot, Vorräte und Ausführung beschreibt [Mit einer Turtle bauen](Turtle-Bau.md).
+
+## Erker und Gauben
+
+Im nativen Knotenmenü liegt **Erker** unter **Spezielle Räume**, **Gaube** unter **Dächer**. Eine Definition kann mehrfach verwendet werden. Beide Erweiterungen werden mit Gebäudegraphschema **4** gespeichert; ältere Entwürfe bleiben lesbar. Der separate Browsereditor unterstützt diese Knoten noch nicht.
+
+### Einen Erker anbauen
+
+1. Einen Erkerknoten hinzufügen und **Definition bearbeiten** öffnen. Innere Breite und Tiefe einstellen; Standard sind **3 × 2 Blöcke**.
+2. Seitenwandsegment, Fensterfrontsegment, Boden und Decke anschließen. Segmente werden in ihrer ursprünglichen Größe wiederholt. Boden und Decke müssen in Höhe und Schichtdicke zum Hauptraum passen; auch horizontale Segmentquellen sind möglich.
+3. Am Hauptraum **Erker am Raum** öffnen, eine Instanz hinzufügen und Definition, Anschlusswand und Abstand entlang der Wand wählen. Die Wand muss außen liegen und ausreichend lang sein.
+4. Durchgangsbreite und -höhe einstellen. **0** verwendet jeweils die verfügbare innere Größe. Der Durchgang liegt mittig und bodengleich; die restliche Anschlusswand bleibt erhalten.
+5. Über **Aufbauten in 2D platzieren** den Erker entlang der Wände verschieben. Türkis markiert den Durchgang, Rot eine ungültige Position. Erst das Loslassen an einer gültigen Position übernimmt die Bewegung.
+
+Der Erker folgt der Raumhöhe und hat eine eigene flache Decke. Seine zusätzliche Fläche vergrößert das Hauptdach nicht. Überschneidungen mit anderen Räumen oder Erkern verhindern die Berechnung.
+
+### Eine Gaube einsetzen
+
+1. Einen Gaubenknoten hinzufügen. Standard sind **3 × 3 Blöcke Innenfläche**, **2 Blöcke vordere Wandhöhe** und ein Satteldach mit Neigung **1:1**.
+2. Seitenwand- und Fensterfrontsegmente mit **Tiefe 1** sowie einen Dach-Copycat anschließen. Die Dachquelle muss den benötigten Querschnitt abdecken; ein voller Copycat ist geeignet.
+3. An einer Dachebene **Gauben der Dachebene** öffnen und eine Instanz hinzufügen. Position und Vorderseite so wählen, dass die Front hangabwärts zeigt.
+4. **Geschossdecke öffnen** bei Bedarf einschalten. Der Schalter ist zunächst aus; das Hauptdach wird unabhängig davon für die Gaube ausgeschnitten.
+5. Die Gaube über **Aufbauten in 2D platzieren** auf dem Blockraster verschieben. Das Mausrad zoomt. Jede gültig abgeschlossene Bewegung ist ein Rückgängig-Schritt.
+
+Gauben funktionieren auf einer einzelnen Schräge eines **Sattel- oder Pultdachs**. Ihre Unterkante liegt an der strukturellen Deckenoberkante. Wandhöhe und Tiefe müssen einen vollständigen Anschluss an die Schräge ermöglichen. Firstüberschreitungen, fehlender Dachkontakt und überlappende Aufbauten werden abgewiesen. Ausschnitte, Verkleidungen und Materialbedarf stammen aus derselben exakten Geometrie wie der Bauplan. Einzelne Definitionsknoten zeigen eine gekennzeichnete Beispielvorschau.

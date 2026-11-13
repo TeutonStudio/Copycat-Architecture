@@ -11,6 +11,43 @@ data class BuildingPreviewViewport(val x:Int,val y:Int,val width:Int,val height:
 
 /** A view of the selected definition, independent of the final building and its visibility filter. */
 object BuildingPreviewRenderer {
+    private data class Style(val node:BuildingNode,val mode:String,val yaw:Float,val sampleRoof:Boolean,val footprint:Set<P>)
+
+    /** Reuse the finished inspector image; render changed scenes in bounded slices. */
+    internal fun drawCached(g:GuiGraphics,viewport:BuildingPreviewViewport,node:BuildingNode,ready:Result<Plan>,mode:String,yaw:Float,sampleRoof:Boolean=false,roomFootprint:Set<P> = emptySet()) {
+        val plan=ready.getOrNull()
+        if(plan==null || plan.placements.isEmpty()) {
+            draw(g,viewport,node,ready,mode,yaw,sampleRoof,roomFootprint)
+            return
+        }
+        val (x,y,w,h)=viewport
+        GraphPreviewThumbnails.draw(g,x,y,w,h,plan,Style(node,mode,if(mode=="2d") 0f else yaw,sampleRoof,roomFootprint)) {
+            var renderScene:((GuiGraphics)->Boolean)?=null
+            var sceneViewport:BuildingPreviewViewport?=null
+            val local=BuildingPreviewViewport(0,0,w,h)
+            val roomTop=mode=="2d" && node.kind==BuildingKind.ROOM
+            val shown=if(roomTop) plan.copy(placements=plan.placements.filter { it.component!="ceiling" }) else plan
+            val projection=projection(node,mode)
+            val render:(GuiGraphics)->Boolean={ target ->
+                if(renderScene==null) {
+                    draw(target,local,node,ready,mode,yaw,sampleRoof,roomFootprint,clip=false) {
+                        sceneViewport=it
+                        renderScene=BuildingScene.thumbnail(shown,it,yaw,projection)
+                    }
+                }
+                val complete=renderScene?.invoke(target) ?: true
+                // The room outline must be drawn after the last geometry batch.
+                if(complete && roomTop && shown.placements.isNotEmpty()) {
+                    sceneViewport?.let { roomOutline(target,it,shown,roomFootprint) }
+                }
+                complete
+            }
+            render
+        }
+    }
+
+    private fun projection(node:BuildingNode,mode:String)=if(mode!="2d") "3d" else if(node.kind in setOf(BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)) "front" else "top"
+
     fun draw(g:GuiGraphics,viewport:BuildingPreviewViewport,node:BuildingNode,ready:Result<Plan>,mode:String,yaw:Float,sampleRoof:Boolean=false,roomFootprint:Set<P> = emptySet(),clip:Boolean=true,sceneRenderer:((BuildingPreviewViewport)->Unit)?=null) {
         val (x,y,w,h)=viewport
         val font=Minecraft.getInstance().font
@@ -29,7 +66,7 @@ object BuildingPreviewRenderer {
             val plan=ready.getOrThrow()
             val roomTop=mode=="2d" && node.kind==BuildingKind.ROOM
             val shown=if(roomTop) plan.copy(placements=plan.placements.filter { it.component!="ceiling" }) else plan
-            val projection=if(mode!="2d") "3d" else if(node.kind in (CopycatBooleans.kinds+SegmentBooleans.kinds+setOf(BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE))) "front" else "top"
+            val projection=projection(node,mode)
             val showHint=h>=100 || roomTop
             val pendingConnections=node.kind!=BuildingKind.BUILDING && (node.features?.extensions.orEmpty().isNotEmpty() || !node.attachments.isNullOrEmpty())
             val footer=(if(showHint) 14 else 0)+(if(sampleRoof) 13 else 0)+(if(pendingConnections) 13 else 0)
@@ -46,7 +83,7 @@ object BuildingPreviewRenderer {
             val hint=ui(when { mode=="3d"->"node_preview_hint";roomTop->"bg_preview_room_top";projection=="front"->"bg_preview_front";else->"bg_preview_top" })
             if(showHint) g.drawString(font,font.plainSubstrByWidth(hint,(w-16).coerceAtLeast(1)),x+8,y+h-footer,ArchitectTheme.muted,false)
             if(pendingConnections) g.drawString(font,font.plainSubstrByWidth(ui("semantic_pending_connections"),(w-16).coerceAtLeast(1)),x+8,y+h-(if(sampleRoof) 26 else 13),ArchitectTheme.brass,false)
-            if(sampleRoof) g.drawString(font,font.plainSubstrByWidth(ui("bg_preview_roof_sample"),(w-16).coerceAtLeast(1)),x+8,y+h-13,ArchitectTheme.brass,false)
+            if(sampleRoof) g.drawString(font,font.plainSubstrByWidth(ui(if(node.kind in setOf(BuildingKind.BAY_WINDOW,BuildingKind.DORMER)) "special_sample_hint" else "bg_preview_roof_sample"),(w-16).coerceAtLeast(1)),x+8,y+h-13,ArchitectTheme.brass,false)
         } finally {
             g.flush()
             if(clip) g.disableScissor()

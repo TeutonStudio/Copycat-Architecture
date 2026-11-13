@@ -1,0 +1,313 @@
+{
+  "date": "2026-11-13",
+  "result": "partial_compatibility",
+  "native": {
+    "version": "0.5.1",
+    "head": "990754d8db44beec4ab6c1aa5c04c1bc74197f0d",
+    "workingTree": "modified",
+    "catalogSha256": "68d9b67501ccd2e6008691374e13aeb665601d77b6a07e8f7e5aaba83a9bc340"
+  },
+  "published": {
+    "version": "0.4.0",
+    "sourceCommit": "40cd4518038778c35445b87431c0d8003ba98cc8",
+    "repository": "https://github.com/TeutonStudio/Copycat-Architecture",
+    "bundleSha256": "4501772db9897fbaf14adcddbaf5fe0c2d3eefdaffb0dd246bc8d927504aa73d"
+  },
+  "checks": {
+    "nativeDocumentsInPublishedBrowser": 8,
+    "browserExportsInNativeMod": 17,
+    "nativeDocumentBrowserAcceptance": 2,
+    "browserExportModAcceptance": 3,
+    "localBrowserUnitTestsPassed": 8,
+    "localBrowserBuild": "passed",
+    "isolatedJvmAudit": "passed_expected_differences_confirmed"
+  },
+  "browser": {
+    "deployed": {
+      "site": "https://teutonstudio.github.io/Copycat-Architecture/",
+      "asset": "assets/index-DxF6hRjP.js",
+      "kinds": {
+        "form": [
+          "INPUT",
+          "UNION",
+          "INTERSECTION",
+          "DIFFERENCE",
+          "SYMMETRIC_DIFFERENCE",
+          "ROTATE",
+          "ROTATION",
+          "OUTPUT",
+          "SAVED",
+          "MIRROR"
+        ],
+        "building": [
+          "ROTATION",
+          "MIRRORING",
+          "COPYCAT",
+          "COPYCAT_ROTATE",
+          "COPYCAT_MIRROR",
+          "COPYCAT_UNION",
+          "COPYCAT_INTERSECTION",
+          "COPYCAT_DIFFERENCE",
+          "COPYCAT_SYMMETRIC_DIFFERENCE",
+          "SEGMENT",
+          "SEGMENT_ROTATE",
+          "SEGMENT_MIRROR",
+          "SEGMENT_UNION",
+          "SEGMENT_INTERSECTION",
+          "SEGMENT_DIFFERENCE",
+          "SEGMENT_SYMMETRIC_DIFFERENCE",
+          "PATTERN",
+          "FLOOR",
+          "CEILING",
+          "ROOM",
+          "STOREY",
+          "ROOF",
+          "BUILDING"
+        ]
+      },
+      "difference": {
+        "formCommon": [
+          "INPUT",
+          "UNION",
+          "INTERSECTION",
+          "DIFFERENCE",
+          "SYMMETRIC_DIFFERENCE",
+          "ROTATE",
+          "ROTATION",
+          "OUTPUT",
+          "MIRROR",
+          "SAVED"
+        ],
+        "buildingCommon": [
+          "COPYCAT",
+          "SEGMENT",
+          "PATTERN",
+          "FLOOR",
+          "CEILING",
+          "ROOM",
+          "STOREY",
+          "ROOF",
+          "BUILDING",
+          "SEGMENT_MIRROR",
+          "COPYCAT_MIRROR",
+          "SEGMENT_ROTATE",
+          "COPYCAT_ROTATE"
+        ],
+        "modOnly": [
+          "AREA",
+          "SEGMENT_LAYOUT",
+          "ROOM_GEOMETRY",
+          "ROOF_LEVEL",
+          "ROOF_LAYOUT",
+          "STAIRWELL",
+          "ELEVATOR_SHAFT",
+          "SERVICE_SHAFT",
+          "GARDEN",
+          "PATH",
+          "ROOM_LAYOUT",
+          "BAY_WINDOW",
+          "DORMER"
+        ],
+        "deployedOnly": [
+          "ROTATION",
+          "MIRRORING",
+          "COPYCAT_UNION",
+          "COPYCAT_INTERSECTION",
+          "COPYCAT_DIFFERENCE",
+          "COPYCAT_SYMMETRIC_DIFFERENCE",
+          "SEGMENT_UNION",
+          "SEGMENT_INTERSECTION",
+          "SEGMENT_DIFFERENCE",
+          "SEGMENT_SYMMETRIC_DIFFERENCE"
+        ]
+      },
+      "nativeResults": [
+        {
+          "case": "building-legacy-native.json",
+          "acceptedByDeployed": false,
+          "error": "Graph groups and projections require the native editor"
+        },
+        {
+          "case": "building-legacy-without-projection.json",
+          "acceptedByDeployed": true
+        },
+        {
+          "case": "building-special-schema4.json",
+          "acceptedByDeployed": false,
+          "error": "Unsupported browser graph schema; use the native editor"
+        },
+        {
+          "case": "form-diagonal-mirror.json",
+          "acceptedByDeployed": false,
+          "error": "This mirror plane requires the native editor"
+        },
+        {
+          "case": "form-document4.json",
+          "acceptedByDeployed": false,
+          "error": "Invalid form schema for browser; use the native editor"
+        },
+        {
+          "case": "form-named-group.json",
+          "acceptedByDeployed": false,
+          "error": "Graph groups and projections require the native editor"
+        },
+        {
+          "case": "form-schema3.json",
+          "acceptedByDeployed": false,
+          "error": "Unsupported browser graph schema; use the native editor"
+        },
+        {
+          "case": "form-simple.json",
+          "acceptedByDeployed": true
+        }
+      ],
+      "browserExtra": [
+        {
+          "case": "empty-copycat-union",
+          "acceptedByDeployed": true
+        },
+        {
+          "case": "empty-copycat-final",
+          "acceptedByDeployed": true
+        },
+        {
+          "case": "axial-mirror-control",
+          "acceptedByDeployed": true
+        }
+      ]
+    },
+    "localPrototype": {
+      "copycatKinds": [
+        "INPUT",
+        "UNION",
+        "INTERSECTION",
+        "DIFFERENCE",
+        "SYMMETRIC_DIFFERENCE",
+        "ROTATE",
+        "ROTATION",
+        "OUTPUT",
+        "MIRROR",
+        "SAVED"
+      ],
+      "buildingKinds": [
+        "AREA",
+        "COPYCAT",
+        "SEGMENT_LAYOUT",
+        "SEGMENT",
+        "PATTERN",
+        "ROOM_GEOMETRY",
+        "FLOOR",
+        "CEILING",
+        "ROOM",
+        "STOREY",
+        "ROOF_LEVEL",
+        "ROOF_LAYOUT",
+        "ROOF",
+        "STAIRWELL",
+        "ELEVATOR_SHAFT",
+        "SERVICE_SHAFT",
+        "BUILDING",
+        "GARDEN",
+        "PATH",
+        "SEGMENT_MIRROR",
+        "COPYCAT_MIRROR",
+        "SEGMENT_ROTATE",
+        "COPYCAT_ROTATE",
+        "ROOM_LAYOUT",
+        "BAY_WINDOW",
+        "DORMER"
+      ],
+      "bayWindowSchemaAfterCreation": 2,
+      "groupInputAfterRewire": {
+        "form": "source"
+      }
+    }
+  },
+  "modResults": [
+    {
+      "case": "control-axial-mirror",
+      "acceptedByMod": true,
+      "error": ""
+    },
+    {
+      "case": "control-building-legacy-without-projection",
+      "acceptedByMod": true,
+      "error": ""
+    },
+    {
+      "case": "control-form-simple",
+      "acceptedByMod": true,
+      "error": ""
+    },
+    {
+      "case": "empty-copycat-final",
+      "acceptedByMod": false,
+      "error": "A form needs 1–32 parts"
+    },
+    {
+      "case": "empty-copycat-union",
+      "acceptedByMod": false,
+      "error": "A form needs 1–32 parts"
+    },
+    {
+      "case": "prototype-group-rewire",
+      "acceptedByMod": false,
+      "error": "Connect named group inputs on the instance node"
+    },
+    {
+      "case": "prototype-group-source-remove",
+      "acceptedByMod": false,
+      "error": "Invalid group input connection"
+    },
+    {
+      "case": "unsupported-COPYCAT_DIFFERENCE",
+      "acceptedByMod": false,
+      "error": "Parameter specified as non-null is null: method de.teutonstudio.copycatarchitect.domain.BuildingNode.copy, parameter kind"
+    },
+    {
+      "case": "unsupported-COPYCAT_INTERSECTION",
+      "acceptedByMod": false,
+      "error": "Parameter specified as non-null is null: method de.teutonstudio.copycatarchitect.domain.BuildingNode.copy, parameter kind"
+    },
+    {
+      "case": "unsupported-COPYCAT_SYMMETRIC_DIFFERENCE",
+      "acceptedByMod": false,
+      "error": "Parameter specified as non-null is null: method de.teutonstudio.copycatarchitect.domain.BuildingNode.copy, parameter kind"
+    },
+    {
+      "case": "unsupported-COPYCAT_UNION",
+      "acceptedByMod": false,
+      "error": "Parameter specified as non-null is null: method de.teutonstudio.copycatarchitect.domain.BuildingNode.copy, parameter kind"
+    },
+    {
+      "case": "unsupported-MIRRORING",
+      "acceptedByMod": false,
+      "error": "Parameter specified as non-null is null: method de.teutonstudio.copycatarchitect.domain.BuildingNode.copy, parameter kind"
+    },
+    {
+      "case": "unsupported-ROTATION",
+      "acceptedByMod": false,
+      "error": "Parameter specified as non-null is null: method de.teutonstudio.copycatarchitect.domain.BuildingNode.copy, parameter kind"
+    },
+    {
+      "case": "unsupported-SEGMENT_DIFFERENCE",
+      "acceptedByMod": false,
+      "error": "Parameter specified as non-null is null: method de.teutonstudio.copycatarchitect.domain.BuildingNode.copy, parameter kind"
+    },
+    {
+      "case": "unsupported-SEGMENT_INTERSECTION",
+      "acceptedByMod": false,
+      "error": "Parameter specified as non-null is null: method de.teutonstudio.copycatarchitect.domain.BuildingNode.copy, parameter kind"
+    },
+    {
+      "case": "unsupported-SEGMENT_SYMMETRIC_DIFFERENCE",
+      "acceptedByMod": false,
+      "error": "Parameter specified as non-null is null: method de.teutonstudio.copycatarchitect.domain.BuildingNode.copy, parameter kind"
+    },
+    {
+      "case": "unsupported-SEGMENT_UNION",
+      "acceptedByMod": false,
+      "error": "Parameter specified as non-null is null: method de.teutonstudio.copycatarchitect.domain.BuildingNode.copy, parameter kind"
+    }
+  ]
+}

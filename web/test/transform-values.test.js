@@ -24,7 +24,7 @@ test('building rotation and mirroring values have typed ports and survive wiring
  assert.equal(preview(round,'mirror').count,1)
  assert.throws(()=>applyWires('building',d,entries,[...connections(entries),{source:'m',target:'rotate',port:'rotation'}]),/Incompatible/)
  const removed=applyWires('building',changed,inspect('building',changed),connections(inspect('building',changed)).filter(w=>w.source!=='r'),['r'])
- assert.equal(removed.graph.nodes.find(n=>n.id==='rotate').rotation,'')
+ assert.equal(removed.graph.nodes.find(n=>n.id==='rotate').rotation,null)
 })
 
 test('ordered rotation lists match chained operators and empty lists are identity',()=>{

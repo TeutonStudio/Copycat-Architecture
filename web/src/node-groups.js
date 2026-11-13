@@ -1,3 +1,4 @@
+import { remapBuildingReferences } from './generated/engine.mjs'
 import { applyWires, connections, formGroups, inspect, protectedNode, replaceNodes } from './model.js'
 
 export function saveNodeGroup(mode, document, ids, name, materials = {}, library = null) {
@@ -48,7 +49,7 @@ export function insertNodeGroup(document, template, idFactory = () => `node_${cr
   const left = Math.min(...template.nodes.map(node => node.x ?? 0)), top = Math.min(...template.nodes.map(node => node.y ?? 0))
   const right = Math.max(...document.graph.nodes.map(node => node.x ?? 0))
   const nodes = template.nodes.map(original => {
-    const node = structuredClone(original)
+    const node = mode === 'building' ? { ...structuredClone(original), ...remapBuildingReferences(original, Object.fromEntries(ids)) } : structuredClone(original)
     node.id = ids.get(original.id); node.x = Math.min(4096, right + 200 + (node.x ?? 0) - left); node.y = Math.min(4096, 80 + (node.y ?? 0) - top)
     if (mode === 'form') {
       node.inputs = (node.inputs || []).map(() => '')

@@ -32,7 +32,7 @@ class BuildingNodePreviews(private val definition:()->Building,private val libra
                     else -> {
                         if(evaluation==null) evaluation=runCatching { BuildingGraphCompiler.Evaluation(graph,b.palette,lib.forms,lib.modules) }
                         val ready=evaluation!!.getOrThrow()
-                        if(n.kind==BuildingKind.BUILDING) ready.building().plan else ready.preview(id)
+                        ready.preview(id)
                     }
                 }
             }
@@ -42,12 +42,12 @@ class BuildingNodePreviews(private val definition:()->Building,private val libra
     }
 
     fun roomFootprint(node:BuildingNode):Set<P> {
-        if(node.roomConfig?.mode!=RoomMode.SEGMENTS) return RoomGeometry.cells(node.rectangles)
+        if(node.roomConfig?.mode!=RoomMode.SEGMENTS && node.bayWindowInstances.isEmpty()) return RoomGeometry.cells(node.rectangles)
         get(node.id)
         return runCatching { evaluation?.getOrThrow()?.room(node.id)?.footprint.orEmpty() }.getOrDefault(emptySet())
     }
     fun roomShell(node:BuildingNode):Set<P> {
-        if(node.roomConfig?.mode!=RoomMode.SEGMENTS) return RoomWallJoints.shell(node)
+        if(node.roomConfig?.mode!=RoomMode.SEGMENTS && node.bayWindowInstances.isEmpty()) return RoomWallJoints.shell(node)
         get(node.id)
         return runCatching { evaluation?.getOrThrow()?.room(node.id)?.shell.orEmpty() }.getOrDefault(emptySet())
     }

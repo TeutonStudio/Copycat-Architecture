@@ -285,3 +285,20 @@ button.primary:hover:not(:disabled) { background: #cef6e9; }
 .transform-value-row { display: flex; gap: 4px; align-items: end; margin: 8px 0; }
 .transform-value-row label { flex: 1; min-width: 0; }
 .transform-value-row button { padding: 6px; }
+
+/* Match the gray CC frames and dark work surfaces used by the mod. */
+:root { --panel: #292929; --line: #606060; --muted: #b3b3b3; --mint: #ffcc4c; background: #151515; color: #f0f0f0; }
+.page-header { background: #333; border-bottom: 3px solid #888; }
+.brand-mark { background: #202020; border-color: #999; border-radius: 2px; }
+button, select, input:not([type="checkbox"]) { border-radius: 2px; background: #484848; border-color: #888 #202020 #202020 #888; color: #fff; }
+button:hover:not(:disabled), select:hover { background: #5b5b5b; }
+.page-header nav button[aria-pressed="true"] { background: #505050; border-color: #999; color: #ffcc4c; }
+.canvas-panel, .inspector, .preview-panel { border-radius: 2px; border: 2px solid #777; }
+.canvas, .viewer { background: #191919; }
+.diagram-node { background: #303030; border-radius: 2px; border-color: #777; }
+.node-heading, .panel-heading { background: #444; }
+.diagram-node.selected { border-color: #ffcc4c; }
+.native-fields fieldset, .native-optional { min-width: 0; padding: 6px; }
+.native-item { border-bottom: 1px solid var(--line); padding-bottom: 7px; margin-bottom: 7px; }
+.native-item legend { overflow-wrap: anywhere; }
+.native-fields .button-row input { width: 100%; }

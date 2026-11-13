@@ -1,17 +1,14 @@
 package de.teutonstudio.copycatarchitect.domain
 
+import de.teutonstudio.copycatarchitect.web.decodeBuildingNode
+import de.teutonstudio.copycatarchitect.web.decodeGraphNode
+
 /** Read the same packaged contract as the native editor without a JVM JSON runtime. */
 internal object GraphModels {
     private val catalog:dynamic=JSON.parse(graphCatalogJson)
     private fun names(value:dynamic):Array<String> = js("Object.keys(value)")
     private fun list(value:dynamic):List<dynamic> = if(value==null) emptyList() else value.unsafeCast<Array<dynamic>>().toList()
     private fun ints(value:dynamic)=list(value).map { it.unsafeCast<Int>() }.toSet()
-    fun validateBrowserFields(value:dynamic,isBuilding:Boolean,supported:Set<String>) {
-        val defaults=if(isBuilding) catalog.building.nodeDefaults else catalog.copycat.nodeDefaults
-        for(key in names(defaults)) if(key !in supported && value[key]!=null) {
-            require(JSON.stringify(value[key])==JSON.stringify(defaults[key])) { "$key requires the native editor" }
-        }
-    }
     val copycat=Model(catalog.copycat)
     val building=Model(catalog.building)
     val coordinates=-8192..8192
@@ -30,11 +27,17 @@ internal object GraphModels {
         BuildingKind.STOREY->if(mode=="rooms") 1 else 0
         else->0
     }
+    private fun defaults(model:dynamic,kind:String,overrides:dynamic):dynamic {
+        val value:dynamic=JSON.parse(JSON.stringify(model.nodeDefaults))
+        if(overrides!=null) for(key in names(overrides)) value[key]=overrides[key]
+        value.kind=kind
+        return value
+    }
+    fun newShape(kind:NodeKind):GraphNode = decodeGraphNode(defaults(catalog.copycat,kind.name,catalog.copycat.nodes[kind.name].defaults))
+        .copy(inputs=List(inputs(kind).first) { "" })
     fun newBuilding(kind:BuildingKind,explicit:Boolean):BuildingNode {
-        // Browser authoring intentionally uses the legacy contract. Native-only
-        // assembly factories are never a substitute for a lossless browser parser.
-        require(!explicit) { "Explicit assembly requires the native editor" }
-        return BuildingNode(kind=kind)
+        val model=catalog.building.nodes[kind.name]
+        return decodeBuildingNode(defaults(catalog.building,kind.name,if(explicit || model.alwaysExplicit==true) model.defaults else model.legacyDefaults))
     }
     fun buildingPort(node:BuildingNode,key:String):BuildingPortModel {
         val rules=if(key.startsWith("semantic:")) building.semanticPorts else building.nodes.getValue(node.kind.name).ports

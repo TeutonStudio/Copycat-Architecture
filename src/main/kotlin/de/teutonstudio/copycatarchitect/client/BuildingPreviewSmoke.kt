@@ -31,6 +31,7 @@ internal object BuildingPreviewSmoke {
     private val mirrorId="preview_mirror"
     private val yaw=mutableMapOf<String,Float>()
     private var previewSection="3d"
+    private var stationaryRenderSteps=0L
     private var sharedSections=mapOf("properties" to true,"2d" to false,"3d" to true)
     private val plans=mutableMapOf<String,Plan>()
 
@@ -47,7 +48,8 @@ internal object BuildingPreviewSmoke {
                 15 -> mode("2d")
                 20 -> screenshot(mc,"segment-2d-normal")
                 25 -> { mode("3d");orbit() }
-                30 -> screenshot(mc,"segment-3d-normal")
+                30 -> { screenshot(mc,"segment-3d-normal");stationaryRenderSteps=GraphPreviewThumbnails.renderSteps }
+                33 -> check(GraphPreviewThumbnails.renderSteps==stationaryRenderSteps) { "Unchanged inspector scenes were rendered again" }
                 35 -> select(BuildingPanelSection.ROOMS,roomId)
                 40 -> mode("2d")
                 45 -> screenshot(mc,"room-2d-normal")

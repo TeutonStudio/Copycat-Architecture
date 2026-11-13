@@ -43,7 +43,7 @@ object DiagramEdits {
     fun building(original:BuildingGraph,positions:List<DiagramPosition>,connections:List<DiagramConnection>):BuildingGraph {
         validate(original.nodes.map { it.id }.toSet(),positions,connections)
         val byId=positions.associateBy { it.id }
-        require(original.nodes.single { it.kind==BuildingKind.BUILDING }.id in byId && "empty_wall" in byId) { "Keep the result and Empty wall source" }
+        require(original.resultNode().id in byId && "empty_wall" in byId) { "Keep the result and Empty wall source" }
         val ports=original.nodes.associate { it.id to BuildingPorts.of(it,original,true).associateBy(BuildingPort::key) }
         require(connections.all { it.port in ports.getValue(it.target) }) { "Unknown building input" }
         val wires=connections.associateBy { it.target to it.port }

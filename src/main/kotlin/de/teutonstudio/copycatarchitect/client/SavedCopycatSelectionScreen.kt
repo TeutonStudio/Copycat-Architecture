@@ -226,7 +226,7 @@ class SavedCopycatSelectionScreen private constructor(
     override fun render(g:GuiGraphics,mx:Int,my:Int,delta:Float) {
         ArchitectTheme.background(g,width,height)
         ArchitectTheme.header(g,width,title.string,width-16)
-        ArchitectTheme.panel(g,left,top,panelWidth,panelHeight,if(versionGroup==null) ui("saved_copycat_shared") else ui("saved_copycat_versions_count",versionGroup.versions.size))
+        ArchitectTheme.dialog(g,left,top,panelWidth,panelHeight,if(versionGroup==null) ui("saved_copycat_shared") else ui("saved_copycat_versions_count",versionGroup.versions.size))
         val breadcrumb=if(versionGroup!=null && query.isBlank()) versionGroup.fullName else if(query.isNotBlank()) ui("saved_copycat_results",entries.size) else (listOf(ui("saved_copycat_root"))+path).joinToString(" / ")
         g.drawString(font,font.plainSubstrByWidth(breadcrumb,panelWidth-60),left+43,top+59,ArchitectTheme.brass,false)
         ArchitectTheme.inset(g,listX,listY,listWidth,listHeight)

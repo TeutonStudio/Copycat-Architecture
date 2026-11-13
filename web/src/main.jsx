@@ -3,7 +3,8 @@ import { createRoot } from 'react-dom/client'
 import { Background, Controls, Handle, MiniMap, Position, ReactFlow, useUpdateNodeInternals } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { adaptRectangles, newNode, starterBuilding } from './generated/engine.mjs'
-import { applyWires, connections, formGroups, inspect, model, position, protectedNode, readGraph, replaceNodes, validateLibrary, writeGraph } from './model.js'
+import { applyWires, connections, formGroups, inspect, editNode, model, position, protectedNode, readGraph, replaceNodes, validateLibrary, writeGraph } from './model.js'
+import { NativeDocumentFields } from './NativeFields.jsx'
 import { DocumentFields, Field, names, NodeFields, portName } from './Inspector.jsx'
 import './style.css'
 import { SplitHandle } from './SplitHandle.jsx'
@@ -33,19 +34,19 @@ const examples = {
 const query = new URLSearchParams(window.location.search)
 const initialMode = query.get('editor') === 'form' || query.get('graph') === 'copycat' ? 'form' : 'building'
 
-function DiagramNode({ id, data: { node, ports }, selected }) {
+function DiagramNode({ id, data: { node, ports, groupName, outputType, hasOutput }, selected }) {
   const updateInternals = useUpdateNodeInternals()
   const signature = ports.map(port => port.id).join('|')
   useEffect(() => updateInternals(id), [id, signature, updateInternals])
-  const source = !['BUILDING', 'OUTPUT'].includes(node.kind)
+  const source = hasOutput ?? !['BUILDING', 'OUTPUT'].includes(node.kind)
   return <div className={`diagram-node ${selected ? 'selected' : ''} ${source ? '' : 'result-node'}`}>
     <div className="node-heading">
       <span className="node-symbol">{source ? '◇' : '◆'}</span>
-      <div><strong>{node.name || names[node.kind]}</strong><small>{node.name ? names[node.kind] : node.id}</small></div>
-      {source && <Handle type="source" position={Position.Right} id="out" aria-label="Ausgang" />}
+      <div><strong>{node.name || names[node.kind]}</strong><small>{node.name ? names[node.kind] : node.id}{groupName ? ` · ${groupName}` : ''}</small></div>
+      {source && <Handle type="source" position={Position.Right} id="out" aria-label={`Ausgang · ${outputType}`} title={`Ausgang · ${outputType}`} />}
     </div>
     {ports.length > 0 && <div className="ports">{ports.map(port => <div className="port" key={port.id}>
-      <Handle type="target" position={Position.Left} id={port.id} title={portName(port, node)} />
+      <Handle type="target" position={Position.Left} id={port.id} title={`${portName(port, node)} · ${(port.types || []).join(" / ")}`} />
       <span>{portName(port, node)}</span>
       <span className={`port-status ${port.source ? 'connected' : ''}`}>{port.source ? '●' : '○'}</span>
     </div>)}</div>}
@@ -123,12 +124,12 @@ function Studio({ mode, active }) {
   const entries = useMemo(() => inspect(mode, document), [mode, document])
   const wires = useMemo(() => connections(entries), [entries])
   const current = entries.find(({ node }) => node.id === selected)
-  const resultNode = entries.find(({ node }) => ['OUTPUT', 'BUILDING'].includes(node.kind))
+  const resultNode = entries.find(({ node }) => ['OUTPUT', 'BUILDING'].includes(node.kind) && !document.graph.nodeGroups?.some(group => group.nodes.includes(node.id)))
   const visibleNode = current ?? resultNode
   const kinds = mode === 'form' ? model.form.map(type => type.kind).filter(kind => kind !== 'OUTPUT') : model.building.filter(kind => kind !== 'BUILDING')
   const edgeId = ({ target, port }) => `${target}/${port}`
   const nodes = useMemo(() => entries.map(data => ({
-    id: data.node.id, type: 'architect', data,
+    id: data.node.id, type: 'architect', data: { ...data, hasOutput: data.node.id !== resultNode.node.id, groupName: document.graph.nodeGroups?.find(group => group.nodes.includes(data.node.id))?.name },
     position: dragging?.id === data.node.id ? dragging.position : { x: data.node.x, y: data.node.y },
     selected: selectedIds.includes(data.node.id),
     measured: nodeMeasurements[data.node.id]
@@ -183,12 +184,7 @@ function Studio({ mode, active }) {
   const patchNode = patch => transact(() => {
     const { node } = visibleNode
     let updated = { ...document.graph.nodes.find(item => item.id === node.id), ...patch }
-    if ('rectangles' in patch || patch.storeyMode === 'walls') {
-      const adapted = adaptRectangles(node, updated)
-      updated = { ...updated, walls: adapted.walls }
-    }
-    if (patch.storeyMode === 'rooms' && !node.inputs.length) updated.inputs = ['']
-    commit(replaceNodes(document, document.graph.nodes.map(item => item.id === node.id ? updated : item)))
+    commit(editNode(mode, document, updated))
   })
   const setWire = (target, port, source) => transact(() => {
     const rest = wires.filter(wire => wire.target !== target || wire.port !== port)
@@ -220,10 +216,11 @@ function Studio({ mode, active }) {
     const { left, top, width, height } = canvas.current.getBoundingClientRect()
     const center = flow?.screenToFlowPosition({ x: left + width * 0.5, y: top + height * 0.4 }) ?? { x: 50, y: 50 }
     const id = `node_${crypto.randomUUID().slice(0, 13)}`
-    const node = newNode(mode === 'building', kind, id, position(center.x), position(center.y))
+    const node = newNode(mode === 'building', kind, id, position(center.x), position(center.y), true)
     if (kind === 'INPUT') node.part.group = formGroups(document)[0].id
     commit(replaceNodes(document, [...document.graph.nodes, node]))
     setSelected(id)
+    setSelectedIds([id])
     setSelectedWire(null)
   })
   const onDrag = useCallback((_, node) => setDragging({ id: node.id, position: node.position }), [])
@@ -409,7 +406,7 @@ function Studio({ mode, active }) {
           <div id={`${mode}-inspector`} className="inspector-body" hidden={inspectorCollapsed} key={visibleNode.node.id}>
             <a className="reference-link" href={`${wiki}/Knoten-${mode === 'form' ? 'Formgraph' : 'Gebaeudegraph'}#${visibleNode.node.kind.toLowerCase()}`}>Knotenreferenz ↗</a>
             <h2>{visibleNode.node.name || names[visibleNode.node.kind]}</h2>
-            <div className="node-id">{visibleNode.node.id}</div>
+            <div className="node-id">{visibleNode.node.id} · Ausgang: {visibleNode.outputType || 'Ergebnis'}</div>
             {visibleNode.ports.length > 0 && <details open><summary>Verbindungen</summary>
               {visibleNode.ports.map(port => <Field key={port.id} label={portName(port, visibleNode.node)}
                 value={port.source} options={[[ '', 'Offen' ], ...entries.filter(({ node }) =>
@@ -426,10 +423,12 @@ function Studio({ mode, active }) {
               </div>}
             </details>}
             <NodeFields {...{ mode, node: visibleNode.node, document, edit: patchNode, library }}
+              onInspectNode={id => { setSelected(id); setSelectedIds([id]); setSelectedWire(null) }}
               onChooseCopycat={() => chooseCopycat(visibleNode.node.id)}
               onImportCopycat={() => copycatInput.current.click()} />
             {(selectedWire || current && !protectedNode(current.node)) &&
               <button className="danger" type="button" onClick={removeSelection}>{selectedWire ? 'Verbindung trennen' : 'Knoten löschen'}</button>}
+            <NativeDocumentFields {...{ mode, document }} selection={selectedIds} edit={next => transact(() => commit(next))} />
             <DocumentFields {...{ mode, document, library, materials, setMaterials }} edit={next => transact(() => commit(next))} />
           </div>
         </section>
@@ -454,7 +453,7 @@ function App() {
   return <>
     <header className="page-header">
       <div className="brand-mark" aria-hidden="true">⬡</div>
-      <div className="brand"><span>COPYCAT ARCHITECT</span><h1>Graphstudio</h1></div>
+      <div className="brand"><span>COPYCAT ARCHITECT · {model.release}</span><h1>Graphstudio</h1></div>
       <nav aria-label="Graph auswählen">
         <button type="button" aria-pressed={mode === 'form'} onClick={() => setMode('form')}>Formgraph</button>
         <button type="button" aria-pressed={mode === 'building'} onClick={() => setMode('building')}>Gebäudegraph</button>

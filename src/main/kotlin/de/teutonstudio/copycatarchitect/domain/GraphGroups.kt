@@ -2,14 +2,105 @@ package de.teutonstudio.copycatarchitect.domain
 
 import java.util.UUID
 
-/** Saved editor organization. Members keep their original IDs, sockets, and evaluation order. */
-data class GraphGroup(val id:String="",val name:String="Gruppe",val nodes:List<String> = emptyList(),val definitionId:String="") {
+/** The interface uses member indices so every instance shares the same graph definition. */
+data class GraphGroupTarget(val member:Int=0,val port:String="0")
+data class GraphGroupInput(val id:String="",val name:String="Eingang",val type:String="shape",
+    val targets:List<GraphGroupTarget> = emptyList(),val x:Int=-240,val y:Int=0)
+data class GraphGroupOutput(val id:String="",val name:String="Ausgang",val type:String="shape",
+    val member:Int=-1,val x:Int=620,val y:Int=0)
+data class GraphGroupPosition(val x:Int=0,val y:Int=0)
+data class GraphGroupInterface(val inputs:List<GraphGroupInput> = emptyList(),val outputs:List<GraphGroupOutput> = emptyList(),
+    /** Member-indexed layout in the same definition-local frame as the terminals. Null is legacy. */
+    val positions:List<GraphGroupPosition>?=null)
+
+/** Members are stored in compilation order; the editor opens their definition as a separate graph. */
+data class GraphGroup(val id:String="",val name:String="Gruppe",val nodes:List<String> = emptyList(),val definitionId:String="",
+    val graphInterface:GraphGroupInterface?=null,val inputConnections:Map<String,String> = emptyMap()) {
     val effectiveDefinitionId get()=definitionId.ifEmpty { id }
 }
 
 /** Groups contain nodes directly; moving a selection into a group never creates nested groups. */
 object GraphGroups {
     private val idPattern=Regex("[a-zA-Z0-9_-]{1,36}")
+
+    /** Freeze legacy layouts before changing instance positions; prefer the original definition. */
+    fun captureLayouts(groups:List<GraphGroup>,positions:Map<String,GraphGroupPosition>):List<GraphGroup> {
+        val layouts=groups.groupBy { it.effectiveDefinitionId }.mapValues { (definition,instances) ->
+            val source=instances.firstOrNull { it.id==definition } ?: instances.first()
+            source.nodes.map { positions.getValue(it) }
+        }
+        return groups.map { group -> group.graphInterface?.takeIf { it.positions==null }?.let { face ->
+            group.copy(graphInterface=face.copy(positions=layouts.getValue(group.effectiveDefinitionId)))
+        } ?: group }
+    }
+
+    /** Named terminals reserve optional slots before an instance is wired. */
+    fun reserveInputs(graph:BuildingGraph):BuildingGraph {
+        val sizes=mutableMapOf<String,Int>()
+        graph.nodeGroups.forEach { group -> group.graphInterface?.inputs.orEmpty().flatMap { it.targets }.forEach { target ->
+            val index=target.port.takeIf { it.startsWith("in:") }?.substringAfter(':')?.toIntOrNull()
+            val member=group.nodes.getOrNull(target.member)
+            if(index!=null && index in 0..15 && member!=null) sizes[member]=maxOf(sizes[member] ?: 0,index+1)
+        } }
+        return graph.copy(nodes=graph.nodes.map { node ->
+            val size=sizes[node.id] ?: 0
+            if(node.inputs.size>=size) node else node.copy(inputs=node.inputs+List(size-node.inputs.size) { "" })
+        })
+    }
+
+    fun interfaceForInstances(groups:List<GraphGroup>,edited:GraphGroup):List<GraphGroup> = groups.map { group ->
+        if(group.effectiveDefinitionId!=edited.effectiveDefinitionId) group else group.copy(nodes=if(group.id==edited.id) edited.nodes else group.nodes,graphInterface=edited.graphInterface,
+            inputConnections=(if(group.id==edited.id) edited.inputConnections else group.inputConnections).filterKeys { key ->
+                val next=edited.graphInterface?.inputs.orEmpty().firstOrNull { it.id==key }
+                next!=null && group.graphInterface?.inputs.orEmpty().firstOrNull { it.id==key }?.type==next.type
+            })
+    }
+
+    fun addMembers(graph:NodeGraph,id:String,members:List<String>):NodeGraph {
+        if(members.isEmpty()) return graph
+        require(graph.nodeGroups.none { group -> group.nodes.any { it in members } })
+        val existing=captureLayouts(graph.nodeGroups,graph.nodes.associate { it.id to GraphGroupPosition(it.x,it.y) })
+        val source=existing.first { it.id==id }
+        val anchor=graph.nodes.first { it.id==source.nodes.first() }
+        val local=source.graphInterface?.positions?.firstOrNull() ?: GraphGroupPosition(anchor.x,anchor.y)
+        val added=members.map { member -> graph.nodes.first { it.id==member }.let { GraphGroupPosition(it.x-anchor.x+local.x,it.y-anchor.y+local.y) } }
+        var nodes=graph.nodes
+        val groups=existing.map { original ->
+            if(original.effectiveDefinitionId!=source.effectiveDefinitionId) return@map original
+            val target=original.copy(graphInterface=original.graphInterface?.let { face -> face.copy(positions=face.positions?.plus(added)) })
+            if(target.id==id) target.copy(nodes=target.nodes+members) else {
+                val mapping=source.nodes.zip(target.nodes).toMap()+members.associateWith { UUID.randomUUID().toString() }
+                val targetAnchor=graph.nodes.first { it.id==target.nodes.first() }
+                nodes+=members.map { member -> graph.nodes.first { it.id==member }.let { n -> n.copy(id=mapping.getValue(member),
+                    x=(n.x-anchor.x+targetAnchor.x).coerceIn(-8192,8192),y=(n.y-anchor.y+targetAnchor.y).coerceIn(-8192,8192),inputs=n.inputs.map { mapping[it] ?: it }) } }
+                target.copy(nodes=target.nodes+members.map(mapping::getValue))
+            }
+        }
+        return graph.copy(nodes=nodes,nodeGroups=groups)
+    }
+
+    fun addMembers(graph:BuildingGraph,id:String,members:List<String>):BuildingGraph {
+        if(members.isEmpty()) return graph
+        require(graph.nodeGroups.none { group -> group.nodes.any { it in members } })
+        val existing=captureLayouts(graph.nodeGroups,graph.nodes.associate { it.id to GraphGroupPosition(it.x,it.y) })
+        val source=existing.first { it.id==id }
+        val anchor=graph.nodes.first { it.id==source.nodes.first() }
+        val local=source.graphInterface?.positions?.firstOrNull() ?: GraphGroupPosition(anchor.x,anchor.y)
+        val added=members.map { member -> graph.nodes.first { it.id==member }.let { GraphGroupPosition(it.x-anchor.x+local.x,it.y-anchor.y+local.y) } }
+        var nodes=graph.nodes
+        val groups=existing.map { original ->
+            if(original.effectiveDefinitionId!=source.effectiveDefinitionId) return@map original
+            val target=original.copy(graphInterface=original.graphInterface?.let { face -> face.copy(positions=face.positions?.plus(added)) })
+            if(target.id==id) target.copy(nodes=target.nodes+members) else {
+                val mapping=source.nodes.zip(target.nodes).toMap()+members.associateWith { UUID.randomUUID().toString() }
+                val targetAnchor=graph.nodes.first { it.id==target.nodes.first() }
+                nodes+=members.map { member -> graph.nodes.first { it.id==member }.let { n -> remap(n) { _,ref -> mapping[ref] ?: ref }.copy(id=mapping.getValue(member),
+                    x=(n.x-anchor.x+targetAnchor.x).coerceIn(-8192,8192),y=(n.y-anchor.y+targetAnchor.y).coerceIn(-8192,8192)) } }
+                target.copy(nodes=target.nodes+members.map(mapping::getValue))
+            }
+        }
+        return graph.copy(nodes=nodes,nodeGroups=groups)
+    }
 
     fun validate(groups:List<GraphGroup>,nodeIds:Set<String>,protectedNodes:Set<String> = emptySet()) {
         require(groups.size<=nodeIds.size) { "Too many node groups" }
@@ -20,8 +111,22 @@ object GraphGroups {
             require(group.name.isNotBlank() && group.name.length<=64 && group.name.none(Char::isISOControl)) { "Node group names need 1–64 visible characters" }
             require(group.nodes.isNotEmpty() && group.nodes.distinct().size==group.nodes.size && group.nodes.all { it in nodeIds && it !in protectedNodes }) { "Node groups must contain existing editable nodes exactly once" }
             require(group.nodes.all(assigned::add)) { "A node can belong to only one node group" }
+            group.graphInterface?.let { face ->
+                require(face.positions==null || face.positions.size==group.nodes.size && face.positions.all { it.x in -8192..8192 && it.y in -8192..8192 }) { "Invalid group member layout" }
+                val ports=face.inputs.map { it.id }+face.outputs.map { it.id }
+                require(ports.size<=64 && ports.distinct().size==ports.size && ports.all { it.matches(idPattern) }) { "Invalid group port IDs" }
+                require((face.inputs.map { it.name }+face.outputs.map { it.name }).all { it.isNotBlank() && it.length<=64 && it.none(Char::isISOControl) }) { "Invalid group port name" }
+                require(face.inputs.all { it.x in -8192..8192 && it.y in -8192..8192 } && face.outputs.all { it.x in -8192..8192 && it.y in -8192..8192 }) { "Group terminal position exceeds graph bounds" }
+                require(face.inputs.all { it.targets.distinct().size==it.targets.size && it.targets.all { t -> t.member in group.nodes.indices && t.port.isNotBlank() } }) { "Invalid group input binding" }
+                val targets=face.inputs.flatMap { it.targets }
+                require(targets.distinct().size==targets.size) { "A group socket accepts only one input" }
+                require(face.outputs.all { it.member==-1 || it.member in group.nodes.indices }) { "Invalid group output binding" }
+                require(face.outputs.filter { it.member>=0 }.map { it.member }.distinct().size==face.outputs.count { it.member>=0 }) { "Export each result once" }
+                require(group.inputConnections.keys.all { key -> face.inputs.any { it.id==key } } && group.inputConnections.values.all { it in nodeIds && it !in group.nodes }) { "Invalid group input connection" }
+            }
         }
         require(groups.groupBy { it.effectiveDefinitionId }.values.all { instances -> instances.map { it.nodes.size }.distinct().size==1 }) { "Instances of a node group must have matching members" }
+        require(groups.groupBy { it.effectiveDefinitionId }.values.all { it.map { g -> g.graphInterface }.distinct().size==1 }) { "Instances must share a graph interface" }
     }
 
     fun validate(graph:NodeGraph) {
@@ -30,14 +135,42 @@ object GraphGroups {
         graph.nodeGroups.groupBy { it.effectiveDefinitionId }.values.forEach { instances ->
             require(instances.map { group -> group.nodes.map { shapeTemplate(nodes.getValue(it),group) } }.distinct().size==1) { "Instances of a node group must share the same definition" }
         }
+        graph.nodeGroups.forEach { group -> group.graphInterface?.let { face ->
+            face.inputs.forEach { input ->
+                require(input.type in setOf("shape","rotation")) { "Unknown Copycat graph input type" }
+                val connection=group.inputConnections[input.id].orEmpty()
+                require(connection.isEmpty() || GraphModels.shape(nodes.getValue(connection).kind).output==input.type) { "Incompatible Copycat group instance connection" }
+                input.targets.forEach { target ->
+                    val node=nodes.getValue(group.nodes[target.member]);val slot=target.port.toIntOrNull()
+                    require(slot!=null && slot in node.inputs.indices && GraphModels.shape(node.kind).inputs?.type(slot)==input.type) { "Incompatible Copycat group input" }
+                    require(node.inputs[slot]==connection) { "Connect named group inputs on the instance node" }
+                }
+            }
+            face.outputs.forEach { output -> require(output.type in setOf("shape","rotation") && (output.member==-1 || GraphModels.shape(nodes.getValue(group.nodes[output.member]).kind).output==output.type)) { "Incompatible Copycat group output" } }
+        } }
     }
 
     fun validate(graph:BuildingGraph) {
         val nodes=graph.nodes.associateBy { it.id }
-        validate(graph.nodeGroups,nodes.keys,graph.nodes.filter { it.kind==BuildingKind.BUILDING || it.id=="empty_wall" }.map { it.id }.toSet())
+        validate(graph.nodeGroups,nodes.keys,graph.nodes.filter { n -> n.id=="empty_wall" || n.kind==BuildingKind.BUILDING && graph.nodeGroups.none { n.id in it.nodes } }.mapTo(hashSetOf()) { it.id })
         graph.nodeGroups.groupBy { it.effectiveDefinitionId }.values.forEach { instances ->
             require(instances.map { group -> group.nodes.map { buildingTemplate(nodes.getValue(it),group) } }.distinct().size==1) { "Instances of a node group must share the same definition" }
         }
+        graph.nodeGroups.forEach { group -> group.graphInterface?.let { face ->
+            val types=BuildingKind.entries.map(::buildingGraphType).toSet()
+            face.inputs.forEach { input ->
+                require(input.type in types) { "Unknown building graph input type" }
+                val connection=group.inputConnections[input.id].orEmpty()
+                require(connection.isEmpty() || buildingGraphType(nodes.getValue(connection).kind)==input.type) { "Incompatible building group instance connection" }
+                input.targets.forEach { target ->
+                    val node=nodes.getValue(group.nodes[target.member])
+                    val port=BuildingPorts.of(node,graph,true).firstOrNull { it.key==target.port }
+                    require(port!=null && port.accepts.any { buildingGraphType(it)==input.type }) { "Incompatible building group input" }
+                    require(port.source==connection) { "Connect named group inputs on the instance node" }
+                }
+            }
+            face.outputs.forEach { output -> require(output.type in types && (output.member==-1 || buildingGraphType(nodes.getValue(group.nodes[output.member]).kind)==output.type)) { "Incompatible building group output" } }
+        } }
     }
 
     fun create(graph:NodeGraph,selection:Set<String>,name:String="Gruppe"):NodeGraph =
@@ -54,8 +187,12 @@ object GraphGroups {
 
     /** Deletion retains surviving members and discards groups after their last node is removed. */
     fun prune(groups:List<GraphGroup>,nodeIds:Set<String>):List<GraphGroup> = groups.mapNotNull { group ->
-        group.nodes.filter { it in nodeIds }.takeIf { it.isNotEmpty() }?.let {
-            group.copy(nodes=it)
+            group.nodes.filter { it in nodeIds }.takeIf { it.isNotEmpty() }?.let { retained ->
+            val indices=group.nodes.indices.filter { group.nodes[it] in nodeIds }.withIndex().associate { it.value to it.index }
+            group.copy(nodes=retained,inputConnections=group.inputConnections.filterValues { it in nodeIds },graphInterface=group.graphInterface?.let { face -> face.copy(
+                inputs=face.inputs.map { input -> input.copy(targets=input.targets.mapNotNull { t -> indices[t.member]?.let { t.copy(member=it) } }) },
+                outputs=face.outputs.map { output -> output.copy(member=indices[output.member] ?: -1) },
+                positions=face.positions?.filterIndexed { index,_ -> index in indices }) })
         }
     }
 
@@ -63,30 +200,33 @@ object GraphGroups {
     fun duplicate(groups:List<GraphGroup>,copiedIds:Map<String,String>,nodeIds:Set<String>):List<GraphGroup> {
         var result=groups
         groups.filter { it.nodes.all(copiedIds::containsKey) }.forEach { group ->
-            result=result+GraphGroup(freshId(result,nodeIds),uniqueName(result,group.name),group.nodes.map(copiedIds::getValue),group.effectiveDefinitionId)
+            result=result+group.copy(id=freshId(result,nodeIds),name=uniqueName(result,group.name),nodes=group.nodes.map(copiedIds::getValue),definitionId=group.effectiveDefinitionId,
+                inputConnections=group.inputConnections.mapValues { copiedIds[it.value] ?: it.value })
         }
         return result
     }
 
     fun instantiate(graph:NodeGraph,id:String):NodeGraph {
-        val group=graph.nodeGroups.first { it.id==id }
+        val existing=captureLayouts(graph.nodeGroups,graph.nodes.associate { it.id to GraphGroupPosition(it.x,it.y) })
+        val group=existing.first { it.id==id }
         val members=group.nodes.map { member -> graph.nodes.first { it.id==member } }
         require(members.none { it.kind==NodeKind.OUTPUT } && graph.nodes.size+members.size<=64 && graph.nodes.count { it.kind==NodeKind.INPUT || it.kind==NodeKind.SAVED }+members.count { it.kind==NodeKind.INPUT || it.kind==NodeKind.SAVED }<=32) { "Group instance exceeds shape node limits" }
         val ids=members.associate { it.id to UUID.randomUUID().toString() }
         val (dx,dy)=placement(graph.nodes.map { it.x to it.y },members.map { it.x to it.y })
         val copies=members.map { n -> n.copy(id=ids.getValue(n.id),x=n.x+dx,y=n.y+dy,inputs=n.inputs.map { ids[it] ?: it }) }
-        val groups=graph.nodeGroups+GraphGroup(freshId(graph.nodeGroups,(graph.nodes+copies).map { it.id }.toSet()),uniqueName(graph.nodeGroups,group.name),group.nodes.map(ids::getValue),group.effectiveDefinitionId)
+        val groups=existing+group.copy(id=freshId(existing,(graph.nodes+copies).map { it.id }.toSet()),name=uniqueName(existing,group.name),nodes=group.nodes.map(ids::getValue),definitionId=group.effectiveDefinitionId)
         return graph.copy(nodes=graph.nodes+copies,nodeGroups=groups)
     }
 
     fun instantiate(graph:BuildingGraph,id:String):BuildingGraph {
-        val group=graph.nodeGroups.first { it.id==id }
+        val existing=captureLayouts(graph.nodeGroups,graph.nodes.associate { it.id to GraphGroupPosition(it.x,it.y) })
+        val group=existing.first { it.id==id }
         val members=group.nodes.map { member -> graph.nodes.first { it.id==member } }
-        require(members.none { it.kind==BuildingKind.BUILDING || it.id=="empty_wall" } && graph.nodes.size+members.size<=96) { "Group instance exceeds building node limits" }
+        require(members.none { it.id=="empty_wall" } && graph.nodes.size+members.size<=96) { "Group instance exceeds building node limits" }
         val ids=members.associate { it.id to UUID.randomUUID().toString() }
         val (dx,dy)=placement(graph.nodes.map { it.x to it.y },members.map { it.x to it.y })
         val copies=members.map { n -> remap(n) { _,ref -> ids[ref] ?: ref }.copy(id=ids.getValue(n.id),x=n.x+dx,y=n.y+dy) }
-        val groups=graph.nodeGroups+GraphGroup(freshId(graph.nodeGroups,(graph.nodes+copies).map { it.id }.toSet()),uniqueName(graph.nodeGroups,group.name),group.nodes.map(ids::getValue),group.effectiveDefinitionId)
+        val groups=existing+group.copy(id=freshId(existing,(graph.nodes+copies).map { it.id }.toSet()),name=uniqueName(existing,group.name),nodes=group.nodes.map(ids::getValue),definitionId=group.effectiveDefinitionId)
         return graph.copy(nodes=graph.nodes+copies,nodeGroups=groups)
     }
 
@@ -151,7 +291,7 @@ object GraphGroups {
                 }
             }
         }
-        return changed.copy(nodes=changed.nodes.map { nodes.getValue(it.id) },nodeGroups=groups)
+        return reserveInputs(changed.copy(nodes=changed.nodes.map { nodes.getValue(it.id) },nodeGroups=groups))
     }
 
     private fun shapeTemplate(node:GraphNode,group:GraphGroup):GraphNode {
@@ -173,7 +313,7 @@ object GraphGroups {
     }
 
     /** All node references, including configuration references which have no visible input socket. */
-    private fun remap(node:BuildingNode,reference:(String,String)->String):BuildingNode = BuildingSemantics.remapReferences(node.copy(
+    internal fun remap(node:BuildingNode,reference:(String,String)->String):BuildingNode = BuildingSemantics.remapReferences(node.copy(
         inputs=node.inputs.mapIndexed { i,ref -> reference("in:$i",ref) },
         rotation=node.rotation?.let { reference("rotation",it) },mirroring=node.mirroring?.let { reference("mirroring",it) },
         walls=node.walls.mapValues { (key,ref) -> reference("wall:$key",ref) },

@@ -1,4 +1,4 @@
--- Create: Copycat Architect 0.4 / CC:Tweaked 1.120.0
+-- Create: Copycat Architect / CC:Tweaked 1.120.0–1.120.2
 -- No GPS, digging, teleportation or world-coordinate placement.
 local args = {...}
 local gun = peripheral.find("copycat_architect")

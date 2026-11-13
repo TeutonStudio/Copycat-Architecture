@@ -1,0 +1,15 @@
+// Keep compatibility runs separate from normal builds and existing test worlds.
+// ./gradlew -I tools/cc-tweaked-validation.init.gradle -PccTweakedVersion=1.120.2 build runGameTestServer -PgraphWorldSmoke
+gradle.beforeProject { project ->
+    if (project.path == ':') {
+        def ccVersion = project.findProperty('ccTweakedVersion') ?: '1.120.0'
+        project.layout.buildDirectory.set(project.file("build/cc-tweaked-${ccVersion}"))
+    }
+}
+gradle.projectsEvaluated {
+    rootProject.tasks.withType(Test).configureEach { maxHeapSize = '1G' }
+    rootProject.extensions.getByName('neoForge').runs.configureEach {
+        gameDirectory.set(rootProject.layout.buildDirectory.dir("run-${name}"))
+        jvmArgument('-Xmx2G')
+    }
+}

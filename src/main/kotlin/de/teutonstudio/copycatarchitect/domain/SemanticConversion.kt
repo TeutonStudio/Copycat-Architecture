@@ -28,7 +28,7 @@ object SemanticConversion {
         // A converted stockwork is now a local definition. Detach its linked group family rather
         // than silently propagating semantic settings into unrelated stockworks.
         val detached=graph.nodeGroups.filter { storeyId in it.nodes }.map { it.effectiveDefinitionId }.toSet()
-        return graph.copy(schema=3,nodes=graph.nodes.map { if(it.id==storeyId) changedStorey else it }+copies,
+        return graph.copy(schema=maxOf(3,graph.schema),nodes=graph.nodes.map { if(it.id==storeyId) changedStorey else it }+copies,
             nodeGroups=graph.nodeGroups.filter { it.effectiveDefinitionId !in detached })
     }
 }

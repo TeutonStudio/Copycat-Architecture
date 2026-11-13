@@ -1,53 +1,54 @@
 # Entwicklungsstand und Kompatibilität
 
-> **Stand dieses Entwicklungszweigs:** Diese Anleitung beschreibt die vollständige Überarbeitung mit Vorschau-Auswahldialog, allen sechs Copycat- und Segmentoperationen sowie dem 2D-Anordnungsraster. Der Browser unterstützt hier 10 Form- und 21 Gebäudeknotentypen. Die Änderungen sind noch nicht in master integriert oder im Live-Graphstudio bereitgestellt. Das Modrelease 0.6.0 bleibt unverändert.
+Stand: **13. November 2026 · Mod und Graphstudio 0.6.1**.
 
-Abgleich vom **9. November 2026**. Der Mod-Build und die Browseroberfläche haben unterschiedliche Versionsnummern und unterschiedliche Bedienmöglichkeiten:
+Mod und Browser werden aus demselben Kotlin-Fachkern und demselben Knotenvertrag gebaut.
+Alle **zehn Form- und 36 Gebäudeknotentypen** stehen in beiden Editoren zur Verfügung.
+Dazu gehören Copycat-/Segmentoperationen, Grundrisse, Anordnungen, semantische Räume,
+Fassaden, Dachebenen, Treppenhäuser, Schächte, Außenanlagen, Erker und Gauben.
 
-| Stand | Vorhanden | Grenzen |
-| --- | --- | --- |
-| Veröffentlichtes Modrelease **0.6.0** | 10 Formknotentypen, 24 Gebäudeknotentypen; gespeicherte Quellen, Spiegelungen und Drehungen, räumliche Segmentanordnungen, semantische Räume, Fassaden, Dachebenen, Schächte und Außenanlagen | Enthält die acht neuen booleschen Gebäude-Knoten für Copycats und Segmente noch nicht. |
-| Aktueller gemeinsamer Fachkern | 10 Formknotentypen und **32 Gebäudeknotentypen**, einschließlich Vereinigung, Schnitt, Differenz und symmetrischer Differenz für Copycat- und Segmentwerte | Für diese neuen Operator-IDs ist beim Spielimport ein Mod-Build mit der Erweiterung erforderlich. |
-| **Graphstudio 0.4** | **10 Formknotentypen und 21 Gebäudeknotentypen**; Copycat-Auswahldialog mit Geometrievorschauen für Grundformen und gespeicherte Formen im Form- und Gebäudegraphen; alle sechs Operationen für Copycats und Segmente; Graph-/Selektionsvorschau, Blockrahmen und hB-Achsen, Inspektor, JSON-Austausch, persönliche Browserbibliotheken | Segmentlayout-, Raumlayout-, Schacht- und Garten-/Wegknoten sowie native Gruppen und exakte Geometrieimporte sind nicht im Browser enthalten. Die Materialbibliothek zeigt Faithful-Texturen und verlinkbare Mod-Ressourcen; eigene Modell-Loader werden nicht ausgeführt. |
+| Dokument | Unterstützte Schemata |
+| --- | --- |
+| Form | 1–4 |
+| Formgraph | 1–3 |
+| Gebäude | 1–2, für den Browseraustausch mit Graph |
+| Gebäudegraph | 1–4 |
 
-## Operationen im Gebäudegraphen
+Native Knotengruppen mit benannten Schnittstellen und gemeinsamen Instanzdefinitionen,
+Architektentisch-Projektion sowie exakte Geometrie und Dachvorlagen bleiben erhalten.
+Die Oberfläche bearbeitet zusätzliche Eigenschaften unter **Knoteneinstellungen**.
+Zusammengehörige Änderungen werden gemeinsam übernommen und nach den Modregeln geprüft.
+Ältere Graphen behalten ihren Raumaufbau; neue Entwürfe verwenden den expliziten Aufbau.
 
-| Operation | Copycat-Wert | Segmentwert |
-| --- | --- | --- |
-| Rotieren | `COPYCAT_ROTATE` | `SEGMENT_ROTATE` |
-| Spiegeln | `COPYCAT_MIRROR` | `SEGMENT_MIRROR` |
-| Vereinigung | `COPYCAT_UNION` | `SEGMENT_UNION` |
-| Schnitt | `COPYCAT_INTERSECTION` | `SEGMENT_INTERSECTION` |
-| Differenz A − B | `COPYCAT_DIFFERENCE` | `SEGMENT_DIFFERENCE` |
-| Symmetrische Differenz | `COPYCAT_SYMMETRIC_DIFFERENCE` | `SEGMENT_SYMMETRIC_DIFFERENCE` |
+## Austauschprüfung
 
-Alle zwölf Kombinationen sind in der aktuellen Browseroberfläche auswählbar. Die Ausgänge bleiben mit ihrer jeweiligen Wertfamilie verbindbar. Rotation und Spiegelung verwenden im Browser X/Y/Z; diagonale Spiegelebenen benötigen den nativen Editor. Die [Graphstudio-Anleitung](Graphstudio.md) beschreibt gespeicherte Quellen, Eingänge und Materialmodi.
+Der Browser-Codec wird aus 52 nativen Datenklassen erzeugt. Die CI prüft den JVM-Fachkern,
+alle Browserregressionen und sieben gerichtete Dokumentfälle **JVM → Browser → JVM**.
+Dazu gehören eine rationale Diagonalspiegelung, eine Dachvorlage, ein leerer Copycat,
+eine benannte Gruppe, ein expliziter Grundriss mit Projektion, Erker/Gauben und das T-Haus.
+Zusätzlich werden alle nativen Form- und Gebäudeknotenfabriken durch den Browsercodec gelesen.
 
-Teilweise geschnittene normale Vollblöcke und semantische Segmentmetadaten werden bei booleschen Segmentoperationen ausdrücklich abgewiesen. Die [Operatorreferenz](Geplante-Segmentoperatoren.md) erklärt diese Grenzen.
+Das [öffentliche Manifest](https://teutonstudio.github.io/Copycat-Architecture/compatibility.json)
+nennt Release, Knotentypen, Schemata und SHA-256-Fingerabdrücke von Fachkern und Katalog.
+Die [historische Fehlerprüfung](../GRAPH_COMPATIBILITY.md) dokumentiert die zuvor
+auseinanderentwickelten Stände und die Behebung.
 
-## Dateiformate
+## Bibliotheken und Darstellung
 
-| Bereich | Aktueller nativer Fachkern | Graphstudio 0.4 |
-| --- | --- | --- |
-| Formdokument | Schema 1–4 | Schema 1–3, Export als Schema 3 |
-| Formgraph | Schema 1–3 | Schema 1–2 |
-| Gebäudedokument | Schema 1–2 | Graphdokumente, Export als Schema 2 |
-| Gebäudegraph | Schema 1–3 | Schema 1 |
+Gebäudeexporte enthalten Referenzen wie `ID@Version`. Die entsprechenden Form- und
+Modulversionen müssen im Spiel vorhanden sein. Persönliche Browsergraphen und
+Graphstudio-Sicherungen bewahren die verwendete Referenzbibliothek mit auf.
 
-Das Schema allein genügt nicht: Eine Datei muss auch ausschließlich unterstützte Knotentypen und Eigenschaften enthalten. Im Browser nicht unterstützte Typen, exakte native Geometriedaten und Einstellungen werden abgewiesen. Umgekehrt können Browserdateien im passenden Spielstand geöffnet werden; referenzierte Bibliotheksversionen müssen vorhanden sein. Ältere Graphen werden nicht still in den neuesten Raumaufbau umgewandelt.
+Die 3D-Vorschau verwendet Materialfarben oder Texturvorschauen. Exakte Schrägflächen
+werden konservativ im 16er-Raster dargestellt; die exportierten rationalen Ebenen
+bleiben vollständig erhalten. Minecraft-Spezialrenderer, exakte Modell-UVs, CTM und
+Animationen werden nicht vollständig nachgebildet. Bauaufträge und Inventare werden
+weiterhin im Spiel ausgeführt.
 
-Eine im Copycat-Referenzknoten geladene Form wird als feste Version in der **Referenzbibliothek des Browserentwurfs** aufbewahrt. Benannte Browsergraphen und Graphstudio-Sicherungen enthalten diese Bibliothek. Der normale Minecraft-Gebäudeexport enthält weiterhin nur Referenzen wie `ID@Version`; er bündelt keine Formbibliothek und installiert sie nicht im Spiel.
 
-## Gemeinsamer Vertrag und Prüfungen
-
-Der [Knotenvertrag im Repository](https://github.com/TeutonStudio/copycat-architect/blob/1896c21b2ae6962fdf5791579efe064655d3a391/src/main/resources/assets/copycat_architect/graph-models.json) legt Knotentypen, Anschlüsse, Standardwerte und Felder für Mod und Browser fest. Der zu dieser Referenz gehörende [Wiki-Snapshot](https://raw.githubusercontent.com/wiki/TeutonStudio/copycat-architect/reference/graph-models-2026-11-08.json) enthält denselben Vertrag. Die Browseroberfläche gibt nur die Typen und Felder frei, die ihr Parser und Exporter vollständig unterstützen.
-
-Die Knotenreferenz beschreibt auch native Funktionen, die im Browser fehlen. Ein implementierter Knoten kann unvollständige Eingänge besitzen oder im Gebäudekontext unzulässig sein. Ein gültiger Typvertrag ersetzt deshalb keine erfolgreiche Ergebnisberechnung.
-
-Der Graphstudio-Workflow prüft den gemeinsamen Fachkern mit JVM-Tests sowie die Browseradapter und erstellt den Produktionsbuild vor der Bereitstellung. Das ersetzt keine Abnahme des vollständigen Minecraft-Clients und veröffentlicht kein neues Modrelease.
-
-## Kosten und Darstellung
-
-Mod und Browser verwenden die gemeinsame Volumenberechnung des Fachkerns: Ein voller Copycat-Block benötigt **256 mB** Zink; Überlappungen werden im belegten Volumen einmal gezählt. Für den tatsächlichen Bau gelten der im Spiel verwendete Build, seine Materialpalette und die verfügbaren Bibliotheken.
-
-Die Browseransicht zeigt Geometrie mit Materialfarben oder Texturvorschauen. Minecraft-Spezialrenderer, exakte Modell-UVs, CTM, Animationen und weitere Mod-Effekte werden nicht vollständig nachgebildet. Baurechte, Inventare und die Ausführung des Bauauftrags bleiben Aufgaben des Spiels.
+Ein- und Ausgangstypen werden direkt aus den nativen Anschlüssen übernommen.
+Die Paritätsprüfung vergleicht alle 72 Gebäudeknotenvarianten und sämtliche
+Inspektorfelder einschließlich Typen, Auswahlwerten und Grenzen. Referenzfelder
+bieten passende native Quellknoten an. Abgeleitete Maße öffnen ihre gemeinsame
+Quelle. Benannte Gruppenschnittstellen verwenden denselben Adapter wie der
+Architektentisch; Eingänge, Ausgänge, Typen und Bindungen lassen sich bearbeiten.

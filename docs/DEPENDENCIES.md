@@ -1,6 +1,6 @@
 # Gepinnte Versionsmatrix
 
-Stand: 08.11.2026, Release 0.6.0. Java-Ziel: 21; Eclipse Temurin 21.0.7 ist als Java-21-Toolchain vorhanden. Gradle-Wrapper: 9.8.0, ModDevGradle: 2.0.143. Kotlin-Compiler: 2.2.20. Kein Serialization-Plugin, kein geschattetes Kotlin, keine zweite eingebettete Standardbibliothek. Die tatsächlichen Prüfungen stehen in [VALIDATION.md](VALIDATION.md).
+Stand: 02.11.2026, Entwicklungsstand 0.5.1. Java-Ziel: 21; Eclipse Temurin 21.0.7 ist als Java-21-Toolchain vorhanden. Gradle-Wrapper: 9.8.0, ModDevGradle: 2.0.143. Kotlin-Compiler: 2.2.20. Kein Serialization-Plugin, kein geschattetes Kotlin, keine zweite eingebettete Standardbibliothek. Die tatsächlichen Prüfungen stehen in [VALIDATION.md](VALIDATION.md).
 
 | Bestandteil | Exakte Version / Koordinate |
 | --- | --- |
@@ -9,7 +9,7 @@ Stand: 08.11.2026, Release 0.6.0. Java-Ziel: 21; Eclipse Temurin 21.0.7 ist als 
 | Create | `maven.modrinth:create:6.0.10+mc1.21.1` |
 | Create: Molten Metals – Neoforged | Release 1.0.1: `maven.modrinth:LDuJMNS2:dCzZU1My` (interne Modversion 1.0.0) |
 | Copycats+ | `maven.modrinth:copycats:3.0.9+mc.1.21.1-neoforge` |
-| CC:Tweaked | `cc.tweaked:cc-tweaked-1.21.1-forge:1.120.0` (NeoForge-Artefakt trägt weiterhin „forge“ im Namen) |
+| CC:Tweaked | `cc.tweaked:cc-tweaked-1.21.1-forge:1.120.0` (Build-Basis; unterstützt: 1.120.0–1.120.2; NeoForge-Artefakt trägt weiterhin „forge“ im Namen) |
 | KotlinForForge | `thedarkcolour:kotlinforforge-neoforge:5.10.0` |
 | KilaGraph, erforderlich auf dem Client | `com.lowdragmc.kilagraph:kilagraph-neoforge-1.21.1:21.1.0.16` |
 | LDLib2, erforderlich auf dem Client | `com.lowdragmc.ldlib2:ldlib2-neoforge-1.21.1:2.2.44:all` |
@@ -33,7 +33,7 @@ Primärquellen:
 - [LDLib2 für Minecraft 1.21.1](https://github.com/Low-Drag-MC/LDLib2/tree/1.21)
 - [LDLib2 Node Graph Toolkit](https://low-drag-mc.github.io/LowDragMC-Doc/en/ldlib2/node-graph-toolkit/)
 
-Die öffentliche CC-Javadoc zeigt inzwischen 1.120.2. Implementiert und kompiliert wurde gegen die tatsächlichen 1.120.0-JARs; insbesondere `UpgradeType`, `UpgradeData`, `executeCommand`, `TurtleCommandResult` und `WritableMount.openFile` wurden direkt geprüft. Die Bibliotheken wurden gemeinsam im echten NeoForge-GameTestServer geladen.
+CC:Tweaked 1.120.0 bleibt die Build-Basis, damit die älteste unterstützte API erhalten bleibt. Die Modmetadaten erlauben 1.120.0 bis einschließlich 1.120.2 (`[1.120.0,1.120.3)`). Mit `-PccTweakedVersion=1.120.2` lässt sich der Build samt Entwicklungsclient und GameTestServer gegen die neuere Version ausführen; `tools/cc-tweaked-validation.init.gradle` trennt dabei Klassen, Berichte und Spielwelten vom regulären Build. Die tatsächlich ausgeführten Kompatibilitätsprüfungen stehen in der Abnahmedokumentation.
 
 ## Entwicklungsmods für runClient
 

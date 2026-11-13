@@ -23,8 +23,7 @@ data class PrinterWorkspaceLayout(val screenWidth:Int,val screenHeight:Int,val t
     fun render(g:GuiGraphics,peek:Boolean) {
         if(!peek) {
             g.fill(0,0,screenWidth,screenHeight,0xb0101010.toInt())
-            g.blitSprite(GuiSprites.getComputerTextures(ComputerFamily.ADVANCED).border(),left,top,width,height)
-            g.fill(x,y,x+innerWidth,y+height-24,0xff101820.toInt())
+            ArchitectTheme.computer(g,left,top,width,height)
         }
     }
 }
@@ -60,7 +59,7 @@ internal fun renderComputerTab(g:GuiGraphics,x:Int,y:Int,width:Int,height:Int,sy
             if(cull) RenderSystem.enableCull()
         } else g.blitSprite(sprite,x,y,width,height)
     }
-    val color=if(hovered || selected) 0xffffffff.toInt() else 0xffdcdcdc.toInt()
+    val color=if(hovered || selected) 0xffffffff.toInt() else ArchitectTheme.text
     val font=Minecraft.getInstance().font
     val px=x+(width-11)/2;val py=y+(height-12)/2
     when(symbol) {
@@ -69,7 +68,7 @@ internal fun renderComputerTab(g:GuiGraphics,x:Int,y:Int,width:Int,height:Int,sy
         }
         "P" -> {
             g.renderOutline(px,py+4,11,6,color);g.renderOutline(px+2,py,7,5,color)
-            g.fill(px+2,py+7,px+9,py+12,color);g.fill(px+3,py+8,px+8,py+9,0xff6c632e.toInt())
+            g.fill(px+2,py+7,px+9,py+12,color);g.fill(px+3,py+8,px+8,py+9,ArchitectTheme.brassDark)
         }
         "H" -> {
             g.renderOutline(px+1,py+1,10,10,color)
@@ -79,10 +78,10 @@ internal fun renderComputerTab(g:GuiGraphics,x:Int,y:Int,width:Int,height:Int,sy
         else -> g.drawString(font,symbol,x+(width-font.width(symbol))/2,y+(height-8)/2,color,false)
     }
     if(selected) {
-        if(top) g.fill(x+5,y+height-2,x+width-5,y+height,0xffffcc55.toInt())
+        if(top) g.fill(x+5,y+height-2,x+width-5,y+height,ArchitectTheme.brass)
         else {
             val edge=if(right) x else x+width-2
-            g.fill(edge,y+5,edge+2,y+height-5,0xffffcc55.toInt())
+            g.fill(edge,y+5,edge+2,y+height-5,ArchitectTheme.brass)
         }
     }
 }

@@ -1,6 +1,6 @@
 # Gemeinsame und verschachtelte Inspektoreigenschaften
 
-> Stand: **8. November 2026**. Beschreibt den aktuellen gemeinsamen Knotenvertrag. Die im Browser **Graphstudio 0.4** verfügbaren Knoten und Felder sind in der [Knotenreferenz](Knotenreferenz.md) und im [Entwicklungsstand](Entwicklungsstand.md) ausgewiesen.
+> Stand: 13. November 2026 · Gemeinsamer Modellstand von Mod und Graphstudio 0.6.1.
 
 [Knotenreferenz](Knotenreferenz.md) · [Einheiten](Einheiten-und-Ausrichtung.md)
 
@@ -192,3 +192,19 @@ Zielwände und Dachunterseiten sind spät gebundene Oberflächenreferenzen. Sie 
 | `variant` | slope, eave, edge, ridge, hip, valley, corner oder cap. |
 
 Diese Quelle erzeugt exakte schräge Geometrie. `exact` und `exactClip` sind geometrische Ergebnisdaten, keine frei einzustellenden Zahlenfelder des Inspektors.
+
+## Zusätzliche semantische Anschlüsse
+
+Die Verbindungsauswahl bietet die folgenden typisierten Sonderraumanschlüsse an:
+
+| Anschluss | Akzeptierte Quellen |
+| --- | --- |
+| `semantic:bay:wall` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE`, `SEGMENT_UNION`, `SEGMENT_INTERSECTION`, `SEGMENT_DIFFERENCE`, `SEGMENT_SYMMETRIC_DIFFERENCE` |
+| `semantic:bay:front` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE`, `SEGMENT_UNION`, `SEGMENT_INTERSECTION`, `SEGMENT_DIFFERENCE`, `SEGMENT_SYMMETRIC_DIFFERENCE` |
+| `semantic:bay:floor` | `FLOOR`, `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE`, `SEGMENT_UNION`, `SEGMENT_INTERSECTION`, `SEGMENT_DIFFERENCE`, `SEGMENT_SYMMETRIC_DIFFERENCE` |
+| `semantic:bay:ceiling` | `CEILING`, `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE`, `SEGMENT_UNION`, `SEGMENT_INTERSECTION`, `SEGMENT_DIFFERENCE`, `SEGMENT_SYMMETRIC_DIFFERENCE` |
+| `semantic:dormer:wall` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE`, `SEGMENT_UNION`, `SEGMENT_INTERSECTION`, `SEGMENT_DIFFERENCE`, `SEGMENT_SYMMETRIC_DIFFERENCE` |
+| `semantic:dormer:front` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE`, `SEGMENT_UNION`, `SEGMENT_INTERSECTION`, `SEGMENT_DIFFERENCE`, `SEGMENT_SYMMETRIC_DIFFERENCE` |
+| `semantic:dormer:roof` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE`, `COPYCAT_UNION`, `COPYCAT_INTERSECTION`, `COPYCAT_DIFFERENCE`, `COPYCAT_SYMMETRIC_DIFFERENCE` |
+| `semantic:bay:*:source` | `BAY_WINDOW` |
+| `semantic:dormer:*:source` | `DORMER` |

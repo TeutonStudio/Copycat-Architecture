@@ -35,16 +35,16 @@ class ShapeNodePreviews(private val definition:()->Form,private val disconnected
 }
 
 object ShapeNodePreviewRenderer {
-    private data class ThumbnailStyle(val groups:List<MaterialGroup>,val surfaces:Map<String,String>,val showMaterials:Boolean)
+    private data class ThumbnailStyle(val groups:List<MaterialGroup>,val surfaces:Map<String,String>,val showMaterials:Boolean,val yaw:Float)
 
-    internal fun drawThumbnail(g:GuiGraphics,x:Int,y:Int,w:Int,h:Int,preview:ShapeNodePreview,groups:List<MaterialGroup>,surfaces:Map<String,String>,showMaterials:Boolean=true) {
+    internal fun drawThumbnail(g:GuiGraphics,x:Int,y:Int,w:Int,h:Int,preview:ShapeNodePreview,groups:List<MaterialGroup>,surfaces:Map<String,String>,showMaterials:Boolean=true,yaw:Float=35f) {
         if(preview.error.isNotEmpty()) {
-            draw(g,x,y,w,h,preview,groups,surfaces,showMaterials=showMaterials)
+            draw(g,x,y,w,h,preview,groups,surfaces,yaw,showMaterials=showMaterials)
             return
         }
-        GraphPreviewThumbnails.draw(g,x,y,w,h,preview,ThumbnailStyle(groups,surfaces,showMaterials)) {
+        GraphPreviewThumbnails.draw(g,x,y,w,h,preview,ThumbnailStyle(groups,surfaces,showMaterials,yaw)) {
             { target ->
-                draw(target,0,0,w,h,preview,groups,surfaces,showMaterials=showMaterials)
+                draw(target,0,0,w,h,preview,groups,surfaces,yaw,showMaterials=showMaterials)
                 true
             }
         }

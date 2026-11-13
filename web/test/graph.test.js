@@ -174,27 +174,13 @@ test('empty intermediate geometry is inspectable but the empty final form cannot
   assert.throws(() => writeGraph('form', graph), /Result is empty/)
 })
 
-test('native-only nodes, schemas and geometry are rejected before browser import or export', () => {
-  const original = fixture('nodegraph-form')
-  const input = original.graph.nodes.find(node => node.kind === 'INPUT')
-  for (const kind of ['UNSUPPORTED_NODE']) {
-    const document = replaceNodes(original, original.graph.nodes.map(node => node.id === input.id ? { ...node, kind } : node))
-    assert.throws(() => readGraph(document, 'form'), /native editor/)
-  }
-  for (const field of ['exact', 'exactClip', 'roof']) {
-    const document = replaceNodes(original, original.graph.nodes.map(node => node.id === input.id ? { ...node, part: { ...node.part, [field]: {} } } : node))
-    assert.throws(() => writeGraph('form', document), /native editor/)
-  }
-  const groups = { ...original, graph: { ...original.graph, nodeGroups: [{ id: 'group' }] } }
-  assert.throws(() => readGraph(groups, 'form'), /native editor/)
+test('all native schemas, geometry fields and building kinds are available to the browser', () => {
   const graph = fixture('building-graph')
-  for (const change of [{ assembly: true }, { depth: 2 }]) {
-    const document = replaceNodes(graph, graph.graph.nodes.map((node, index) => index === 0 ? { ...node, ...change } : node))
-    assert.throws(() => writeGraph('building', document), /native editor/)
-  }
-  assert.throws(() => readGraph({ ...graph, graph: { ...graph.graph, schema: 3 } }, 'building'), /schema/)
+  const layout = newNode(true, 'ROOM_LAYOUT', 'layout', 0, 0)
+  const document = replaceNodes(graph, [...graph.graph.nodes, layout])
+  assert.equal(readGraph(document, 'building').graph.nodes.at(-1).kind, 'ROOM_LAYOUT')
   assert.equal(newNode(false, 'MIRROR', 'mirror', 0, 0).kind, 'MIRROR')
-  assert.throws(() => newNode(true, 'ROOM_LAYOUT', 'layout', 0, 0), /native editor/)
+  assert.throws(() => newNode(false, 'UNSUPPORTED_NODE', 'unknown', 0, 0), /enum constant/)
 })
 
 test('plate previews use the connected footprint while independent room branches stay incomplete', () => {

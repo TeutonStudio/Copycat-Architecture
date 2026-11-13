@@ -1,4 +1,4 @@
-# Copycat Architect Graphstudio 0.4
+# Copycat Architect Graphstudio 0.6.1
 
 Browsereditor für Form- und Gebäudegraphen. Die Beispieldateien stammen aus
 [`examples/`](../examples). Die beiden Editoren verwalten getrennte Entwürfe.
@@ -10,7 +10,9 @@ Benötigt werden Node.js 22.12 oder neuer, Java 21, Bash und curl.
 ```sh
 cd web
 npm ci
+../gradlew -p .. test --tests "*GraphstudioExchangeTest.nativeCorpus"
 npm test
+../gradlew -p .. test --tests "*GraphstudioExchangeTest.browserExports" --rerun
 npm run dev
 ```
 
@@ -62,18 +64,29 @@ Ausrichtungs-Enums übersetzen weiterhin in das vorhandene Quellformat. Nicht un
 
 Die vollständige deutsche [Knotenreferenz](../docs/wiki/Knotenreferenz.md) dokumentiert den gemeinsamen Knotenvertrag einschließlich zusätzlicher nativer Funktionen; jede Knotenbeschreibung kennzeichnet ihre Browserverfügbarkeit.
 
-## Integration mit dem nativen Mod ab 0.6.0
+## Gemeinsamer Modellstand 0.6.1
 
-Der Browser kompiliert den vollständigen aktuellen Fachkern. Der Knoten- und
-Anschlussvertrag wird aus derselben `graph-models.json` wie im Mod geladen;
-Browseradapter ersetzen JVM-Caches, Bitsets und Ganzzahlarithmetik.
+Alle zehn Form- und 36 Gebäudeknoten werden aus dem Modkatalog angeboten.
+`generate-codec.mjs` erzeugt den vollständigen JSON-Codec und die Eigenschaftstypen
+aus den 52 erreichbaren nativen Datenklassen. Formdokumente 1–4, Formgraphen 1–3
+und Gebäudegraphen 1–4 werden mit denselben Kotlin-Validatoren bearbeitet.
+Gruppen, benannte Schnittstellen, Projektion, exakte Geometrie, Dachvorlagen,
+vertikale Erschließung und Erker/Gauben bleiben beim Austausch erhalten.
+`Knoteneinstellungen` erlaubt das Bearbeiten der zusätzlichen Eigenschaften;
+zusammengehörige Änderungen werden gemeinsam übernommen.
 
-Die Browseroberfläche unterstützt zehn Form- und einundzwanzig
-Gebäudeknotentypen; der gemeinsame Katalog enthält insgesamt 32 Gebäudetypen.
-Erweiterte native Graphen, Gruppen, exakte Geometrien und
-nicht unterstützte Knoteneinstellungen werden beim Import und vor dem Export
-mit einem Hinweis auf den nativen Editor abgewiesen. Dadurch können sie nicht
-unbemerkt vereinfacht oder mit fehlenden Einstellungen gespeichert werden.
+Native Knotengruppen können aus der Auswahl angelegt, umbenannt, instanziert und
+aufgelöst werden. Benannte Gruppeneingänge aktualisieren beim Neuverbinden alle
+gebundenen Anschlüsse. Die gemeinsamen Definitionen synchronisieren Einstellungen
+zwischen Instanzen. Die Browserbibliothek kann weiterhin Knotenauswahlen speichern.
+
+`compatibility.json` im Website-Build nennt Release, Schemata, Knotentypen und
+SHA-256-Fingerabdrücke des Katalogs und Fachkerns. CI prüft sieben echte native
+Dokumente in der Reihenfolge JVM → Browser → JVM und beide nativen Knotenfabriken.
+
+Die 3D-Ansicht stellt exakte Formen weiterhin konservativ im 16er-Raster dar;
+die exportierten rationalen Ebenen bleiben vollständig erhalten. Die visuelle
+Rasterdarstellung ist daher keine Prüfung der exakten Oberflächenqualität.
 
 ## Material and personal libraries
 
@@ -176,3 +189,11 @@ python3 tools/verify-graphstudio-browser.py --url http://127.0.0.1:4173
 Verzeichnis für die Screenshots (Standard: `/tmp/graphstudio-browser-check`).
 Gemessene Knotengrößen bleiben ausschließlich Ansichtsstatus; der Test prüft,
 dass diese Daten nicht im Minecraft-JSON landen.
+
+
+Ein- und Ausgangstypen werden direkt aus den nativen Anschlüssen übernommen.
+Die Paritätsprüfung vergleicht alle 72 Gebäudeknotenvarianten und sämtliche
+Inspektorfelder einschließlich Typen, Auswahlwerten und Grenzen. Referenzfelder
+bieten passende native Quellknoten an. Abgeleitete Maße öffnen ihre gemeinsame
+Quelle. Benannte Gruppenschnittstellen verwenden denselben Adapter wie der
+Architektentisch; Eingänge, Ausgänge, Typen und Bindungen lassen sich bearbeiten.

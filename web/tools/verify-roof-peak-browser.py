@@ -27,7 +27,7 @@ with sync_playwright() as p:
     port = studio.get_by_label('Dachspitze (optional)', exact=True)
     expect(port).to_have_value('peak_copycat')
     assert 'Wall segment' not in port.locator('option').all_text_contents()
-    studio.get_by_label('Vorschauziel', exact=True).select_option('selected')
+    studio.get_by_role('group', name='Vorschauziel', exact=True).get_by_role('button', name='Selektiert', exact=True).click()
     status = studio.locator('.preview-meta[role="status"]')
     expect(status).to_contain_text('Zinkeinheiten')
     expect(studio.locator('.preview-body canvas')).to_be_visible()

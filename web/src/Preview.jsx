@@ -141,7 +141,7 @@ function groundCompass(group, bounds) {
     new THREE.Vector3(center.x + diameter * 0.55, plane.position.y, center.z + diameter * 0.55))
 }
 
-export function Viewer({ plan, blockFrame, catalog }) {
+export function Viewer({ plan, blockFrame, catalog, details }) {
   const container = useRef(null)
   const viewer = useRef(null)
   const [activeSide, setActiveSide] = useState('')
@@ -346,16 +346,24 @@ export function Viewer({ plan, blockFrame, catalog }) {
     return () => { live = false }
   }, [plan, blockFrame, catalog])
 
-  return <div className="viewer-with-sides">
-    <div className="preview-sides" role="group" aria-label="Seitenansicht wählen">
-      {sides.map(side => <button key={side.id} type="button" aria-pressed={activeSide === side.id}
-        aria-label={`Ansicht ${side.label}`} onClick={() => fit(side)}>{side.label}</button>)}
-    </div>
+  const hasDetails = !!details
+  return <div className={`viewer-with-sides${hasDetails ? ' has-details' : ''}`}>
+    <aside className="preview-hud preview-hud-left" aria-label="3D-Ansichten">
+      <div className="preview-sides" role="group" aria-label="Seitenansicht wählen">
+        {sides.map(side => <button key={side.id} type="button" aria-pressed={activeSide === side.id}
+          aria-label={`Ansicht ${side.label}`} onClick={() => fit(side)}>{side.label}</button>)}
+      </div>
+      <button type="button" className="fit3d" aria-label="3D einpassen" onClick={() => fit()}>Einpassen</button>
+    </aside>
     <div className="viewer" ref={container}>
-      <button type="button" className="fit3d" onClick={() => fit()}>3D einpassen</button>
+      {!hasDetails && error && <p className="preview-error" role="status">{error}</p>}
+      {!hasDetails && textureWarning && <p className="texture-warning" role="status">{textureWarning}</p>}
+    </div>
+    {hasDetails && <aside className="preview-hud preview-hud-right" aria-label="3D-Informationen">
+      {details}
       {error && <p className="preview-error" role="status">{error}</p>}
       {textureWarning && <p className="texture-warning" role="status">{textureWarning}</p>}
-    </div>
+    </aside>}
   </div>
 }
 
@@ -418,13 +426,15 @@ export default function Preview({ mode, document, library, selected, previewMode
   const texturedPlan = useMemo(() => result.plan && mode === 'form' ? { ...result.plan, meshes: result.plan.meshes.map(mesh => ({ ...mesh, material: materials[mesh.material] || mesh.material })) } : result.plan, [result.plan, mode, materials])
   return <section className="preview-panel" aria-label="Gebäude- und Formvorschau">
     <div className="panel-heading"><span>3D-Vorschau</span><div className="button-row">
-      <select aria-label="Vorschauziel" value={previewMode} onChange={event => onMode(event.target.value)}>
-        <option value="graph">Graph</option><option value="selected">Selektiert</option>
-      </select>
+      <div className="preview-target-switch" role="group" aria-label="Vorschauziel">
+        {[['graph', 'Graph'], ['selected', 'Selektiert']].map(([value, label]) =>
+          <button key={value} type="button" aria-pressed={previewMode === value}
+            onClick={() => onMode(value)}>{label}</button>)}
+      </div>
       <button type="button" aria-expanded={!collapsed} aria-controls={`${mode}-preview`} aria-label={collapsed ? '3D-Vorschau ausklappen' : '3D-Vorschau einklappen'} onClick={onToggle}>{collapsed ? '▸' : '▾'}</button>
     </div></div>
     <div id={`${mode}-preview`} className="preview-body" hidden={collapsed}>
-    <Viewer plan={texturedPlan} blockFrame={blockFrame} catalog={catalog} />
+    <Viewer plan={texturedPlan} blockFrame={blockFrame} catalog={catalog} details={<>
     <div className="preview-meta" role="status">
       {result.error ? <><strong>{result.plan ? 'Letzter gültiger Stand' : 'Vorschau wartet auf einen gültigen Graphen'}</strong><br />{result.error}</>
         : result.pending ? 'Vorschau wird berechnet …'
@@ -433,11 +443,12 @@ export default function Preview({ mode, document, library, selected, previewMode
     </div>
     {result.plan?.value && <p className="preview-meta">{result.plan.value}</p>}
     {result.plan?.warnings?.map((warning, index) => <p className="preview-meta" key={index}>{warning}</p>)}
-    <p className="axis-legend"><span style={{color:axisColors.x}}>West (−X) · Ost (+X)</span> · <span style={{color:axisColors.y}}>Unten (−Y) · Oben (+Y)</span><br /><span style={{color:axisColors.z}}>Nord (−Z) · Süd (+Z)</span>
-      {blockFrame && <><br />Rahmen: 16 hB · lange Marke: 8 hB · kurze Marken: 4 / 12 hB</>}</p>
+    <div className="axis-legend" aria-label="Koordinatenachsen"><span style={{color:axisColors.x}}>West (−X) · Ost (+X)</span><span style={{color:axisColors.y}}>Unten (−Y) · Oben (+Y)</span><span style={{color:axisColors.z}}>Nord (−Z) · Süd (+Z)</span>
+      {blockFrame && <span>Rahmen: 16 hB · lange Marke: 8 hB · kurze Marken: 4 / 12 hB</span>}</div>
     {result.plan?.materials && <details className="materials"><summary>Materialbedarf</summary>
       {Object.entries(result.plan.materials).map(([id, count]) => <div key={id}><code>{id}</code><span>{count}</span></div>)}
     </details>}
+    </>} />
     </div>
   </section>
 }

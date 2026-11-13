@@ -94,6 +94,13 @@ Die mittlere Maustaste verschiebt die Ansicht. **Vergrößern**, **Verkleinern**
 
 ## 3D-Vorschau: Graph oder Selektiert
 
+Der Wechselschalter **Graph / Selektiert** im Vorschaukopf wählt das Ziel direkt;
+der aktive Knopf ist hervorgehoben. Mit Tab fokussieren und Enter oder Leertaste
+umschalten. Links neben der Grafik liegen die sechs Seitenansichten und
+**Einpassen**, rechts Status, Achsenlegende, Warnungen und Materialbedarf.
+Die Grafik nutzt die volle Höhe zwischen den Panels. Bei wenig Platz scrollen
+die Panels unabhängig von der Zeichenfläche.
+
 | Auswahl | Darstellung |
 | --- | --- |
 | **Graph** | Das endgültige Ergebnis des Formgraphen beziehungsweise das vollständige Gebäude. Die Knotenauswahl verändert dieses Vorschauziel nicht. |

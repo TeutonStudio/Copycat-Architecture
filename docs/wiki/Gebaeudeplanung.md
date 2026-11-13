@@ -7,7 +7,7 @@
 
 Am **Architektentisch** setzt du gespeicherte Copycat-Formen zu Wänden, Räumen und Stockwerken zusammen. Der fertige Entwurf enthält die Baupositionen und den Materialbedarf für einen Turtle-Auftrag. Diese Seite beschreibt den lokalen Entwicklungsstand **0.5.1** und verwendet den aktuellen Graphentwurf als Einstieg.
 
-Im Browser kannst du die Knoten und Verbindungen eines Gebäudegraphen bearbeiten. [Gebäudegraph öffnen](https://teutonstudio.github.io/copycat-architect/?graph=building) · [JSON mit Minecraft austauschen](Graphstudio.md)
+Im Browser kannst du die Knoten und Verbindungen eines Gebäudegraphen bearbeiten. [Gebäudegraph öffnen](https://teutonstudio.github.io/Copycat-Architecture/?editor=building) · [JSON mit Minecraft austauschen](Graphstudio.md)
 
 ## Einen Entwurf beginnen
 

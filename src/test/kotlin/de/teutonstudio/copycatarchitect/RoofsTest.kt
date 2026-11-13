@@ -71,6 +71,19 @@ class RoofsTest {
             assertTrue(walls.all { it.pos.copy(y=0) in cells(3,2) },"$form/$axis: walls must stay on the support")
         }
     }
+    @Test fun `explicit eave templates follow low edges parallel to the ridge including gable extensions`() {
+        for(form in listOf(RoofForm.GABLE,RoofForm.PENT)) for(axis in 0..3) {
+            val plan=compile(RoofLevelConfig(form=form,axis=axis,slope=RoofSlope(1,3),knee16=16,overhang16=5),cells(3,4))
+            val eaves=plan.placements.filter { p->p.parts.any { it.group=="roof_eave" } }
+            assertTrue(eaves.isNotEmpty(),"$form/$axis")
+            val alongX=axis%2==1
+            val sides=if(form==RoofForm.GABLE) (if(alongX) setOf(0,3) else setOf(0,2))
+                else setOf(if(axis<2) 0 else if(alongX) 3 else 2)
+            assertEquals(sides,eaves.map { if(alongX) it.pos.z else it.pos.x }.toSet(),"$form/$axis: low sides")
+            val along=eaves.map { if(alongX) it.pos.x else it.pos.z }.toSet()
+            assertEquals(-1,along.min());assertEquals(if(alongX) 3 else 4,along.max())
+        }
+    }
     @Test fun `same support upper envelope removes a completely hidden lower roof`() {
         val base=RoofLevelConfig(form=RoofForm.FLAT,knee16=16,overhang16=0)
         val (g,r)=graph(base)

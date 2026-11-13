@@ -192,7 +192,7 @@ object Roofs {
                 val backing=backingUpper.minus(down).intersect(visibleSkin)
                 val winner=active.maxBy { it.height((p.x+.5)*16,(p.z+.5)*16) }
                 if(!visibleSkin.isEmpty()) {
-                    val variant=if(p !in winner.mask) "eave" else if(RoomGeometry.directions.any { p+it !in winner.mask }) "edge" else "slope"
+                    val variant=if(isEave(winner,p)) "eave" else if(RoomGeometry.directions.any { p+it !in winner.coverage }) "edge" else "slope"
                     templatePlacement(winner,block,visibleSkin,variant,shared,roof,palette,source,formSource,::segmentOverride,required=backing)?.let(pieces::add)
 
                 }
@@ -528,6 +528,15 @@ object Roofs {
             if(!band.isEmpty()) result[kind]=(result[kind] ?: ExactVolume()).union(band)
         }
         return result
+    }
+    /** Eaves follow the low edges parallel to the ridge, including the gable extension. */
+    private fun isEave(l:Level,p:P):Boolean {
+        val lowEdges=when(l.c.form) {
+            RoofForm.GABLE,RoofForm.CROSS -> if(l.c.axis%2==0) listOf(P(-1,0,0),P(1,0,0)) else listOf(P(0,0,-1),P(0,0,1))
+            RoofForm.PENT -> listOf(listOf(P(-1,0,0),P(0,0,-1),P(1,0,0),P(0,0,1))[l.c.axis])
+            else -> RoomGeometry.directions
+        }
+        return lowEdges.any { p+it !in l.coverage }
     }
     private fun clippedBody(l:Level,block:P,shift:Int=0):ExactVolume {
         var body=l.body(block,shift)

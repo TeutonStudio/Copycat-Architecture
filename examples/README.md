@@ -29,3 +29,7 @@ Für einen Einzelentwurf die entsprechende JSON-Datei kopieren und im passenden 
 - `modular-roofs-and-access.json`: zwei unterschiedlich breite Geschosse mit eigenem unterem Teildach und oberem Satteldach, exakter Steigung 1:2, U-Treppenhaus, vorbereitetem Aufzugsschacht und Versorgungsschacht. Verwendet die integrierten Formen `full@1` und `stair@1`. Im Gebäudeeditor importieren; unter **Dach** die Dachebenen und unter **Erschließung** die Kerne bearbeiten. **Gebäude/Außenanlagen platzieren** zeigt die einzeln verschiebbaren Kernflächen.
 
 - `building-roof-peak.json`: einfaches Satteldach mit separater optionaler Copycat-Dachspitze bei ungerader Breite. In Graphstudio als Beispiel auswählbar; Dachspitze im Inspektor auf **Offen** setzen und per Undo vergleichen. Verwendet `full@1` und `bar@1` aus `library.json`. Dachebenen nutzen weiterhin ihre vorhandene First-Segmentvorlage.
+
+`building-roof-eave.json` zeigt eine eigene Dachendkante / Traufe parallel zum
+First. Die Copycat-Quelle belegt beide unteren Randreihen einschließlich des
+Überhangs, unabhängig von Dachfläche, Dachspitze und Giebelmauern.

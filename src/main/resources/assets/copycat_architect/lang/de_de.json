@@ -632,7 +632,7 @@
   "gui.copycat_architect.roof_source_empty_slice": "Dieses Teilstück enthält bei der gewählten Phase keine Dachgeometrie.",
   "gui.copycat_architect.roof_variant_slope": "Dachfläche",
   "gui.copycat_architect.roof_variant_edge": "Ortgang / Rahmen",
-  "gui.copycat_architect.roof_variant_eave": "Traufe",
+  "gui.copycat_architect.roof_variant_eave": "Dachendkante / Traufe",
   "gui.copycat_architect.roof_variant_ridge": "First",
   "gui.copycat_architect.roof_variant_corner": "Ecke",
   "gui.copycat_architect.roof_variant_hip": "Grat",
@@ -834,5 +834,6 @@
   "gui.copycat_architect.copycat_symmetric_difference": "Symmetrische Copycat-Differenz",
   "gui.copycat_architect.bg_rotation": "Rotation",
   "gui.copycat_architect.bg_mirroring": "Spiegelungen",
-  "gui.copycat_architect.bg_roof_peak": "Dachspitze (optional)"
+  "gui.copycat_architect.bg_roof_peak": "Dachspitze (optional)",
+  "gui.copycat_architect.bg_roof_eave": "Dachendkante / Traufe (optional)"
 }

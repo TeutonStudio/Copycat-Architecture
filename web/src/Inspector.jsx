@@ -21,7 +21,7 @@ export const names = {
 }
 
 export function portName(port, node) {
-  const native = { roofPeak: 'Dachspitze (optional)', layout: 'Anordnung', geometry: 'Grundriss', area: 'Fläche', tread: 'Stufen', landing: 'Podest', enclosure: 'Schachtwände' }
+  const native = { roofPeak: 'Dachspitze (optional)', roofEave: 'Dachendkante / Traufe (optional)', layout: 'Anordnung', geometry: 'Grundriss', area: 'Fläche', tread: 'Stufen', landing: 'Podest', enclosure: 'Schachtwände' }
   if (native[port.id]) return native[port.id]
   if (port.id.startsWith('region:')) return `Bereich ${port.id.slice(7)}`
   if (port.id.startsWith('semantic:')) {
@@ -35,7 +35,7 @@ export function portName(port, node) {
   if (node.kind === 'SEGMENT_DIFFERENCE' && kind === 'in') return key === '0' ? 'A · Grundsegment' : 'B · Abzug'
   if (node.kind === 'COPYCAT_DIFFERENCE' && kind === 'in') return key === '0' ? 'A · Grundform' : 'B · Abzug'
   if (kind === 'in') {
-    if (node.kind === 'ROOF' && node.assembly && Number(key) < 6) return ['Dachfläche', 'Traufe', 'Ortgang', 'First', 'Grat', 'Kehle'][Number(key)]
+    if (node.kind === 'ROOF' && node.assembly && Number(key) < 6) return ['Dachfläche', 'Dachendkante / Traufe', 'Ortgang', 'First', 'Grat', 'Kehle'][Number(key)]
     const family = node.kind === 'BUILDING' ? 'Außenanlage' : node.kind === 'ROOF_LAYOUT' ? 'Dachebene' : node.kind === 'ROOM_LAYOUT' || node.kind === 'PATTERN' || node.kind.startsWith('SEGMENT_') ? 'Segment' : node.kind === 'STOREY' ? 'Raum' : 'Copycat'
     return `${family} ${Number(key) + 1}`
   }

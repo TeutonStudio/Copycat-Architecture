@@ -80,6 +80,7 @@ object DiagramEdits {
                     port.key=="corner" -> next=next.copy(corner=source)
                     port.key.startsWith("edge:") -> next=next.copy(verticalEdges=if(source.isEmpty()) next.verticalEdges.orEmpty()-port.key.removePrefix("edge:") else next.verticalEdges.orEmpty()+(port.key.removePrefix("edge:") to source))
                     port.key=="roofPeak" -> next=next.copy(roofPeak=source.takeIf(String::isNotEmpty))
+                    port.key=="roofEave" -> next=next.copy(roofEave=source.takeIf(String::isNotEmpty))
                     port.key=="roof" -> next=next.copy(roof=source)
                     port.key=="area" -> next=next.copy(roofLevel=(next.roofLevel ?: RoofLevelConfig()).copy(area=source))
                     // Access ports refer to the original instance indices. Apply them together below.

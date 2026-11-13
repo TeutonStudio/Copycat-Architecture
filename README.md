@@ -1,6 +1,6 @@
 # Create: Copycat Architect
 
-Version **0.6.3** für Minecraft **1.21.1**, **NeoForge 21.1.251**, **Java 21**. Kotlin-Mod mit einem platzierbaren Blockdrucker für geometrische Copycat-Kompositformen, versionierten Gebäudemodulen und echtem Turtle-Bau mit Rohmaterial und Oberflächenpalette.
+Version **0.6.4** für Minecraft **1.21.1**, **NeoForge 21.1.251**, **Java 21**. Kotlin-Mod mit einem platzierbaren Blockdrucker für geometrische Copycat-Kompositformen, versionierten Gebäudemodulen und echtem Turtle-Bau mit Rohmaterial und Oberflächenpalette.
 
 **Neu hier?** Die [deutsche GitHub-Wiki](https://github.com/TeutonStudio/copycat-architect/wiki) erklärt Installation, Rezepte, Blockdrucker, Formeditor, Gebäudeplanung und Turtle-Bau mit Screenshots und Fehlerhilfe. Die [lokale Fassung](docs/WIKI.md) liegt im Projekt.
 
@@ -17,7 +17,7 @@ Version **0.6.3** für Minecraft **1.21.1**, **NeoForge 21.1.251**, **Java 21**.
 
 `runClient` lädt zusätzlich JEI, Neat und Jade als Entwicklungsmods. Die gepinnten Client-Versionen stehen in [DEPENDENCIES.md](docs/DEPENDENCIES.md).
 
-Der Gradle-Wrapper benötigt zum Start Java 21 (`JAVA_HOME` bei Bedarf setzen). Die fertige Mod liegt unter `build/libs/copycat_architect-0.6.3.jar`. Diese JAR und folgende Abhängigkeiten aus [DEPENDENCIES.md](docs/DEPENDENCIES.md) gehören in `mods` von Client und Server:
+Der Gradle-Wrapper benötigt zum Start Java 21 (`JAVA_HOME` bei Bedarf setzen). Die fertige Mod liegt unter `build/libs/copycat_architect-0.6.4.jar`. Diese JAR und folgende Abhängigkeiten aus [DEPENDENCIES.md](docs/DEPENDENCIES.md) gehören in `mods` von Client und Server:
 
 - Create 6.0.10 für 1.21.1
 - [Create: Molten Metals – Neoforged 1.0.1](https://modrinth.com/mod/create-molten-metals-neoforged) für 1.21.1 (Pflicht auf Client und Server)

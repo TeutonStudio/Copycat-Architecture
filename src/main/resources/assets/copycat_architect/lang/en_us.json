@@ -632,7 +632,7 @@
   "gui.copycat_architect.roof_source_empty_slice": "This slice contains no roof geometry at the selected phase.",
   "gui.copycat_architect.roof_variant_slope": "Roof skin",
   "gui.copycat_architect.roof_variant_edge": "Verge / frame",
-  "gui.copycat_architect.roof_variant_eave": "Eave",
+  "gui.copycat_architect.roof_variant_eave": "Roof end edge / eave",
   "gui.copycat_architect.roof_variant_ridge": "Ridge",
   "gui.copycat_architect.roof_variant_corner": "Corner",
   "gui.copycat_architect.roof_variant_hip": "Hip",
@@ -834,5 +834,6 @@
   "gui.copycat_architect.copycat_symmetric_difference": "Copycat symmetric difference",
   "gui.copycat_architect.bg_rotation": "Rotation",
   "gui.copycat_architect.bg_mirroring": "Mirroring",
-  "gui.copycat_architect.bg_roof_peak": "Roof peak (optional)"
+  "gui.copycat_architect.bg_roof_peak": "Roof peak (optional)",
+  "gui.copycat_architect.bg_roof_eave": "Roof end edge / eave (optional)"
 }

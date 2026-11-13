@@ -1,4 +1,4 @@
-# Copycat Architect Graphstudio 0.6.3
+# Copycat Architect Graphstudio 0.6.4
 
 Browsereditor für Form- und Gebäudegraphen. Die Beispieldateien stammen aus
 [`examples/`](../examples). Die beiden Editoren verwalten getrennte Entwürfe.
@@ -239,3 +239,15 @@ dessen Giebelanschlüsse folgen der Firstachse (Z: Nord/Süd, X: Ost/West).
 Beim Flachdach stehen die vier Dachränder für Rand-/Attikavorlagen bereit.
 Ausgeblendete Verbindungen bleiben für einen späteren Rückwechsel erhalten und
 werden beim Löschen ihrer Quellen bereinigt. Typ- und Gruppenprüfung bleiben aktiv.
+
+## Dachendkante parallel zum First
+
+Bei einfachen Satteldächern nimmt **Dachendkante / Traufe (optional)** eine
+Copycat-Quelle auf. Sie ersetzt ausschließlich die beiden unteren Dachrandreihen
+parallel zum First, einschließlich der Verlängerung über die Giebelseiten.
+Die gegenüberliegenden Seiten werden passend gedreht; First und Giebelmauern
+bleiben unabhängig. Ohne Verbindung bleibt die normale Deckung erhalten.
+Beim Flachdach bleibt die ausgeblendete Verbindung gespeichert.
+Bei Dachebenen dient dafür weiterhin der zweite Vorlageneingang `in:1`.
+Das Beispiel **Dachendkante parallel zum First** zeigt den neuen Anschluss.
+Für den Spielimport wird Mod 0.6.4 mit demselben Knotenvertrag benötigt.

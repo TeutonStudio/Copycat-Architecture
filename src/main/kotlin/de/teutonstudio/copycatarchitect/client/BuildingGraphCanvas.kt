@@ -295,6 +295,7 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
         owner.kind==BuildingKind.ROOF && owner.assembly && p.key.startsWith("in:") && p.number<6 -> ui("roof_variant_"+listOf("slope","eave","edge","ridge","hip","valley")[p.number])
         p.key=="floor"->ui("bg_floor");p.key=="ceiling"->ui("bg_ceiling");p.key=="roof"->ui("bg_roof")
         p.key=="roofPeak" -> ui("bg_roof_peak")
+        p.key=="roofEave" -> ui("bg_roof_eave")
         p.key=="corner" -> ui("bg_corner_copycat")
         p.key.startsWith("edge:")->ui("bg_vertical_edge_port",p.key.removePrefix("edge:").substringBefore(':'),p.key.substringAfterLast(':'),p.height)
         p.key=="layout"->ui(when { BuildingKind.ROOF_LAYOUT in p.accepts -> "bg_roof_layout";BuildingKind.ROOM_LAYOUT in p.accepts -> "bg_room_layout";else -> "bg_segment_layout" })

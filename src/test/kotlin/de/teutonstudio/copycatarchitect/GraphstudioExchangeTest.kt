@@ -48,6 +48,7 @@ class GraphstudioExchangeTest {
         building("explicit-projection",Building(schema=2,name="Explizit",graph=BuildingGraph.explicitStarter().copy(projection=BuildingProjection(P(3,2,-7),3))))
         building("special-rooms",SpecialRoomsExample.building())
         building("roof-peak",gson.fromJson(File("examples/building-roof-peak.json").readText(),Building::class.java))
+        building("roof-eave",gson.fromJson(File("examples/building-roof-eave.json").readText(),Building::class.java))
         building("semantic-T-house",TBuildingExample.building,TBuildingExample.forms,TBuildingExample.modules)
         val formNodes=NodeKind.entries.map { GraphModels.newShape(it).copy(id=it.name) }
         val buildingNodes=BuildingKind.entries.flatMap { kind -> listOf(false,true).map { explicit -> GraphModels.newBuilding(kind,explicit).copy(id=kind.name+if(explicit) "_explicit" else "_legacy") } }

@@ -320,6 +320,7 @@ object GraphGroups {
         verticalEdges=node.verticalEdges?.mapValues { (key,ref) -> reference("edge:$key",ref) },
         floor=reference("floor",node.floor),ceiling=reference("ceiling",node.ceiling),corner=reference("corner",node.corner),
         roofPeak=node.roofPeak?.let { reference("roofPeak",it) },
+        roofEave=node.roofEave?.let { reference("roofEave",it) },
         roof=reference("roof",node.roof),layout=reference("layout",node.layout),geometry=reference("geometry",node.geometry),
         levels=node.levels.mapValues { (key,ref) -> reference("level:$key",ref) },
         regionCopies=node.regionCopies.mapValues { (key,ref) -> reference(key,ref) },

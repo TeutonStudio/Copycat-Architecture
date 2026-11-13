@@ -31,6 +31,7 @@ data class BuildingNode(
     val features:SegmentFeatures?=null,val attachments:List<AttachmentSpec>?=null,
     val bayWindow:BayWindowConfig?=null,val dormer:DormerConfig?=null,
     val bayWindows:List<BayWindowInstance>?=null,val dormers:List<DormerInstance>?=null,
+    val roofPeak:String?=null,
     val rotation:String?=null,val mirroring:String?=null,val rotations:List<SegmentRotation>?=null,val mirrors:List<CopycatMirror>?=null
 )
 /** Optional arrays stay absent in older JSON documents until the feature is used. */
@@ -52,7 +53,7 @@ data class BuildingGraph(val schema:Int=1,val nodes:List<BuildingNode> = emptyLi
         return copy(nodeGroups=GraphGroups.prune(nodeGroups,nodes.map { it.id }.toSet()-id),nodes=nodes.filter { it.id!=id }.map { original -> val n=BuildingSemantics.remapReferences(original) { _,ref->if(ref==id) "" else ref };n.copy(
             inputs=n.inputs.map { if(it==id) "" else it },walls=n.walls.filterValues { it!=id },verticalEdges=n.verticalEdges?.filterValues { it!=id },
             floor=if(n.floor==id) "" else n.floor,ceiling=if(n.ceiling==id) "" else n.ceiling,corner=if(n.corner==id) "" else n.corner,
-            roof=if(n.roof==id) "" else n.roof,
+            roof=if(n.roof==id) "" else n.roof,roofPeak=if(n.roofPeak==id) null else n.roofPeak,
             rotation=if(n.rotation==id) null else n.rotation,mirroring=if(n.mirroring==id) null else n.mirroring,
             layout=if(n.layout==id) "" else n.layout,geometry=if(n.geometry==id) "" else n.geometry,
             regionCopies=n.regionCopies.filterValues { it!=id },sitePaths=n.sitePaths.filterKeys { n.inputs.getOrNull(it)!=id },
@@ -82,6 +83,7 @@ data class BuildingGraph(val schema:Int=1,val nodes:List<BuildingNode> = emptyLi
             key=="ceiling" -> n.copy(ceiling=source)
             key=="corner" -> n.copy(corner=source)
             key.startsWith("edge:") -> n.copy(verticalEdges=if(source.isEmpty()) n.verticalEdges.orEmpty()-key.removePrefix("edge:") else n.verticalEdges.orEmpty()+(key.removePrefix("edge:") to source))
+            key=="roofPeak" -> n.copy(roofPeak=source.takeIf(String::isNotEmpty))
             key=="roof" -> n.copy(roof=source)
             key=="area" -> n.copy(roofLevel=(n.roofLevel ?: RoofLevelConfig()).copy(area=source))
             key.startsWith("access:") -> {
@@ -263,7 +265,7 @@ object BuildingPorts {
         BuildingKind.ELEVATOR_SHAFT -> listOf(port(n,"enclosure",n.elevatorShaft?.enclosure.orEmpty()))
         BuildingKind.SERVICE_SHAFT -> listOf(port(n,"enclosure",n.serviceShaft?.enclosure.orEmpty()))
         BuildingKind.ROOF -> if(n.assembly) listOf(port(n,"layout",n.layout))+inputs(n,expanding)
-            else inputs(n,expanding)+(0..3).map { port(n,"wall:$it",n.walls[it.toString()].orEmpty(),it) }
+            else inputs(n,expanding)+port(n,"roofPeak",n.roofPeak.orEmpty())+(0..3).map { port(n,"wall:$it",n.walls[it.toString()].orEmpty(),it) }
         BuildingKind.BUILDING -> {
             val levels=n.levels.keys+0+(if(expanding) setOf((n.levels.keys.maxOrNull() ?: 0)+1,(n.levels.keys.minOrNull() ?: 0)-1) else emptySet())
             val levelModel=GraphModels.buildingPort(n,"level:0")
@@ -371,6 +373,7 @@ object BuildingGraphCompiler {
             if(n.kind==BuildingKind.SERVICE_SHAFT) (n.serviceShaft ?: ServiceShaftConfig()).validate()
             if(n.kind==BuildingKind.BUILDING) { require(n.accessInstances.size<=16);n.accessInstances.forEach(VerticalAccess::validateInstance) }
             require(n.roofLevel==null || n.kind==BuildingKind.ROOF_LEVEL) { "Roof-level settings belong to a roof level" }
+            require(n.roofPeak.isNullOrEmpty() || n.kind==BuildingKind.ROOF && !n.assembly) { "A roof peak Copycat belongs to a simple roof; explicit roofs use their ridge template" }
             require(n.roofConfig==null || n.kind==BuildingKind.ROOF) { "Roof templates belong to a roof" }
             if(n.roofConfig!=null) {
                 val refs=n.roofConfig.variants.values+n.roofConfig.families.flatMap { it.variants.values }
@@ -1260,10 +1263,11 @@ object BuildingGraphCompiler {
                     val (h,turn)=profile
                     val part=Part(if(turn<0) "copycats:copycat_slab" else "copycats:copycat_stairs",turn.coerceAtLeast(0))
                     for(t in 0 until roof.thickness) {
-                        val source=copies.getOrNull((t*ordered.size+index)%copies.size.coerceAtLeast(1))
+                        val peak=if(turn<0) roof.roofPeak?.takeIf(String::isNotEmpty)?.let(::copycat) else null
+                        val source=peak ?: copies.getOrNull((t*ordered.size+index)%copies.size.coerceAtLeast(1))
                         if(source?.let(::sourceIsAir)==true) { r.clear(p+P(0,roofBase+h+t,0));continue }
                         r.add(if(source==null) Placement(p+P(0,roofBase+h+t,0),listOf(part),palette[roof.role] ?: error("Missing roof material"),component="roof")
-                            else sourcePlacement(p+P(0,roofBase+h+t,0),source,"roof",turn.coerceAtLeast(0),if(roof.materialMode==MaterialMode.GROUPED) roof.role else ""))
+                            else sourcePlacement(p+P(0,roofBase+h+t,0),source,"roof",if(peak!=null) roof.ridge else turn.coerceAtLeast(0),if(roof.materialMode==MaterialMode.GROUPED) roof.role else ""))
                     }
                     val lowest=RoomGeometry.directions.minOf { heights[p+it]?.first ?: -1 }
                     val explicitWall=RoomGeometry.directions.indices.any { q -> p+RoomGeometry.directions[q] !in coverage && roof.walls[q.toString()].orEmpty().isNotEmpty() }

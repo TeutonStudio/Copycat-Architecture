@@ -21,7 +21,7 @@ export const names = {
 }
 
 export function portName(port, node) {
-  const native = { layout: 'Anordnung', geometry: 'Grundriss', area: 'Fläche', tread: 'Stufen', landing: 'Podest', enclosure: 'Schachtwände' }
+  const native = { roofPeak: 'Dachspitze (optional)', layout: 'Anordnung', geometry: 'Grundriss', area: 'Fläche', tread: 'Stufen', landing: 'Podest', enclosure: 'Schachtwände' }
   if (native[port.id]) return native[port.id]
   if (port.id.startsWith('region:')) return `Bereich ${port.id.slice(7)}`
   if (port.id.startsWith('semantic:')) {

@@ -15,7 +15,7 @@ test('browser advertises exactly the mod node types, schemas and DTO fields', ()
   assert.deepEqual(new Set(runtime.building), new Set(Object.keys(catalog.building.nodes)))
   assert.deepEqual(runtime.copycatSchemas, catalog.copycat.graphSchemas)
   assert.deepEqual(runtime.buildingSchemas, catalog.building.graphSchemas)
-  assert.equal(Object.keys(wireModels()).length - 1, 52)
+  assert.equal(Object.keys(wireModels()).length - 1, 53)
   assert.equal(wireModels().enums.CopycatMirrorPlane.length, 13)
 })
 

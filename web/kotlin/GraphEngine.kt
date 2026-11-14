@@ -391,7 +391,7 @@ fun inspectorContext(document:dynamic,id:String):Json {
         BuildingKind.ROOM->if(node.assembly) source(node.geometry,"height","rectangles")
         else->Unit
     }
-    return json("palette" to b.palette.asJson(),"references" to references,"derived" to derived,"resolved" to encodeBuildingNode(graph.resolvedNode(node)),
+    return json("windowWalls" to (if(node.kind==BuildingKind.STOREY) runCatching { StoreyWindows.walls(graph,node) }.getOrDefault(emptyList()) else emptyList()).map { w->json("roomIndex" to w.roomIndex,"edge" to w.edge,"direction" to w.direction,"height" to w.height,"cells" to w.cells.map { p->json("x" to p.x,"z" to p.z) }.toTypedArray()) }.toTypedArray(),"palette" to b.palette.asJson(),"references" to references,"derived" to derived,"resolved" to encodeBuildingNode(graph.resolvedNode(node)),
         "storeys" to graph.storeyInstances().map { json("value" to it.id,"label" to "${it.level}: ${graph.nodes.first { n->n.id==it.source }.name.ifBlank { it.source }}") }.toTypedArray(),
         "slopes" to RoofSlope.presets.map { json("p" to it.p,"q" to it.q) }.toTypedArray(),
         "surfaceBlocks" to LandscapeGeometry.surfaceBlocks.toTypedArray(),"groundBlocks" to LandscapeGeometry.groundBlocks.toTypedArray(),"fenceBlocks" to LandscapeGeometry.fenceBlocks.toTypedArray())

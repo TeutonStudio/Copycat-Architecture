@@ -24,22 +24,81 @@ der eingebundenen Kotlin-Standardbibliothek im Ausgabeverzeichnis ab.
 
 Der Workflow prüft außerdem mit `./gradlew test` die Minecraft-Seite der
 gemeinsamen Domänenlogik. Der Browser wird aus dem Fachkern desselben
-Repository-Stands gebaut. Seine Oberfläche gibt nur Knoten und Einstellungen
-frei, die der Browser verlustfrei lesen, bearbeiten und exportieren kann.
+Repository-Stands gebaut. Native Knoten und Einstellungen werden verlustfrei gelesen, bearbeitet und exportiert.
+Die unten beschriebene Referenzerweiterung hat einen eigenen Browservertrag.
 
 ## Vorschau-HUD
 
 Die 3D-Vorschau besitzt zwei seitliche Panels: links die sechs Seitenansichten
 und **Einpassen**, rechts Status, Achsenlegende, Warnungen und Materialbedarf.
-Die Zeichenfläche nutzt dazwischen die volle Höhe; beide Panels scrollen bei
-Bedarf unabhängig. Das gilt auch bei schmaler Seitenleiste. Im Kopf schaltet
+Die Zeichenfläche nutzt dazwischen die volle Höhe; lange Inhalte und Ansichten
+werden mit Vor-/Zurück-Tasten in Seiten aufgeteilt. Das gilt auch bei schmaler Seitenleiste. Im Kopf schaltet
 **Graph / Selektiert** direkt zwischen Gesamtergebnis und ausgewähltem Knoten
 um. Der aktive Knopf ist hervorgehoben; Tab und Enter bzw. Leertaste bedienen
 den Schalter per Tastatur.
 
-`python3 tools/verify-preview-hud-browser.py --url http://127.0.0.1:4186`
-prüft die Panelgeometrie, schmale Splitterstellung, Tastaturumschaltung,
-Materialbedarf, Ein-/Ausklappen sowie Tablet, Handy und Copycat-Auswahldialog.
+Die Arbeitsfläche bleibt innerhalb des Browserfensters. Bei schmalen oder flachen
+Fenstern schalten **Graph / Vorschau / Eigenschaften** zwischen den Ansichten um.
+**Datei & Bibliothek** öffnet die vorhandenen Datei-, Beispiel-, Speicher- und
+Undo-Funktionen. Der **Inspektor scrollt innerhalb seiner Fläche**; alle Eigenschaften
+bleiben ohne Seitenwechsel erreichbar. Die Website selbst scrollt weder horizontal
+noch vertikal. Werkzeuge, Bibliotheken und Vorschau-HUD verwenden Seitensteuerungen.
+
+## Referenzknoten und Architekturvorlagen
+
+Im Gebäudegraph heißt die bisherige Copycat-Quelle **Referenz**. **Referenz auswählen**
+öffnet einen gemeinsamen Dialog mit Grundformen, gespeicherten Formen, Gebäudegraphen
+sowie gespeicherten Knotengruppen/Karten. Ordner entstehen aus Namen mit `/`.
+Der Ordner **deutsche Renaisance** enthält zwölf vollständige Bauteile, darunter
+Wandsegmente, Säule, Pilaster, Kreuzstock- und Rundbogenfenster, Portal, Gesims,
+Sockelband, Ziergiebel und Balustrade. Einzelne Copycat-Bauteile liegen im Unterordner
+**Bauteile**. Eine Vorlage setzt einen vollständigen Bauteilknoten ein.
+
+Bei Graphen und Gebäudegruppen wählt **Ergebnisausgang** den typisierten Ausgang.
+Die Instanz bleibt ein sichtbarer Knoten, hält ihre Definition samt Bibliothek und
+Versionsnummer fest und veröffentlicht offene Eingänge als typisierte Anschlüsse.
+Spätere Änderungen oder das Löschen des Bibliothekseintrags verändern bestehende
+Instanzen nicht. Die 3D-Vorschau wertet die eingebettete Definition aus; inkompatible
+Verbindungen, rekursive Definitionen und Überschreitungen der nativen Knotengrenze
+werden abgewiesen. Graphspeicherungen erhalten fortlaufende Versionen.
+
+**Als Kopie im Graph öffnen** öffnet die Auswahl als eigenen Entwurf. Bei einer
+vollständigen Architekturvorlage zeigt der Gebäudegraph die Copycat-Quellen,
+ihre Anordnung und das Segment. Im Inspektor einer Quelle führt
+**Als Kopie im Graph öffnen/bearbeiten** weiter in den Formgraphen.
+Die 32 Einzelprofile des Renaissance-Bausatzes werden aus ihren gespeicherten
+Rasterprofilen als bearbeitbare Grundformen, Schnitte, Differenzen und Vereinigungen
+rekonstruiert. Dies ist eine geometrisch geprüfte Konstruktion, keine wiederhergestellte
+ursprüngliche Bearbeitungshistorie. Komplexe Profile enthalten kleinere Baugruppen,
+die mit derselben Aktion bis zu ihren Grundformen geöffnet werden können.
+
+**In Bauteilkopie übernehmen** beziehungsweise **In Formkopie übernehmen** wendet
+eine bearbeitete Quelle ausdrücklich auf die eigene Kopie an. **Zurück ohne Übernahme**
+kehrt ohne diese Änderung zurück. Materialien, Rückweg und offene Kopie bleiben beim
+Neuladen erhalten. Bereits vorhandene, noch nicht gespeicherte Zielentwürfe werden vor
+dem Öffnen unter **Entwurf vor Kopie** in der Graphbibliothek gesichert. Vorlage und
+bestehende Referenzversionen werden nicht geändert; die Kopie kann unter eigenem Namen
+gespeichert und wiederverwendet werden. `editableGraph` und `editableMaterials` halten
+bei gespeicherten Formquellen die zugehörige bearbeitbare Konstruktion fest.
+
+Der Browservertrag verwendet `referenceSchema: 1` und `kind: "REFERENCE"` mit
+`reference: {schema, id, version, output, document, library, bindings}` sowie
+`referenceInputs` und optionalen `referenceOverrides` für Instanzeinstellungen. JSON-Export, Zwischenablage und Browsersicherung erhalten diese
+Definitionen. **Dieses erweiterte Format benötigt den in
+[Issue #26](https://github.com/TeutonStudio/Copycat-Architecture/issues/26)
+beschriebenen Modumbau, bevor es im Spiel importiert werden kann.** Dokumente ohne
+diese Erweiterung verwenden weiterhin den bisherigen Minecraft-Vertrag.
+
+Browserprüfung gegen einen gestarteten Entwicklungs- oder Produktionsserver:
+
+```sh
+python3 tools/verify-reference-browser.py --url http://127.0.0.1:4193/ --chromium /pfad/zu/chromium
+```
+
+Sie prüft Vorlagenauswahl, 3D-Vorschau, Übernahme, erneutes Laden und alle Seiten
+von Eigenschaften, Werkzeugen, HUD und Bibliothek bei zehn Fenstergrößen
+(einschließlich 320 × 568, 844 × 390 und den effektiven CSS-Fenstergrößen bei
+125/150/200 % Zoom auf einem 1280 × 720 Bildschirm).
 
 ## Austausch mit Minecraft
 
@@ -272,3 +331,45 @@ Längenwert öffnet den Anzahl-Knoten.
 
 `python3 tools/verify-rotation-segment-browser.py` prüft Anschlüsse, Quellenwechsel,
 Trennen, Längenänderung, Rückgängig und JSON-Export im Chromium.
+
+
+## Fenster am Stockwerk (Issue #27)
+
+**Fenster** (`WINDOW`) nimmt ein **Segment** als Geometriequelle für Rahmen und
+Glas entgegen. Breite und Höhe geben die Öffnungsmaße in Blöcken an. Die Maße
+müssen ganze Vielfache des Quellsegments sein; die Geometrie wird wiederholt,
+ohne Rahmen zu strecken oder abzuschneiden.
+
+Am **Stockwerk** unter **Fenster am Stockwerk** eine Instanz hinzufügen und die
+Fensterdefinition wählen. Dieselbe Definition kann mehrfach verbunden werden.
+Im **Fenstergrundriss** die Zielwand anklicken oder die Instanz entlang der Wand
+ziehen; Pfeil links/rechts verschiebt die aktive Instanz um einen Block.
+Wandrichtung, Position entlang der Wand, Einbauhöhe und Tiefenversatz bestimmen
+jede Instanz unabhängig. **Übernehmen** speichert alle Einstellungen gemeinsam;
+Undo/Redo und erneutes Laden erhalten die Anschlüsse und Platzierungen.
+
+**Innenwand und Fassade automatisch öffnen** entfernt die betroffenen Wandzellen
+durch die Wandtiefe einschließlich getrennter Lagen innerhalb des Wandaufbaus.
+Nur der Bereich der Fensterbreite und -höhe wird geöffnet; Fenstergeometrie und
+übrige Wand bleiben erhalten. Jede Auswertung beginnt mit der ursprünglichen
+Wand, sodass Verschieben, Größenänderung und Entfernen keine alten Öffnungen
+hinterlassen. Unpassende Wände, überstehende Fenster und Überschneidungen werden
+in der Vorschau erklärt. Mod und Browser verwenden `StoreyWindows` gemeinsam für
+Vorschau, Bauplan und Materialberechnung.
+
+Das Beispiel **Fenster am Stockwerk** zeigt zwei Instanzen derselben Definition
+an unterschiedlich ausgerichteten Wänden. In der Mod gibt es am Stockwerk die
+Aktionen **Fensterinstanzen einstellen** und **Fenster im Grundriss platzieren**.
+Der Anzahl-Knoten hat ein direktes Feld für ganze Werte von 0 bis 2147483647;
+eine angeschlossene Säulenlänge benötigt weiterhin 1 bis 128 Blöcke.
+
+
+Browserprüfung für diese Bedienwege (laufender Produktionsbuild erforderlich):
+
+```bash
+python web/tools/verify-window-browser.py --url http://127.0.0.1:4194/ --chromium /pfad/zu/chromium
+```
+
+Der Check deckt Anzahl-Eingaben einschließlich 0, Säulenlängen, den scrollenden
+Inspektor ohne Seiten-Überlauf, Wandwahl, Ziehen im Fenstergrundriss,
+Undo/Redo, erneutes Laden und die Anzeige ungültiger Fensterpositionen ab.

@@ -1,0 +1,152 @@
+{
+  "schema": 2,
+  "id": "window_example",
+  "version": 1,
+  "name": "Fenster am Stockwerk",
+  "graph": {
+    "schema": 1,
+    "nodes": [
+      {
+        "id": "empty_wall",
+        "kind": "SEGMENT",
+        "name": "empty_wall",
+        "block": "minecraft:air",
+        "length": 1,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "id": "wall",
+        "kind": "SEGMENT",
+        "name": "wall",
+        "block": "minecraft:stone_bricks",
+        "module": "",
+        "length": 7,
+        "height": 5,
+        "x": 0,
+        "y": 180
+      },
+      {
+        "id": "side",
+        "kind": "SEGMENT",
+        "name": "side",
+        "block": "minecraft:stone_bricks",
+        "module": "",
+        "length": 6,
+        "height": 5,
+        "x": 0,
+        "y": 480
+      },
+      {
+        "id": "glass",
+        "kind": "SEGMENT",
+        "name": "glass",
+        "block": "minecraft:glass",
+        "module": "",
+        "length": 2,
+        "height": 2,
+        "x": 0,
+        "y": 780
+      },
+      {
+        "id": "window",
+        "kind": "WINDOW",
+        "name": "window",
+        "inputs": [
+          "glass"
+        ],
+        "length": 2,
+        "height": 2,
+        "x": 340,
+        "y": 780
+      },
+      {
+        "id": "floor",
+        "kind": "FLOOR",
+        "name": "floor",
+        "x": 340,
+        "y": 0
+      },
+      {
+        "id": "ceiling",
+        "kind": "CEILING",
+        "name": "ceiling",
+        "x": 340,
+        "y": 240
+      },
+      {
+        "id": "room",
+        "kind": "ROOM",
+        "name": "room",
+        "rectangles": [
+          {
+            "x": 0,
+            "z": 0,
+            "width": 7,
+            "length": 6
+          }
+        ],
+        "height": 5,
+        "floor": "floor",
+        "ceiling": "ceiling",
+        "walls": {
+          "0:0:0": "wall",
+          "1:6:0": "side",
+          "2:6:5": "wall",
+          "3:0:5": "side"
+        },
+        "x": 680,
+        "y": 0
+      },
+      {
+        "id": "storey",
+        "kind": "STOREY",
+        "name": "storey",
+        "inputs": [
+          "room"
+        ],
+        "offsets": [
+          {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          }
+        ],
+        "windows": [
+          {
+            "id": "window_0",
+            "source": "window",
+            "roomIndex": 0,
+            "edge": "0:0:0",
+            "offset": 1,
+            "sill": 1,
+            "depthOffset": 0,
+            "autoOpening": true
+          },
+          {
+            "id": "window_1",
+            "source": "window",
+            "roomIndex": 0,
+            "edge": "1:6:0",
+            "offset": 1,
+            "sill": 1,
+            "depthOffset": 0,
+            "autoOpening": true
+          }
+        ],
+        "x": 1060,
+        "y": 0
+      },
+      {
+        "id": "building",
+        "kind": "BUILDING",
+        "name": "building",
+        "levels": {
+          "0": "storey"
+        },
+        "x": 1430,
+        "y": 0
+      }
+    ]
+  }
+}

@@ -16,6 +16,7 @@ Für einen Einzelentwurf die entsprechende JSON-Datei kopieren und im passenden 
 
 - `nodegraph-material-groups.json`: Eine geteilte Vollblockquelle mit zwei Materialien. Die Vereinigung weist ihren beiden Eingängen die Gruppen Stone und Wood zu. Am Ergebnisknoten „Alles“, „Stone“ oder „Wood“ auswählen. In der Handpistole die beiden Gruppenmaterialien einstellen. Die Quelle benötigt insgesamt 256 Zinkeinheiten.
 
+- `building-windows.json`: Zwei unabhängig platzierte Instanzen eines Fensterknotens am Stockwerk, mit automatischen Wandöffnungen, Wandbezug und Einbauhöhe. In Graphstudio auch als **Fenster am Stockwerk** unter den Beispielen verfügbar.
 - `building-graph.json`: Direkt baubares Gebäudegraph-Startbeispiel mit festen Wandsegmenten, Boden, Decke, Raum, Stockwerk und Dach.
 - `building-graph-basements.json`: A und BC werden zum festen Wandmuster verbunden. Ein Raum wird je Stockwerk zweimal angeordnet, das Stockwerk für Untergeschoss/Erdgeschoss/Obergeschoss wiederverwendet. Weiße Teppiche belegen die unterste Raumzelle; die Konstruktion umfasst 603 Positionen. Gesamten JSON-Text im Gebäudeeditor mit Strg+V importieren, „Graph“ öffnen und speichern. Die Standardform `full@1` muss vorhanden sein.
 

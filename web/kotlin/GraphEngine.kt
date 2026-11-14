@@ -224,6 +224,10 @@ fun previewGraph(isBuilding: Boolean, document: dynamic, library: dynamic, selec
     val modules = map(library.modules) { obj, key -> module(obj[key]) }
     val graph = requireNotNull(b.graph)
     val selectedNode=graph.nodes.firstOrNull { it.id==selected }
+    if(selectedNode?.kind==BuildingKind.INT) {
+        BuildingGraphCompiler.structure(graph)
+        return json("count" to 0,"raw" to 0,"meshes" to emptyArray<Json>(),"value" to "Anzahl: ${selectedNode.countValue ?: 0}")
+    }
     if(selectedNode?.kind in setOf(BuildingKind.ROTATION,BuildingKind.MIRRORING)) {
         BuildingGraphCompiler.structure(graph)
         val value=if(selectedNode!!.kind==BuildingKind.ROTATION) selectedNode.rotations.orEmpty().joinToString(" → ") { "${it.axis}: ${it.quarterTurns*90}°" } else selectedNode.mirrors.orEmpty().joinToString(" → ") { it.plane.name }
@@ -380,6 +384,7 @@ fun inspectorContext(document:dynamic,id:String):Json {
     val derived=json()
     fun source(id:String,vararg fields:String) { if(id.isNotEmpty()) fields.forEach { derived[it]=id } }
     when(node.kind) {
+        BuildingKind.ROTATION_SEGMENT->source(node.dimensions.orEmpty()["length"].orEmpty(),"length")
         BuildingKind.SEGMENT->source(node.layout,"length","height","depth")
         BuildingKind.SEGMENT_LAYOUT->source(node.geometry,"length","height")
         BuildingKind.ROOM_GEOMETRY->source(node.geometry,"coordinates")

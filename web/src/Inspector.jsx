@@ -8,7 +8,7 @@ import { MaterialField } from './Workspace.jsx'
 import { copycatShapeNames } from './copycat-options.js'
 
 export const names = {
-  AREA: 'Fläche', SEGMENT_LAYOUT: 'Segmentanordnung', ROOM_GEOMETRY: 'Raumgrundriss', ROOF_LEVEL: 'Dachebene', ROOF_LAYOUT: 'Dachanordnung', STAIRWELL: 'Treppenhaus', ELEVATOR_SHAFT: 'Aufzugsschacht', SERVICE_SHAFT: 'Installationsschacht', GARDEN: 'Garten', PATH: 'Weg', ROOM_LAYOUT: 'Raumanordnung', BAY_WINDOW: 'Erker', DORMER: 'Gaube',
+  INT: 'Anzahl', ROTATION_SEGMENT: 'Rotationssegment', AREA: 'Fläche', SEGMENT_LAYOUT: 'Segmentanordnung', ROOM_GEOMETRY: 'Raumgrundriss', ROOF_LEVEL: 'Dachebene', ROOF_LAYOUT: 'Dachanordnung', STAIRWELL: 'Treppenhaus', ELEVATOR_SHAFT: 'Aufzugsschacht', SERVICE_SHAFT: 'Installationsschacht', GARDEN: 'Garten', PATH: 'Weg', ROOM_LAYOUT: 'Raumanordnung', BAY_WINDOW: 'Erker', DORMER: 'Gaube',
   INPUT: 'Grundform', UNION: 'Vereinigung', INTERSECTION: 'Schnitt', DIFFERENCE: 'Differenz',
   SYMMETRIC_DIFFERENCE: 'Symmetrische Differenz', ROTATE: 'Copycat rotieren', ROTATION: 'Rotation', OUTPUT: 'Ergebnis',
   SAVED: 'Gespeicherter Copycat', MIRROR: 'Copycat spiegeln',
@@ -21,7 +21,7 @@ export const names = {
 }
 
 export function portName(port, node) {
-  const native = { roofPeak: 'Dachspitze (optional)', roofEave: 'Dachendkante / Traufe (optional)', layout: 'Anordnung', geometry: 'Grundriss', area: 'Fläche', tread: 'Stufen', landing: 'Podest', enclosure: 'Schachtwände' }
+  const native = { length: 'Länge (Y)', roofPeak: 'Dachspitze (optional)', roofEave: 'Dachendkante / Traufe (optional)', layout: 'Anordnung', geometry: 'Grundriss', area: 'Fläche', tread: 'Stufen', landing: 'Podest', enclosure: 'Schachtwände' }
   if (native[port.id]) return native[port.id]
   if (port.id.startsWith('region:')) return `Bereich ${port.id.slice(7)}`
   if (port.id.startsWith('semantic:')) {

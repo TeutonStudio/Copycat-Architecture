@@ -79,6 +79,7 @@ object DiagramEdits {
                     port.key=="ceiling" -> next=next.copy(ceiling=source)
                     port.key=="corner" -> next=next.copy(corner=source)
                     port.key.startsWith("edge:") -> next=next.copy(verticalEdges=if(source.isEmpty()) next.verticalEdges.orEmpty()-port.key.removePrefix("edge:") else next.verticalEdges.orEmpty()+(port.key.removePrefix("edge:") to source))
+                    port.key=="length" -> next=next.copy(dimensions=if(source.isEmpty()) next.dimensions.orEmpty()-"length" else next.dimensions.orEmpty()+("length" to source))
                     port.key=="roofPeak" -> next=next.copy(roofPeak=source.takeIf(String::isNotEmpty))
                     port.key=="roofEave" -> next=next.copy(roofEave=source.takeIf(String::isNotEmpty))
                     port.key=="roof" -> next=next.copy(roof=source)

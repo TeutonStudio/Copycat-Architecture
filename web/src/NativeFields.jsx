@@ -12,7 +12,7 @@ const contextCarpets = model.carpets
 const Context = createContext({})
 const choiceLabels = { SEPARATED: 'Separiert', GROUPED: 'Gruppiert', NORMAL: 'Lokale Normale', FOOTPRINT: 'Aus Grundriss', SEGMENTS: 'Aus Segmenten', FLAT: 'Flachdach', PENT: 'Pultdach', GABLE: 'Satteldach', HIP: 'Walmdach', MANSARD: 'Mansarddach', HEIGHT: 'Firsthöhe', ANGLE: 'Dachneigung', rooms: 'Aus Räumen', walls: 'Aus Wänden', horizontal: 'Horizontal', vertical: 'Vertikal', depth: 'Tiefe', transform: 'Frei anordnen', flat: 'Flachdach', gable: 'Satteldach', AUTO: 'Automatisch', EXPLICIT: 'Explizit', OPEN: 'Offen', BOUNDARY: 'Raumgrenze', OPENING: 'Öffnung', STRUCTURE: 'Tragwerk', DECORATION: 'Dekoration' }
 const labels = {
-  roofType: 'Dachart', ridge: 'Firstrichtung', overhang: 'Dachüberhang', coordinates: 'Koordinaten', layoutCells: 'Zellenbelegung', assembly: 'Expliziter Aufbau', depth: 'Tiefe',
+  countValue: 'Anzahl', roofType: 'Dachart', ridge: 'Firstrichtung', overhang: 'Dachüberhang', coordinates: 'Koordinaten', layoutCells: 'Zellenbelegung', assembly: 'Expliziter Aufbau', depth: 'Tiefe',
   regionCopies: 'Copycats je Bereich', roofLevel: 'Dachebene', roofConfig: 'Dachaufbau', levelIds: 'Geschosskennungen',
   stairwell: 'Treppenhaus', elevatorShaft: 'Aufzugsschacht', serviceShaft: 'Installationsschacht',
   accessInstances: 'Vertikale Erschließung', roomLayout: 'Raumanordnung', roomConfig: 'Raumaufbau', facade: 'Fassade',
@@ -168,6 +168,7 @@ export function NativeFields({ mode, node, edit, document, library, onInspectNod
   const groups = library?.forms?.[draft.form]?.groups || [{ id: 'body', name: 'Body', role: 'surface' }]
   const patch = (path, next) => setDraft(setPath(draft, path, next))
   return <Context.Provider value={context}><details open className="native-fields"><summary>{mode === 'building' ? 'Knoteneinstellungen' : 'Ausrichtung und Formeinstellungen'}</summary>
+    {node.kind === 'ROTATION_SEGMENT' && <p className="hint">Die Copycat wird bei 0°, 90°, 180° und 270° um Y vereinigt. Die Länge wiederholt dieses Profil entlang Y zur Säule.</p>}
     {(draft.kind === 'ROOF' && !draft.assembly && draft.roofType === 'gable' || draft.kind === 'ROOF_LEVEL' && ['GABLE', 'CROSS', 'PENT'].includes(draft.roofLevel?.form)) && <p className="hint">Die Dachverlängerung wächst entlang des Firsts über die Giebelseiten hinaus. Dachbreite und Mauern bleiben am Gebäudegrundriss.</p>}
     {fields.map(field => <div key={field.path} data-inspector-field={field.path}>
       {context.derived?.[field.path] ? <div><label>{label(field.path)}<output>{Array.isArray(getPath(context.resolved, field.path)) ? `${getPath(context.resolved, field.path).length} Einträge` : String(getPath(context.resolved, field.path))}</output></label><button type="button" onClick={() => onInspectNode?.(context.derived[field.path])}>Quelle bearbeiten</button></div>

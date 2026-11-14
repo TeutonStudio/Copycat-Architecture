@@ -80,7 +80,7 @@ Die vollständige deutsche [Knotenreferenz](../docs/wiki/Knotenreferenz.md) doku
 
 ## Gemeinsamer Modellstand 0.6.1
 
-Alle zehn Form- und 36 Gebäudeknoten werden aus dem Modkatalog angeboten.
+Alle zehn Form- und 38 Gebäudeknoten werden aus dem Modkatalog angeboten.
 `generate-codec.mjs` erzeugt den vollständigen JSON-Codec und die Eigenschaftstypen
 aus den 52 erreichbaren nativen Datenklassen. Formdokumente 1–4, Formgraphen 1–3
 und Gebäudegraphen 1–4 werden mit denselben Kotlin-Validatoren bearbeitet.
@@ -251,3 +251,24 @@ Beim Flachdach bleibt die ausgeblendete Verbindung gespeichert.
 Bei Dachebenen dient dafür weiterhin der zweite Vorlageneingang `in:1`.
 Das Beispiel **Dachendkante parallel zum First** zeigt den neuen Anschluss.
 Für den Spielimport wird Mod 0.6.4 mit demselben Knotenvertrag benötigt.
+
+## Rotationssegment für Säulen
+
+**Rotationssegment** (`ROTATION_SEGMENT`) besitzt den Copycat-Anschluss `in:0`
+und den Anzahl-Anschluss `length`. **Anzahl** (`INT`) liefert `countValue` als
+Ganzzahl. Die Verbindung wird als `dimensions.length` im Segment gespeichert.
+Ohne Verbindung gilt dessen lokaler `length`-Wert; erlaubt sind 1–128 Blöcke.
+
+Die gemeinsame Kotlin-Auswertung vereinigt die Copycat bei 0°, 90°, 180° und
+270° um die Y-Achse innerhalb einer Blockzelle und wiederholt das Profil entlang
+Y. Das Ergebnis hat die Segmentabmessungen **1 × Länge × 1**. Überlappungen
+zählen für Geometrie, Material und Zinkkosten einmal. Vorherige Copycat-Drehungen,
+Spiegelungen und Materialzuordnungen bleiben erhalten. Die Ausgabe lässt sich
+mit Segmentoperationen oder einer Segmentrotation weiterverarbeiten.
+
+Das Beispiel **Rotationssegment · Säule** verbindet eine Anzahlquelle und ein
+stehendes Panel bis zum Gebäudeausgang. **Quelle bearbeiten** am abgeleiteten
+Längenwert öffnet den Anzahl-Knoten.
+
+`python3 tools/verify-rotation-segment-browser.py` prüft Anschlüsse, Quellenwechsel,
+Trennen, Längenänderung, Rückgängig und JSON-Export im Chromium.

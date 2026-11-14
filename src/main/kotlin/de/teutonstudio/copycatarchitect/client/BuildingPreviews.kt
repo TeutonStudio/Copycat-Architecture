@@ -46,7 +46,7 @@ object BuildingPreviewRenderer {
         }
     }
 
-    private fun projection(node:BuildingNode,mode:String)=if(mode!="2d") "3d" else if(node.kind in setOf(BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)) "front" else "top"
+    private fun projection(node:BuildingNode,mode:String)=if(mode!="2d") "3d" else if(node.kind in setOf(BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)) "front" else "top"
 
     fun draw(g:GuiGraphics,viewport:BuildingPreviewViewport,node:BuildingNode,ready:Result<Plan>,mode:String,yaw:Float,sampleRoof:Boolean=false,roomFootprint:Set<P> = emptySet(),clip:Boolean=true,sceneRenderer:((BuildingPreviewViewport)->Unit)?=null) {
         val (x,y,w,h)=viewport

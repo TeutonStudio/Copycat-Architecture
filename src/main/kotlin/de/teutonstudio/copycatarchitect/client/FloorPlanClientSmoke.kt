@@ -111,7 +111,7 @@ internal object FloorPlanClientSmoke {
         check(edges.size==ports.size)
         edges.forEach { edge ->
             val port=ports.single { it.key=="wall:${edge.id}" }
-            check(port.length==edge.length && port.accepts==(setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds))
+            check(port.length==edge.length && port.accepts==(setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds))
             canvas().wallPoint(port.key)
         }
     }

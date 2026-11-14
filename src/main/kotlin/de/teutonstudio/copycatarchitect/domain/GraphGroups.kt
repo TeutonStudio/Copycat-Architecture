@@ -314,6 +314,7 @@ object GraphGroups {
 
     /** All node references, including configuration references which have no visible input socket. */
     internal fun remap(node:BuildingNode,reference:(String,String)->String):BuildingNode = BuildingSemantics.remapReferences(node.copy(
+        dimensions=node.dimensions?.mapValues { (key,ref) -> reference(key,ref) },
         inputs=node.inputs.mapIndexed { i,ref -> reference("in:$i",ref) },
         rotation=node.rotation?.let { reference("rotation",it) },mirroring=node.mirroring?.let { reference("mirroring",it) },
         walls=node.walls.mapValues { (key,ref) -> reference("wall:$key",ref) },

@@ -1,0 +1,184 @@
+{
+  "schema": 2,
+  "name": "Säule aus vier Copycat-Drehungen",
+  "graph": {
+    "schema": 3,
+    "nodes": [
+      {
+        "id": "empty_wall",
+        "kind": "SEGMENT",
+        "name": "Empty wall",
+        "x": 20,
+        "y": 20,
+        "block": "minecraft:air",
+        "length": 1
+      },
+      {
+        "id": "count",
+        "kind": "INT",
+        "name": "Säulenlänge",
+        "x": 20,
+        "y": 200,
+        "countValue": 6
+      },
+      {
+        "id": "copycat",
+        "kind": "COPYCAT",
+        "name": "Säulenprofil",
+        "x": 20,
+        "y": 380,
+        "form": "column_profile@1",
+        "role": "frame"
+      },
+      {
+        "id": "column",
+        "kind": "ROTATION_SEGMENT",
+        "name": "Rotationssegment · Säule",
+        "x": 340,
+        "y": 200,
+        "inputs": [
+          "copycat"
+        ],
+        "length": 4,
+        "dimensions": {
+          "length": "count"
+        }
+      },
+      {
+        "id": "layout",
+        "kind": "ROOM_LAYOUT",
+        "name": "Säule im Raum",
+        "x": 640,
+        "y": 200,
+        "inputs": [
+          "column"
+        ],
+        "roomLayout": {
+          "instances": [
+            {
+              "id": "pillar",
+              "sourceIndex": 0,
+              "position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "policy": "EXPLICIT",
+              "contribution": "STRUCTURE"
+            }
+          ],
+          "boundary": [
+            {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            {
+              "x": 1,
+              "y": 0,
+              "z": 0
+            },
+            {
+              "x": 1,
+              "y": 0,
+              "z": 1
+            },
+            {
+              "x": 0,
+              "y": 0,
+              "z": 1
+            }
+          ],
+          "boundaryRules": [
+            {
+              "start": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "end": {
+                "x": 1,
+                "y": 0,
+                "z": 0
+              },
+              "policy": "OPEN"
+            },
+            {
+              "start": {
+                "x": 1,
+                "y": 0,
+                "z": 0
+              },
+              "end": {
+                "x": 1,
+                "y": 0,
+                "z": 1
+              },
+              "policy": "OPEN"
+            },
+            {
+              "start": {
+                "x": 1,
+                "y": 0,
+                "z": 1
+              },
+              "end": {
+                "x": 0,
+                "y": 0,
+                "z": 1
+              },
+              "policy": "OPEN"
+            },
+            {
+              "start": {
+                "x": 0,
+                "y": 0,
+                "z": 1
+              },
+              "end": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "policy": "OPEN"
+            }
+          ]
+        }
+      },
+      {
+        "id": "room",
+        "kind": "ROOM",
+        "name": "Offener Säulenraum",
+        "x": 920,
+        "y": 200,
+        "layout": "layout",
+        "assembly": true,
+        "roomConfig": {
+          "mode": "SEGMENTS"
+        },
+        "floor": "empty_wall",
+        "ceiling": "empty_wall"
+      },
+      {
+        "id": "storey",
+        "kind": "STOREY",
+        "name": "Säulengeschoss",
+        "x": 920,
+        "y": 620,
+        "inputs": [
+          "room"
+        ]
+      },
+      {
+        "id": "building",
+        "kind": "BUILDING",
+        "name": "Gebäude",
+        "x": 1300,
+        "y": 200,
+        "levels": {
+          "0": "storey"
+        }
+      }
+    ]
+  }
+}

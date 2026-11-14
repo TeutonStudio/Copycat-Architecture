@@ -835,5 +835,9 @@
   "gui.copycat_architect.bg_rotation": "Rotation",
   "gui.copycat_architect.bg_mirroring": "Spiegelungen",
   "gui.copycat_architect.bg_roof_peak": "Dachspitze (optional)",
-  "gui.copycat_architect.bg_roof_eave": "Dachendkante / Traufe (optional)"
+  "gui.copycat_architect.bg_roof_eave": "Dachendkante / Traufe (optional)",
+  "gui.copycat_architect.bg_int": "Anzahl",
+  "gui.copycat_architect.bg_count_value": "Wert: %s",
+  "gui.copycat_architect.bg_rotation_segment": "Rotationssegment",
+  "gui.copycat_architect.bg_rotation_segment_hint": "Vier Y-Drehungen je Lage · Länge entlang Y"
 }

@@ -987,7 +987,7 @@ class BuildingScreen:EditorScreen(tr("building_editor")) {
         val ports=graph.nodes.associate { it.id to BuildingPorts.of(it,graph,true) }
         return KilaGraphData(graph.nodes.mapIndexed { index,n ->
             KilaNode(n.id,"${index+1} · ${if(n.id=="empty_wall") ui("empty_wall") else if(n.kind==BuildingKind.BUILDING) ui("bg_table_building") else ui(GraphModels.building(n.kind).labelKey)}",n.x,n.y,ports.getValue(n.id).map { p -> buildingPortLabel(p,n) },n.id!=graph.resultNode().id,n.id!=graph.resultNode().id && n.id!="empty_wall",inputTypes=ports.getValue(n.id).map { it.accepts.map(::buildingDiagramType).distinct().joinToString("|") },outputType=buildingDiagramType(n.kind),accent=when(n.kind) {
-                BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.SEGMENT_LAYOUT -> 0xffff8a27.toInt()
+                BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.SEGMENT_LAYOUT -> 0xffff8a27.toInt()
                 BuildingKind.ROOM,BuildingKind.BAY_WINDOW,BuildingKind.GARDEN -> 0xff21b15b.toInt()
                 BuildingKind.PATH -> 0xffc8a46a.toInt()
                 BuildingKind.AREA,BuildingKind.ROOM_GEOMETRY,BuildingKind.ROOM_LAYOUT -> 0xff74b4cf.toInt()

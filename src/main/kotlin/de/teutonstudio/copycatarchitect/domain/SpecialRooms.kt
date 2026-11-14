@@ -10,7 +10,7 @@ data class BayAnchor(val edge:String,val direction:Int,val cells:List<P>)
 internal data class BayFrame(val origin:P,val direction:Int,val wallDepth:Int)
 
 object SpecialRooms {
-    private val segmentKinds=(setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds)
+    private val segmentKinds=(setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds)
     fun validate(n:BuildingNode,nodes:Map<String,BuildingNode>) {
         require(n.bayWindow==null || n.kind==BuildingKind.BAY_WINDOW) { "Erkereinstellungen benötigen einen Erkerknoten" }
         require(n.dormer==null || n.kind==BuildingKind.DORMER) { "Gaubeneinstellungen benötigen einen Gaubenknoten" }

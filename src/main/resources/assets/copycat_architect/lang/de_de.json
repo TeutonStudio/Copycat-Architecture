@@ -839,5 +839,7 @@
   "gui.copycat_architect.bg_int": "Anzahl",
   "gui.copycat_architect.bg_count_value": "Wert: %s",
   "gui.copycat_architect.bg_rotation_segment": "Rotationssegment",
-  "gui.copycat_architect.bg_rotation_segment_hint": "Vier Y-Drehungen je Lage · Länge entlang Y"
+  "gui.copycat_architect.bg_rotation_segment_hint": "Vier Y-Drehungen je Lage · Länge entlang Y",
+  "gui.copycat_architect.bg_window": "Fenster",
+  "gui.copycat_architect.window_geometry": "Fenstergeometrie"
 }

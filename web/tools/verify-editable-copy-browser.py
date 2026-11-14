@@ -12,6 +12,10 @@ with sync_playwright() as runtime:
   expect(page.locator('.workspace-status')).to_contain_text('Im Browser gespeichert')
   return page.evaluate("""()=>new Promise((resolve,reject)=>{const r=indexedDB.open('copycat-architect-graphstudio',1);r.onsuccess=()=>{const q=r.result.transaction('workspace').objectStore('workspace').get('current');q.onsuccess=()=>{resolve(q.result);r.result.close()};q.onerror=reject};r.onerror=reject})""")
  def find_control(panel,control):
+  if 'inspector-body' in (panel.get_attribute('class') or ''):
+   control.scroll_into_view_if_needed()
+   assert page.evaluate('scrollX===0 && scrollY===0')
+   return control
   for _ in range(100):
    if control.is_visible():return control
    back=panel.locator(':scope > .page-controls button').first
@@ -34,7 +38,7 @@ with sync_playwright() as runtime:
   panel=inspector();find_control(panel,panel.get_by_role('button',name='Als Kopie im Graph öffnen/bearbeiten',exact=True)).click()
  def fit():
   page.wait_for_timeout(150)
-  failures=page.evaluate("""()=>[...document.querySelectorAll('button,input:not([type=hidden]),select,summary')].filter(e=>e.getClientRects().length&&!e.closest('[hidden],.pager-hidden,.pager-empty')).flatMap(e=>{const r=e.getBoundingClientRect();const p=e.closest('.pager-body');const q=p?.getBoundingClientRect();return r.left<-.5||r.top<-.5||r.right>innerWidth+.5||r.bottom>innerHeight+.5||q&&(r.top<q.top-1||r.bottom>q.bottom+1||r.right>q.right+1)?[[e.textContent.slice(0,50),r.toJSON()]]:[]})""")
+  failures=page.evaluate("""()=>[...document.querySelectorAll('button,input:not([type=hidden]),select,summary')].filter(e=>e.getClientRects().length&&!e.closest('[hidden],.pager-hidden,.pager-empty,.inspector-body')).flatMap(e=>{const r=e.getBoundingClientRect();const p=e.closest('.pager-body');const q=p?.getBoundingClientRect();return r.left<-.5||r.top<-.5||r.right>innerWidth+.5||r.bottom>innerHeight+.5||q&&(r.top<q.top-1||r.bottom>q.bottom+1||r.right>q.right+1)?[[e.textContent.slice(0,50),r.toJSON()]]:[]})""")
   assert not failures,failures
  def choose(name):
   studio.locator(':scope > .studio-navigation > button').first.click()

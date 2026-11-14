@@ -13,18 +13,19 @@ class SpecialPlacementScreen private constructor(private val parent:Screen?,init
     private var node=initial
     private var candidate:BuildingNode?=null
     var selected=0;private set
+    private val window get()=node.kind==BuildingKind.STOREY
     private val bay get()=node.kind==BuildingKind.ROOM
     private var projection:BuildingGridProjection?=null
     private var dragStart:P?=null
     private var original:BuildingNode?=null
     private var validity:Result<Unit> = Result.success(Unit)
     private var status=""
-    private val count get()=if(bay) node.bayWindowInstances.size else node.dormerInstances.size
+    private val count get()=if(window) node.windows.orEmpty().size else if(bay) node.bayWindowInstances.size else node.dormerInstances.size
     private val mapTop=54
     private val mapHeight get()=(height-120).coerceAtLeast(12)
     private val background:Set<P> by lazy {
         runCatching {
-            val bare=if(bay) node.copy(bayWindows=emptyList()) else node.copy(dormers=emptyList())
+            val bare=if(window) node.copy(windows=emptyList()) else if(bay) node.copy(bayWindows=emptyList()) else node.copy(dormers=emptyList())
             val ev=evaluation(context.replace(bare))
             if(bay) ev.semanticRoom(node.id).compiled.shell else ev.preview(node.id).placements.map { it.pos.copy(y=0) }.toSet()
         }.getOrDefault(emptySet())
@@ -36,13 +37,17 @@ class SpecialPlacementScreen private constructor(private val parent:Screen?,init
         resetDropdown()
         if(count>0) {
             selected=selected.coerceIn(0,count-1)
-            select(8,28,width-16,selected,(0 until count).toList(),{ "${ui(if(bay) "bg_bay_window" else "bg_dormer")} ${it+1}" }) { selected=it;rebuildWidgets() }
+            select(8,28,width-16,selected,(0 until count).toList(),{ "${ui(if(window) "bg_window" else if(bay) "bg_bay_window" else "bg_dormer")} ${it+1}" }) { selected=it;rebuildWidgets() }
         }
         button(8,height-30,(width-24)/2,"fit_graph") { projection=null }
         button(16+(width-24)/2,height-30,(width-24)/2,"close") { onClose() }
         if(projection?.let { it.width!=width-16 || it.height!=mapHeight }==true) projection=null
     }
-    private fun shapes(value:BuildingNode):List<Set<P>> = if(bay) value.bayWindowInstances.map { item ->
+    private fun shapes(value:BuildingNode):List<Set<P>> = if(window) value.windows.orEmpty().map { i->
+        val a=StoreyWindows.walls(context,value).firstOrNull { it.roomIndex==i.roomIndex && it.edge==i.edge }
+        val width=context.nodes.firstOrNull { it.id==i.source }?.length ?: 1
+        a?.cells?.drop(i.offset)?.take(width)?.toSet().orEmpty()
+    } else if(bay) value.bayWindowInstances.map { item ->
         val config=context.nodes.firstOrNull { it.id==item.source }?.bayWindow ?: BayWindowConfig()
         val anchor=anchors.firstOrNull { it.edge==item.edge }
         val start=anchor?.cells?.getOrNull(item.offset)
@@ -59,13 +64,19 @@ class SpecialPlacementScreen private constructor(private val parent:Screen?,init
     fun gridPoint(x:Double,z:Double):Pair<Double,Double> { val p=fitted();return p.x+(x-p.minX)*p.step to p.y+(z-p.minZ)*p.step }
     private fun validate(value:BuildingNode,full:Boolean=false):Result<Unit> = runCatching {
         val changed=context.replace(value);val ev=evaluation(changed)
-        if(bay) {
+        if(window) ev.storey(value.id) else if(bay) {
             ev.room(value.id)
             changed.nodes.filter { it.kind==BuildingKind.STOREY && value.id in it.inputs }.forEach { ev.storey(it.id) }
         } else ev.validateDormerPlacement(value.id,full)
         Unit
     }
     private fun moved(base:BuildingNode,cell:P,start:P):BuildingNode {
+        if(window) {
+            val item=base.windows.orEmpty()[selected]
+            val width=context.nodes.firstOrNull { it.id==item.source }?.length ?: 1
+            val choice=StoreyWindows.walls(context,base).flatMap { a->(0..a.cells.size-width).map { a to it } }.minByOrNull { (a,i)->abs(a.cells[i].x-cell.x)+abs(a.cells[i].z-cell.z) } ?: error("Keine passende Zielwand")
+            return base.copy(windows=base.windows.orEmpty().mapIndexed { index,i->if(index==selected) i.copy(roomIndex=choice.first.roomIndex,edge=choice.first.edge,offset=choice.second) else i })
+        }
         if(!bay) return base.copy(dormers=base.dormerInstances.mapIndexed { i,v -> if(i==selected) v.copy(position=v.position+cell-start) else v })
         val item=base.bayWindowInstances[selected]
         val c=context.nodes.firstOrNull { it.id==item.source }?.bayWindow ?: BayWindowConfig()

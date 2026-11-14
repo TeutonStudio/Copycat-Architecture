@@ -24,6 +24,7 @@ import buildingAssembly from '../../examples/building-graph-assembly.json'
 import buildingBasements from '../../examples/building-graph-basements.json'
 import buildingRotationSegment from '../../examples/building-rotation-segment.json'
 import buildingRoofPeak from '../../examples/building-roof-peak.json'
+import buildingWindows from '../../examples/building-windows.json'
 import buildingRoofEave from '../../examples/building-roof-eave.json'
 
 const Preview = lazy(() => import('./Preview.jsx'))
@@ -34,7 +35,7 @@ const examples = {
     ['Aussparung', formExample], ['Rotation und Differenz', formRotation], ['Materialgruppen', formMaterials]
   ],
   building: [
-    ['Gebäude aus Copycats', buildingAssembly], ['Rotationssegment · Säule', buildingRotationSegment], ['Dachspitze bei ungerader Breite', buildingRoofPeak], ['Dachendkante parallel zum First', buildingRoofEave], ['L-förmiges Gebäude', buildingExample], ['Gebäude mit Kellern', buildingBasements]
+    ['Fenster am Stockwerk', buildingWindows], ['Gebäude aus Copycats', buildingAssembly], ['Rotationssegment · Säule', buildingRotationSegment], ['Dachspitze bei ungerader Breite', buildingRoofPeak], ['Dachendkante parallel zum First', buildingRoofEave], ['L-förmiges Gebäude', buildingExample], ['Gebäude mit Kellern', buildingBasements]
   ]
 }
 const query = new URLSearchParams(window.location.search)
@@ -454,7 +455,7 @@ function Studio({ mode, active, editorRequest, onOpenCopy, onApplyCopy }) {
           <div className="panel-heading"><span>Inspektor</span><div className="button-row"><small>{current ? 'AUSWAHL' : 'ERGEBNIS'}</small>
             <button type="button" aria-expanded={!inspectorCollapsed} aria-controls={`${mode}-inspector`} aria-label={inspectorCollapsed ? 'Inspektor ausklappen' : 'Inspektor einklappen'} onClick={() => setInspectorCollapsed(value => !value)}>{inspectorCollapsed ? '▸' : '▾'}</button>
           </div></div>
-          <PagedPanel id={`${mode}-inspector`} label="Eigenschaften" className="inspector-body" hidden={inspectorCollapsed} key={visibleNode.node.id}>
+          <div id={`${mode}-inspector`} className="inspector-body" hidden={inspectorCollapsed} key={visibleNode.node.id}>
             <a className="reference-link" href={`${wiki}/Knoten-${mode === 'form' ? 'Formgraph' : 'Gebaeudegraph'}#${visibleNode.node.kind.toLowerCase()}`}>Knotenreferenz ↗</a>
             <h2>{document.graph.nodes.find(n=>n.id===visibleNode.node.id)?.editorLabel || visibleNode.node.name || names[visibleNode.node.kind]}</h2>
             <div className="node-id">{visibleNode.node.id} · Ausgang: {visibleNode.outputType || 'Ergebnis'}</div>
@@ -482,7 +483,7 @@ function Studio({ mode, active, editorRequest, onOpenCopy, onApplyCopy }) {
               <button className="danger" type="button" onClick={removeSelection}>{selectedWire ? 'Verbindung trennen' : 'Knoten löschen'}</button>}
             <NativeDocumentFields mode={mode} document={resolved?.document || document} managedGroups={resolved?.managedGroups || []} selection={selectedIds.filter(id => !resolved?.owned.has(id))} edit={next => transact(() => commit(resolved ? foldReferenceEdit(document,resolved,next) : next))} />
             <DocumentFields {...{ mode, document, library, materials, setMaterials }} edit={next => transact(() => commit(next))} />
-          </PagedPanel>
+          </div>
         </section>
       </div>
     </div>

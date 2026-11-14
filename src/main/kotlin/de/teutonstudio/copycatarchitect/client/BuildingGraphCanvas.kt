@@ -208,7 +208,7 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
     private fun body(n:BuildingNode)=(if(mapFirst(n) || ports(n).isEmpty()) 29 else 45+ports(n).size*19)+(if(n.kind==BuildingKind.STOREY) 22 else 0)
     private fun copycatGroups(n:BuildingNode)=library().forms[n.form]?.groups ?: DEFAULT_GROUPS
     private fun copycatMaterialEnd(n:BuildingNode)=44+22*copycatGroups(n).size
-    private fun details(n:BuildingNode)=when(layoutKind(n)) { BuildingKind.INT->28;BuildingKind.ROTATION_SEGMENT->125;BuildingKind.ROTATION,BuildingKind.MIRRORING->72;BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE->120; BuildingKind.BAY_WINDOW,BuildingKind.DORMER->120; BuildingKind.GARDEN->440;BuildingKind.PATH->396;BuildingKind.COPYCAT->copycatMaterialEnd(n)+(if(n.surfaces.isNullOrEmpty()) 68 else 90);BuildingKind.COPYCAT_ROTATE->160;BuildingKind.SEGMENT_ROTATE->187;BuildingKind.COPYCAT_MIRROR->140;BuildingKind.SEGMENT_LAYOUT->252;BuildingKind.ROOM_LAYOUT->136;BuildingKind.AREA->246;BuildingKind.ROOM_GEOMETRY->272;BuildingKind.ROOF_LAYOUT->90;BuildingKind.ROOF_LEVEL->198;BuildingKind.STAIRWELL,BuildingKind.ELEVATOR_SHAFT,BuildingKind.SERVICE_SHAFT->120;BuildingKind.SEGMENT->209;BuildingKind.PATTERN->181;BuildingKind.SEGMENT_MIRROR->206;BuildingKind.FLOOR,BuildingKind.CEILING->158;BuildingKind.ROOM->if(n.kind==BuildingKind.STOREY) 444 else 389;BuildingKind.STOREY->392;BuildingKind.ROOF->160;BuildingKind.BUILDING->332 }
+    private fun details(n:BuildingNode)=when(layoutKind(n)) { BuildingKind.WINDOW->72;BuildingKind.INT->28;BuildingKind.ROTATION_SEGMENT->125;BuildingKind.ROTATION,BuildingKind.MIRRORING->72;BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE->120; BuildingKind.BAY_WINDOW,BuildingKind.DORMER->120; BuildingKind.GARDEN->440;BuildingKind.PATH->396;BuildingKind.COPYCAT->copycatMaterialEnd(n)+(if(n.surfaces.isNullOrEmpty()) 68 else 90);BuildingKind.COPYCAT_ROTATE->160;BuildingKind.SEGMENT_ROTATE->187;BuildingKind.COPYCAT_MIRROR->140;BuildingKind.SEGMENT_LAYOUT->252;BuildingKind.ROOM_LAYOUT->136;BuildingKind.AREA->246;BuildingKind.ROOM_GEOMETRY->272;BuildingKind.ROOF_LAYOUT->90;BuildingKind.ROOF_LEVEL->198;BuildingKind.STAIRWELL,BuildingKind.ELEVATOR_SHAFT,BuildingKind.SERVICE_SHAFT->120;BuildingKind.SEGMENT->209;BuildingKind.PATTERN->181;BuildingKind.SEGMENT_MIRROR->206;BuildingKind.FLOOR,BuildingKind.CEILING->158;BuildingKind.ROOM->if(n.kind==BuildingKind.STOREY) 496 else 389;BuildingKind.STOREY->444;BuildingKind.ROOF->160;BuildingKind.BUILDING->332 }
     fun nodeHeight(n:BuildingNode)=body(n)+details(n)+(if(mapFirst(n)) ports(n).size*19 else 0)
     private fun nx(mx:Double)=(mx-x-panX)/scale
     private fun ny(my:Double)=(my-y-panY)/scale
@@ -283,6 +283,7 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
             for(j in 0..steps) { val u=j.toDouble()/steps;val xx=(last.first+(p.first-last.first)*u).roundToInt();val yy=(last.second+(p.second-last.second)*u).roundToInt();g.fill(xx-1,yy-1,xx+2,yy+2,c) };last=p }
     }
     private fun label(p:BuildingPort,owner:BuildingNode):String=when {
+        owner.kind==BuildingKind.WINDOW && p.key=="in:0"->ui("window_geometry")
         p.key=="length"->ui("bg_fixed_length",graph.resolvedNode(owner).length)
         p.key.startsWith("semantic:") -> SemanticPropertyEditors.portLabel(p.key)
         p.key.startsWith("wall:") -> if(p.length>0) ui("bg_wall_port",ui(listOf("north","east","south","west")[p.key.removePrefix("wall:").substringBefore(':').toInt()]),p.length,p.height) else ui("bg_roof_wall_port",ui(listOf("north","east","south","west")[p.key.removePrefix("wall:").toInt()]))
@@ -485,8 +486,13 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
                 if(!inspector) { ArchitectTheme.inset(g,n.x-5,sy-5,10,10);g.fill(n.x-2,sy-2,n.x+2,sy+2,if(p.source.isEmpty()) ArchitectTheme.disabled else color(p.accepts.first())) }
             }
             if(!inspector && n.kind!=BuildingKind.BUILDING) { ArchitectTheme.inset(g,n.x+w-5,n.y+31,10,10);g.fill(n.x+w-2,n.y+34,n.x+w+2,n.y+38,color(n.kind)) }
+            if(n.kind==BuildingKind.STOREY) {
+                row(g,"Fensterinstanzen einstellen",n.x+8,by+details(n)-48,w-16)
+                row(g,"Fenster im Grundriss platzieren",n.x+8,by+details(n)-24,w-16)
+            }
             if(n.kind==BuildingKind.STOREY) row(g,ui("bg_storey_mode",ui("bg_storey_"+n.storeyMode))+" ▾",n.x+8,by-22,w-16)
             when(layoutKind(n)) {
+                BuildingKind.WINDOW -> row(g,"Fenstermaße einstellen",n.x+8,by,w-16)
                 BuildingKind.INT -> row(g,ui("bg_count_value",n.countValue ?: 0),n.x+8,by,w-16)
                 BuildingKind.ROTATION_SEGMENT -> {
                     row(g,ui("bg_fixed_length",graph.resolvedNode(n).length),n.x+8,by,w-16)
@@ -808,7 +814,7 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
         if(m.type.startsWith("number:")) {
             val n=graph.nodes.first { it.id==m.node };val number=current(m).toInt()
             val range=when(m.type) {
-                "number:count_value"->Int.MIN_VALUE..Int.MAX_VALUE;"number:length","number:depth"->1..128;"number:height"->1..if(n.kind==BuildingKind.SEGMENT_LAYOUT) 128 else 16;"number:thickness"->(if(n.finish.isNotEmpty()) 2 else 1)..4
+                "number:count_value"->0..Int.MAX_VALUE;"number:length","number:depth"->1..128;"number:height"->1..if(n.kind==BuildingKind.SEGMENT_LAYOUT) 128 else 16;"number:thickness"->(if(n.finish.isNotEmpty()) 2 else 1)..4
                 "number:overhang"->0..2
                 "number:ground_depth","number:path_width"->1..16;"number:clearance"->0..16;"number:fence_height"->1..4
                 "number:table_x","number:table_z"->-128..128;"number:table_y"->-256..256;else->-64..64
@@ -948,7 +954,10 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
                         }
                     }
                 }
+                if(n.kind==BuildingKind.STOREY && inside(details(n)-48)) { WindowEditors.instances(n,graph) { edit(it) };return@safe }
+                if(n.kind==BuildingKind.STOREY && inside(details(n)-24)) { openSpecialPlacement(n);return@safe }
                 when(layoutKind(n)) {
+                    BuildingKind.WINDOW -> if(inside(0)) WindowEditors.definition(n) { edit(it) }
                     BuildingKind.INT -> if(inside(0)) open("number:count_value",0)
                     BuildingKind.ROTATION_SEGMENT -> when {
                         inside(0) && n.dimensions.orEmpty()["length"].isNullOrEmpty() -> open("number:length",0)

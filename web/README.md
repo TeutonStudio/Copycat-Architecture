@@ -40,8 +40,9 @@ den Schalter per Tastatur.
 Die Arbeitsfläche bleibt innerhalb des Browserfensters. Bei schmalen oder flachen
 Fenstern schalten **Graph / Vorschau / Eigenschaften** zwischen den Ansichten um.
 **Datei & Bibliothek** öffnet die vorhandenen Datei-, Beispiel-, Speicher- und
-Undo-Funktionen. Inspektor, Werkzeuge, Bibliotheken und Vorschau-HUD verwenden
-Seitensteuerungen; auch geöffnete Eigenschaftsabschnitte bleiben erreichbar.
+Undo-Funktionen. Der **Inspektor scrollt innerhalb seiner Fläche**; alle Eigenschaften
+bleiben ohne Seitenwechsel erreichbar. Die Website selbst scrollt weder horizontal
+noch vertikal. Werkzeuge, Bibliotheken und Vorschau-HUD verwenden Seitensteuerungen.
 
 ## Referenzknoten und Architekturvorlagen
 
@@ -330,3 +331,45 @@ Längenwert öffnet den Anzahl-Knoten.
 
 `python3 tools/verify-rotation-segment-browser.py` prüft Anschlüsse, Quellenwechsel,
 Trennen, Längenänderung, Rückgängig und JSON-Export im Chromium.
+
+
+## Fenster am Stockwerk (Issue #27)
+
+**Fenster** (`WINDOW`) nimmt ein **Segment** als Geometriequelle für Rahmen und
+Glas entgegen. Breite und Höhe geben die Öffnungsmaße in Blöcken an. Die Maße
+müssen ganze Vielfache des Quellsegments sein; die Geometrie wird wiederholt,
+ohne Rahmen zu strecken oder abzuschneiden.
+
+Am **Stockwerk** unter **Fenster am Stockwerk** eine Instanz hinzufügen und die
+Fensterdefinition wählen. Dieselbe Definition kann mehrfach verbunden werden.
+Im **Fenstergrundriss** die Zielwand anklicken oder die Instanz entlang der Wand
+ziehen; Pfeil links/rechts verschiebt die aktive Instanz um einen Block.
+Wandrichtung, Position entlang der Wand, Einbauhöhe und Tiefenversatz bestimmen
+jede Instanz unabhängig. **Übernehmen** speichert alle Einstellungen gemeinsam;
+Undo/Redo und erneutes Laden erhalten die Anschlüsse und Platzierungen.
+
+**Innenwand und Fassade automatisch öffnen** entfernt die betroffenen Wandzellen
+durch die Wandtiefe einschließlich getrennter Lagen innerhalb des Wandaufbaus.
+Nur der Bereich der Fensterbreite und -höhe wird geöffnet; Fenstergeometrie und
+übrige Wand bleiben erhalten. Jede Auswertung beginnt mit der ursprünglichen
+Wand, sodass Verschieben, Größenänderung und Entfernen keine alten Öffnungen
+hinterlassen. Unpassende Wände, überstehende Fenster und Überschneidungen werden
+in der Vorschau erklärt. Mod und Browser verwenden `StoreyWindows` gemeinsam für
+Vorschau, Bauplan und Materialberechnung.
+
+Das Beispiel **Fenster am Stockwerk** zeigt zwei Instanzen derselben Definition
+an unterschiedlich ausgerichteten Wänden. In der Mod gibt es am Stockwerk die
+Aktionen **Fensterinstanzen einstellen** und **Fenster im Grundriss platzieren**.
+Der Anzahl-Knoten hat ein direktes Feld für ganze Werte von 0 bis 2147483647;
+eine angeschlossene Säulenlänge benötigt weiterhin 1 bis 128 Blöcke.
+
+
+Browserprüfung für diese Bedienwege (laufender Produktionsbuild erforderlich):
+
+```bash
+python web/tools/verify-window-browser.py --url http://127.0.0.1:4194/ --chromium /pfad/zu/chromium
+```
+
+Der Check deckt Anzahl-Eingaben einschließlich 0, Säulenlängen, den scrollenden
+Inspektor ohne Seiten-Überlauf, Wandwahl, Ziehen im Fenstergrundriss,
+Undo/Redo, erneutes Laden und die Anzeige ungültiger Fensterpositionen ab.

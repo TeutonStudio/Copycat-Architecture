@@ -839,5 +839,7 @@
   "gui.copycat_architect.bg_int": "Count",
   "gui.copycat_architect.bg_count_value": "Value: %s",
   "gui.copycat_architect.bg_rotation_segment": "Rotation segment",
-  "gui.copycat_architect.bg_rotation_segment_hint": "Four Y rotations per layer · length along Y"
+  "gui.copycat_architect.bg_rotation_segment_hint": "Four Y rotations per layer · length along Y",
+  "gui.copycat_architect.bg_window": "Window",
+  "gui.copycat_architect.window_geometry": "Window geometry"
 }

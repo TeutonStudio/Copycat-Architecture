@@ -4,6 +4,7 @@ package de.teutonstudio.copycatarchitect.domain
 object BuildingCounts {
     fun validate(n:BuildingNode) {
         require(n.countValue==null || n.kind==BuildingKind.INT) { "Anzahl values belong to INT nodes" }
+        require(n.countValue==null || n.countValue>=0) { "Anzahl muss eine nicht negative Ganzzahl sein" }
         require(n.kind!=BuildingKind.INT || n.inputs.isEmpty()) { "Anzahl sources have no inputs" }
         require(n.dimensions.orEmpty().isEmpty() || n.kind==BuildingKind.ROTATION_SEGMENT && n.dimensions.orEmpty().keys.all { it=="length" }) { "Only rotation segments accept an Anzahl length" }
     }

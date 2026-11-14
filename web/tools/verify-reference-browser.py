@@ -21,12 +21,20 @@ with sync_playwright() as p:
    for(const e of document.querySelectorAll('button,input:not([type=hidden]),select,summary,.page-controls,.pager-body [data-page-item],.copycat-card')) {
     if(!e.getClientRects().length||e.closest('[hidden],.pager-hidden,.pager-empty'))continue;
     const r=e.getBoundingClientRect();if(r.width<1||r.height<1)continue;
+    if(e.closest('.inspector-body'))continue;
     if(r.x<-.5||r.y<-.5||r.right>innerWidth+.5||r.bottom>innerHeight+.5) failures.push([e.className,e.textContent.slice(0,35),r.toJSON()]);
     const panel=e.closest('.pager-body,.copycat-results');if(panel) {const q=panel.getBoundingClientRect();if(r.top<q.top-1||r.bottom>q.bottom+1||r.left<q.left-1||r.right>q.right+1)failures.push(['clipped',e.textContent.slice(0,35),r.toJSON(),q.toJSON()]);}
    }return failures;
   }""")
   if failures:page.screenshot(path=str(a.artifacts/(label+'-failure.png')))
   assert not failures,(label,failures[:8])
+ def scroll_inspector(label):
+  panel=studio.locator('.inspector-body')
+  assert panel.locator(':scope > .page-controls').count()==0
+  panel.evaluate('(e)=>{e.scrollTop=e.scrollHeight}')
+  fit(label)
+  assert page.evaluate('scrollY===0 && scrollX===0')
+  panel.evaluate('(e)=>{e.scrollTop=0}')
  def pages(panel,label):
   for i in range(100):
    fit(label+str(i));n=panel.locator(':scope > .page-controls button').nth(1)
@@ -54,7 +62,7 @@ with sync_playwright() as p:
   page.set_viewport_size({'width':w,'height':h});fit('studio-'+str(w))
   tabs=studio.get_by_role('group',name='Arbeitsansicht')
   if tabs.is_visible():tabs.get_by_role('button',name='Eigenschaften',exact=True).click()
-  pages(studio.locator('.inspector-body'),'inspector-'+str(w))
+  scroll_inspector('inspector-'+str(w))
   if tabs.is_visible():tabs.get_by_role('button',name='Vorschau',exact=True).click()
   for panel in studio.locator('.preview-hud .paged-panel').all():pages(panel,'hud-'+str(w))
   if tabs.is_visible():tabs.get_by_role('button',name='Graph',exact=True).click()
@@ -71,8 +79,8 @@ with sync_playwright() as p:
   page.set_viewport_size({'width':w,'height':h});fit('form-'+str(w))
   tabs=studio.get_by_role('group',name='Arbeitsansicht')
   if tabs.is_visible():tabs.get_by_role('button',name='Eigenschaften',exact=True).click()
-  pages(studio.locator('.inspector-body'),'form-inspector-'+str(w))
+  scroll_inspector('form-inspector-'+str(w))
   if tabs.is_visible():tabs.get_by_role('button',name='Graph',exact=True).click()
  assert not errors,errors
- print('PASS: form/building editors, template insertion, source preview, reload, all property/HUD/tool/library pages and viewport fit at ten sizes, including effective 125/150/200 percent zoom sizes')
+ print('PASS: form/building editors, template insertion, source preview, reload, scrolling properties and all HUD/tool/library pages and viewport fit at ten sizes, including effective 125/150/200 percent zoom sizes')
  b.close()

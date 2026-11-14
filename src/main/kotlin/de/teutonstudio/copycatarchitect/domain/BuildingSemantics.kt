@@ -114,6 +114,7 @@ object BuildingSemantics {
     /** Targets are late-bound surfaces, so they must not introduce room → roof → room evaluation cycles. */
     fun structuralReferences(node:BuildingNode)=references(node).filterKeys { !it.startsWith("attachment:") && !(it.startsWith("column:") && it.endsWith(":roof")) }
     fun remapReferences(node:BuildingNode,reference:(String,String)->String):BuildingNode=node.copy(
+        windows=node.windows?.mapIndexed { i,it->it.copy(source=reference("window:$i:source",it.source)) },
         bayWindow=node.bayWindow?.let { it.copy(wall=reference("bay:wall",it.wall),front=reference("bay:front",it.front),floor=reference("bay:floor",it.floor),ceiling=reference("bay:ceiling",it.ceiling)) },
         dormer=node.dormer?.let { it.copy(wall=reference("dormer:wall",it.wall),front=reference("dormer:front",it.front),roof=reference("dormer:roof",it.roof)) },
         bayWindows=node.bayWindows?.mapIndexed { i,it -> it.copy(source=reference("bay:$i:source",it.source)) },

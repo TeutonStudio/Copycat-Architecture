@@ -4,6 +4,7 @@ import { inspectorContext, wireModels, editNativeGroup, groupInterfaceContext, e
 
 import { contract, getPath, inspectorFields, setPath } from './inspector-model.js'
 import { TransformValues } from './TransformValues.jsx'
+import { WindowFields } from './WindowFields.jsx'
 import { ArrangementGrid } from './ArrangementGrid.jsx'
 import { model } from './model.js'
 import { MaterialField } from './Workspace.jsx'
@@ -129,7 +130,7 @@ function Value({ type, value, change, title, path = '', settings = {} }) {
   if (type === 'Boolean') return <label className="check"><input type="checkbox" checked={value || false} onChange={event => change(event.target.checked)} />{title}</label>
   return <label>{title}<input type={type === 'String' ? 'text' : 'number'} value={value ?? ''} step="1" min={settings.min} max={settings.max} onChange={event => {
     const next = type === 'String' ? event.target.value : Number(event.target.value)
-    if (type === 'String' || Number.isSafeInteger(next)) change(next)
+    if (type === 'String' || event.target.value !== '' && Number.isSafeInteger(next) && (path !== 'countValue' || (settings.min == null || next >= settings.min) && (settings.max == null || next <= settings.max))) change(next)
   }} /></label>
 }
 function MapAdd({ numeric, onAdd }) {
@@ -175,7 +176,7 @@ export function NativeFields({ mode, node, edit, document, library, onInspectNod
   return <Context.Provider value={context}><details open className="native-fields"><summary>{mode === 'building' ? 'Knoteneinstellungen' : 'Ausrichtung und Formeinstellungen'}</summary>
     {node.kind === 'ROTATION_SEGMENT' && <p className="hint">Die Copycat wird bei 0°, 90°, 180° und 270° um Y vereinigt. Die Länge wiederholt dieses Profil entlang Y zur Säule.</p>}
     {(draft.kind === 'ROOF' && !draft.assembly && draft.roofType === 'gable' || draft.kind === 'ROOF_LEVEL' && ['GABLE', 'CROSS', 'PENT'].includes(draft.roofLevel?.form)) && <p className="hint">Die Dachverlängerung wächst entlang des Firsts über die Giebelseiten hinaus. Dachbreite und Mauern bleiben am Gebäudegrundriss.</p>}
-    {fields.map(field => <div key={field.path} data-inspector-field={field.path}>
+    {fields.filter(field => field.path !== 'windows').map(field => <div key={field.path} data-inspector-field={field.path}>
       {context.derived?.[field.path] ? <div><label>{label(field.path)}<output>{Array.isArray(getPath(context.resolved, field.path)) ? `${getPath(context.resolved, field.path).length} Einträge` : String(getPath(context.resolved, field.path))}</output></label><button type="button" onClick={() => onInspectNode?.(context.derived[field.path])}>Quelle bearbeiten</button></div>
         : field.path === 'module'  && node.kind === 'SEGMENT' ? <label>Segmentquelle<select value={draft.block === 'minecraft:air' ? '_air' : draft.module || '_solid'} onChange={event => {
         const value = event.target.value
@@ -183,8 +184,9 @@ export function NativeFields({ mode, node, edit, document, library, onInspectNod
       }}><option value="_solid">Massive Wand</option><option value="_air">Leere Wand</option>{Object.entries(library?.modules || {}).map(([id, item]) => <option key={id} value={id}>{item.name || id}</option>)}</select></label>
         : field.path === 'block' && node.kind === 'SEGMENT' ? null
         : field.path === 'surfaces' ? <fieldset><legend>Materialgruppen</legend>{groups.map(group => <MaterialField key={group.id} blockOnly label={group.name} value={draft.surfaces?.[group.id] || context.palette?.[group.role === 'surface' ? draft.role : group.role] || ''} onChange={value => patch('surfaces', Object.fromEntries(groups.map(item => [item.id, item.id === group.id ? value : draft.surfaces?.[item.id] || context.palette?.[item.role === 'surface' ? draft.role : item.role] || 'minecraft:stone'])))} />)}<button type="button" onClick={() => patch('surfaces', null)}>Gebäudepalette verwenden</button></fieldset>
-        : <Value type={field.type} value={getPath(draft, field.path)} path={field.path} settings={field} title={label(field.path.split('.').at(-1))} change={next => patch(field.path, next)} />}
+        : <Value type={node.kind === 'INT' && field.path === 'countValue' ? 'Int' : field.type} value={getPath(draft, field.path)} path={field.path} settings={field} title={node.kind === 'WINDOW' && field.path === 'length' ? 'Breite' : label(field.path.split('.').at(-1))} change={next => patch(field.path, next)} />}
     </div>)}
+    {node.kind === 'STOREY' && <WindowFields node={draft} document={document} walls={context.windowWalls} change={next => patch('windows', next)} />}
     {(node.kind === 'PATTERN' || node.kind === 'SEGMENT_UNION' || node.kind === 'STOREY' && node.storeyMode === 'rooms') && <ArrangementGrid {...{ node, document: hasReferences(document) ? expandReferences(document,library).document : document, library:hasReferences(document) ? expandReferences(document,library).library : library, edit }} />}
     <button type="button" className="primary" disabled={JSON.stringify(draft) === JSON.stringify(node)} onClick={() => edit(Object.fromEntries(fields.map(field => field.path.split('.')[0]).map(key => [key, draft[key]])))}>Übernehmen</button>
   </details></Context.Provider>

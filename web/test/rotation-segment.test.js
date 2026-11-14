@@ -29,7 +29,7 @@ test('rotation segment has typed integer and Copycat inputs and a segment output
 
 test('integer length changes column height and rejects out-of-range lengths', () => {
   for (const countValue of [1, 8, 128]) assert.equal(preview(change(example, 'count', { countValue })).count, countValue)
-  for (const countValue of [0, -1, 129]) assert.throws(() => preview(change(example, 'count', { countValue })), /between 1 and 128/)
+  for (const countValue of [0, 129]) assert.throws(() => preview(change(example, 'count', { countValue })), /between 1 and 128/)
   const plan = preview(example)
   assert.equal(plan.count, 6)
   assert.equal(previewGraph(true, example, library, '').count, 6)
@@ -51,3 +51,11 @@ test('full symmetric Copycat costs one block per layer and can feed a segment op
   const rotated = replaceNodes(full, [...full.graph.nodes, { ...newNode(true, 'SEGMENT_ROTATE', 'horizontal', 0, 0), inputs: ['column'], rotationAxis: 'Z', quarterTurns: 1 }])
   assert.equal(previewGraph(true, rotated, library, 'horizontal').count, 6)
 })
+
+ test('Anzahl accepts zero independently and rejects negative or fractional values', () => {
+  const disconnected = change(example, 'column', { dimensions: {} })
+  const zero = change(disconnected, 'count', { countValue: 0 })
+  assert.equal(previewGraph(true, zero, library, 'count').value, 'Anzahl: 0')
+  assert.throws(() => previewGraph(true, change(disconnected, 'count', { countValue: -1 }), library, 'count'), /nicht negative Ganzzahl/)
+  assert.throws(() => change(disconnected, 'count', { countValue: 1.5 }), /integer/)
+ })

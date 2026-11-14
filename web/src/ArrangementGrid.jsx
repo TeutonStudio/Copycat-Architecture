@@ -5,8 +5,9 @@ import { arrangementPath, fitArrangement, moveArrangement } from './arrangement.
 const colors = ['#55b8d0', '#d69b62', '#90be78', '#ba8dcc', '#da7980', '#799ee0']
 
 export function ArrangementGrid({ node, document, library, edit }) {
+  const copycats = node.kind === 'SEGMENT'
   const pattern = node.kind === 'PATTERN'
-  const segments = pattern || node.kind === 'SEGMENT_UNION'
+  const segments = copycats || pattern || node.kind === 'SEGMENT_UNION'
   const [plane, setPlane] = useState(segments ? 'Z' : 'Y')
   const [patch, setPatch] = useState(null)
   const [selected, setSelected] = useState(0)
@@ -28,12 +29,12 @@ export function ArrangementGrid({ node, document, library, edit }) {
   const bounds = viewport ?? fitArrangement(base.model?.items ?? [])
   const active = Math.min(selected, Math.max(0, items.length - 1))
   const transforms = current.model?.transforms ?? []
-  const offsets = patch?.offsets ?? node.offsets ?? []
+  const offsets = patch?.offsets ?? (copycats ? (base.model?.transforms ?? []).map(t => t.offset) : node.offsets ?? [])
   const offset = pattern ? transforms[active]?.offset : offsets[active] ?? { x: 0, y: 0, z: 0 }
   const stage = (index, value, rotation = {}) => {
     if (pattern) setPatch({ patternAxis: 'transform', transforms: transforms.map((item, i) =>
       i === index ? { ...item, ...rotation, offset: value } : item) })
-    else setPatch({ offsets: node.inputs.map((_, i) => i === index ? value : offsets[i] ?? { x: 0, y: 0, z: 0 }) })
+    else setPatch({ ...(copycats ? { copycatArrangement: true } : {}), offsets: node.inputs.map((_, i) => i === index ? value : offsets[i] ?? { x: 0, y: 0, z: 0 }) })
     setError('')
   }
   const point = event => {
@@ -55,7 +56,7 @@ export function ArrangementGrid({ node, document, library, edit }) {
     } catch (cause) { setError(cause.message || String(cause)) }
   }
   return <details className="arrangement-editor" open>
-    <summary>2D-Raster · {segments ? 'Segmente anordnen' : 'Räume anordnen'}</summary>
+    <summary>2D-Raster · {copycats ? 'Copycats anordnen' : segments ? 'Segmente anordnen' : 'Räume anordnen'}</summary>
     {base.error ? <p role="status">Alle Eingänge verbinden und gültige Quellen verwenden: {base.error}</p> : <>
       <div className="arrangement-tools">
         {segments && <label>Ansicht<select aria-label="Rasteransicht" value={plane} onChange={event => {
@@ -86,7 +87,7 @@ export function ArrangementGrid({ node, document, library, edit }) {
             return
           }
           stage(state.index, moveArrangement(state.offset, plane,
-            Math.round(position.x - state.start.x), Math.round(position.y - state.start.y), pattern ? 128 : 64))
+            Math.round(position.x - state.start.x), Math.round(position.y - state.start.y), pattern || copycats ? 128 : 64))
         }} onPointerUp={event => {
           drag.current = null
           if (svg.current.hasPointerCapture(event.pointerId)) svg.current.releasePointerCapture(event.pointerId)
@@ -96,7 +97,7 @@ export function ArrangementGrid({ node, document, library, edit }) {
           event.stopPropagation()
           if (event.key === 'Escape') { event.preventDefault(); cancelDrag(); return }
           const delta = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[event.key]
-          if (delta && offset) { event.preventDefault(); stage(active, moveArrangement(offset, plane, ...delta, pattern ? 128 : 64)) }
+          if (delta && offset) { event.preventDefault(); stage(active, moveArrangement(offset, plane, ...delta, pattern || copycats ? 128 : 64)) }
         }}>
         <defs><pattern id={patternId} width="1" height="1" patternUnits="userSpaceOnUse">
           <path d="M1,0H0V1" fill="none" stroke="#647984" strokeWidth="0.025" />
@@ -124,10 +125,10 @@ export function ArrangementGrid({ node, document, library, edit }) {
         <button type="button" onClick={() => setViewport(fitArrangement(items))}>Einpassen</button></div>
       {offset && <div className="arrangement-tools">
         {(segments ? ['x', 'y', 'z'] : ['x', 'z']).map(axis => <label key={axis}>{axis.toUpperCase()} · Blöcke
-          <input aria-label={`Anordnung ${axis.toUpperCase()}`} type="number" min={pattern ? -128 : -64} max={pattern ? 128 : 64}
+          <input aria-label={`Anordnung ${axis.toUpperCase()}`} type="number" min={pattern || copycats ? -128 : -64} max={pattern || copycats ? 128 : 64}
             value={offset[axis]} onChange={event => {
               const value = event.target.valueAsNumber
-              if (Number.isInteger(value) && Math.abs(value) <= (pattern ? 128 : 64)) stage(active, { ...offset, [axis]: value })
+              if (Number.isInteger(value) && Math.abs(value) <= (pattern || copycats ? 128 : 64)) stage(active, { ...offset, [axis]: value })
             }} /></label>)}
         {pattern && <><label>Drehachse<select aria-label="Anordnung Drehachse" value={transforms[active]?.axis} onChange={event => stage(active, offset, { axis: event.target.value })}>
           {['X', 'Y', 'Z'].map(axis => <option key={axis}>{axis}</option>)}</select></label>

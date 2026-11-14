@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { useWorkspace } from './Workspace.jsx'
 import { axisColors, sides } from './orientation.js'
+import { exactGeometry } from './preview-geometry.js'
 
 const colors = {
   body: '#8ba4a2', cap: '#d29763', 'minecraft:stone_bricks': '#979999',
@@ -265,7 +266,7 @@ export function Viewer({ plan, blockFrame, catalog, details }) {
     const corner = new THREE.Vector3()
     for (const [material, meshes] of batches) {
       const count = meshes.reduce((sum, mesh) => sum + mesh.boxes.length * mesh.positions.length, 0)
-      if (!count) continue
+      if (!count && !meshes.some(mesh => mesh.faces?.length && mesh.positions.length)) continue
       const surfaceMaterials = Array.from({ length: 6 }, () => {
         const surface = new THREE.MeshLambertMaterial({ color: color(material), alphaTest: 0.1 })
         surface.onBeforeCompile = shader => {
@@ -273,38 +274,53 @@ export function Viewer({ plan, blockFrame, catalog, details }) {
           shader.vertexShader = shader.vertexShader.replace('#include <uv_vertex>', `#include <uv_vertex>
             #ifdef USE_MAP
               vec3 pointInBlock = position * blockSize + blockCenter;
-              vec2 blockUv = normal.x > 0.5 ? vec2(1.0-pointInBlock.z, pointInBlock.y)
-                : normal.x < -0.5 ? vec2(pointInBlock.z, pointInBlock.y)
-                : normal.y > 0.5 ? vec2(pointInBlock.x, 1.0-pointInBlock.z)
-                : normal.y < -0.5 ? vec2(pointInBlock.x, pointInBlock.z)
-                : normal.z > 0.5 ? vec2(pointInBlock.x, pointInBlock.y) : vec2(1.0-pointInBlock.x, pointInBlock.y);
+              vec3 magnitude = abs(normal);
+              vec2 blockUv = magnitude.x >= magnitude.y && magnitude.x >= magnitude.z
+                ? (normal.x > 0.0 ? vec2(1.0-pointInBlock.z, pointInBlock.y) : vec2(pointInBlock.z, pointInBlock.y))
+                : magnitude.y >= magnitude.z
+                  ? (normal.y > 0.0 ? vec2(pointInBlock.x, 1.0-pointInBlock.z) : vec2(pointInBlock.x, pointInBlock.z))
+                  : (normal.z > 0.0 ? vec2(pointInBlock.x, pointInBlock.y) : vec2(1.0-pointInBlock.x, pointInBlock.y));
               vMapUv = (mapTransform * vec3(blockUv, 1.0)).xy;
             #endif`)
         }
-        surface.customProgramCacheKey = () => 'copycat-block-uv-v1'
+        surface.customProgramCacheKey = () => 'copycat-block-uv-v2'
         return surface
       })
-      const geometry = new THREE.BoxGeometry()
-      const blockCenters = new Float32Array(count * 3), blockSizes = new Float32Array(count * 3)
-      geometry.setAttribute('blockCenter', new THREE.InstancedBufferAttribute(blockCenters, 3))
-      geometry.setAttribute('blockSize', new THREE.InstancedBufferAttribute(blockSizes, 3))
-      const draw = new THREE.InstancedMesh(geometry, surfaceMaterials, count)
-      let index = 0
-      for (const mesh of meshes) for (const [px, py, pz] of mesh.positions) {
-        for (const [x, y, z, maxX, maxY, maxZ] of mesh.boxes) {
-          scale.set((maxX - x) / 16, (maxY - y) / 16, (maxZ - z) / 16)
-          translation.set(px + (x + maxX) / 32, py + (y + maxY) / 32, pz + (z + maxZ) / 32)
-          matrix.makeScale(scale.x, scale.y, scale.z).setPosition(translation)
-          blockCenters.set([(x + maxX) / 32, (y + maxY) / 32, (z + maxZ) / 32], index * 3)
-          blockSizes.set([scale.x, scale.y, scale.z], index * 3)
-          draw.setMatrixAt(index++, matrix)
-          bounds.expandByPoint(corner.set(px + x / 16, py + y / 16, pz + z / 16))
-          bounds.expandByPoint(corner.set(px + maxX / 16, py + maxY / 16, pz + maxZ / 16))
+      if (count) {
+        const geometry = new THREE.BoxGeometry()
+        const blockCenters = new Float32Array(count * 3), blockSizes = new Float32Array(count * 3)
+        geometry.setAttribute('blockCenter', new THREE.InstancedBufferAttribute(blockCenters, 3))
+        geometry.setAttribute('blockSize', new THREE.InstancedBufferAttribute(blockSizes, 3))
+        const draw = new THREE.InstancedMesh(geometry, surfaceMaterials, count)
+        let index = 0
+        for (const mesh of meshes) for (const [px, py, pz] of mesh.positions) {
+          for (const [x, y, z, maxX, maxY, maxZ] of mesh.boxes) {
+            scale.set((maxX - x) / 16, (maxY - y) / 16, (maxZ - z) / 16)
+            translation.set(px + (x + maxX) / 32, py + (y + maxY) / 32, pz + (z + maxZ) / 32)
+            matrix.makeScale(scale.x, scale.y, scale.z).setPosition(translation)
+            blockCenters.set([(x + maxX) / 32, (y + maxY) / 32, (z + maxZ) / 32], index * 3)
+            blockSizes.set([scale.x, scale.y, scale.z], index * 3)
+            draw.setMatrixAt(index++, matrix)
+            bounds.expandByPoint(corner.set(px + x / 16, py + y / 16, pz + z / 16))
+            bounds.expandByPoint(corner.set(px + maxX / 16, py + maxY / 16, pz + maxZ / 16))
+          }
         }
+        draw.instanceMatrix.needsUpdate = true
+        draw.computeBoundingSphere()
+        view.model.add(draw)
       }
-      draw.instanceMatrix.needsUpdate = true
-      draw.computeBoundingSphere()
-      view.model.add(draw)
+      for (const mesh of meshes) {
+        if (!mesh.faces?.length || !mesh.positions.length) continue
+        const geometry = exactGeometry(mesh.faces)
+        const draw = new THREE.InstancedMesh(geometry, surfaceMaterials, mesh.positions.length)
+        mesh.positions.forEach(([x, y, z], index) => {
+          draw.setMatrixAt(index, matrix.makeTranslation(x, y, z))
+          bounds.union(geometry.boundingBox.clone().translate(corner.set(x, y, z)))
+        })
+        draw.instanceMatrix.needsUpdate = true
+        draw.computeBoundingSphere()
+        view.model.add(draw)
+      }
       if (catalog.ids.includes(material.split('[')[0])) catalog.resolve(material).then(resolved => {
         if (!live) return
         if (resolved.missing.length || resolved.warning) setTextureWarning(resolved.warning || `Fehlende Texturen: ${resolved.missing.join(', ')}`)

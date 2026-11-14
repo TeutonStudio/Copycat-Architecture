@@ -587,7 +587,10 @@
       "rotation": null,
       "mirroring": null,
       "rotations": null,
-      "mirrors": null
+      "mirrors": null,
+      "countValue": null,
+      "dimensions": {},
+      "copycatArrangement": false
     },
     "semanticPorts": [
       {
@@ -999,6 +1002,57 @@
               "AREA"
             ],
             "labelKey": "bg_area"
+          },
+          {
+            "key": "length",
+            "path": [
+              "dimensions",
+              "length"
+            ],
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX"
+            ],
+            "labelKey": "bg_dimension_length"
+          },
+          {
+            "key": "height",
+            "path": [
+              "dimensions",
+              "height"
+            ],
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX"
+            ],
+            "labelKey": "bg_dimension_height"
+          },
+          {
+            "key": "depth",
+            "path": [
+              "dimensions",
+              "depth"
+            ],
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX"
+            ],
+            "labelKey": "bg_dimension_depth"
           }
         ],
         "fields": {
@@ -1086,6 +1140,57 @@
               }
             },
             "dynamic": "segmentRegions"
+          },
+          {
+            "key": "length",
+            "path": [
+              "dimensions",
+              "length"
+            ],
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX"
+            ],
+            "labelKey": "bg_dimension_length"
+          },
+          {
+            "key": "height",
+            "path": [
+              "dimensions",
+              "height"
+            ],
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX"
+            ],
+            "labelKey": "bg_dimension_height"
+          },
+          {
+            "key": "depth",
+            "path": [
+              "dimensions",
+              "depth"
+            ],
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX"
+            ],
+            "labelKey": "bg_dimension_depth"
           }
         ],
         "fields": {
@@ -3287,13 +3392,14 @@
         "output": "INT",
         "alwaysExplicit": true,
         "defaults": {
-          "countValue": 4
+          "countValue": 4,
+          "inputs": []
         },
         "ports": [],
         "fields": {
           "countValue": {
-            "labelKey": "bg_count_value",
-            "min": 0,
+            "labelKey": "bg_int",
+            "min": -2147483648,
             "max": 2147483647
           }
         }
@@ -3319,7 +3425,13 @@
               "length"
             ],
             "accepts": [
-              "INT"
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX"
             ]
           },
           {
@@ -3401,6 +3513,204 @@
             "max": 16
           }
         }
+      },
+      "INT_ADD": {
+        "labelKey": "bg_int_add",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX"
+            ],
+            "min": 2,
+            "max": 2,
+            "expand": false,
+            "path": [
+              "inputs",
+              "*"
+            ],
+            "labelKey": "bg_int"
+          }
+        ],
+        "alwaysExplicit": true
+      },
+      "INT_SUBTRACT": {
+        "labelKey": "bg_int_subtract",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX"
+            ],
+            "min": 2,
+            "max": 2,
+            "expand": false,
+            "path": [
+              "inputs",
+              "*"
+            ],
+            "labelKey": "bg_int"
+          }
+        ],
+        "alwaysExplicit": true
+      },
+      "INT_MULTIPLY": {
+        "labelKey": "bg_int_multiply",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX"
+            ],
+            "min": 2,
+            "max": 2,
+            "expand": false,
+            "path": [
+              "inputs",
+              "*"
+            ],
+            "labelKey": "bg_int"
+          }
+        ],
+        "alwaysExplicit": true
+      },
+      "INT_DIVIDE": {
+        "labelKey": "bg_int_divide",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX"
+            ],
+            "min": 2,
+            "max": 2,
+            "expand": false,
+            "path": [
+              "inputs",
+              "*"
+            ],
+            "labelKey": "bg_int"
+          }
+        ],
+        "alwaysExplicit": true
+      },
+      "INT_MIN": {
+        "labelKey": "bg_int_min",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX"
+            ],
+            "min": 2,
+            "max": 2,
+            "expand": false,
+            "path": [
+              "inputs",
+              "*"
+            ],
+            "labelKey": "bg_int"
+          }
+        ],
+        "alwaysExplicit": true
+      },
+      "INT_MAX": {
+        "labelKey": "bg_int_max",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX"
+            ],
+            "min": 2,
+            "max": 2,
+            "expand": false,
+            "path": [
+              "inputs",
+              "*"
+            ],
+            "labelKey": "bg_int"
+          }
+        ],
+        "alwaysExplicit": true
       }
     }
   },

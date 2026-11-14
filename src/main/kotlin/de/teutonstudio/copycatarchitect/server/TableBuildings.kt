@@ -33,9 +33,12 @@ data class OwnedCopycat(val pos:P=P(),val token:String="")
 data class TableBuilding(val id:String=UUID.randomUUID().toString(),val owner:String="",val dimension:String="",
     var table:P=P(),var building:Building=Building(),var origin:P=P(),var turn:Int=0,var attached:Boolean=true,
     var blocks:MutableList<OwnedCopycat> = mutableListOf()) {
-    fun relativeBuilding():Building = building.graph?.let { graph ->
+    fun relativeBuilding():Building {
+        if(building.versionedGraph!=null) return building.copy(graphProjection=BuildingProjection(P(table.x-origin.x,table.y-origin.y,table.z-origin.z).turn(-turn),turn))
+        return building.graph?.let { graph ->
         building.copy(graph=graph.copy(projection=BuildingProjection(P(table.x-origin.x,table.y-origin.y,table.z-origin.z).turn(-turn),turn)))
     } ?: building
+    }
 }
 
 object TableBuildings {
@@ -98,7 +101,7 @@ object TableBuildings {
         // Ambiguous neighbors need their carried table item; proximity must not select the wrong house.
         val record=candidates.singleOrNull() ?: (if(candidates.isEmpty()) legacy(level,player,pos) else null)
             ?: run { table.buildingId="";table.setChanged();return null }
-        if(record.building.graph!=null && runCatching {
+        if((record.building.graph!=null || record.building.versionedGraph!=null) && runCatching {
             BuildingProjection(P(pos.x-record.origin.x,pos.y-record.origin.y,pos.z-record.origin.z).turn(-record.turn),record.turn).validate()
         }.isFailure) { table.buildingId="";table.setChanged();return null }
         record.table=pos;record.attached=true;table.buildingId=record.id;table.setChanged();ArchitectData.get(level).setDirty()
@@ -107,7 +110,7 @@ object TableBuildings {
     fun prepare(level:ServerLevel,table:TableEntity,player:ServerPlayer,building:Building,origin:P,turn:Int):TableBuilding {
         require(level.getBlockEntity(table.blockPos)===table) { "Open a nearby architect table" }
         require(level.mayInteract(player,table.blockPos) && player.mayUseItemAt(table.blockPos,Direction.UP,ItemStack(Architect.TABLE_ITEM.get()))) { "Table access denied" }
-        if(building.graph!=null) {
+        if(building.graph!=null || building.versionedGraph!=null) {
             val pos=PlacementService.local(table.blockPos)
             BuildingProjection(P(pos.x-origin.x,pos.y-origin.y,pos.z-origin.z).turn(-turn),turn).validate()
         }
@@ -132,6 +135,7 @@ object TableBuildings {
         ArchitectData.get(level).setDirty()
     }
     fun creativeBuild(player:ServerPlayer,table:TableEntity,building:Building,library:Library,origin:P,turn:Int):Int {
+        building.versionedGraph?.let { GraphPackages.checkConflicts(it,library.graphs,library.forms,library.modules) }
         require(player.isCreative) { "Creative mode is required" }
         require(turn in 0..3) { "Invalid building rotation" }
         val level=player.serverLevel();val delta=table.blockPos.subtract(player.blockPosition())

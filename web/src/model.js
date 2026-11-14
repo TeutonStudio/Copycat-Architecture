@@ -1,5 +1,5 @@
 import { hasReferences, expandReferences, referenceEntries, referenceWires } from './references.js'
-import { applyGraphDiagram, replaceGraphNodes, exportDocument, editInspectorNode, normalizeDocument, wireModels, compileForm, graphModels, inspectGraph, prepareForm } from './generated/engine.mjs'
+import { resolveVersionedGraph, validateGraphBundle, applyGraphDiagram, replaceGraphNodes, exportDocument, editInspectorNode, normalizeDocument, wireModels, compileForm, graphModels, inspectGraph, prepareForm } from './generated/engine.mjs'
 
 export const model = { ...graphModels(), mirrorPlanes: wireModels().enums.CopycatMirrorPlane }
 export const defaults = [{ id: 'body', name: 'Body', role: 'surface', priority: 0 }]
@@ -39,6 +39,12 @@ export function replaceNodes(document, nodes) {
 
 export function readGraph(raw, mode) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Eine Graphdatei muss ein JSON-Objekt sein.')
+  if (raw.versionedGraph) {
+    validateGraphBundle(raw.versionedGraph)
+    if ((raw.versionedGraph.root.mode === 'BUILDING') !== (mode === 'building')) throw new Error('Die Datei gehört zum anderen Editor.')
+    const view = resolveVersionedGraph(raw.versionedGraph.root, raw.versionedGraph.graphs)
+    return { ...raw, schema: raw.schema || view.schema, graph: view.graph, groups: raw.groups || view.groups }
+  }
   const bare = Array.isArray(raw.nodes)
   if (!bare && !raw.graph && !Array.isArray(raw.parts) && !raw.wings && !raw.patterns && !raw.palette) {
     throw new Error('Die Datei enthält weder einen Copycat-Graphen noch eine Form.')
@@ -59,7 +65,8 @@ export function readGraph(raw, mode) {
 export function writeGraph(mode, document) {
   inspect(mode, document)
   if (hasReferences(document)) return structuredClone(document)
-  return retainShape(document, normalizeDocument(mode === 'building', document), exportDocument(mode === 'building', document))
+  const exported = retainShape(document, normalizeDocument(mode === 'building', document), exportDocument(mode === 'building', document))
+  return document.versionedGraph ? { ...exported, graph: null } : exported
 }
 
 export function connections(entries) {

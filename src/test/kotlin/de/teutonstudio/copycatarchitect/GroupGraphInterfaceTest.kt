@@ -7,6 +7,18 @@ import org.junit.jupiter.api.Test
 import kotlin.test.*
 
 class GroupGraphInterfaceTest {
+    @Test fun `axis colors never become stored group interface types`() {
+        val original=KilaGraphData(listOf(
+            KilaNode("count","Count",0,0,emptyList(),outputType="COUNT_Y"),
+            KilaNode("sum","Sum",100,0,listOf("A"),inputTypes=listOf("COUNT_Y"),outputType="COUNT_Y")),
+            listOf(KilaLink("count","sum",0)),listOf(GraphGroup("group","Count group",listOf("sum"))))
+        val initialized=GroupGraphInterfaces.initializeInstances(original,"group")
+        val face=initialized.nodeGroups.single().graphInterface!!
+        assertEquals("INT",face.inputs.single().type)
+        assertEquals("INT",face.outputs.single().type)
+        val projection=KilaGroupGraphProjection(initialized,"group")
+        assertEquals(initialized,projection.restore(projection.display))
+    }
     private fun data():KilaGraphData {
         val face=GraphGroupInterface(listOf(GraphGroupInput("form","Form","shape",listOf(GraphGroupTarget(0,"0")),y=20)),
             listOf(GraphGroupOutput("result","Form","shape",0)))

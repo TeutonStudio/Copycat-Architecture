@@ -387,6 +387,7 @@ object IntegrationTests {
         h.succeed()
     }
     @JvmStatic @GameTest(template="empty",timeoutTicks=180000) fun graphBuildingTurtleWithBasementAndCarpet(h:GameTestHelper) {
+        if(java.lang.Boolean.getBoolean("architect.classicWorldSmoke")) { h.succeed();return }
         val l=h.level;val owner=GameProfile(UUID.randomUUID(),"ArchitectGraphBuild");val actor=FakePlayerFactory.get(l,owner)
         val dock=h.absolutePos(BlockPos(2,2,2)).offset(96,0,96);val origin=PlacementService.local(dock)+P(5,-1,5)
         val d=ArchitectData.get(l);val lib=d.library(owner.id);var graph=BuildingGraph.starter()

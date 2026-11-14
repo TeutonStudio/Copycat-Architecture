@@ -214,10 +214,15 @@ Die vollständige API und Installation stehen in [LUA_API.md](docs/LUA_API.md). 
 
 Verkleidungen können zulässige normale Vollblockitems einschließlich Glas verwenden; zehn bisherige Vanilla-Materialien bleiben als Vorschläge erhalten. Bis zu acht Gruppen pro Form sind möglich. Der Formgraph erzeugt geometrische Kompositblöcke und keine funktionsfähigen Türen oder Maschinen; solche nativen funktionalen Copycats bleiben im Katalog „Häufige“ verfügbar. Texturen werden seitenrichtig vom Materialmodell übernommen; Create-/Copycats-Connected-Textures zwischen benachbarten Kompositblöcken fehlen noch. Der klassische Generator verwendet für L-Grundrisse die dokumentierte bündige Zwei-Flügel-Konfiguration; der Gebäudegraph unterstützt die beschriebenen orthogonalen Rechteckvereinigungen. Wände sind eine Zelle dick; die Baufolge benötigt den ausgewiesenen freien Arbeitsraum. Diese Grenzen sind keine stillen Fallbacks: Unzulässige Referenzen und Konfigurationen werden geprüft.
 
+Graphstudio 0.3: [Materialbibliothek, Faithful-Texturen und persönliche Browserbibliotheken](https://github.com/TeutonStudio/copycat-architect/wiki/Materialbibliothek). Minecraft-Texturen von [Faithful Resource Pack](https://faithfulpack.net), [Lizenz](https://faithfulpack.net/license).
 
-### Graphstudio und Mod 0.6.1
+## Entwicklungszweig für 0.7.0
 
-Der Browsereditor unterstützt jetzt denselben Modellstand wie die Mod: zehn Form-
-und 36 Gebäudeknoten, native Gruppen und Instanzen, Architektentisch-Projektion,
-exakte Geometrie sowie Erker/Gauben. Der Codec wird aus den nativen Datenklassen
-erzeugt. [Graphstudio-Anleitung](web/README.md) · [Kompatibilitätsprüfung](docs/GRAPH_COMPATIBILITY.md).
+Der Entwicklungsstand ergänzt die Copycat-Anordnung im Wandsegment und typisierte
+Anzahl-Eingänge für Segmentmaße in beiden Editoren. Die nativen Unterdialoge
+verwenden denselben CC-Rahmen und abgestimmte dunkle Flächen wie Drucker und
+Architektentisch. [Prüfstand und Aufnahmen](docs/VALIDATION.md) dokumentieren die
+bisherigen Prüfungen. Die Versionsnummer bleibt bis zur vollständigen Release-Abnahme bei
+0.6.4. Versionierte Untergraphen sind als geprüfter Entwicklungsstand verfügbar,
+einschließlich Referenzpaketen für Druck- und Bauvorlagen. Die vollständige
+Browserabdeckung und die Zug-, Bewegungsmittel- und Contraption-Modi fehlen noch. Es ist kein Release 0.7.0 verfügbar.

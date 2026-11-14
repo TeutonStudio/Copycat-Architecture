@@ -52,10 +52,10 @@ test('full symmetric Copycat costs one block per layer and can feed a segment op
   assert.equal(previewGraph(true, rotated, library, 'horizontal').count, 6)
 })
 
- test('Anzahl accepts zero independently and rejects negative or fractional values', () => {
+ test('Anzahl accepts signed integers independently and rejects fractional values', () => {
   const disconnected = change(example, 'column', { dimensions: {} })
   const zero = change(disconnected, 'count', { countValue: 0 })
   assert.equal(previewGraph(true, zero, library, 'count').value, 'Anzahl: 0')
-  assert.throws(() => previewGraph(true, change(disconnected, 'count', { countValue: -1 }), library, 'count'), /nicht negative Ganzzahl/)
+  assert.equal(previewGraph(true, change(disconnected, 'count', { countValue: -1 }), library, 'count').value, 'Anzahl: -1')
   assert.throws(() => change(disconnected, 'count', { countValue: 1.5 }), /integer/)
  })

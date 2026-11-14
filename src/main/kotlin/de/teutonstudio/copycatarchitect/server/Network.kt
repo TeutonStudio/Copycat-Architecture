@@ -38,7 +38,7 @@ data class Response(val json:String):CustomPacketPayload {
 data class Command(val action:String="sync",val payload:String="",val key:String="",val material:String="minecraft:stone",val turn:Int=0,val origin:P=P(),val dock:P=P(),val computer:Int=-1,val surfaces:Map<String,String> = emptyMap(),val slot:Int=-1,val inventorySlot:Int=-1)
 data class JobView(val id:String,val name:String,val state:String,val index:Int,val total:Int,val message:String)
 data class Snapshot(val editor:String="",val library:Library=Library(),val jobs:List<JobView> = emptyList(),val message:String="",val position:P=P(),val extrusionOutputs:Map<String,Int> = Extrusion.outputs.toMap(),val printer:PrinterView?=null,val table:P?=null,
-    val creative:Boolean=false,val tableBuilding:Building?=null,val tableOrigin:P?=null,val tableTurn:Int=0) {
+    val creative:Boolean=false,val tableBuilding:Building?=null,val tableOrigin:P?=null,val tableTurn:Int=0,val graphTransfer:GraphTransferProgress?=null) {
     companion object { const val MAX_SNAPSHOT_JSON_CHARS=1000000 }
 }
 object Network {
@@ -71,13 +71,13 @@ object Network {
         }
         return PlacementService.local(binding.pos)
     }
-    fun sync(player:ServerPlayer,editor:String="",message:String="") {
+    fun sync(player:ServerPlayer,editor:String="",message:String="",graphTransfer:GraphTransferProgress?=null) {
         val data=ArchitectData.get(player.serverLevel())
         val jobs=data.db.jobs.filter { it.owner==player.uuid.toString() }.map { JobView(it.id,it.name,it.state,it.index,it.plan.placements.size,it.message) }
         val table=table(player)
         val record=table?.let { player.level().getBlockEntity(PlacementService.world(it)) as? TableEntity }?.let { TableBuildings.current(player.serverLevel(),it) }
         val json=Json.encode(Snapshot(editor,data.library(player.uuid),jobs,message,PlacementService.local(player.blockPosition()),printer=PrinterService.view(player),table=table,
-            creative=player.isCreative,tableBuilding=if(editor=="building") record?.relativeBuilding() else null,tableOrigin=record?.origin,tableTurn=record?.turn ?: 0))
+            creative=player.isCreative,tableBuilding=if(editor=="building") record?.relativeBuilding() else null,tableOrigin=record?.origin,tableTurn=record?.turn ?: 0,graphTransfer=graphTransfer))
         if(json.length<=Snapshot.MAX_SNAPSHOT_JSON_CHARS) PacketDistributor.sendToPlayer(player,Response(json))
     }
     private fun authorized(p:ServerPlayer):Boolean {
@@ -85,6 +85,7 @@ object Network {
         if(p.mainHandItem.`is`(Architect.GUN.get()) || p.offhandItem.`is`(Architect.GUN.get())) return true
         return BlockPos.betweenClosed(p.blockPosition().offset(-6,-3,-6),p.blockPosition().offset(6,3,6)).any { p.level().getBlockState(it).`is`(Architect.TABLE.get()) }
     }
+    private val graphTransfers=GraphPackageTransfers()
     fun handle(player:ServerPlayer,json:String) {
         try {
             require(json.length<=CommandTransport.MAX_JSON_CHARS && authorized(player)) { "Use your block printer or a nearby architect table" }
@@ -113,8 +114,35 @@ object Network {
                     lib.savePrintHistory(c.key,c.payload);editor="printerStorage";message="Print saved"
                 }
                 "sync" -> {}
+                "saveGraphDraft" -> {
+                    val draft=Json.decode<GraphDocument>(c.payload);GraphLibrary.saveDraft(lib,draft);message="Saved draft ${draft.name}"
+                }
+                "publishGraph" -> {
+                    val published=GraphLibrary.publish(lib,Json.decode(c.payload));message="Saved ${published.name} @${published.version}"
+                }
+                "saveGraphPackage" -> {
+                    val root=GraphLibrary.importPackage(lib,Json.decode(c.payload),replaceDraft=true);message="Saved ${root.name}"
+                }
+                "importGraphPackage" -> {
+                    val root=GraphLibrary.importPackage(lib,Json.decode(c.payload));message="Imported ${root.name}"
+                }
+                "graphImportBegin" -> {
+                    val manifest=Json.decode<GraphTransferManifest>(c.payload)
+                    graphTransfers.begin(player.uuid.toString(),manifest,now)
+                    sync(player,message="Graph upload ready",graphTransfer=GraphTransferProgress(manifest.id,graphTransfers.missing(player.uuid.toString(),manifest.id,now)));return
+                }
+                "graphImportChunk" -> {
+                    graphTransfers.append(player.uuid.toString(),c.key,c.slot,c.payload,now)
+                    sync(player,message="Graph chunk received",graphTransfer=GraphTransferProgress(c.key,graphTransfers.missing(player.uuid.toString(),c.key,now)));return
+                }
+                "graphImportFinish" -> {
+                    require(c.turn in 0..1)
+                    val root=GraphLibrary.importPackage(lib,Json.decode(graphTransfers.content(player.uuid.toString(),c.key,now)),replaceDraft=c.turn==1)
+                    graphTransfers.complete(player.uuid.toString(),c.key);message="Imported ${root.name}"
+                }
                 "saveForm" -> {
                     val f=Geometry.validate(Json.decode<Form>(c.payload));val fid=id(f.id)
+                    f.versionedGraph?.let { GraphLibrary.importPackage(lib,it,replaceDraft=true) }
                     f.parts.forEach { part ->
                         val source=ResourceLocation.parse(part.source)
                         if(part.source==RoofPartParameters.SOURCE) {
@@ -138,9 +166,9 @@ object Network {
                     lib.modules["$mid@$v"]=m.copy(id=mid,version=v);message="Module saved @$v"
                 }
                 "saveBuilding" -> {
-                    val decoded=Json.decode<Building>(c.payload);val b=decoded.copy(graph=decoded.graph?.withCurrentSchema());val plan=Generator.generate(b,lib.forms,lib.modules);plan.placements.filter { it.block.isNotEmpty() }.forEach { Economy.nativeState(it.block) };b.palette.values.forEach { Economy.state(it) }
+                    val decoded=Json.decode<Building>(c.payload);decoded.versionedGraph?.let { GraphLibrary.importPackage(lib,it,replaceDraft=true) };val b=decoded.copy(graph=decoded.graph?.withCurrentSchema());val plan=Generator.generate(b,lib.forms,lib.modules);plan.placements.filter { it.block.isNotEmpty() }.forEach { Economy.nativeState(it.block) };b.palette.values.forEach { Economy.state(it) }
                     val bid=id(b.id);val v=(lib.buildings.values.filter { it.id==bid }.maxOfOrNull { it.version } ?: 0)+1
-                    lib.buildings["$bid@$v"]=b.copy(schema=if(b.graph==null) 1 else 2,id=bid,version=v);message="Building saved @$v"
+                    lib.buildings["$bid@$v"]=b.copy(schema=if(b.graph==null && b.versionedGraph==null) 1 else 2,id=bid,version=v);message="Building saved @$v"
                 }
                 "select" -> {
                     require(c.key in lib.forms && c.turn in 0..3);Economy.state(c.material)
@@ -165,7 +193,7 @@ object Network {
                     sync(player,message="Kreativ gebaut: $count Blöcke aktualisiert");return
                 }
                 "createJob" -> {
-                    val b=Json.decode<Building>(c.payload);val plan=Generator.generate(b,lib.forms,lib.modules)
+                    val b=Json.decode<Building>(c.payload);b.versionedGraph?.let { GraphPackages.checkConflicts(it,lib.graphs,lib.forms,lib.modules) };val plan=Generator.generate(b,lib.forms,lib.modules)
                     plan.placements.filter { it.block.isNotEmpty() }.forEach { Economy.nativeState(it.block) }
                     require(c.turn in 0..3 && c.computer>=-1 && c.computer<=1_000_000)
                     require(PlacementService.world(c.origin).distManhattan(player.blockPosition())<96) { "Build origin is too far away" }

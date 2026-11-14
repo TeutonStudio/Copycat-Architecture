@@ -79,7 +79,7 @@ data class Building(val schema:Int=1,val id:String="",val version:Int=1,val name
     val floors:Int=2,val roomHeight:Int=4,val patterns:List<Pattern> = List(4) { Pattern() },
     val floorForm:String="full@1",val ceilingForm:String="full@1",val floorThickness:Int=1,val ceilingThickness:Int=1,
     val holes:List<P> = emptyList(),val roof:String="gable",val ridge:Int=0,val overhang:Int=1,val roofThickness:Int=1,
-    val trimForm:String="inner@1",val palette:Map<String,String> = mapOf("wall" to "minecraft:stone_bricks","frame" to "minecraft:oak_planks","glass" to "minecraft:glass","roof" to "minecraft:deepslate_tiles","gable" to "minecraft:stone_bricks","trim" to "minecraft:oak_planks"),val graph:BuildingGraph?=null)
+    val trimForm:String="inner@1",val palette:Map<String,String> = mapOf("wall" to "minecraft:stone_bricks","frame" to "minecraft:oak_planks","glass" to "minecraft:glass","roof" to "minecraft:deepslate_tiles","gable" to "minecraft:stone_bricks","trim" to "minecraft:oak_planks"),val graph:BuildingGraph?=null,val versionedGraph:GraphPackage?=null,val graphProjection:BuildingProjection?=null)
 data class Placement(val pos:P=P(),val parts:List<Part> = emptyList(),val material:String="minecraft:stone",val block:String="",val component:String="wall",val groups:List<MaterialGroup> = DEFAULT_GROUPS,val surfaces:Map<String,String> = emptyMap()) {
     fun surfaceItems():Map<String,Int> = if(block.isNotEmpty()) mapOf(block to 1) else Geometry.resolve(parts,groups).materialSolids(material,surfaces).keys.filter { it.isNotEmpty() }.associateWith { 1 }
     fun visualKey():String = if(block.isNotEmpty()) "block:$block" else Geometry.resolve(parts,groups).visualKey(material,surfaces)
@@ -116,6 +116,13 @@ class Resolver {
 }
 object Generator {
     fun generate(b:Building,forms:Map<String,Form>,modules:Map<String,Module>):Plan {
+        if(b.versionedGraph!=null) {
+            require(b.graph==null && b.versionedGraph.root.mode==GraphMode.BUILDING) { "Building graph sources disagree" }
+            GraphPackages.checkConflicts(b.versionedGraph,emptyMap(),forms,modules)
+            val resolved=VersionedGraphs.resolve(b.versionedGraph.root,b.versionedGraph.graphs).building!!
+            val graph=b.graphProjection?.let { resolved.copy(projection=it) } ?: resolved
+            return BuildingGraphCompiler.compile(b.copy(versionedGraph=null,graph=graph),forms+b.versionedGraph.forms,modules+b.versionedGraph.modules).plan
+        }
         if(b.graph!=null) return BuildingGraphCompiler.compile(b,forms,modules).plan
         require(b.name.length in 1..64 && b.holes.size<=4096 && b.palette.size<=16)
         require(b.schema==1 && b.floors in 1..8 && b.roomHeight in 2..12 && b.wings.size in 1..2)

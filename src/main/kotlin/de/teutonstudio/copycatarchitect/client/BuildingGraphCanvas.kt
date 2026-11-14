@@ -208,7 +208,7 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
     private fun body(n:BuildingNode)=(if(mapFirst(n) || ports(n).isEmpty()) 29 else 45+ports(n).size*19)+(if(n.kind==BuildingKind.STOREY) 22 else 0)
     private fun copycatGroups(n:BuildingNode)=library().forms[n.form]?.groups ?: DEFAULT_GROUPS
     private fun copycatMaterialEnd(n:BuildingNode)=44+22*copycatGroups(n).size
-    private fun details(n:BuildingNode)=when(layoutKind(n)) { BuildingKind.WINDOW->72;BuildingKind.INT->28;BuildingKind.ROTATION_SEGMENT->125;BuildingKind.ROTATION,BuildingKind.MIRRORING->72;BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE->120; BuildingKind.BAY_WINDOW,BuildingKind.DORMER->120; BuildingKind.GARDEN->440;BuildingKind.PATH->396;BuildingKind.COPYCAT->copycatMaterialEnd(n)+(if(n.surfaces.isNullOrEmpty()) 68 else 90);BuildingKind.COPYCAT_ROTATE->160;BuildingKind.SEGMENT_ROTATE->187;BuildingKind.COPYCAT_MIRROR->140;BuildingKind.SEGMENT_LAYOUT->252;BuildingKind.ROOM_LAYOUT->136;BuildingKind.AREA->246;BuildingKind.ROOM_GEOMETRY->272;BuildingKind.ROOF_LAYOUT->90;BuildingKind.ROOF_LEVEL->198;BuildingKind.STAIRWELL,BuildingKind.ELEVATOR_SHAFT,BuildingKind.SERVICE_SHAFT->120;BuildingKind.SEGMENT->209;BuildingKind.PATTERN->181;BuildingKind.SEGMENT_MIRROR->206;BuildingKind.FLOOR,BuildingKind.CEILING->158;BuildingKind.ROOM->if(n.kind==BuildingKind.STOREY) 496 else 389;BuildingKind.STOREY->444;BuildingKind.ROOF->160;BuildingKind.BUILDING->332 }
+    private fun details(n:BuildingNode)=when(layoutKind(n)) { BuildingKind.WINDOW->72;BuildingKind.INT,BuildingKind.INT_ADD,BuildingKind.INT_SUBTRACT,BuildingKind.INT_MULTIPLY,BuildingKind.INT_DIVIDE,BuildingKind.INT_MIN,BuildingKind.INT_MAX->90;BuildingKind.ROTATION_SEGMENT->125;BuildingKind.ROTATION,BuildingKind.MIRRORING->72;BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE->120; BuildingKind.BAY_WINDOW,BuildingKind.DORMER->120; BuildingKind.GARDEN->440;BuildingKind.PATH->396;BuildingKind.COPYCAT->copycatMaterialEnd(n)+(if(n.surfaces.isNullOrEmpty()) 68 else 90);BuildingKind.COPYCAT_ROTATE->160;BuildingKind.SEGMENT_ROTATE->187;BuildingKind.COPYCAT_MIRROR->140;BuildingKind.SEGMENT_LAYOUT->252;BuildingKind.ROOM_LAYOUT->136;BuildingKind.AREA->246;BuildingKind.ROOM_GEOMETRY->272;BuildingKind.ROOF_LAYOUT->90;BuildingKind.ROOF_LEVEL->198;BuildingKind.STAIRWELL,BuildingKind.ELEVATOR_SHAFT,BuildingKind.SERVICE_SHAFT->120;BuildingKind.SEGMENT->209;BuildingKind.PATTERN->181;BuildingKind.SEGMENT_MIRROR->206;BuildingKind.FLOOR,BuildingKind.CEILING->158;BuildingKind.ROOM->if(n.kind==BuildingKind.STOREY) 496 else 389;BuildingKind.STOREY->444;BuildingKind.ROOF->160;BuildingKind.BUILDING->332 }
     fun nodeHeight(n:BuildingNode)=body(n)+details(n)+(if(mapFirst(n)) ports(n).size*19 else 0)
     private fun nx(mx:Double)=(mx-x-panX)/scale
     private fun ny(my:Double)=(my-y-panY)/scale
@@ -284,7 +284,8 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
     }
     private fun label(p:BuildingPort,owner:BuildingNode):String=when {
         owner.kind==BuildingKind.WINDOW && p.key=="in:0"->ui("window_geometry")
-        p.key=="length"->ui("bg_fixed_length",graph.resolvedNode(owner).length)
+        owner.kind==BuildingKind.ROTATION_SEGMENT && p.key=="length"->ui("bg_fixed_length",graph.resolvedNode(owner).length)
+        p.key in BuildingCounts.axes -> countDimensionLabel(graph,owner,p.key)
         p.key.startsWith("semantic:") -> SemanticPropertyEditors.portLabel(p.key)
         p.key.startsWith("wall:") -> if(p.length>0) ui("bg_wall_port",ui(listOf("north","east","south","west")[p.key.removePrefix("wall:").substringBefore(':').toInt()]),p.length,p.height) else ui("bg_roof_wall_port",ui(listOf("north","east","south","west")[p.key.removePrefix("wall:").toInt()]))
         p.key.startsWith("level:") -> if(p.number==0) ui("bg_ground") else ui(if(p.number>0) "bg_upper" else "bg_lower",abs(p.number))
@@ -493,11 +494,14 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
             if(n.kind==BuildingKind.STOREY) row(g,ui("bg_storey_mode",ui("bg_storey_"+n.storeyMode))+" ▾",n.x+8,by-22,w-16)
             when(layoutKind(n)) {
                 BuildingKind.WINDOW -> row(g,"Fenstermaße einstellen",n.x+8,by,w-16)
-                BuildingKind.INT -> row(g,ui("bg_count_value",n.countValue ?: 0),n.x+8,by,w-16)
                 BuildingKind.ROTATION_SEGMENT -> {
                     row(g,ui("bg_fixed_length",graph.resolvedNode(n).length),n.x+8,by,w-16)
                     materialRows(g,n,by+24)
                     font.split(tr("bg_rotation_segment_hint"),w-16).forEachIndexed { i,line -> g.drawString(font,line,n.x+8,by+76+i*11,ArchitectTheme.muted,false) }
+                }
+                BuildingKind.INT,BuildingKind.INT_ADD,BuildingKind.INT_SUBTRACT,BuildingKind.INT_MULTIPLY,BuildingKind.INT_DIVIDE,BuildingKind.INT_MIN,BuildingKind.INT_MAX -> {
+                    if(n.kind==BuildingKind.INT) row(g,ui("bg_count_value",n.countValue ?: 0),n.x+8,by,w-16)
+                    text(g,runCatching { BuildingCounts.Evaluation(graph).value(n.id).toString() }.getOrElse { it.message.orEmpty() },n.x+8,by+28,ArchitectTheme.text)
                 }
                 BuildingKind.ROTATION,BuildingKind.MIRRORING -> row(g,"${n.rotations?.size ?: n.mirrors?.size ?: 0} Schritte",n.x+8,by,w-16)
                 BuildingKind.COPYCAT -> {
@@ -534,7 +538,7 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
                 BuildingKind.SEGMENT_LAYOUT -> {
                     val geometry=graph.resolvedNode(n)
                     row(g,ui("bg_fixed_length",geometry.length),n.x+8,by,94);row(g,ui("height",geometry.height),n.x+108,by,94)
-                    row(g,ui("bg_depth",n.depth),n.x+8,by+22,w-16)
+                    row(g,ui("bg_depth",geometry.depth),n.x+8,by+22,w-16)
                     text(g,ui(if(n.layoutCells.isEmpty()) "bg_layout_repeat" else "bg_layout_explicit",n.layoutCells.size),n.x+8,by+47,ArchitectTheme.muted)
                     row(g,ui("bg_layout_cell_list"),n.x+8,by+66,w-16)
                     layoutMap(g,n,by+92)
@@ -592,7 +596,8 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
                     row(g,ui("bg_fixed_length",s?.length ?: n.length),n.x+8,by+22,94);row(g,ui("height",s?.height ?: n.height),n.x+108,by+22,94)
                     row(g,ui("role",roleLabel(n.role)),n.x+8,by+44,w-16)
                     row(g,ui("bg_depth",s?.depth ?: n.depth),n.x+8,by+66,w-16)
-                    text(g,if(n.block=="minecraft:air") ui("bg_adaptive_air") else ui("bg_fixed_segment"),n.x+8,by+93,ArchitectTheme.muted)
+                    if(n.inputs.any(String::isNotEmpty)) row(g,ui("bg_copycat_arrange"),n.x+8,by+90,w-16)
+                    else text(g,if(n.block=="minecraft:air") ui("bg_adaptive_air") else ui("bg_fixed_segment"),n.x+8,by+93,ArchitectTheme.muted)
                     text(g,ui(if(n.assembly) "bg_segment_planes" else "bg_segment_one_sided"),n.x+8,by+106,ArchitectTheme.brass)
                     font.split(tr(if(n.assembly) "bg_segment_layout_hint" else "bg_segment_opposite"),w-16).forEachIndexed { i,line -> g.drawString(font,line,n.x+8,by+119+i*11,ArchitectTheme.muted,false) }
                     row(g,ui("semantic_segment_settings"),n.x+8,by+160,w-16)
@@ -789,7 +794,7 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
             "surface_block" -> n.block;"ground_block" -> n.groundBlock;"fence_block" -> n.fenceBlock;"fenced" -> n.fenced.toString()
             "number:elevation" -> n.elevation.toString();"number:ground_depth" -> n.groundDepth.toString();"number:clearance" -> n.clearance.toString();"number:path_width" -> n.pathWidth.toString();"number:fence_height" -> n.fenceHeight.toString()
             "room" -> (view.room[n.id] ?: 0).toString()
-            "number:count_value" -> (n.countValue ?: 0).toString();"number:length" -> n.length.toString();"number:depth" -> n.depth.toString();"number:height" -> n.height.toString();"number:thickness" -> n.thickness.toString();"number:overhang" -> n.overhang.toString()
+            "number:count" -> (n.countValue ?: 0).toString();"number:length" -> n.length.toString();"number:depth" -> n.depth.toString();"number:height" -> n.height.toString();"number:thickness" -> n.thickness.toString();"number:overhang" -> n.overhang.toString()
             "number:x","number:z" -> (n.offsets.getOrNull(view.room[n.id] ?: 0) ?: P()).let { if(m.type.endsWith("x")) it.x else it.z }.toString()
             "number:table_x" -> graph.projection.table.x.toString()
             "number:table_y" -> graph.projection.table.y.toString()
@@ -814,7 +819,8 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
         if(m.type.startsWith("number:")) {
             val n=graph.nodes.first { it.id==m.node };val number=current(m).toInt()
             val range=when(m.type) {
-                "number:count_value"->0..Int.MAX_VALUE;"number:length","number:depth"->1..128;"number:height"->1..if(n.kind==BuildingKind.SEGMENT_LAYOUT) 128 else 16;"number:thickness"->(if(n.finish.isNotEmpty()) 2 else 1)..4
+                "number:count"->Int.MIN_VALUE..Int.MAX_VALUE
+                "number:length","number:depth"->1..128;"number:height"->1..if(n.kind in setOf(BuildingKind.SEGMENT,BuildingKind.SEGMENT_LAYOUT)) 128 else 16;"number:thickness"->(if(n.finish.isNotEmpty()) 2 else 1)..4
                 "number:overhang"->0..2
                 "number:ground_depth","number:path_width"->1..16;"number:clearance"->0..16;"number:fence_height"->1..4
                 "number:table_x","number:table_z"->-128..128;"number:table_y"->-256..256;else->-64..64
@@ -874,6 +880,7 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
         }
         val n=graph.nodes.first { it.id==m.node }
         edit(when(m.type) {
+            "number:count" -> n.copy(countValue=value.toInt())
             "source" -> if(n.id=="empty_wall") n else when(value) { "_air"->n.copy(block="minecraft:air",module="");"_solid"->n.copy(block="",module="");else->n.copy(block="",module=value,length=library().modules.getValue(value).width,height=library().modules.getValue(value).height) }
             "storey_mode"->n.copy(storeyMode=value,inputs=if(value=="rooms") n.inputs.ifEmpty { listOf("") } else n.inputs)
             "surface_block"->n.copy(block=value);"ground_block"->n.copy(groundBlock=value);"fence_block"->n.copy(fenceBlock=value);"fenced"->n.copy(fenced=value.toBoolean())
@@ -958,11 +965,11 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
                 if(n.kind==BuildingKind.STOREY && inside(details(n)-24)) { openSpecialPlacement(n);return@safe }
                 when(layoutKind(n)) {
                     BuildingKind.WINDOW -> if(inside(0)) WindowEditors.definition(n) { edit(it) }
-                    BuildingKind.INT -> if(inside(0)) open("number:count_value",0)
                     BuildingKind.ROTATION_SEGMENT -> when {
                         inside(0) && n.dimensions.orEmpty()["length"].isNullOrEmpty() -> open("number:length",0)
                         else -> material(24)
                     }
+                    BuildingKind.INT,BuildingKind.INT_ADD,BuildingKind.INT_SUBTRACT,BuildingKind.INT_MULTIPLY,BuildingKind.INT_DIVIDE,BuildingKind.INT_MIN,BuildingKind.INT_MAX -> if(n.kind==BuildingKind.INT && inside(0)) open("number:count",0)
                     BuildingKind.ROTATION,BuildingKind.MIRRORING -> Unit
                     BuildingKind.COPYCAT -> {
                         val groups=copycatGroups(n);val end=copycatMaterialEnd(n)
@@ -1033,6 +1040,7 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
                         }
                     }
                     BuildingKind.SEGMENT -> when {
+                        inside(90) && n.inputs.any(String::isNotEmpty)->SegmentArrangementScreen.open(n,graph,evaluation().getOrThrow()) { edit(it) }
                         inside(160)->SemanticPropertyEditors.features(n,graph) { edit(it) }
                         inside(186)->SemanticPropertyEditors.attachments(n,graph) { edit(it) }
                         inside(0) && n.assembly->if(n.layout.isEmpty()) openMenu(Menu(n.id,"input",by,socket="layout")) else showSource(n.layout)

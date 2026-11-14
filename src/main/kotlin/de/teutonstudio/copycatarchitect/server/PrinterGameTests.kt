@@ -244,4 +244,26 @@ object PrinterGameTests {
         h.assertTrue(slotsEqual(before,contents(be)),"Opening memory must preserve all seven physical cartridge stacks")
         PrinterService.cancelDirect(h.level,be,actor);h.succeed()
     }
+    @JvmStatic @GameTest(template="empty") fun versionedSourcePrintRetainsPinnedGraphInDeviceAndHistory(h:GameTestHelper) {
+        val graph=NodeGraph(nodes=listOf(GraphNode("full",part=Part("copycats:copycat_block")),GraphNode("slab",part=Part("copycats:copycat_slab")),
+            GraphNode("cut",NodeKind.DIFFERENCE,listOf("full","slab")),GraphNode("result",NodeKind.OUTPUT,listOf("cut"))))
+        val extracted=VersionedGraphs.extract(VersionedGraphs.fromShape("printRoot","Pinned print",graph),setOf("full","slab","cut"),"printPart","Printed part","instance")
+        val bundle=GraphPackages.export(extracted.parent,mapOf(extracted.definition.key to extracted.definition),emptyMap(),emptyMap())
+        val source=Geometry.validate(Form(id="pinned_print",name="Pinned print",parts=emptyList(),versionedGraph=bundle))
+        val slots=SimpleContainer(7);slots.setItem(0,Economy.cartridge(128))
+        val (actor,be)=place(h,stack(h,source,slots),"PinnedGraphPrint")
+        val library=Library()
+        val conflicting=Library(graphs=mutableMapOf(extracted.definition.key to extracted.definition.copy(name="Conflicting version")))
+        h.assertTrue(runCatching { PrinterService.print(actor,update(be,source).copy(action="printerPrint"),conflicting) }.isFailure,"A conflicting immutable version must be refused before printing")
+        h.assertTrue(PrinterService.active(actor)===be && Economy.units(be.cartridges.getItem(0))==128 && conflicting.history.isEmpty(),"Version conflicts must preserve the placed device, materials and history")
+        h.assertTrue(PrinterService.print(actor,update(be,source).copy(action="printerPrint"),library),"Pinned source must print through the authenticated printer wrapper")
+        val printed=h.level.getBlockEntity(be.blockPos) as CompositeEntity
+        h.assertTrue(printed.receipt.units==128 && Geometry.solid(printed.parts)==Geometry.solid(source.parts),"The print must use the resolved half-block and its exact paid recipe")
+        h.assertTrue(library.history.single().form.versionedGraph==bundle,"Print history must retain pinned references without expanding stored parent members")
+        val returned=(0 until actor.inventory.containerSize).map { actor.inventory.getItem(it) }.single { it.`is`(Architect.GUN.get()) }
+        val restored=ItemStack.parseOptional(h.level.registryAccess(),returned.save(h.level.registryAccess()) as CompoundTag)
+        h.assertTrue(PrinterStack.form(restored).versionedGraph==bundle,"Returned printer source must retain its offline reference package through NBT")
+        h.succeed()
+    }
+
 }

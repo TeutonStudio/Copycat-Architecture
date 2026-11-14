@@ -15,6 +15,24 @@ class RotationSegmentTest {
         BuildingNode("building",BuildingKind.BUILDING)))
     private fun evaluation(g:BuildingGraph)=BuildingGraphCompiler.Evaluation(g,Building().palette,forms,emptyMap())
 
+    @Test fun `arithmetic length sources preserve integer ports and the vertical axis`() {
+        val original=graph()
+        val g=original.copy(nodes=original.nodes+
+            BuildingNode("extra",BuildingKind.INT,countValue=2)+
+            BuildingNode("sum",BuildingKind.INT_ADD,inputs=listOf("count","extra")))
+            .connect("column","length","sum")
+        assertEquals(7,evaluation(g).segment("column").height)
+        assertEquals(1,BuildingPorts.of(g.nodes.first { it.id=="column" },g).count { it.key=="length" })
+        assertEquals(setOf("height"),BuildingCounts.axisUsage(g)["count"])
+        assertEquals("INT",buildingGraphType(BuildingKind.INT_ADD))
+    }
+
+    @Test fun `legacy zero count defaults remain readable on non count nodes`() {
+        val g=graph().let { it.copy(nodes=it.nodes.map { node -> if(node.kind==BuildingKind.INT) node else node.copy(countValue=0) }) }
+        assertEquals(5,evaluation(g).segment("column").height)
+        assertFails { BuildingGraphCompiler.structure(g.replace(g.nodes.first { it.id=="source" }.copy(countValue=3))) }
+    }
+
     @Test fun `four Y rotations form a vertical segment with exact union geometry`() {
         val g=graph();val e=evaluation(g);val segment=e.segment("column")
         assertEquals(Triple(1,5,1),Triple(segment.length,segment.height,segment.depth))
@@ -41,7 +59,7 @@ class RotationSegmentTest {
     }
     @Test fun `length sockets enforce integer type and range and restore local fallback on deletion`() {
         val g=graph();val n=g.nodes.first { it.id=="column" }
-        assertEquals(setOf(BuildingKind.INT),BuildingPorts.of(n,g).first { it.key=="length" }.accepts)
+        assertEquals(BuildingCounts.kinds,BuildingPorts.of(n,g).first { it.key=="length" }.accepts)
         assertEquals("WALL",buildingGraphType(n.kind))
         assertFails { g.connect("column","length","source") }
         assertFails { g.connect("column","in:0","count") }

@@ -178,4 +178,24 @@ object TableBuildingGameTests {
         h.assertTrue(runCatching { TableBuildings.creativeBuild(f.player,replacement,f.building,f.library,f.origin+P(0,257,0),0) }.isFailure,"An invalid vertical table reference must be rejected before storing an unusable document")
         h.succeed()
     }
+    @JvmStatic @GameTest(template="empty",timeoutTicks=100) fun versionedBuildingSourceRetainsReferencesAndTableOwnership(h:GameTestHelper) {
+        val f=fixture(h);val graph=f.building.graph!!
+        val members=graph.nodes.filter { it.kind!=BuildingKind.BUILDING && it.id!="empty_wall" }.map { it.id }.toSet()
+        val extracted=VersionedGraphs.extract(VersionedGraphs.fromBuilding("buildingRoot","Pinned building",graph,f.building.palette),members,"buildingPart","Building part","instance")
+        val bundle=GraphPackages.export(extracted.parent,mapOf(extracted.definition.key to extracted.definition),f.library.forms,f.library.modules)
+        val source=f.building.copy(graph=null,versionedGraph=bundle)
+        h.assertTrue(BuildingProjection(table=P()).plan(Generator.generate(source,emptyMap(),emptyMap()),f.origin)==f.plan,"Offline package must retain the actual build plan")
+        f.library.graphs[extracted.definition.key]=extracted.definition.copy(name="Conflicting version")
+        h.assertTrue(runCatching { build(f,building=source) }.isFailure,"A conflicting immutable version must be refused before building")
+        h.assertTrue(f.plan.placements.none { h.level.getBlockEntity(PlacementService.world(it.pos)) is CompositeEntity },"Version conflicts must leave the actual build area untouched")
+        f.library.graphs.clear()
+        build(f,building=source)
+        val record=record(h,f)
+        h.assertTrue(record.building.graph==null && record.building.versionedGraph==bundle,"The persistent building must retain its parent reference document")
+        h.assertTrue(record.blocks.all { TableBuildings.owned(h.level,record,it) },"Every actual Copycat must retain its table ownership token")
+        val restored=Json.decode<TableBuilding>(Json.encode(record))
+        h.assertTrue(restored.relativeBuilding().versionedGraph==bundle,"Restoring a table must retain the exact source package and versions")
+        h.succeed()
+    }
+
 }

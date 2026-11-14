@@ -30,13 +30,13 @@ internal object GroupGraphInterfaces {
         val incoming=data.links.filter { it.target in members && it.source !in members }
         val inputs=incoming.groupBy { it.source }.values.mapIndexed { index,links ->
             val first=links.first();val target=nodes.getValue(first.target)
-            GraphGroupInput(UUID.randomUUID().toString(),target.inputs[first.slot],nodes.getValue(first.source).outputPorts().getOrNull(first.sourceSlot)?.type ?: target.inputTypes[first.slot],
+            GraphGroupInput(UUID.randomUUID().toString(),target.inputs[first.slot],semanticPortType(nodes.getValue(first.source).outputPorts().getOrNull(first.sourceSlot)?.type ?: target.inputTypes[first.slot]),
                 links.map { GraphGroupTarget(group.nodes.indexOf(it.target),nodes.getValue(it.target).inputKeys[it.slot]) },
                 (positions.minOf { it.x }-240).coerceIn(-8192,8192),(top+index*100).coerceIn(-8192,8192))
         }
         val outputs=group.nodes.filter { id -> nodes[id]?.outputPorts()?.isNotEmpty()==true && (data.links.none { it.source==id } || data.links.any { it.source==id && it.target !in members }) }.mapIndexed { i,id ->
             val node=nodes.getValue(id)
-            GraphGroupOutput(UUID.randomUUID().toString(),node.title,node.outputPorts().first().type,group.nodes.indexOf(id),(positions.maxOf { it.x }+250).coerceIn(-8192,8192),(top+i*100).coerceIn(-8192,8192))
+            GraphGroupOutput(UUID.randomUUID().toString(),node.title,semanticPortType(node.outputPorts().first().type),group.nodes.indexOf(id),(positions.maxOf { it.x }+250).coerceIn(-8192,8192),(top+i*100).coerceIn(-8192,8192))
         }
         return group.copy(graphInterface=GraphGroupInterface(inputs,outputs,positions),inputConnections=inputs.mapIndexed { i,input -> input.id to incoming.groupBy { it.source }.values.elementAt(i).first().source }.toMap())
     }
@@ -107,14 +107,14 @@ internal class KilaGroupGraphProjection(private val original:KilaGraphData,group
             input.copy(x=position?.x ?: input.x,y=position?.y ?: input.y,targets=displaySnapshot.links.filter { it.source==id }.map { link ->
                 val member=checkNotNull(indices[link.target]) { "Group inputs connect to member nodes" }
                 val node=nodes.getValue(link.target)
-                require(input.type in node.inputTypes[link.slot].split('|')) { "Incompatible group input" }
+                require(node.inputTypes[link.slot].split('|').any { semanticPortType(it)==semanticPortType(input.type) }) { "Incompatible group input" }
                 GraphGroupTarget(member,node.inputKeys[link.slot])
             })
         }
         val outputs=face.outputs.map { output ->
             val id=GroupGraphInterfaces.outputId(output.id);val position=moved[id]
             val source=displaySnapshot.links.singleOrNull { it.target==id }?.source
-            if(source!=null) require(nodes[source]?.outputPorts()?.firstOrNull()?.type==output.type) { "Incompatible group output" }
+            if(source!=null) require(nodes[source]?.outputPorts()?.firstOrNull()?.type?.let(::semanticPortType)==semanticPortType(output.type)) { "Incompatible group output" }
             output.copy(x=position?.x ?: output.x,y=position?.y ?: output.y,member=indices[source] ?: -1)
         }
         val layout=retained.map { id -> moved.getValue(id).let { GraphGroupPosition(it.x,it.y) } }

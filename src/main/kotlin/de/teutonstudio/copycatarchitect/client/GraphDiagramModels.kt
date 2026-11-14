@@ -10,6 +10,8 @@ data class KilaNode(val id:String,val title:String,val x:Int,val y:Int,val input
                     val previewExpandedByDefault:Boolean=false,val outputs:List<KilaOutput> = emptyList(),val sourceLabel:String="",
                     val inputKeys:List<String> = inputs.indices.map(Int::toString))
 data class KilaOutput(val label:String,val type:String)
+/** Axis colors are display state; stored named terminals retain the integer value type. */
+internal fun semanticPortType(type:String)=if(type in setOf("COUNT","COUNT_X","COUNT_Y","COUNT_Z")) "INT" else type
 internal fun outputPortId(slot:Int)=if(slot==0) "out" else "out$slot"
 internal fun outputPortSlot(id:String)=if(id=="out") 0 else id.removePrefix("out").toIntOrNull()
 data class KilaLink(val source:String,val target:String,val slot:Int,val sourceSlot:Int=0)

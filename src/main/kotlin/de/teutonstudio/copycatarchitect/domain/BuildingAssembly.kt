@@ -42,7 +42,9 @@ fun BuildingGraph.resolvedNode(node:BuildingNode):BuildingNode {
             resolved=resolved.copy(coordinates=emptyList())
         areaOf(node)?.let { area ->
             resolved=if(node.kind==BuildingKind.SEGMENT_LAYOUT) {
-                SegmentVolume(area,node.depth)
+                SegmentVolume(area,resolved.depth)
+                if(runCatching { BuildingCounts.resolve(this,node,strict=true) }.exceptionOrNull() !is BuildingCounts.IncompleteCount)
+                    BuildingCounts.checkDerived(node,resolved,area.width,area.length)
                 resolved.copy(length=area.width,height=area.length)
             } else {
                 RoomVolume(area,node.height)

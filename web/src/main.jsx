@@ -2,7 +2,7 @@ import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState
 import { createRoot } from 'react-dom/client'
 import { Background, Controls, Handle, MiniMap, Position, ReactFlow, useUpdateNodeInternals } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { adaptRectangles, newNode, starterBuilding } from './generated/engine.mjs'
+import { adaptRectangles, createVersionedGraph, newNode, starterBuilding } from './generated/engine.mjs'
 import { applyWires, connections, formGroups, inspect, editNode, model, position, protectedNode, readGraph, replaceNodes, validateLibrary, writeGraph } from './model.js'
 import { NativeDocumentFields } from './NativeFields.jsx'
 import { DocumentFields, Field, names, NodeFields, portName } from './Inspector.jsx'
@@ -28,6 +28,7 @@ import buildingWindows from '../../examples/building-windows.json'
 import buildingRoofEave from '../../examples/building-roof-eave.json'
 
 const Preview = lazy(() => import('./Preview.jsx'))
+const VersionedGraphs = lazy(() => import('./VersionedGraphs.jsx'))
 const CopycatPicker = lazy(() => import('./CopycatPicker.jsx'))
 const wiki = 'https://github.com/TeutonStudio/copycat-architect/wiki'
 const examples = {
@@ -41,20 +42,23 @@ const examples = {
 const query = new URLSearchParams(window.location.search)
 const initialMode = query.get('editor') === 'form' || query.get('graph') === 'copycat' ? 'form' : 'building'
 
-function DiagramNode({ id, data: { node, ports, groupName, editorLabel, outputType, hasOutput }, selected }) {
+const axisColors = {length:"#ef6666",height:"#66cf85",depth:"#739fff"}
+const countColor = axes => axes?.length === 1 ? axisColors[axes[0]] : "#abb7bd"
+
+function DiagramNode({ id, data: { node, ports, axes, groupName, editorLabel, outputType, hasOutput }, selected }) {
   const updateInternals = useUpdateNodeInternals()
   const signature = ports.map(port => port.id).join('|')
   useEffect(() => updateInternals(id), [id, signature, updateInternals])
   const source = hasOutput ?? !['BUILDING', 'OUTPUT'].includes(node.kind)
-  return <div className={`diagram-node ${selected ? 'selected' : ''} ${source ? '' : 'result-node'}`}>
+  return <div style={node.kind.startsWith("INT") ? {borderColor:countColor(axes)} : undefined} className={`diagram-node ${selected ? 'selected' : ''} ${source ? '' : 'result-node'}`}>
     <div className="node-heading">
       <span className="node-symbol">{source ? '◇' : '◆'}</span>
-      <div><strong>{editorLabel || node.name || names[node.kind]}</strong><small>{node.name ? names[node.kind] : node.id}{groupName ? ` · ${groupName}` : ''}</small></div>
+      <div><strong>{editorLabel || node.name || names[node.kind]}</strong><small>{node.name ? names[node.kind] : node.id}{groupName ? ` · ${groupName}` : ''}{axes?.length ? ` · ${axes.map(axis => ({length:'X',height:'Y',depth:'Z'})[axis]).join(' / ')}` : ''}</small></div>
       {source && <Handle type="source" position={Position.Right} id="out" aria-label={`Ausgang · ${outputType}`} title={`Ausgang · ${outputType}`} />}
     </div>
     {ports.length > 0 && <div className="ports">{ports.map(port => <div className="port" key={port.id}>
       <Handle type="target" position={Position.Left} id={port.id} title={`${portName(port, node)} · ${(port.types || []).join(" / ")}`} />
-      <span>{portName(port, node)}</span>
+      <span style={{color:axisColors[port.id]}}>{portName(port, node)}</span>
       <span className={`port-status ${port.source ? 'connected' : ''}`}>{port.source ? '●' : '○'}</span>
     </div>)}</div>}
   </div>
@@ -127,6 +131,7 @@ function Studio({ mode, active, editorRequest, onOpenCopy, onApplyCopy }) {
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false)
   const [previewMode, setPreviewMode] = useState(draft?.document?.editableOutput ? 'selected' : 'graph')
   const [copycatPicker, setCopycatPicker] = useState(null)
+  const [versioned, setVersioned] = useState(null)
   const graphInput = useRef(null)
   const libraryInput = useRef(null)
   const copycatInput = useRef(null)
@@ -162,11 +167,12 @@ function Studio({ mode, active, editorRequest, onOpenCopy, onApplyCopy }) {
       return changed ? next : previous
     })
   }, [entries])
+  const axisUsage = useMemo(() => Object.fromEntries(entries.map(e => [e.node.id,e.axes])), [entries])
   const edges = useMemo(() => wires.map(wire => ({
     id: edgeId(wire), source: wire.source, sourceHandle: 'out', target: wire.target, targetHandle: wire.port,
-    style: wire.source === 'empty_wall' ? { ...edgeStyle, opacity: 0.38 } : edgeStyle,
+    style: wire.source === 'empty_wall' ? { ...edgeStyle, opacity: 0.38 } : {...edgeStyle,...(axisUsage[wire.source]?.length ? {stroke:countColor(axisUsage[wire.source])} : {})},
     selected: edgeId(wire) === selectedWire
-  })), [wires, selectedWire])
+  })), [wires, selectedWire, axisUsage])
 
   const transact = callback => {
     try {
@@ -177,6 +183,7 @@ function Studio({ mode, active, editorRequest, onOpenCopy, onApplyCopy }) {
     }
   }
   const commit = next => {
+    if (document.versionedGraph && next.versionedGraph === document.versionedGraph && JSON.stringify(next.graph) !== JSON.stringify(document.graph)) throw new Error('Diesen Entwurf über „Versionierte Untergraphen“ bearbeiten.')
     inspect(mode, next)
     if (JSON.stringify(next) !== JSON.stringify(document)) {
       historyContext.current.set(document, { library, materials, copyReturn })
@@ -383,6 +390,9 @@ function Studio({ mode, active, editorRequest, onOpenCopy, onApplyCopy }) {
     </div>
 
     <div className="personal-library-bar">
+      <button onClick={() => transact(() => setVersioned(createVersionedGraph(mode === 'building', document, crypto.randomUUID())))}>Versionierte Untergraphen</button>
+      <select aria-label="Versionierten Entwurf öffnen" value="" onChange={event => setVersioned(savedData.versionedDrafts[event.target.value])}><option value="" disabled>Untergraph-Entwürfe</option>{Object.values(savedData.versionedDrafts).filter(d => d.mode === (mode === 'form' ? 'FORM' : 'BUILDING')).map(d => <option key={d.graphId} value={d.graphId}>{d.name}</option>)}</select>
+
       <label>Name für Bibliothek<input aria-label="Name für Bibliothek" placeholder={document.name || 'Mein Entwurf'} maxLength={64} value={saveName} onChange={event => setSaveName(event.target.value)} /></label>
       <button onClick={() => transact(() => {
         const name = saveName.trim() || document.name || 'Graph'
@@ -487,6 +497,9 @@ function Studio({ mode, active, editorRequest, onOpenCopy, onApplyCopy }) {
         </section>
       </div>
     </div>
+    {versioned && <Suspense fallback={<p role="status">Untergraphen werden geladen …</p>}><VersionedGraphs initial={versioned} initialSelection={document.versionedGraph ? [] : selectedIds} definitions={{ ...savedData.versionedGraphs, ...document.versionedGraph?.graphs }} library={library} materials={materials} onClose={() => setVersioned(null)}
+      onApply={bundle => { const next = readGraph({ ...document, name: bundle.root.name, versionedGraph: bundle, graph: null, ...(mode === 'form' ? { groups: bundle.root.materialGroups } : { palette: bundle.root.palette }) }, mode); commit(next); setLibrary(current => ({ ...current, forms: { ...current.forms, ...bundle.forms }, modules: { ...current.modules, ...bundle.modules } })); setSelected(null); setSelectedIds([]); setVersioned(null) }}
+      onSave={state => { updateWorkspace(data => ({ ...data, versionedGraphs: { ...data.versionedGraphs, ...state.definitions }, versionedDrafts: { ...data.versionedDrafts, [state.document.graphId]: state.document } })); setLibrary(state.library) }} /></Suspense>}
     {copycatPicker && <Suspense fallback={<p className="copycat-loading" role="status">Copycat-Auswahl wird geladen …</p>}>
       <CopycatPicker {...copycatPicker} mode={mode} savedForms={savedForms} savedGraphs={savedData.graphs} savedGroups={savedData.nodeGroups} library={library}
         onChoose={applyCopycat} onOpenCopy={option => onOpenCopy(copyReferenceOption(option))} onClose={() => setCopycatPicker(null)} />

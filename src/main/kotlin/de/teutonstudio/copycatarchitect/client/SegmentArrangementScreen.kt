@@ -9,7 +9,7 @@ import kotlin.math.*
 
 /** Orthographic block placement, committed as one ordinary graph edit. */
 class SegmentArrangementScreen private constructor(private val parent:Screen?,private val node:BuildingNode,
-    val draft:SegmentArrangement,private val names:List<String>,private val commit:(BuildingNode)->Unit):EditorScreen(tr("bg_segment_arrange")) {
+    val draft:SegmentArrangement,private val names:List<String>,private val commit:(BuildingNode)->Unit):EditorScreen(tr(if(node.kind==BuildingKind.SEGMENT) "bg_copycat_arrange" else "bg_segment_arrange")) {
     var selected=0;private set
     var view=SegmentView.Z;private set
     private var projection:BuildingGridProjection?=null
@@ -40,16 +40,16 @@ class SegmentArrangementScreen private constructor(private val parent:Screen?,pr
         val t=draft.transforms[selected]
         listOf("X","Y","Z").forEachIndexed { i,axis ->
             val value=listOf(t.offset.x,t.offset.y,t.offset.z)[i]
-            number(8+i*(cellWidth+4),52,cellWidth,value,-128..128,{ "$axis $it" }) { value -> change {
+            number(8+i*(cellWidth+4),52,cellWidth,value,draft.offsetRange,{ "$axis $it" }) { value -> change {
                 val current=draft.transforms[selected]
                 draft.update(selected,current.copy(offset=when(i) { 0->current.offset.copy(x=value);1->current.offset.copy(y=value);else->current.offset.copy(z=value) }))
             } }
         }
-        select(8+3*(cellWidth+4),52,cellWidth,t.axis,listOf(RotationAxis.X,RotationAxis.Y,RotationAxis.Z),{ ui("bg_segment_turn_axis",it.name) }) { axis -> change { draft.update(selected,draft.transforms[selected].copy(axis=axis)) } }
-        select(8+4*(cellWidth+4),52,cellWidth,t.quarterTurns,(0..3).toList(),{ "${it*90}°" }) { q -> change { draft.update(selected,draft.transforms[selected].copy(quarterTurns=q)) } }
+        if(!draft.copycats) select(8+3*(cellWidth+4),52,cellWidth,t.axis,listOf(RotationAxis.X,RotationAxis.Y,RotationAxis.Z),{ ui("bg_segment_turn_axis",it.name) }) { axis -> change { draft.update(selected,draft.transforms[selected].copy(axis=axis)) } }
+        if(!draft.copycats) select(8+4*(cellWidth+4),52,cellWidth,t.quarterTurns,(0..3).toList(),{ "${it*90}°" }) { q -> change { draft.update(selected,draft.transforms[selected].copy(quarterTurns=q)) } }
         val buttonWidth=(width-28)/4
         button(8,height-30,buttonWidth,"fit_graph") { projection=null }
-        button(12+buttonWidth,height-30,buttonWidth,"bg_segment_text") {
+        if(!draft.copycats) button(12+buttonWidth,height-30,buttonWidth,"bg_segment_text") {
             EditorValueInput.text(tr("bg_segment_transforms"),SegmentTransformEditor.format(draft.transforms,node.inputs.size),2048,
                 { runCatching { SegmentTransformEditor.parse(it,node.inputs.size) }.isSuccess }) { text ->
                 change { SegmentTransformEditor.parse(text,node.inputs.size).forEachIndexed { i,value -> draft.update(i,value) } }
@@ -145,15 +145,18 @@ class SegmentArrangementScreen private constructor(private val parent:Screen?,pr
     override fun keyPressed(key:Int,scan:Int,mods:Int):Boolean {
         if(dropdownKey(key)) return true
         if(key==256 && (drag!=null || panning)) { cancelDrag();rebuildWidgets();return true }
+        val delta=when(key) { 263->-1 to 0;262->1 to 0;265->0 to -1;264->0 to 1;else->null }
+        if(delta!=null) { change { draft.move(selected,draft.transforms[selected],view,delta.first,delta.second) };return true }
         return super.keyPressed(key,scan,mods)
     }
     override fun onClose() { cancelDrag();minecraft?.setScreen(parent) }
     companion object {
         fun open(node:BuildingNode,graph:BuildingGraph,evaluation:BuildingGraphCompiler.Evaluation,commit:(BuildingNode)->Unit) {
-            val sources=node.inputs.map { evaluation.segment(it) }
+            val sources=if(node.kind==BuildingKind.SEGMENT) evaluation.copycatInputSegments(node) else node.inputs.map { evaluation.segment(it) }
+            require(sources.isNotEmpty()) { "Connect at least one Copycat input" }
             val names=node.inputs.map { id -> graph.nodes.first { it.id==id }.let { it.name.ifBlank { ui("bg_"+it.kind.name.lowercase()) } } }
             val mc=Minecraft.getInstance()
-            mc.setScreen(SegmentArrangementScreen(mc.screen,node,SegmentArrangement(sources,node),names,commit))
+            mc.setScreen(SegmentArrangementScreen(mc.screen,node,SegmentArrangement(sources,graph.resolvedNode(node)),names,commit))
         }
     }
 }

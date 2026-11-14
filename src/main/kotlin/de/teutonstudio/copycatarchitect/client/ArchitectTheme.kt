@@ -85,6 +85,7 @@ object ArchitectTheme {
         inset(g,x,y,w,h,blueprint)
         grid(g,x+2,y+2,w-4,h-4)
     }
+    /** Compact native CC casing leaves the existing eight-pixel dialog content margin intact. */
     fun background(g:GuiGraphics,w:Int,h:Int,peek:Boolean=false) {
         g.fill(0,0,w,h,if(peek) 0x30101010 else backdrop)
         // Full-screen tools retain their 8px content margins; modal dialogs use the full border.

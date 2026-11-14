@@ -1,0 +1,80 @@
+{
+  "schema": 4,
+  "id": "crossed-roofs-regression",
+  "name": "Crossed default roof surfaces",
+  "version": 1,
+  "groups": [
+    {
+      "id": "body",
+      "name": "Body",
+      "role": "surface",
+      "priority": 0
+    }
+  ],
+  "graph": {
+    "schema": 3,
+    "nodes": [
+      {
+        "id": "roof",
+        "kind": "INPUT",
+        "part": {
+          "source": "copycat_architect:copycat_roof",
+          "roof": {
+            "rise": 1,
+            "run": 1,
+            "thickness": 2
+          }
+        }
+      },
+      {
+        "id": "opposite",
+        "kind": "ROTATE",
+        "inputs": [
+          "roof",
+          ""
+        ],
+        "rotationAxis": "Y",
+        "quarterTurns": 2
+      },
+      {
+        "id": "union",
+        "kind": "UNION",
+        "inputs": [
+          "roof",
+          "opposite"
+        ]
+      },
+      {
+        "id": "intersection",
+        "kind": "INTERSECTION",
+        "inputs": [
+          "roof",
+          "opposite"
+        ]
+      },
+      {
+        "id": "xor",
+        "kind": "SYMMETRIC_DIFFERENCE",
+        "inputs": [
+          "roof",
+          "opposite"
+        ]
+      },
+      {
+        "id": "constructed",
+        "kind": "DIFFERENCE",
+        "inputs": [
+          "union",
+          "intersection"
+        ]
+      },
+      {
+        "id": "result",
+        "kind": "OUTPUT",
+        "inputs": [
+          "xor"
+        ]
+      }
+    ]
+  }
+}

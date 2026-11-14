@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { TransformValues } from './TransformValues.jsx'
 import { ArrangementGrid } from './ArrangementGrid.jsx'
 import { NativeFields } from './NativeFields.jsx'
-import { sourceMounting, mountSource } from './generated/engine.mjs'
+import { sourceMounting, mountSource, evaluateCount, inspectGraph } from './generated/engine.mjs'
 import { formGroups, model } from './model.js'
 import { MaterialField } from './Workspace.jsx'
 import { copycatShapeNames } from './copycat-options.js'
 
 export const names = {
+  INT_ADD:'Anzahl addieren', INT_SUBTRACT:'Anzahl subtrahieren', INT_MULTIPLY:'Anzahl multiplizieren', INT_DIVIDE:'Anzahl dividieren', INT_MIN:'Anzahl Minimum', INT_MAX:'Anzahl Maximum',
   WINDOW: 'Fenster', INT: 'Anzahl', ROTATION_SEGMENT: 'Rotationssegment', AREA: 'Fläche', SEGMENT_LAYOUT: 'Segmentanordnung', ROOM_GEOMETRY: 'Raumgrundriss', ROOF_LEVEL: 'Dachebene', ROOF_LAYOUT: 'Dachanordnung', STAIRWELL: 'Treppenhaus', ELEVATOR_SHAFT: 'Aufzugsschacht', SERVICE_SHAFT: 'Installationsschacht', GARDEN: 'Garten', PATH: 'Weg', ROOM_LAYOUT: 'Raumanordnung', BAY_WINDOW: 'Erker', DORMER: 'Gaube',
   INPUT: 'Grundform', UNION: 'Vereinigung', INTERSECTION: 'Schnitt', DIFFERENCE: 'Differenz',
   SYMMETRIC_DIFFERENCE: 'Symmetrische Differenz', ROTATE: 'Copycat rotieren', ROTATION: 'Rotation', OUTPUT: 'Ergebnis',
@@ -21,6 +22,8 @@ export const names = {
 }
 
 export function portName(port, node) {
+  if (['length','height','depth'].includes(port.id) && node.kind !== 'ROTATION_SEGMENT') return ({length:'Länge · X',height:'Höhe · Y',depth:'Tiefe · Z'})[port.id]
+  if (node.kind.startsWith('INT') && port.id.startsWith('in:')) return `Anzahl ${Number(port.id.slice(3))+1}`
   if (node.kind === 'WINDOW' && port.id === 'in:0') return 'Fenstergeometrie (Segment)'
   if (port.name) return port.name
   const native = { length: 'Länge (Y)', roofPeak: 'Dachspitze (optional)', roofEave: 'Dachendkante / Traufe (optional)', layout: 'Anordnung', geometry: 'Grundriss', area: 'Fläche', tread: 'Stufen', landing: 'Podest', enclosure: 'Schachtwände' }
@@ -113,7 +116,7 @@ export function NodeFields({ mode, node, document, edit, library, onChooseCopyca
         {...{ options, type, min, max }} />
     const adapter = model.shapes.find(shape => shape.id === part.source)
     const groupFields = ['UNION', 'SYMMETRIC_DIFFERENCE'].includes(node.kind)
-    return <>
+  return <>
       <NativeFields {...{ mode, node, edit, document, library, onInspectNode }} />
       {node.kind === 'SAVED' && <>{copycatPicker}<button onClick={onOpenSourceCopy}>Als Kopie im Graph öffnen/bearbeiten</button></>}
       {node.kind === 'MIRROR' && <Field label="Spiegelebene" value={node.mirror?.plane || 'X'} options={model.mirrorPlanes} onChange={plane => edit({ mirror: { plane } })} />}
@@ -146,10 +149,18 @@ export function NodeFields({ mode, node, document, edit, library, onChooseCopyca
   }
 
   if (node.id === 'empty_wall') return <p className="hint">Standardquelle für eine freie Wandöffnung.</p>
+    if (node.kind.startsWith('INT')) {
+    let result
+    try { result = evaluateCount(document, node.id) } catch (error) { result = error.message }
+    return <>{field('name', 'Knotenname')}{node.kind === 'INT' && number('countValue','Anzahl',-2147483648,2147483647)}<p role="status">{result}</p><p className="hint">Ganzzahldivision rundet gegen null.</p></>
+  }
+
   return <>
     {field('name', 'Knotenname')}
     {node.kind === 'COPYCAT' && <>{copycatPicker}{!node.block && library.forms?.[node.form] && <button onClick={onOpenSourceCopy}>Als Kopie im Graph öffnen/bearbeiten</button>}<button type="button" onClick={onImportCopycat}>Formdatei laden</button></>}
     <NativeFields {...{ mode, node, edit, document, library, onInspectNode }} />
+    {["SEGMENT", "SEGMENT_LAYOUT"].includes(node.kind) && <DimensionInfo node={node} document={document} />}
+    {node.kind === "SEGMENT" && node.inputs?.some(Boolean) && <ArrangementGrid key={node.id} {...{ node, document, library, edit }} />}
     {['ROOM', 'STOREY', 'BUILDING'].includes(node.kind) && field('preview', 'Vorschaufilter', viewFilters)}
     {['COPYCAT_DIFFERENCE', 'SEGMENT_DIFFERENCE'].includes(node.kind) && <button type="button" onClick={() => edit({ inputs: [...node.inputs].reverse() })}>A / B tauschen</button>}
   </>
@@ -198,4 +209,10 @@ export function DocumentFields({ mode, document, edit, library, materials, setMa
       <p className="hint">{Object.keys(library.forms ?? {}).length} Formen · {Object.keys(library.modules ?? {}).length} Module geladen</p>
     </>}
   </details>
+}
+
+function DimensionInfo({node,document}) {
+  const entry=inspectGraph(true,document).find(entry=>entry.node.id===node.id)
+  const dimensions=entry?.effectiveDimensions ?? {}
+  return <>{entry?.dimensionError && <p role="alert">{entry.dimensionError}</p>}<p className="hint">{Object.entries(dimensions).map(([key,value]) => `${({length:'X',height:'Y',depth:'Z'})[key]} ${value}${node.dimensions?.[key] ? ` ← ${node.dimensions[key]}` : ''} (manuell ${node[key]})`).join(' · ')}</p></>
 }

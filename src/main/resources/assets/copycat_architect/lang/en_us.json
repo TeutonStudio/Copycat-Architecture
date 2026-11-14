@@ -835,5 +835,9 @@
   "gui.copycat_architect.bg_rotation": "Rotation",
   "gui.copycat_architect.bg_mirroring": "Mirroring",
   "gui.copycat_architect.bg_roof_peak": "Roof peak (optional)",
-  "gui.copycat_architect.bg_roof_eave": "Roof end edge / eave (optional)"
+  "gui.copycat_architect.bg_roof_eave": "Roof end edge / eave (optional)",
+  "gui.copycat_architect.bg_int": "Count",
+  "gui.copycat_architect.bg_count_value": "Value: %s",
+  "gui.copycat_architect.bg_rotation_segment": "Rotation segment",
+  "gui.copycat_architect.bg_rotation_segment_hint": "Four Y rotations per layer · length along Y"
 }

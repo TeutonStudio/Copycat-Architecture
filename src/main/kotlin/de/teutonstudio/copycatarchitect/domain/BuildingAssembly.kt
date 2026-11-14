@@ -30,7 +30,7 @@ private fun Collection<P>.orderedCoordinates()=sortedWith(compareBy({ it.z },{ i
 
 /** Resolve connected sources for display. Incomplete drafts retain their local preview until connected. */
 fun BuildingGraph.resolvedNode(node:BuildingNode):BuildingNode {
-    var resolved=node
+    var resolved=BuildingCounts.resolve(this,node)
     if(node.kind==BuildingKind.SEGMENT && node.layout.isNotEmpty()) {
         nodes.firstOrNull { it.id==node.layout && it.kind==BuildingKind.SEGMENT_LAYOUT }?.let {
             val geometry=resolvedNode(it)

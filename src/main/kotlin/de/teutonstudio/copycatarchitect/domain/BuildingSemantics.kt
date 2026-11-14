@@ -129,7 +129,7 @@ object BuildingSemantics {
     )
     fun validate(node:BuildingNode,nodes:Map<String,BuildingNode>) {
         require(references(node).values.all { it in nodes }) { "Unknown semantic source or attachment target" }
-        val segmentKinds=(setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR)+SegmentBooleans.kinds)
+        val segmentKinds=(setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR)+SegmentBooleans.kinds)
         val copycatKinds=CopycatBooleans.sourceKinds
         fun source(id:String,kinds:Set<BuildingKind>,message:String) { if(id.isNotEmpty()) require(nodes.getValue(id).kind in kinds) { message } }
         node.roomLayout?.let { source(it.filler,segmentKinds,"Room filler requires a segment source") }

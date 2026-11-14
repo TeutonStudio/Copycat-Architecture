@@ -19,6 +19,7 @@ import formMaterials from '../../examples/nodegraph-material-groups.json'
 import buildingExample from '../../examples/building-graph.json'
 import buildingAssembly from '../../examples/building-graph-assembly.json'
 import buildingBasements from '../../examples/building-graph-basements.json'
+import buildingRotationSegment from '../../examples/building-rotation-segment.json'
 import buildingRoofPeak from '../../examples/building-roof-peak.json'
 import buildingRoofEave from '../../examples/building-roof-eave.json'
 
@@ -30,7 +31,7 @@ const examples = {
     ['Aussparung', formExample], ['Rotation und Differenz', formRotation], ['Materialgruppen', formMaterials]
   ],
   building: [
-    ['Gebäude aus Copycats', buildingAssembly], ['Dachspitze bei ungerader Breite', buildingRoofPeak], ['Dachendkante parallel zum First', buildingRoofEave], ['L-förmiges Gebäude', buildingExample], ['Gebäude mit Kellern', buildingBasements]
+    ['Gebäude aus Copycats', buildingAssembly], ['Rotationssegment · Säule', buildingRotationSegment], ['Dachspitze bei ungerader Breite', buildingRoofPeak], ['Dachendkante parallel zum First', buildingRoofEave], ['L-förmiges Gebäude', buildingExample], ['Gebäude mit Kellern', buildingBasements]
   ]
 }
 const query = new URLSearchParams(window.location.search)

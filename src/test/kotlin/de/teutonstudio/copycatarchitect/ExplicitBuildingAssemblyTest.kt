@@ -24,7 +24,7 @@ class ExplicitBuildingAssemblyTest {
         assertEquals("",node(graph,"building").roof)
         assertEquals(setOf(BuildingKind.SEGMENT_LAYOUT),BuildingPorts.of(node(graph,"wall"),graph).first { it.key=="layout" }.accepts)
         assertEquals(setOf(BuildingKind.ROOM_GEOMETRY),BuildingPorts.of(node(graph,"room"),graph).first { it.key=="geometry" }.accepts)
-        assertEquals((setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds),BuildingPorts.of(node(graph,"roof"),graph,true).first { it.key=="in:0" }.accepts)
+        assertEquals((setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds),BuildingPorts.of(node(graph,"roof"),graph,true).first { it.key=="in:0" }.accepts)
         val room=eval(graph).room("room")
         assertEquals(114,room.plan.placements.size)
         assertEquals(36,room.plan.clear.size)

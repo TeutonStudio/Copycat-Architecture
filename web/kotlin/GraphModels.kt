@@ -23,7 +23,7 @@ internal object GraphModels {
     fun requiredBuildingInputs(kind:BuildingKind,mode:String)=when(kind) {
         BuildingKind.PATTERN,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,
         BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE->2
-        BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE->1
+        BuildingKind.ROTATION_SEGMENT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE->1
         BuildingKind.STOREY->if(mode=="rooms") 1 else 0
         else->0
     }

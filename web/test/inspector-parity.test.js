@@ -23,8 +23,8 @@ for (const [mode, category, nodes] of [['form', 'copycat', corpus.formNodes], ['
   })
 }
 
-test('all 72 native building factory variants expose identical input and output types in the browser', () => {
-  assert.equal(corpus.buildingSpecs.length, 72)
+test('all native building factory variants expose identical input and output types in the browser', () => {
+  assert.equal(corpus.buildingSpecs.length, Object.keys(contract.building.nodes).length * 2)
   for (const fixture of corpus.buildingSpecs) {
     const actual = describeNode(true, fixture.document, fixture.id)
     assert.equal(actual.outputType, fixture.outputType, fixture.id)

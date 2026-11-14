@@ -5,7 +5,7 @@ import java.util.UUID
 
 /** Ordinary property transactions participate in the shared graph history. */
 object SpecialRoomEditors {
-    private val segments=(setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds)
+    private val segments=(setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds)
     private fun StructurePropertyScreen.source(label:String,value:String,graph:BuildingGraph,kinds:Set<BuildingKind>,change:(String)->Unit) {
         choice(ui(label),value,listOf("")+graph.nodes.filter { it.kind in kinds }.map { it.id },{ id ->
             graph.nodes.firstOrNull { it.id==id }?.name?.ifBlank { id } ?: ui("bg_no_connection")

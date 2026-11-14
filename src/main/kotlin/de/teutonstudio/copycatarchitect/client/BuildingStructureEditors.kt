@@ -45,7 +45,7 @@ object BuildingStructureEditors {
     fun roofTemplates(node:BuildingNode,graph:()->BuildingGraph,commit:(BuildingNode)->Unit) {
         var c=node.roofConfig ?: RoofConfig()
         val sources=graph().nodes.filter { it.kind in CopycatBooleans.sourceKinds }
-        val walls=graph().nodes.filter { it.kind in (setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds) }
+        val walls=graph().nodes.filter { it.kind in (setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds) }
         StructurePropertyScreen.open(tr("roof_templates"),{
             choice(ui("roof_family"),c.family,listOf("builtin")+c.families.map { it.id },{ id -> if(id=="builtin") ui("structure_builtin") else c.families.firstOrNull { it.id==id }?.name ?: id }) { c=c.copy(family=it) }
             action(ui("roof_add_family")) { family(RoofTemplateFamily(id=UUID.randomUUID().toString(),name=ui("roof_new_family"))) { value -> c=c.copy(families=c.families+value,family=value.id) } }

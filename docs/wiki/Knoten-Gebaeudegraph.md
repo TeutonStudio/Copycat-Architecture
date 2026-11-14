@@ -12,7 +12,7 @@ Die Anschlusstabellen verwenden diese Familien, damit auch verkettete Operatione
 | Familie | Zulässige Knotenausgänge |
 | --- | --- |
 | **Copycat-Werte** | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE`, `COPYCAT_UNION`, `COPYCAT_INTERSECTION`, `COPYCAT_DIFFERENCE`, `COPYCAT_SYMMETRIC_DIFFERENCE` |
-| **Segmentwerte** | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE`, `SEGMENT_UNION`, `SEGMENT_INTERSECTION`, `SEGMENT_DIFFERENCE`, `SEGMENT_SYMMETRIC_DIFFERENCE` |
+| **Segmentwerte** | `ROTATION_SEGMENT`, `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE`, `SEGMENT_UNION`, `SEGMENT_INTERSECTION`, `SEGMENT_DIFFERENCE`, `SEGMENT_SYMMETRIC_DIFFERENCE` |
 
 Copycat-Werte beschreiben eine einzelne Blockzelle; Segmentwerte beschreiben ein Bauteil mit seiner lokalen Ausdehnung. Ein Operatorergebnis behält seine Familie und kann wieder mit den entsprechenden Quellen und Operatoren verbunden werden.
 
@@ -910,3 +910,37 @@ Die Eigenschaften werden unter **Aufbau und Geometrie** bearbeitet. Zusammengeh�
 Die Eigenschaften werden unter **Aufbau und Geometrie** bearbeitet. Zusammengehörige Änderungen mit **Übernehmen** bestätigen. Die gemeinsamen Modregeln prüfen Werte und Verbindungen.
 
 - `mirrors`
+
+## INT
+
+**Anzahl.** Liefert eine vorzeichenbehaftete 32-Bit-Ganzzahl als Wert.
+
+**Verfügbarkeit:** Mod und Graphstudio: implementiert.
+
+**Ausgang:** `INT`. Keine Eingänge. Im Inspektor bestimmt `countValue` den Wert
+(Standard beim Anlegen: 4; fehlt der Wert im JSON, gilt 0). Der Wertebereich
+des Verbrauchers gilt zusätzlich: eine Rotationssegment-Länge benötigt 1–128.
+
+## ROTATION_SEGMENT
+
+**Rotationssegment.** Vereint einen Copycat bei 0°, 90°, 180° und 270° um die
+Y-Achse und wiederholt das Ergebnis vertikal zu einer Säule.
+
+**Verfügbarkeit:** Mod und Graphstudio: implementiert.
+
+**Ausgang:** Segmentwert (`WALL`), mit lokaler Ausdehnung 1 × Länge × 1.
+
+| Anschluss | Akzeptiert | Speicherung |
+| --- | --- | --- |
+| `length` | `INT` | `dimensions.length` |
+| `in:0` | Copycat-Werte | `inputs[0]` |
+
+Im Inspektor ist `length` der lokale Ersatzwert (1–128 Blöcke) bei unverbundenem
+Anzahl-Eingang. Bei Verbindung zeigt er den abgeleiteten Wert; **Quelle bearbeiten**
+öffnet die Anzahlquelle. `materialMode` (`SEPARATED`/`GROUPED`) und `role` steuern
+die Materialübernahme wie bei Segmentoperationen. Vorhandene Copycat-Transformationen
+werden vor den vier Drehungen angewandt. Überlappende Volumen werden nur einmal
+gebaut und berechnet.
+
+Das Beispiel **Rotationssegment · Säule** ist bis zum Gebäudeausgang verbunden.
+Mit `SEGMENT_ROTATE` lässt sich die fertige Säule anschließend auch horizontal legen.

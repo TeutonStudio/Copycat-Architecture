@@ -8,7 +8,7 @@ Im Formeditor setzt du geometrische Copycat-Quellen zu einer eigenen Form zusamm
 
 Der aufgestellte [Blockdrucker](Blockdrucker.md) öffnet den Formgraphen. Auch beim Bearbeiten einer Form aus einem Gebäude oder Modul begegnet dir derselbe Editor.
 
-[**Formgraph im Browser öffnen**](https://teutonstudio.github.io/copycat-architect/?editor=form) · [Browserumfang und Vorschau](Graphstudio.md) · [Alle Formknoten und Anschlüsse](Knoten-Formgraph.md)
+[**Formgraph im Browser öffnen**](https://teutonstudio.github.io/Copycat-Architecture/?editor=form) · [Browserumfang und Vorschau](Graphstudio.md) · [Alle Formknoten und Anschlüsse](Knoten-Formgraph.md)
 
 ![Grundformen, Rotation und symmetrische Differenz im Formgraphen](../images/printer-node-previews.png)
 

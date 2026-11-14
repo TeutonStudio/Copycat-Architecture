@@ -9,6 +9,12 @@ on:
       - 'docs/images/**'
       - 'examples/**'
       - 'src/main/kotlin/de/teutonstudio/copycatarchitect/domain/**'
+      - 'src/main/kotlin/de/teutonstudio/copycatarchitect/client/GraphDiagramModels.kt'
+      - 'src/main/kotlin/de/teutonstudio/copycatarchitect/client/KilaGroupProjection.kt'
+      - 'src/main/kotlin/de/teutonstudio/copycatarchitect/client/GroupGraphInterfaces.kt'
+      - 'src/main/resources/assets/copycat_architect/graph-models.json'
+      - 'src/test/**'
+      - 'build.gradle.kts'
       - '.github/workflows/graph-editor-pages.yml'
   pull_request:
     paths:
@@ -17,6 +23,12 @@ on:
       - 'docs/images/**'
       - 'examples/**'
       - 'src/main/kotlin/de/teutonstudio/copycatarchitect/domain/**'
+      - 'src/main/kotlin/de/teutonstudio/copycatarchitect/client/GraphDiagramModels.kt'
+      - 'src/main/kotlin/de/teutonstudio/copycatarchitect/client/KilaGroupProjection.kt'
+      - 'src/main/kotlin/de/teutonstudio/copycatarchitect/client/GroupGraphInterfaces.kt'
+      - 'src/main/resources/assets/copycat_architect/graph-models.json'
+      - 'src/test/**'
+      - 'build.gradle.kts'
       - '.github/workflows/graph-editor-pages.yml'
   workflow_dispatch:
 
@@ -50,6 +62,8 @@ jobs:
       - run: ./gradlew test
         working-directory: .
       - run: npm test
+      - run: ./gradlew test --tests "*GraphstudioExchangeTest.browserExports" --rerun
+        working-directory: .
       - run: npm run build
       - if: github.ref == 'refs/heads/master'
         uses: actions/upload-pages-artifact@v4

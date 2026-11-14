@@ -3,8 +3,10 @@ package de.teutonstudio.copycatarchitect.client
 import de.teutonstudio.copycatarchitect.domain.BaseShapes
 import de.teutonstudio.copycatarchitect.domain.Building
 import de.teutonstudio.copycatarchitect.domain.Module
-import de.teutonstudio.copycatarchitect.server.Economy
-import de.teutonstudio.copycatarchitect.server.Json
+import de.teutonstudio.copycatarchitect.domain.Form
+import de.teutonstudio.copycatarchitect.domain.Part
+import de.teutonstudio.copycatarchitect.domain.P
+import de.teutonstudio.copycatarchitect.server.*
 import net.minecraft.client.Minecraft
 import net.minecraft.client.Screenshot
 import net.minecraft.client.gui.components.AbstractWidget
@@ -41,6 +43,9 @@ internal object WorkshopUiSmoke {
     private var previousScale=1
     private lateinit var building:BuildingScreen
     private var buildingJson=""
+    private lateinit var printer:ShapeScreen
+    private lateinit var storageScreen:PrinterStorageScreen
+    private var printerJson=""
 
     fun begin(mc:Minecraft) {
         previous=mc.screen;previousScale=mc.options.guiScale().get()
@@ -115,8 +120,51 @@ internal object WorkshopUiSmoke {
         check(screen.visibleShapes().isNotEmpty()) { "Catalog search and category must retain matching components" }
         check(screen.visibleShapes().all { it.source.contains(query,true) })
     }
+    private fun beginPrinter(mc:Minecraft) {
+        mc.options.guiScale().set(1);mc.resizeDisplay()
+        val form=Form(id="cc_ui_smoke",name="CC Drucker",parts=listOf(Part("copycats:copycat_slab")))
+        val surfaces=mapOf("body" to "minecraft:gold_block")
+        val menu=PrinterStorageMenu(1,net.minecraft.world.entity.player.Inventory(null))
+        menu.getSlot(0).set(Economy.cartridge(256))
+        menu.getSlot(1).set(Economy.cartridge(128))
+        menu.getSlot(17).set(net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.STONE,32))
+        val slots=(0..6).map { i ->
+            val stack=menu.getSlot(i).item
+            CartridgeView(if(stack.isEmpty) "" else net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.item).toString(),Economy.units(stack))
+        }
+        val view=PrinterView(P(1,1,1),"cc-ui-smoke",form,surfaces,0,slots,true)
+        ClientState.snapshot=ClientState.snapshot.copy(printer=view)
+        ClientState.snapshot.library.history+=PrintRecord(id="cc-ui-history",form=form,surfaces=surfaces,time=1_700_000_000_000)
+        printer=ShapeScreen(printerSession=view)
+        printer.attachPrinterInventory(menu)
+        storageScreen=PrinterStorageScreen(building,menu)
+        mc.setScreen(printer);printerJson=Json.encode(printer.form)
+    }
+    private fun printerHistory() {
+        click(printer,buttons(printer).filterIsInstance<PrinterEdgeTab>().single { it.message.string==ui("printer_history") })
+        check(printer.printerHistoryVisible)
+    }
+    private fun verifyPrinter() {
+        check(Json.encode(printer.form)==printerJson) { "Printer view navigation must preserve the draft" }
+        val screen=checkNotNull(Minecraft.getInstance().screen)
+        screen.children().filterIsInstance<AbstractWidget>().filter { it.visible }.forEach {
+            if(it is PrinterCartridgePanel) {
+                // This scrollable widget intentionally extends beyond its clipped viewport.
+                val l=PrinterWorkspaceLayout(screen.width,screen.height)
+                check(it.x>=l.panelX && it.x+it.width<=l.x+l.innerWidth)
+                check(it.slotAt(it.x+it.width/2.0,l.graphY+25.0)==-1 && it.slotAt(it.x+it.width/2.0,l.bottom-3.0)==-1) {
+                    "Clipped inventory rows must not accept clicks beyond the print viewport"
+                }
+            } else check(it.x>=0 && it.y>=0 && it.x+it.width<=screen.width && it.y+it.height<=screen.height) {
+                "Printer/storage widget outside ${screen.width}x${screen.height}: ${it.message.string}"
+            }
+        }
+        check(storageScreen.menu.slots.size==43 && storageScreen.menu.getSlot(17).item.count==32)
+    }
+
     private fun screenshot(mc:Minecraft,name:String) {
         if(mc.screen===building) layout()
+        if(::printer.isInitialized && (mc.screen===printer || mc.screen===storageScreen)) verifyPrinter()
         Screenshot.grab(mc.gameDirectory,"architect-workshop-$name.png",mc.mainRenderTarget) { println(it.string) }
     }
 
@@ -168,10 +216,33 @@ internal object WorkshopUiSmoke {
             175 -> screenshot(mc,"compact-module-3d")
             180 -> tab(mc,3,"plates")
             185 -> screenshot(mc,"compact-plates-cutouts")
-            190 -> {
-                check(mc.screen===building);layout()
+            190 -> { check(mc.screen===building);layout();beginPrinter(mc) }
+            195 -> screenshot(mc,"printer-graph-normal")
+            200 -> printer.showPrinterPrint()
+            205 -> screenshot(mc,"printer-print-normal")
+            210 -> printerHistory()
+            215 -> screenshot(mc,"printer-history-normal")
+            220 -> { mc.options.guiScale().set(2);mc.resizeDisplay() }
+            225 -> screenshot(mc,"printer-history-compact")
+            230 -> printer.showPrinterPrint()
+            235 -> screenshot(mc,"printer-print-compact")
+            236 -> {
+                val l=PrinterWorkspaceLayout(printer.width,printer.height)
+                check(printer.mouseScrolled(l.panelX+20.0,l.graphY+40.0,0.0,-6.0))
+            }
+            239 -> screenshot(mc,"printer-cartridges-compact")
+            240 -> { mc.setScreen(storageScreen);check(storageScreen.workspace==null) }
+            245 -> screenshot(mc,"printer-storage-compact")
+            250 -> click(storageScreen,buttons(storageScreen).single { it.message.string==ui("ps_saved") })
+            255 -> screenshot(mc,"printer-storage-saved-compact")
+            260 -> { mc.options.guiScale().set(1);mc.resizeDisplay() }
+            265 -> screenshot(mc,"printer-storage-normal")
+            270 -> click(storageScreen,buttons(storageScreen).single { it.message.string==ui("ps_history") })
+            275 -> screenshot(mc,"printer-storage-history-normal")
+            280 -> {
+                verifyPrinter()
                 mc.options.guiScale().set(previousScale);mc.resizeDisplay();mc.setScreen(previous)
-                println("ARCHITECT WORKSHOP UI: normal/compact module grids and 3D views, plate/cutout, material and build pages, actual numeric controls with range validation, material menu, catalog search/category and widget bounds verified")
+                println("ARCHITECT WORKSHOP UI: normal/compact module grids and 3D views, plate/cutout, material and build pages, actual numeric controls with range validation, material menu, catalog search/category, printer graph/print/history, physical storage/history/library and widget bounds verified")
                 return true
             }
         }

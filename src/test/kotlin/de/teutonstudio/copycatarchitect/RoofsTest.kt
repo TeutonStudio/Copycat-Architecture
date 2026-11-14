@@ -49,6 +49,41 @@ class RoofsTest {
         assertEquals(top(zero),top(fraction),1e-8)
         assertTrue(fraction.placements.size>zero.placements.size)
     }
+    @Test fun `fractional roof extension grows only beyond gable ends and keeps wall positions`() {
+        for(form in listOf(RoofForm.GABLE,RoofForm.PENT)) for(axis in 0..3) {
+            val config=RoofLevelConfig(form=form,axis=axis,slope=RoofSlope(1,3),knee16=16,overhang16=0)
+            val base=compile(config,cells(3,2))
+            val extended=compile(config.copy(overhang16=7),cells(3,2))
+            fun bounds(plan:Plan,axisX:Boolean):Pair<Double,Double> {
+                val points=plan.placements.flatMap { placement->Geometry.exact(placement.parts).cells.flatMap { it.vertices() }.map {
+                    if(axisX) placement.pos.x*16+it.x.toDouble() else placement.pos.z*16+it.z.toDouble()
+                } }
+                return points.min() to points.max()
+            }
+            val alongX=axis%2==1
+            assertEquals(bounds(base,!alongX),bounds(extended,!alongX),"$form/$axis: width")
+            val (lo,hi)=bounds(base,alongX)
+            assertEquals(lo-7,bounds(extended,alongX).first,1e-8,"$form/$axis: first gable")
+            assertEquals(hi+7,bounds(extended,alongX).second,1e-8,"$form/$axis: second gable")
+            assertEquals(top(base),top(extended),1e-8,"$form/$axis: ridge")
+            val walls=extended.placements.filter { p->p.parts.any { it.group=="roof_wall" } }
+            assertTrue(walls.isNotEmpty())
+            assertTrue(walls.all { it.pos.copy(y=0) in cells(3,2) },"$form/$axis: walls must stay on the support")
+        }
+    }
+    @Test fun `explicit eave templates follow low edges parallel to the ridge including gable extensions`() {
+        for(form in listOf(RoofForm.GABLE,RoofForm.PENT)) for(axis in 0..3) {
+            val plan=compile(RoofLevelConfig(form=form,axis=axis,slope=RoofSlope(1,3),knee16=16,overhang16=5),cells(3,4))
+            val eaves=plan.placements.filter { p->p.parts.any { it.group=="roof_eave" } }
+            assertTrue(eaves.isNotEmpty(),"$form/$axis")
+            val alongX=axis%2==1
+            val sides=if(form==RoofForm.GABLE) (if(alongX) setOf(0,3) else setOf(0,2))
+                else setOf(if(axis<2) 0 else if(alongX) 3 else 2)
+            assertEquals(sides,eaves.map { if(alongX) it.pos.z else it.pos.x }.toSet(),"$form/$axis: low sides")
+            val along=eaves.map { if(alongX) it.pos.x else it.pos.z }.toSet()
+            assertEquals(-1,along.min());assertEquals(if(alongX) 3 else 4,along.max())
+        }
+    }
     @Test fun `same support upper envelope removes a completely hidden lower roof`() {
         val base=RoofLevelConfig(form=RoofForm.FLAT,knee16=16,overhang16=0)
         val (g,r)=graph(base)

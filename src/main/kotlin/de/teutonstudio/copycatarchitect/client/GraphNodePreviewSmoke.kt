@@ -117,6 +117,8 @@ internal object GraphNodePreviewSmoke {
             BuildingAssembly.newNode(BuildingKind.COPYCAT_MIRROR,"copycat_mirror").copy(inputs=listOf("wall_copycat")),
             BuildingAssembly.newNode(BuildingKind.COPYCAT_ROTATE,"copycat_rotation").copy(inputs=listOf("wall_copycat")),
             BuildingAssembly.newNode(BuildingKind.SEGMENT_ROTATE,"segment_rotation").copy(inputs=listOf("wall")),
+            BuildingNode("bay",BuildingKind.BAY_WINDOW,bayWindow=BayWindowConfig(wall="wall",front="wall",floor="floor",ceiling="ceiling")),
+            BuildingNode("dormer",BuildingKind.DORMER,dormer=DormerConfig(wall="wall",front="wall",roof="roof_copycat")),
             BuildingNode("roof_layout",BuildingKind.ROOF_LAYOUT),
             BuildingAssembly.newNode(BuildingKind.ROOF_LEVEL,"roof_level"),
             BuildingAssembly.newNode(BuildingKind.STAIRWELL,"stairs"),

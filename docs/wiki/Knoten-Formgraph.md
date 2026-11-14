@@ -1,12 +1,12 @@
 # Knotenreferenz: Formgraph
 
-> **Stand dieses Entwicklungszweigs:** Diese Anleitung beschreibt die vollständige Überarbeitung mit Vorschau-Auswahldialog, allen sechs Copycat- und Segmentoperationen sowie dem 2D-Anordnungsraster. Der Browser unterstützt hier 10 Form- und 21 Gebäudeknotentypen. Die Änderungen sind noch nicht in master integriert oder im Live-Graphstudio bereitgestellt. Das Modrelease 0.6.0 bleibt unverändert.
 
-> Stand: **9. November 2026**. Beschreibt den aktuellen gemeinsamen Knotenvertrag. Die im Browser **Graphstudio 0.4** verfügbaren Knoten und Felder sind in der [Knotenreferenz](Knotenreferenz.md) und im [Entwicklungsstand](Entwicklungsstand.md) ausgewiesen.
 
 [Übersicht](Knotenreferenz.md) · [Gemeinsame und verschachtelte Eigenschaften](Knoten-Eigenschaften.md) · [Einheiten](Einheiten-und-Ausrichtung.md)
 
 Die Anschlusskennungen sind die gespeicherten API-Schlüssel. Ein `*` bezeichnet mehrere oder dynamisch bestimmte Anschlüsse; deren konkrete Kennungen liefert die Auswertung. Die Aufzählung von Feldern beschreibt den lokalen Knotenvertrag. Leere Verbindungen bleiben im Entwurf erlaubt, können aber die Ergebnisberechnung verhindern.
+
+> Stand: 13. November 2026 · Mod und Graphstudio **0.6.1**, gemeinsamer Knotenvertrag.
 
 ## INPUT
 
@@ -14,7 +14,7 @@ Die Anschlusskennungen sind die gespeicherten API-Schlüssel. Ein `*` bezeichnet
 
 Im Browser öffnet **Copycat auswählen** einen Dialog mit den Reitern **Grundformen** und **Gespeicherte Formen**. Die Karten zeigen gerenderte Geometrievorschauen; eine markierte Form erscheint zusätzlich in einer größeren, drehbaren Ansicht. Erst **Auswahl übernehmen** setzt die Quelle. Eine gespeicherte Form wandelt diesen Knoten in `SAVED` um, wobei Knoten-ID und Verbindungen erhalten bleiben. **Abbrechen** und **Escape** verwerfen die Auswahl. [Auswahldialog und Herkunft der Formen](Graphstudio.md#copycat-auswählen-grundformen-und-gespeicherte-formen)
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `shape`.
 
@@ -44,7 +44,7 @@ Keine Eingänge.
 
 **Vereinigung.** Vereinigt die belegten Bereiche aller Eingänge; Überlappung wird einmal belegt.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `shape`.
 
@@ -68,7 +68,7 @@ Keine Eingänge.
 
 **Schnitt.** Behält nur die gemeinsame Geometrie aller Eingänge. Die eingehende Materialherkunft stammt bei separierter Auswertung vom ersten Eingang.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `shape`.
 
@@ -88,7 +88,7 @@ Keine zusätzlichen typspezifischen Eingabefelder im Knotenvertrag. Verbindungen
 
 **Differenz A − B.** Berechnet A minus B. Ein Tausch der beiden Eingänge ändert das Ergebnis.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `shape`.
 
@@ -109,7 +109,7 @@ Keine zusätzlichen typspezifischen Eingabefelder im Knotenvertrag. Verbindungen
 
 **Symmetrische Differenz.** Behält Bereiche mit ungerader Überdeckungszahl. Bei zwei Eingängen verschwindet die gemeinsame Überlappung.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `shape`.
 
@@ -133,7 +133,7 @@ Keine zusätzlichen typspezifischen Eingabefelder im Knotenvertrag. Verbindungen
 
 **Copycat rotieren.** Dreht den verbundenen Copycat-Zweig. Eine angeschlossene Rotation übersteuert den lokalen Achsen-/Winkelwert.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `shape`.
 
@@ -155,7 +155,7 @@ Keine zusätzlichen typspezifischen Eingabefelder im Knotenvertrag. Verbindungen
 
 **Rotation.** Ein typisierter Wert aus Achse und Winkel; liefert keine Geometrie.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `rotation`.
 
@@ -174,7 +174,7 @@ Keine Eingänge.
 
 **Ergebnis-Copycat.** Einziger Form-Ergebnisknoten. Ein leeres oder unverbundenes Ergebnis ist nicht druckbar.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** kein weiterführender Ausgang; dies ist das Ergebnis..
 
@@ -194,7 +194,7 @@ Keine Eingänge.
 
 **Copycat spiegeln.** Spiegelt Geometrie an einer ausgewählten Ebene durch die Blockmitte; diagonale Körpernormalen verwenden die exakte Geometrieauswertung.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden (Spiegelebenen X/Y/Z im Browser).
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden (alle 13 Spiegelebenen).
 
 **Ausgang:** `shape`.
 
@@ -216,7 +216,7 @@ Keine Eingänge.
 
 Im Browser unter **Copycat auswählen → Gespeicherte Formen** einen persönlichen Formgraphen oder eine Form aus der geladenen Referenzbibliothek wählen, die Vorschau prüfen und **Auswahl übernehmen** betätigen. Die Karten kennzeichnen ihre Herkunft. Eine Auswahl unter **Grundformen** wandelt denselben Knoten in `INPUT` um; Knoten-ID und Verbindungen bleiben erhalten. **Abbrechen** und **Escape** ändern die bisherige Quelle nicht. [Auswahldialog](Graphstudio.md#copycat-auswählen-grundformen-und-gespeicherte-formen)
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `shape`.
 

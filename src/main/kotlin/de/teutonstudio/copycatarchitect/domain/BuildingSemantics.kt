@@ -114,6 +114,11 @@ object BuildingSemantics {
     /** Targets are late-bound surfaces, so they must not introduce room → roof → room evaluation cycles. */
     fun structuralReferences(node:BuildingNode)=references(node).filterKeys { !it.startsWith("attachment:") && !(it.startsWith("column:") && it.endsWith(":roof")) }
     fun remapReferences(node:BuildingNode,reference:(String,String)->String):BuildingNode=node.copy(
+        windows=node.windows?.mapIndexed { i,it->it.copy(source=reference("window:$i:source",it.source)) },
+        bayWindow=node.bayWindow?.let { it.copy(wall=reference("bay:wall",it.wall),front=reference("bay:front",it.front),floor=reference("bay:floor",it.floor),ceiling=reference("bay:ceiling",it.ceiling)) },
+        dormer=node.dormer?.let { it.copy(wall=reference("dormer:wall",it.wall),front=reference("dormer:front",it.front),roof=reference("dormer:roof",it.roof)) },
+        bayWindows=node.bayWindows?.mapIndexed { i,it -> it.copy(source=reference("bay:$i:source",it.source)) },
+        dormers=node.dormers?.mapIndexed { i,it -> it.copy(source=reference("dormer:$i:source",it.source)) },
         roomLayout=node.roomLayout?.let { it.copy(filler=reference("room:filler",it.filler)) },
         roomConfig=node.roomConfig?.let { it.copy(interiorSource=reference("room:interior",it.interiorSource),defaultPartition=reference("room:partition",it.defaultPartition)) },
         facade=node.facade?.let { it.copy(source=reference("facade:source",it.source),filler=reference("facade:filler",it.filler)) },
@@ -125,7 +130,7 @@ object BuildingSemantics {
     )
     fun validate(node:BuildingNode,nodes:Map<String,BuildingNode>) {
         require(references(node).values.all { it in nodes }) { "Unknown semantic source or attachment target" }
-        val segmentKinds=(setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR)+SegmentBooleans.kinds)
+        val segmentKinds=(setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR)+SegmentBooleans.kinds)
         val copycatKinds=CopycatBooleans.sourceKinds
         fun source(id:String,kinds:Set<BuildingKind>,message:String) { if(id.isNotEmpty()) require(nodes.getValue(id).kind in kinds) { message } }
         node.roomLayout?.let { source(it.filler,segmentKinds,"Room filler requires a segment source") }

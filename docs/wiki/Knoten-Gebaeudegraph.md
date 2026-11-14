@@ -1,12 +1,9 @@
 # Knotenreferenz: Gebäudegraph
 
-> **Stand dieses Entwicklungszweigs:** Diese Anleitung beschreibt die vollständige Überarbeitung mit Vorschau-Auswahldialog, allen sechs Copycat- und Segmentoperationen sowie dem 2D-Anordnungsraster. Der Browser unterstützt hier 10 Form- und 21 Gebäudeknotentypen. Die Änderungen sind noch nicht in master integriert oder im Live-Graphstudio bereitgestellt. Das Modrelease 0.6.0 bleibt unverändert.
-
-> Stand: **9. November 2026**. Beschreibt den aktuellen gemeinsamen Knotenvertrag. **Graphstudio 0.4** bietet 21 der 32 Gebäudeknotentypen; neue boolesche Knoten benötigen im Spiel einen aktualisierten Build gegenüber dem Modrelease **0.6.0**. [Entwicklungsstand](Entwicklungsstand.md)
 
 [Übersicht](Knotenreferenz.md) · [Gemeinsame und verschachtelte Eigenschaften](Knoten-Eigenschaften.md) · [Einheiten](Einheiten-und-Ausrichtung.md)
 
-Die Anschlusskennungen sind die gespeicherten API-Schlüssel. Ein `*` bezeichnet mehrere oder dynamisch bestimmte Anschlüsse; deren konkrete Kennungen liefert die Auswertung. Die Aufzählung von Feldern beschreibt den gemeinsamen Knotenvertrag; native Zusatzfelder sind im Browser nur verfügbar, wenn dies ausdrücklich genannt wird. Leere Verbindungen bleiben im Entwurf erlaubt, können aber die Ergebnisberechnung verhindern.
+Die Anschlusskennungen sind die gespeicherten API-Schlüssel. Ein `*` bezeichnet mehrere oder dynamisch bestimmte Anschlüsse; deren konkrete Kennungen liefert die Auswertung. Die Aufzählung von Feldern beschreibt den gemeinsamen Knotenvertrag; die Felder stehen in Graphstudio 0.6.1 unter Aufbau und Geometrie bereit. Leere Verbindungen bleiben im Entwurf erlaubt, können aber die Ergebnisberechnung verhindern.
 
 ## Wertfamilien
 
@@ -15,15 +12,17 @@ Die Anschlusstabellen verwenden diese Familien, damit auch verkettete Operatione
 | Familie | Zulässige Knotenausgänge |
 | --- | --- |
 | **Copycat-Werte** | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE`, `COPYCAT_UNION`, `COPYCAT_INTERSECTION`, `COPYCAT_DIFFERENCE`, `COPYCAT_SYMMETRIC_DIFFERENCE` |
-| **Segmentwerte** | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE`, `SEGMENT_UNION`, `SEGMENT_INTERSECTION`, `SEGMENT_DIFFERENCE`, `SEGMENT_SYMMETRIC_DIFFERENCE` |
+| **Segmentwerte** | `ROTATION_SEGMENT`, `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE`, `SEGMENT_UNION`, `SEGMENT_INTERSECTION`, `SEGMENT_DIFFERENCE`, `SEGMENT_SYMMETRIC_DIFFERENCE` |
 
 Copycat-Werte beschreiben eine einzelne Blockzelle; Segmentwerte beschreiben ein Bauteil mit seiner lokalen Ausdehnung. Ein Operatorergebnis behält seine Familie und kann wieder mit den entsprechenden Quellen und Operatoren verbunden werden.
+
+> Stand: 13. November 2026 · Mod und Graphstudio **0.6.1**, gemeinsamer Knotenvertrag.
 
 ## AREA
 
 **Flächengebiet.** Wiederverwendbare zweidimensionale Rasterfläche. Anders als ein Raum darf sie auch Löcher oder getrennte Teile enthalten.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `AREA`.
 
@@ -47,7 +46,7 @@ Eine Bibliotheksform behält ihren genauen Versionsschlüssel. Persönliche Form
 
 **Copycat auswählen** in der Werkzeugleiste ersetzt die ausgewählte Copycat-Quelle oder erzeugt beim Bestätigen einen neuen Quellknoten, wenn keine Quelle ausgewählt ist. **Formdatei laden** im Inspektor importiert weiterhin eine einzelne Form-JSON. **Copycat laden** in der Werkzeugleiste verwendet denselben Import und erzeugt bei Bedarf einen Quellknoten.
 
-**Verfügbarkeit:** Mod: implementiert; Graphstudio 0.4: vorhanden, mit Vorschau-Auswahldialog für Grundformen und gespeicherte Formen sowie Einzeldatei-Import.
+**Verfügbarkeit:** Mod: implementiert; Graphstudio 0.6.1: vorhanden, mit Vorschau-Auswahldialog für Grundformen und gespeicherte Formen sowie Einzeldatei-Import.
 
 **Ausgang:** `COPYCAT`.
 
@@ -63,11 +62,13 @@ Keine direkten Graph-Eingänge.
 | `role` | Materialrolle der Gebäudepalette, etwa wall oder roof. | Vom Typ / Quellwert abhängig |
 | `surfaces` | Materialrollen-/Oberflächenzuordnungen für die einzelnen Gruppen der Copycat-Quelle. | Vom Typ / Quellwert abhängig |
 
+Weitere native Inspektoreinstellungen: `rotationAxis`, `quarterTurns`.
+
 ## SEGMENT_LAYOUT
 
 **Segmentgeometrie.** Beschreibt räumliche Belegung und Regionen eines Bauteils; die XY-Fläche kann von AREA stammen, die Tiefe verläuft in Z.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `SEGMENT_LAYOUT`.
 
@@ -90,7 +91,7 @@ Keine direkten Graph-Eingänge.
 
 **Segment.** Füllt eine Anordnung mit Copycat-Quellen und Regionszuordnungen. Der geschützte Sonderknoten empty_wall bleibt eine freie Wandquelle.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `SEGMENT`.
 
@@ -101,6 +102,8 @@ Keine direkten Graph-Eingänge.
 | `layout` | `SEGMENT_LAYOUT` | `assembly` gleich `true`; `id` ungleich `empty_wall` |
 | `in:*` | [Copycat-Werte](#wertfamilien) | `id` ungleich `empty_wall`; höchstens 16; zusätzlicher leerer Anschluss wächst bei Belegung |
 | `region:*` | [Copycat-Werte](#wertfamilien) | `assembly` gleich `true`; `id` ungleich `empty_wall`; dynamisch: `segmentRegions` |
+
+**Dachendkante / Traufe (optional):** `roofEave` ersetzt die beiden unteren Dachrandreihen parallel zum First durch eine eigene Copycat-Vorlage. Gegenüberliegende Kanten werden passend zur Dachseite gedreht. Die Verlängerung über die Giebelseiten wird mitbelegt; Dachfläche, Dachspitze und Giebelmauern bleiben unabhängig. Ohne Verbindung verwendet das Dach weiterhin seine normale Dachquelle. Beim Flachdach wird der Anschluss ausgeblendet und seine Verbindung bleibt gespeichert. Dachebenen verwenden den bestehenden zweiten Vorlageneingang **Dachendkante / Traufe** (`in:1`); dort folgt die Zuordnung ebenfalls den unteren Dachrändern. Das Beispiel **Dachendkante parallel zum First** zeigt die Verbindung. Benötigt Mod und Graphstudio 0.6.4.
 
 Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen erscheinen als [semantische Anschlüsse](Knoten-Eigenschaften.md#semantische-anschluesse), sofern die jeweilige Konfiguration sie verwendet. Zieloberflächen werden teils erst im Gebäudekontext aufgelöst.
 
@@ -124,7 +127,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Segmente vereinigen.** Ordnet mehrere Segmente in Eingangsreihenfolge aneinander oder transformiert sie frei. Dies ist keine boolesche Vereinigung; überlappende Bauteile unterliegen den vorhandenen Zusammenführungsregeln.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `PATTERN`.
 
@@ -133,6 +136,8 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
 | `in:*` | [Segmentwerte](#wertfamilien) | Immer, sofern strukturell gültig; höchstens 16, mindestens 2 |
+
+**Dachendkante / Traufe (optional):** `roofEave` ersetzt die beiden unteren Dachrandreihen parallel zum First durch eine eigene Copycat-Vorlage. Gegenüberliegende Kanten werden passend zur Dachseite gedreht. Die Verlängerung über die Giebelseiten wird mitbelegt; Dachfläche, Dachspitze und Giebelmauern bleiben unabhängig. Ohne Verbindung verwendet das Dach weiterhin seine normale Dachquelle. Beim Flachdach wird der Anschluss ausgeblendet und seine Verbindung bleibt gespeichert. Dachebenen verwenden den bestehenden zweiten Vorlageneingang **Dachendkante / Traufe** (`in:1`); dort folgt die Zuordnung ebenfalls den unteren Dachrändern. Das Beispiel **Dachendkante parallel zum First** zeigt die Verbindung. Benötigt Mod und Graphstudio 0.6.4.
 
 Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen erscheinen als [semantische Anschlüsse](Knoten-Eigenschaften.md#semantische-anschluesse), sofern die jeweilige Konfiguration sie verwendet. Zieloberflächen werden teils erst im Gebäudekontext aufgelöst.
 
@@ -152,7 +157,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Raumgeometrie.** Definiert Innenfläche und Höhe eines grundrissbasierten Raums; kann eine gemeinsame AREA-Quelle verwenden.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `ROOM_GEOMETRY`.
 
@@ -173,7 +178,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Boden.** Älterer Bodenplattenknoten. Neue Entwürfe verwenden normalerweise SEGMENT als Boden.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang. **Älterer Plattenknoten**, nicht der bevorzugte neue Aufbau.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden. **Älterer Plattenknoten**, nicht der bevorzugte neue Aufbau.
 
 **Ausgang:** `FLOOR`.
 
@@ -197,7 +202,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Decke.** Älterer Deckenplattenknoten. Neue Entwürfe verwenden normalerweise SEGMENT als Decke.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang. **Älterer Plattenknoten**, nicht der bevorzugte neue Aufbau.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden. **Älterer Plattenknoten**, nicht der bevorzugte neue Aufbau.
 
 **Ausgang:** `CEILING`.
 
@@ -206,6 +211,8 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
 | `in:*` | [Copycat-Werte](#wertfamilien) | Immer, sofern strukturell gültig; höchstens 16; zusätzlicher leerer Anschluss wächst bei Belegung |
+
+**Dachendkante / Traufe (optional):** `roofEave` ersetzt die beiden unteren Dachrandreihen parallel zum First durch eine eigene Copycat-Vorlage. Gegenüberliegende Kanten werden passend zur Dachseite gedreht. Die Verlängerung über die Giebelseiten wird mitbelegt; Dachfläche, Dachspitze und Giebelmauern bleiben unabhängig. Ohne Verbindung verwendet das Dach weiterhin seine normale Dachquelle. Beim Flachdach wird der Anschluss ausgeblendet und seine Verbindung bleibt gespeichert. Dachebenen verwenden den bestehenden zweiten Vorlageneingang **Dachendkante / Traufe** (`in:1`); dort folgt die Zuordnung ebenfalls den unteren Dachrändern. Das Beispiel **Dachendkante parallel zum First** zeigt die Verbindung. Benötigt Mod und Graphstudio 0.6.4.
 
 Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen erscheinen als [semantische Anschlüsse](Knoten-Eigenschaften.md#semantische-anschluesse), sofern die jeweilige Konfiguration sie verwendet. Zieloberflächen werden teils erst im Gebäudekontext aufgelöst.
 
@@ -223,7 +230,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Raum.** Verbindet Grundriss oder räumlich platzierte Segmente mit Boden, Decke und Wandsemantik. Im Segmentmodus darf der Umriss offen sein; dann entstehen ohne logische Flächenschließung keine vollständigen Platten.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `ROOM`.
 
@@ -243,6 +250,8 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | `corner` | [Copycat-Werte](#wertfamilien) | `roomConfig.mode` ungleich `SEGMENTS` |
 | `edge:*` | [Segmentwerte](#wertfamilien) | `roomConfig.mode` ungleich `SEGMENTS`; dynamisch: `roomEdges` |
 
+**Dachendkante / Traufe (optional):** `roofEave` ersetzt die beiden unteren Dachrandreihen parallel zum First durch eine eigene Copycat-Vorlage. Gegenüberliegende Kanten werden passend zur Dachseite gedreht. Die Verlängerung über die Giebelseiten wird mitbelegt; Dachfläche, Dachspitze und Giebelmauern bleiben unabhängig. Ohne Verbindung verwendet das Dach weiterhin seine normale Dachquelle. Beim Flachdach wird der Anschluss ausgeblendet und seine Verbindung bleibt gespeichert. Dachebenen verwenden den bestehenden zweiten Vorlageneingang **Dachendkante / Traufe** (`in:1`); dort folgt die Zuordnung ebenfalls den unteren Dachrändern. Das Beispiel **Dachendkante parallel zum First** zeigt die Verbindung. Benötigt Mod und Graphstudio 0.6.4.
+
 Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen erscheinen als [semantische Anschlüsse](Knoten-Eigenschaften.md#semantische-anschluesse), sofern die jeweilige Konfiguration sie verwendet. Zieloberflächen werden teils erst im Gebäudekontext aufgelöst.
 
 ### Inspektoreigenschaften
@@ -255,13 +264,21 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | `roomConfig.mode` | FOOTPRINT verwendet einen Grundriss, SEGMENTS eine platzierte Raumanordnung. | `FOOTPRINT`, `SEGMENTS` |
 | `joinWallEnds` | Verbindet Wandendbereiche in expliziten Räumen. Fehlende Altwerte und ein ausdrückliches false können unterschiedliche Altsemantik erhalten. | Vom Typ / Quellwert abhängig |
 
+### Weitere Eigenschaften
+
+Die Eigenschaften werden unter **Aufbau und Geometrie** bearbeitet. Zusammengehörige Änderungen mit **Übernehmen** bestätigen. Die gemeinsamen Modregeln prüfen Werte und Verbindungen.
+
+- `bayWindows`
+
+Weitere native Inspektoreinstellungen: `materialMode`, `role`.
+
 ## STOREY
 
 **2D-Anordnung im Browser:** Auf dem Entwicklungszweig lokal implementiert, noch nicht in master integriert oder im Live-Graphstudio bereitgestellt. Das Raster platziert Rauminstanzen in X/Z bei Zusammensetzung **Aus Räumen**. [Bedienung und Übernahme](https://github.com/TeutonStudio/copycat-architect/wiki/Graphstudio#2d-raster-für-anordnungen)
 
 **Stockwerk.** Platziert Raumquellen und löst gemeinsame Wände sowie Fassaden auf. Alternativ bleibt der ältere Direkt-Wandmodus verfügbar.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `STOREY`.
 
@@ -277,6 +294,8 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | `corner` | [Copycat-Werte](#wertfamilien) | `storeyMode` gleich `walls` |
 | `in:*` | `ROOM` | `storeyMode` ungleich `walls`; höchstens 16, mindestens 1; zusätzlicher leerer Anschluss wächst bei Belegung |
 
+**Dachendkante / Traufe (optional):** `roofEave` ersetzt die beiden unteren Dachrandreihen parallel zum First durch eine eigene Copycat-Vorlage. Gegenüberliegende Kanten werden passend zur Dachseite gedreht. Die Verlängerung über die Giebelseiten wird mitbelegt; Dachfläche, Dachspitze und Giebelmauern bleiben unabhängig. Ohne Verbindung verwendet das Dach weiterhin seine normale Dachquelle. Beim Flachdach wird der Anschluss ausgeblendet und seine Verbindung bleibt gespeichert. Dachebenen verwenden den bestehenden zweiten Vorlageneingang **Dachendkante / Traufe** (`in:1`); dort folgt die Zuordnung ebenfalls den unteren Dachrändern. Das Beispiel **Dachendkante parallel zum First** zeigt die Verbindung. Benötigt Mod und Graphstudio 0.6.4.
+
 Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen erscheinen als [semantische Anschlüsse](Knoten-Eigenschaften.md#semantische-anschluesse), sofern die jeweilige Konfiguration sie verwendet. Zieloberflächen werden teils erst im Gebäudekontext aufgelöst.
 
 ### Inspektoreigenschaften
@@ -289,11 +308,13 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | `offsets` | Platzierungsversatz je Eingang in ganzen Blöcken. Raumplätze verwenden X/Z bei Y=0; der Browser zeigt dafür hB im 16-hB-Raster. | Vom Typ / Quellwert abhängig |
 | `facade` | Gemeinsame Wand-/Fassadenauswertung im Stockwerk; [Unterfelder](Knoten-Eigenschaften.md#facade). | Vom Typ / Quellwert abhängig |
 
+Weitere native Inspektoreinstellungen: `materialMode`, `role`.
+
 ## ROOF_LEVEL
 
 **Dachebene.** Definiert eine konkrete Dachfläche mit Bezugsgeschoss, Form, Steigung, Höhe und Überhang.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `ROOF_LEVEL`.
 
@@ -313,11 +334,17 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Statusdetail:** Die Dachebenenberechnung ist implementiert. Nur der Enumwert `CROSS` ist im aktuellen Dachform-Menü ausgeblendet; eine leere Dachanordnung darf nicht mit fehlender Dachimplementierung verwechselt werden.
 
+### Weitere Eigenschaften
+
+Die Eigenschaften werden unter **Aufbau und Geometrie** bearbeitet. Zusammengehörige Änderungen mit **Übernehmen** bestätigen. Die gemeinsamen Modregeln prüfen Werte und Verbindungen.
+
+- `dormers`
+
 ## ROOF_LAYOUT
 
 **Dachanordnung.** Sammelt bis zu 16 Dachebenen zu einer Dachanordnung. Eine leere Anordnung ist noch kein auswertbares Dach.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `ROOF_LAYOUT`.
 
@@ -335,7 +362,7 @@ Keine zusätzlichen typspezifischen Eingabefelder im Knotenvertrag. Verbindungen
 
 **Dach.** Verknüpft Dachanordnung und Deckungs-/Füllvorlagen. Im alten Aufbau sind direkte Flach-/Satteldächer weiterhin möglich.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `ROOF`.
 
@@ -346,7 +373,13 @@ Keine zusätzlichen typspezifischen Eingabefelder im Knotenvertrag. Verbindungen
 | `layout` | `ROOF_LAYOUT` | `assembly` gleich `true` |
 | `in:*` | [Segmentwerte](#wertfamilien) | `assembly` gleich `true`; höchstens 6; zusätzlicher leerer Anschluss wächst bei Belegung |
 | `in:*` | [Copycat-Werte](#wertfamilien) | `assembly` ungleich `true`; höchstens 16; zusätzlicher leerer Anschluss wächst bei Belegung |
-| `wall:*` | [Segmentwerte](#wertfamilien) | `assembly` ungleich `true`; dynamisch: `roofWalls` |
+| `roofPeak` | [Copycat-Werte](#wertfamilien) | Einfaches Satteldach (`assembly` ungleich `true`, `roofType: gable`); optional |
+| `roofEave` | [Copycat-Werte](#wertfamilien) | Dachendkante / Traufe parallel zum First beim einfachen Satteldach; optional |
+| `wall:*` | [Segmentwerte](#wertfamilien) | Einfaches Flachdach: alle vier Dachränder; einfaches Satteldach: nur die beiden Giebelseiten entsprechend `ridge` |
+
+**Dachspitze (optional):** Bei direkten Satteldächern ersetzt diese Copycat ausschließlich die mittlere Firstreihe, falls die lokale Dachbreite quer zum First ungerade ist. Die Dachverlängerung wächst entlang des Firsts und ändert diese Querbreite nicht. Die Vorlage verläuft entlang Z und dreht bei First entlang X um 90°. Ohne Verbindung, bei gerader Breite und beim Flachdach bleibt das bisherige Ergebnis erhalten. Dachebenen verwenden weiterhin ihre eigene First-Segmentvorlage. Das Graphstudio-Beispiel **Dachspitze bei ungerader Breite** zeigt den Vergleich. Beim Wechsel der Dachart und Firstrichtung werden Anschlüsse und Kanten aktualisiert. Ausgeblendete Quellen bleiben gespeichert und werden beim Zurückwechseln wieder sichtbar; sie lassen sich weiterhin durch Löschen ihrer Quellknoten entfernen. Beim Flachdach entfällt auch die Einstellung der Firstrichtung. Der neue Anschluss benötigt auch im Spiel einen aktualisierten Mod-Build.
+
+**Dachendkante / Traufe (optional):** `roofEave` ersetzt die beiden unteren Dachrandreihen parallel zum First durch eine eigene Copycat-Vorlage. Gegenüberliegende Kanten werden passend zur Dachseite gedreht. Die Verlängerung über die Giebelseiten wird mitbelegt; Dachfläche, Dachspitze und Giebelmauern bleiben unabhängig. Ohne Verbindung verwendet das Dach weiterhin seine normale Dachquelle. Beim Flachdach wird der Anschluss ausgeblendet und seine Verbindung bleibt gespeichert. Dachebenen verwenden den bestehenden zweiten Vorlageneingang **Dachendkante / Traufe** (`in:1`); dort folgt die Zuordnung ebenfalls den unteren Dachrändern. Das Beispiel **Dachendkante parallel zum First** zeigt die Verbindung. Benötigt Mod und Graphstudio 0.6.4.
 
 Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen erscheinen als [semantische Anschlüsse](Knoten-Eigenschaften.md#semantische-anschluesse), sofern die jeweilige Konfiguration sie verwendet. Zieloberflächen werden teils erst im Gebäudekontext aufgelöst.
 
@@ -357,14 +390,16 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | `role` | Materialrolle der Gebäudepalette, etwa wall oder roof. | Vom Typ / Quellwert abhängig |
 | `roofType` | Älteres direktes Dach: flat oder gable; keine Dachlevel-Konfiguration. | `flat`, `gable` |
 | `ridge` | Ältere Firstrichtung: 0 entlang Z (Nord/Süd), 1 entlang X (Ost/West). | 0…1 |
-| `overhang` | Älterer Dachüberhang in ganzen Blöcken. | 0…2 |
+| `overhang` | Dachverlängerung in ganzen Blöcken. Beim Satteldach entlang des Firsts über die Giebelseiten; Mauern bleiben am Gebäudegrundriss. | 0…2 |
 | `roofConfig` | Deckungsfamilien, Varianten und Wandfüllung; [Unterfelder](Knoten-Eigenschaften.md#roofconfig). | Vom Typ / Quellwert abhängig |
+
+Weitere native Inspektoreinstellungen: `materialMode`.
 
 ## STAIRWELL
 
 **Treppenhaus.** Wiederverwendbare Treppenhausdefinition; die tatsächlichen Geschosshöhen kommen von der Gebäudeinstanz.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `STAIRWELL`.
 
@@ -387,7 +422,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Aufzugsvorbereitung.** Definiert einen Schacht mit Haltestellenöffnungen. Ein beweglicher Aufzug wird nicht erzeugt.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `ELEVATOR_SHAFT`.
 
@@ -407,7 +442,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Versorgungsschacht.** Definiert einen Versorgungsschacht und seine Hülle.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `SERVICE_SHAFT`.
 
@@ -427,7 +462,7 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Gebäude.** Einziger Gebäude-Ergebnisknoten. Ordnet Stockwerksinstanzen, Dach, vertikale Erschließungen und Außenanlagen zum Bauplan.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: vorhanden, mit älterem Funktionsumfang.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** kein weiterführender Ausgang; dies ist das Ergebnis..
 
@@ -449,11 +484,13 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | `sitePaths` | Geordnete Wegpunkte je angeschlossenem Wegeingang, im Gebäudekontext bearbeitbar. | Vom Typ / Quellwert abhängig |
 | `accessInstances` | Konkrete Schacht-/Treppenplatzierungen mit stabilen Stockwerksbezügen; [Unterfelder](Knoten-Eigenschaften.md#accessinstances). | Vom Typ / Quellwert abhängig |
 
+Weitere native Inspektoreinstellungen: `materialMode`, `role`.
+
 ## GARDEN
 
 **Garten.** Erzeugt Oberfläche und Bodenaufbau einer Gartenfläche; optional mit Zaun an Außen- und Lochrändern.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `GARDEN`.
 
@@ -477,11 +514,13 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Zusätzliche Gelände-Einstellungen:** `elevation` (Bodenhöhe), `landscapeOffset` (lokaler X/Y/Z-Versatz), `groundDepth` (1–16), `groundBlock` und `clearance` werden ebenfalls vom Geländeinspektor verwaltet. Die Längen liegen im Blockraster. `elevation`: −64…64 Blöcke; `landscapeOffset.x/z`: −128…128 bei Y=0; `clearance`: 0…16 Blöcke. Wege verwenden 2–64 geordnete Punkte und nur zulässige Oberflächen-/Untergrundblöcke.
 
+Weitere native Inspektoreinstellungen: `materialMode`.
+
 ## PATH
 
 **Weg.** Erzeugt einen Weg entlang einer geordneten X/Y/Z-Punktfolge; maximal eine Blockstufe pro Rasterabschnitt.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `PATH`.
 
@@ -505,11 +544,13 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 **Zusätzliche Gelände-Einstellungen:** `elevation` (Bodenhöhe), `landscapeOffset` (lokaler X/Y/Z-Versatz), `groundDepth` (1–16), `groundBlock` und `clearance` werden ebenfalls vom Geländeinspektor verwaltet. Die Längen liegen im Blockraster. `elevation`: −64…64 Blöcke; `landscapeOffset.x/z`: −128…128 bei Y=0; `clearance`: 0…16 Blöcke. Wege verwenden 2–64 geordnete Punkte und nur zulässige Oberflächen-/Untergrundblöcke.
 
+Weitere native Inspektoreinstellungen: `materialMode`.
+
 ## SEGMENT_MIRROR
 
 **Segment spiegeln.** Spiegelt ein vollständiges Segment oder Muster, wahlweise nur dessen Zellpositionen.
 
-**Verfügbarkeit:** Mod und Graphstudio 0.4: implementiert. Der Browser unterstützt X/Y/Z; native semantische Einstellungen benötigen weiterhin den Spiel-Editor.
+**Verfügbarkeit:** Mod und Graphstudio 0.6.1: implementiert. Der Browser unterstützt X/Y/Z; native semantische Einstellungen benötigen weiterhin den Spiel-Editor.
 
 **Ausgang:** `SEGMENT_MIRROR`.
 
@@ -518,6 +559,8 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
 | `in:0` | [Segmentwerte](#wertfamilien) | Immer, sofern strukturell gültig |
+
+**Dachendkante / Traufe (optional):** `roofEave` ersetzt die beiden unteren Dachrandreihen parallel zum First durch eine eigene Copycat-Vorlage. Gegenüberliegende Kanten werden passend zur Dachseite gedreht. Die Verlängerung über die Giebelseiten wird mitbelegt; Dachfläche, Dachspitze und Giebelmauern bleiben unabhängig. Ohne Verbindung verwendet das Dach weiterhin seine normale Dachquelle. Beim Flachdach wird der Anschluss ausgeblendet und seine Verbindung bleibt gespeichert. Dachebenen verwenden den bestehenden zweiten Vorlageneingang **Dachendkante / Traufe** (`in:1`); dort folgt die Zuordnung ebenfalls den unteren Dachrändern. Das Beispiel **Dachendkante parallel zum First** zeigt die Verbindung. Benötigt Mod und Graphstudio 0.6.4.
 
 Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen erscheinen als [semantische Anschlüsse](Knoten-Eigenschaften.md#semantische-anschluesse), sofern die jeweilige Konfiguration sie verwendet. Zieloberflächen werden teils erst im Gebäudekontext aufgelöst.
 
@@ -531,11 +574,17 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | `role` | Materialrolle der Gebäudepalette, etwa wall oder roof. | Vom Typ / Quellwert abhängig |
 | `features` | Öffnungen und Säulenverlängerungen; [alle Unterfelder](Knoten-Eigenschaften.md#segmentfeatures). | Vom Typ / Quellwert abhängig |
 
+### Weitere Anschlüsse
+
+| Anschluss | Akzeptierte Quellen |
+| --- | --- |
+| `mirroring` | `MIRRORING` |
+
 ## COPYCAT_MIRROR
 
 **Copycat spiegeln.** Spiegelt die Quelle innerhalb ihrer Blockzelle; resultiert wieder in einem Copycat-Anschluss.
 
-**Verfügbarkeit:** Mod und Graphstudio 0.4: implementiert.
+**Verfügbarkeit:** Mod und Graphstudio 0.6.1: implementiert.
 
 **Ausgang:** `COPYCAT_MIRROR`.
 
@@ -553,11 +602,19 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 
 Der Browser bietet **X, Y und Z**. Die weiteren aufgeführten Spiegelebenen gehören zum nativen Editor; entsprechende native Dateien werden im Browser ausdrücklich abgewiesen.
 
+### Weitere Anschlüsse
+
+| Anschluss | Akzeptierte Quellen |
+| --- | --- |
+| `mirroring` | `MIRRORING` |
+
+Weitere native Inspektoreinstellungen: `materialMode`, `role`.
+
 ## SEGMENT_ROTATE
 
 **Segment rotieren.** Dreht Segmentpositionen und enthaltene Copycats gemeinsam um eine Weltachse.
 
-**Verfügbarkeit:** Mod und Graphstudio 0.4: implementiert. Der Browser unterstützt X/Y/Z; native semantische Einstellungen benötigen weiterhin den Spiel-Editor.
+**Verfügbarkeit:** Mod und Graphstudio 0.6.1: implementiert. Der Browser unterstützt X/Y/Z; native semantische Einstellungen benötigen weiterhin den Spiel-Editor.
 
 **Ausgang:** `SEGMENT_ROTATE`.
 
@@ -566,6 +623,8 @@ Der Browser bietet **X, Y und Z**. Die weiteren aufgeführten Spiegelebenen geh�
 | Kennung | Akzeptierte Ausgänge | Bedingung / Anzahl |
 | --- | --- | --- |
 | `in:0` | [Segmentwerte](#wertfamilien) | Immer, sofern strukturell gültig |
+
+**Dachendkante / Traufe (optional):** `roofEave` ersetzt die beiden unteren Dachrandreihen parallel zum First durch eine eigene Copycat-Vorlage. Gegenüberliegende Kanten werden passend zur Dachseite gedreht. Die Verlängerung über die Giebelseiten wird mitbelegt; Dachfläche, Dachspitze und Giebelmauern bleiben unabhängig. Ohne Verbindung verwendet das Dach weiterhin seine normale Dachquelle. Beim Flachdach wird der Anschluss ausgeblendet und seine Verbindung bleibt gespeichert. Dachebenen verwenden den bestehenden zweiten Vorlageneingang **Dachendkante / Traufe** (`in:1`); dort folgt die Zuordnung ebenfalls den unteren Dachrändern. Das Beispiel **Dachendkante parallel zum First** zeigt die Verbindung. Benötigt Mod und Graphstudio 0.6.4.
 
 Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen erscheinen als [semantische Anschlüsse](Knoten-Eigenschaften.md#semantische-anschluesse), sofern die jeweilige Konfiguration sie verwendet. Zieloberflächen werden teils erst im Gebäudekontext aufgelöst.
 
@@ -577,11 +636,19 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | `quarterTurns` | Drehwinkel als Vierteldrehungen: 0, 1, 2, 3 entsprechen 0°, 90°, 180°, 270°. | 0…3 |
 | `features` | Öffnungen und Säulenverlängerungen; [alle Unterfelder](Knoten-Eigenschaften.md#segmentfeatures). | Vom Typ / Quellwert abhängig |
 
+### Weitere Anschlüsse
+
+| Anschluss | Akzeptierte Quellen |
+| --- | --- |
+| `rotation` | `ROTATION` |
+
+Weitere native Inspektoreinstellungen: `materialMode`, `role`.
+
 ## COPYCAT_ROTATE
 
 **Copycat rotieren.** Dreht eine Copycat-Quelle um ihre Blockmitte.
 
-**Verfügbarkeit:** Mod und Graphstudio 0.4: implementiert.
+**Verfügbarkeit:** Mod und Graphstudio 0.6.1: implementiert.
 
 **Ausgang:** `COPYCAT_ROTATE`.
 
@@ -598,11 +665,19 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | `rotationAxis` | Drehachse in Minecraft-X/Y/Z. | `X`, `Y`, `Z` |
 | `quarterTurns` | Drehwinkel als Vierteldrehungen: 0, 1, 2, 3 entsprechen 0°, 90°, 180°, 270°. | 0…3 |
 
+### Weitere Anschlüsse
+
+| Anschluss | Akzeptierte Quellen |
+| --- | --- |
+| `rotation` | `ROTATION` |
+
+Weitere native Inspektoreinstellungen: `materialMode`, `role`.
+
 ## ROOM_LAYOUT
 
 **Raumanordnung.** Platziert Segmentinstanzen mit Position, Drehung und Raumbeitrag; beschreibt darüber hinaus virtuelle Raumgrenzen und Füllvorlagen.
 
-**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.4: nicht vorhanden.
+**Verfügbarkeit:** lokale Mod: implementiert; Graphstudio 0.6.1: vorhanden.
 
 **Ausgang:** `ROOM_LAYOUT`.
 
@@ -612,6 +687,8 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | --- | --- | --- |
 | `in:*` | [Segmentwerte](#wertfamilien) | Immer, sofern strukturell gültig; höchstens 16; zusätzlicher leerer Anschluss wächst bei Belegung |
 
+**Dachendkante / Traufe (optional):** `roofEave` ersetzt die beiden unteren Dachrandreihen parallel zum First durch eine eigene Copycat-Vorlage. Gegenüberliegende Kanten werden passend zur Dachseite gedreht. Die Verlängerung über die Giebelseiten wird mitbelegt; Dachfläche, Dachspitze und Giebelmauern bleiben unabhängig. Ohne Verbindung verwendet das Dach weiterhin seine normale Dachquelle. Beim Flachdach wird der Anschluss ausgeblendet und seine Verbindung bleibt gespeichert. Dachebenen verwenden den bestehenden zweiten Vorlageneingang **Dachendkante / Traufe** (`in:1`); dort folgt die Zuordnung ebenfalls den unteren Dachrändern. Das Beispiel **Dachendkante parallel zum First** zeigt die Verbindung. Benötigt Mod und Graphstudio 0.6.4.
+
 Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen erscheinen als [semantische Anschlüsse](Knoten-Eigenschaften.md#semantische-anschluesse), sofern die jeweilige Konfiguration sie verwendet. Zieloberflächen werden teils erst im Gebäudekontext aufgelöst.
 
 ### Inspektoreigenschaften
@@ -620,107 +697,250 @@ Zusätzliche Quellen aus Raum-, Fassaden-, Öffnungs- oder Säuleneinstellungen 
 | --- | --- | --- |
 | `roomLayout` | Platzierte Segmente, logische Grenzpolygonpunkte und Füllregeln; [alle Unterfelder](Knoten-Eigenschaften.md#roomlayout). | Vom Typ / Quellwert abhängig |
 
+## BAY_WINDOW
+
+**Erker.** Rechteckiger besonderer Raum mit eigener flacher Decke. Ausgang: `BAY_WINDOW`; Kategorie: **Spezielle Räume**. **Verfügbarkeit:** In Mod und Graphstudio 0.6.1 implementiert.
+
+`bayWindow` enthält `width` und `depth` (Innenmaße, jeweils 1–32, Standard 3/2) sowie die Quellen `wall`, `front`, `floor`, `ceiling`. Die typisierten Eingänge heißen `semantic:bay:wall`, `semantic:bay:front`, `semantic:bay:floor`, `semantic:bay:ceiling`. Wand und Front akzeptieren Segmentquellen; Boden und Decke akzeptieren ihre jeweilige Plattenart oder Segmentquellen.
+
+Der Hauptraum speichert `bayWindows`: `id`, `source`, `edge`, `offset`, `openingWidth`, `openingHeight`. `source` wird als `semantic:bay:<Index>:source` angeschlossen. Breite/Höhe 0 wählen die verfügbare Durchgangsgröße. Eine Instanz wird durch die Wandkante ausgerichtet; sie ist kein zusätzlicher unabhängiger Stockwerkeingang. Die reguläre Dachgrundfläche bleibt erhalten.
+
+## DORMER
+
+**Satteldachgaube.** In eine einzelne Sattel-/Pultdachschräge eingesetzter Aufbau. Ausgang: `DORMER`; Kategorie: **Dächer**. **Verfügbarkeit:** In Mod und Graphstudio 0.6.1 implementiert.
+
+`dormer` enthält `width`, `depth` (Innenmaße, 1–32, Standard 3/3), `wallHeight` (1–16, Standard 2), `slope` (eine vorhandene rationale Dachneigung, Standard 1:1) sowie `wall`, `front`, `roof`. Anschlüsse: `semantic:dormer:wall`, `semantic:dormer:front` (Segmentquellen mit Tiefe 1) und `semantic:dormer:roof` (Copycat-Quelle).
+
+Die Dachebene speichert `dormers`: `id`, `source`, `position` (X/Z im Geschossraster, Y=0), `direction` (0=Norden, 1=Osten, 2=Süden, 3=Westen) und `openCeiling` (Standard false). `position` bezeichnet die lokale vordere linke äußere Rasterzelle; die äußere Fläche umfasst Innenmaße plus die beiden Wandstreifen. `source` wird als `semantic:dormer:<Index>:source` angeschlossen. `openCeiling` öffnet zusätzlich die Geschossdecke unter der inneren Gaubenfläche.
+
+Beide Erweiterungen erfordern Gebäudegraphschema 4. Pro Raum beziehungsweise Dachebene sind höchstens 16 Instanzen mit eindeutigen IDs möglich. Kopien und Knotengruppen erhalten beziehungsweise übersetzen ihre Definitionsreferenzen.
 
 ## SEGMENT_UNION
 
-**Segment-Vereinigung.** Positionsweise Operation auf Copycat-Teilformen. [Vertrag und Grenzen](Geplante-Segmentoperatoren.md).
+**Segment-Vereinigung.**
 
-**Verfügbarkeit:** aktueller Mod-Quellstand und Graphstudio: implementiert; veröffentlichte Mod 0.6.0: noch nicht enthalten.
+**Verfügbarkeit:** Mod und Graphstudio 0.6.1: vorhanden.
 
-**Ausgang:** `SEGMENT_UNION`, weiterverwendbarer Segmentwert.
+**Ausgang:** `SEGMENT_UNION`.
 
-**Anschlüsse:** `in:*` akzeptiert [Segmentwerte](#wertfamilien). 2–16 geordnete Eingänge; im Inspektor erweiterbar.
+### Weitere Anschlüsse
 
-**Inspektoreigenschaften:** `materialMode` (SEPARATED/GROUPED), `role` (gemeinsame Materialrolle).
+| Anschluss | Akzeptierte Quellen |
+| --- | --- |
+| `in:*` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE`, `SEGMENT_UNION`, `SEGMENT_INTERSECTION`, `SEGMENT_DIFFERENCE`, `SEGMENT_SYMMETRIC_DIFFERENCE` |
+
+### Weitere Eigenschaften
+
+Die Eigenschaften werden unter **Aufbau und Geometrie** bearbeitet. Zusammengehörige Änderungen mit **Übernehmen** bestätigen. Die gemeinsamen Modregeln prüfen Werte und Verbindungen.
+
+- `materialMode` · `SEPARATED` / `GROUPED`
+- `role`
 
 ## SEGMENT_INTERSECTION
 
-**Segment-Schnitt.** Positionsweise Operation auf Copycat-Teilformen. [Vertrag und Grenzen](Geplante-Segmentoperatoren.md).
+**Segment-Schnitt.**
 
-**Verfügbarkeit:** aktueller Mod-Quellstand und Graphstudio: implementiert; veröffentlichte Mod 0.6.0: noch nicht enthalten.
+**Verfügbarkeit:** Mod und Graphstudio 0.6.1: vorhanden.
 
-**Ausgang:** `SEGMENT_INTERSECTION`, weiterverwendbarer Segmentwert.
+**Ausgang:** `SEGMENT_INTERSECTION`.
 
-**Anschlüsse:** `in:*` akzeptiert [Segmentwerte](#wertfamilien). 2–16 geordnete Eingänge; im Inspektor erweiterbar.
+### Weitere Anschlüsse
 
-**Inspektoreigenschaften:** `materialMode` (SEPARATED/GROUPED), `role` (gemeinsame Materialrolle).
+| Anschluss | Akzeptierte Quellen |
+| --- | --- |
+| `in:*` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE`, `SEGMENT_UNION`, `SEGMENT_INTERSECTION`, `SEGMENT_DIFFERENCE`, `SEGMENT_SYMMETRIC_DIFFERENCE` |
+
+### Weitere Eigenschaften
+
+Die Eigenschaften werden unter **Aufbau und Geometrie** bearbeitet. Zusammengehörige Änderungen mit **Übernehmen** bestätigen. Die gemeinsamen Modregeln prüfen Werte und Verbindungen.
+
+- `materialMode` · `SEPARATED` / `GROUPED`
+- `role`
 
 ## SEGMENT_DIFFERENCE
 
-**Segment-Differenz A − B.** Positionsweise Operation auf Copycat-Teilformen. [Vertrag und Grenzen](Geplante-Segmentoperatoren.md).
+**Segment-Differenz.**
 
-**Verfügbarkeit:** aktueller Mod-Quellstand und Graphstudio: implementiert; veröffentlichte Mod 0.6.0: noch nicht enthalten.
+**Verfügbarkeit:** Mod und Graphstudio 0.6.1: vorhanden.
 
-**Ausgang:** `SEGMENT_DIFFERENCE`, weiterverwendbarer Segmentwert.
+**Ausgang:** `SEGMENT_DIFFERENCE`.
 
-**Anschlüsse:** `in:*` akzeptiert [Segmentwerte](#wertfamilien). Genau zwei Eingänge: A und B; A/B sind tauschbar.
+### Weitere Anschlüsse
 
-**Inspektoreigenschaften:** `materialMode` (SEPARATED/GROUPED), `role` (gemeinsame Materialrolle).
+| Anschluss | Akzeptierte Quellen |
+| --- | --- |
+| `in:*` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE`, `SEGMENT_UNION`, `SEGMENT_INTERSECTION`, `SEGMENT_DIFFERENCE`, `SEGMENT_SYMMETRIC_DIFFERENCE` |
+
+### Weitere Eigenschaften
+
+Die Eigenschaften werden unter **Aufbau und Geometrie** bearbeitet. Zusammengehörige Änderungen mit **Übernehmen** bestätigen. Die gemeinsamen Modregeln prüfen Werte und Verbindungen.
+
+- `materialMode` · `SEPARATED` / `GROUPED`
+- `role`
 
 ## SEGMENT_SYMMETRIC_DIFFERENCE
 
-**Symmetrische Segment-Differenz.** Positionsweise Operation auf Copycat-Teilformen. [Vertrag und Grenzen](Geplante-Segmentoperatoren.md).
+**Symmetrische Segment-Differenz.**
 
-**Verfügbarkeit:** aktueller Mod-Quellstand und Graphstudio: implementiert; veröffentlichte Mod 0.6.0: noch nicht enthalten.
+**Verfügbarkeit:** Mod und Graphstudio 0.6.1: vorhanden.
 
-**Ausgang:** `SEGMENT_SYMMETRIC_DIFFERENCE`, weiterverwendbarer Segmentwert.
+**Ausgang:** `SEGMENT_SYMMETRIC_DIFFERENCE`.
 
-**Anschlüsse:** `in:*` akzeptiert [Segmentwerte](#wertfamilien). 2–16 geordnete Eingänge; im Inspektor erweiterbar.
+### Weitere Anschlüsse
 
-**Inspektoreigenschaften:** `materialMode` (SEPARATED/GROUPED), `role` (gemeinsame Materialrolle).
+| Anschluss | Akzeptierte Quellen |
+| --- | --- |
+| `in:*` | `SEGMENT`, `PATTERN`, `SEGMENT_MIRROR`, `SEGMENT_ROTATE`, `SEGMENT_UNION`, `SEGMENT_INTERSECTION`, `SEGMENT_DIFFERENCE`, `SEGMENT_SYMMETRIC_DIFFERENCE` |
+
+### Weitere Eigenschaften
+
+Die Eigenschaften werden unter **Aufbau und Geometrie** bearbeitet. Zusammengehörige Änderungen mit **Übernehmen** bestätigen. Die gemeinsamen Modregeln prüfen Werte und Verbindungen.
+
+- `materialMode` · `SEPARATED` / `GROUPED`
+- `role`
 
 ## COPYCAT_UNION
 
-**Copycat-Vereinigung.** Vereinigt die belegten Teilvolumen aller Eingänge innerhalb derselben Blockzelle. Überlappungen werden geometrisch einmal belegt; die Materialherkunft folgt dem gewählten Materialmodus.
+**Copycat-Vereinigung.**
 
-**Verfügbarkeit:** aktueller Mod-Quellstand und Graphstudio 0.4: implementiert; veröffentlichte Mod 0.6.0: noch nicht enthalten.
+**Verfügbarkeit:** Mod und Graphstudio 0.6.1: vorhanden.
 
-**Ausgang:** `COPYCAT_UNION`, weiterverwendbarer Copycat-Wert.
+**Ausgang:** `COPYCAT_UNION`.
 
-**Anschlüsse:** `in:*` akzeptiert [Copycat-Werte](#wertfamilien). 2–16 geordnete Eingänge; im Inspektor erweiterbar.
+### Weitere Anschlüsse
 
-**Inspektoreigenschaften:** `materialMode` (`SEPARATED` erhält die Materialherkunft, `GROUPED` verwendet eine gemeinsame Rolle), `role` (Rolle aus der Gebäudepalette).
+| Anschluss | Akzeptierte Quellen |
+| --- | --- |
+| `in:*` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE`, `COPYCAT_UNION`, `COPYCAT_INTERSECTION`, `COPYCAT_DIFFERENCE`, `COPYCAT_SYMMETRIC_DIFFERENCE` |
 
-Drehungen und Spiegelungen vor oder nach der Operation bleiben wirksam. Ein leeres Zwischenergebnis kann als Eingabe weiterer Copycat-Operationen dienen. Das Ergebnis lässt sich an die Copycat-Eingänge von Segmenten, Böden, Decken und Dächern anschließen. Die Grenzen von acht Materialgruppen und 32 Formteilen pro Blockzelle gelten weiterhin.
+### Weitere Eigenschaften
+
+Die Eigenschaften werden unter **Aufbau und Geometrie** bearbeitet. Zusammengehörige Änderungen mit **Übernehmen** bestätigen. Die gemeinsamen Modregeln prüfen Werte und Verbindungen.
+
+- `materialMode` · `SEPARATED` / `GROUPED`
+- `role`
 
 ## COPYCAT_INTERSECTION
 
-**Copycat-Schnitt.** Behält die gemeinsame Teilgeometrie aller Eingänge. Im separierten Materialmodus stammt die Materialherkunft vom ersten Eingang.
+**Copycat-Schnitt.**
 
-**Verfügbarkeit:** aktueller Mod-Quellstand und Graphstudio 0.4: implementiert; veröffentlichte Mod 0.6.0: noch nicht enthalten.
+**Verfügbarkeit:** Mod und Graphstudio 0.6.1: vorhanden.
 
-**Ausgang:** `COPYCAT_INTERSECTION`, weiterverwendbarer Copycat-Wert.
+**Ausgang:** `COPYCAT_INTERSECTION`.
 
-**Anschlüsse:** `in:*` akzeptiert [Copycat-Werte](#wertfamilien). 2–16 geordnete Eingänge; im Inspektor erweiterbar.
+### Weitere Anschlüsse
 
-**Inspektoreigenschaften:** `materialMode` (`SEPARATED` erhält die Materialherkunft, `GROUPED` verwendet eine gemeinsame Rolle), `role` (Rolle aus der Gebäudepalette).
+| Anschluss | Akzeptierte Quellen |
+| --- | --- |
+| `in:*` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE`, `COPYCAT_UNION`, `COPYCAT_INTERSECTION`, `COPYCAT_DIFFERENCE`, `COPYCAT_SYMMETRIC_DIFFERENCE` |
 
-Drehungen und Spiegelungen vor oder nach der Operation bleiben wirksam. Ein leeres Zwischenergebnis kann als Eingabe weiterer Copycat-Operationen dienen. Das Ergebnis lässt sich an die Copycat-Eingänge von Segmenten, Böden, Decken und Dächern anschließen. Die Grenzen von acht Materialgruppen und 32 Formteilen pro Blockzelle gelten weiterhin.
+### Weitere Eigenschaften
+
+Die Eigenschaften werden unter **Aufbau und Geometrie** bearbeitet. Zusammengehörige Änderungen mit **Übernehmen** bestätigen. Die gemeinsamen Modregeln prüfen Werte und Verbindungen.
+
+- `materialMode` · `SEPARATED` / `GROUPED`
+- `role`
 
 ## COPYCAT_DIFFERENCE
 
-**Copycat-Differenz A − B.** Schneidet die Geometrie des zweiten Eingangs B aus dem ersten Eingang A aus. Im separierten Materialmodus bleibt die Materialherkunft von A erhalten.
+**Copycat-Differenz.**
 
-**Verfügbarkeit:** aktueller Mod-Quellstand und Graphstudio 0.4: implementiert; veröffentlichte Mod 0.6.0: noch nicht enthalten.
+**Verfügbarkeit:** Mod und Graphstudio 0.6.1: vorhanden.
 
-**Ausgang:** `COPYCAT_DIFFERENCE`, weiterverwendbarer Copycat-Wert.
+**Ausgang:** `COPYCAT_DIFFERENCE`.
 
-**Anschlüsse:** `in:*` akzeptiert [Copycat-Werte](#wertfamilien). Genau zwei geordnete Eingänge: `in:0` = A, `in:1` = B. **A / B tauschen** kehrt die Abzugsrichtung um.
+### Weitere Anschlüsse
 
-**Inspektoreigenschaften:** `materialMode` (`SEPARATED` erhält die Materialherkunft, `GROUPED` verwendet eine gemeinsame Rolle), `role` (Rolle aus der Gebäudepalette).
+| Anschluss | Akzeptierte Quellen |
+| --- | --- |
+| `in:*` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE`, `COPYCAT_UNION`, `COPYCAT_INTERSECTION`, `COPYCAT_DIFFERENCE`, `COPYCAT_SYMMETRIC_DIFFERENCE` |
 
-Drehungen und Spiegelungen vor oder nach der Operation bleiben wirksam. Ein leeres Zwischenergebnis kann als Eingabe weiterer Copycat-Operationen dienen. Das Ergebnis lässt sich an die Copycat-Eingänge von Segmenten, Böden, Decken und Dächern anschließen. Die Grenzen von acht Materialgruppen und 32 Formteilen pro Blockzelle gelten weiterhin.
+### Weitere Eigenschaften
+
+Die Eigenschaften werden unter **Aufbau und Geometrie** bearbeitet. Zusammengehörige Änderungen mit **Übernehmen** bestätigen. Die gemeinsamen Modregeln prüfen Werte und Verbindungen.
+
+- `materialMode` · `SEPARATED` / `GROUPED`
+- `role`
 
 ## COPYCAT_SYMMETRIC_DIFFERENCE
 
-**Symmetrische Copycat-Differenz.** Behält Teilvolumen mit ungerader Überdeckungszahl. Zwei identische Eingänge ergeben ein leeres Ergebnis, drei identische Eingänge behalten die Form.
+**Symmetrische Copycat-Differenz.**
 
-**Verfügbarkeit:** aktueller Mod-Quellstand und Graphstudio 0.4: implementiert; veröffentlichte Mod 0.6.0: noch nicht enthalten.
+**Verfügbarkeit:** Mod und Graphstudio 0.6.1: vorhanden.
 
-**Ausgang:** `COPYCAT_SYMMETRIC_DIFFERENCE`, weiterverwendbarer Copycat-Wert.
+**Ausgang:** `COPYCAT_SYMMETRIC_DIFFERENCE`.
 
-**Anschlüsse:** `in:*` akzeptiert [Copycat-Werte](#wertfamilien). 2–16 geordnete Eingänge; im Inspektor erweiterbar.
+### Weitere Anschlüsse
 
-**Inspektoreigenschaften:** `materialMode` (`SEPARATED` erhält die Materialherkunft, `GROUPED` verwendet eine gemeinsame Rolle), `role` (Rolle aus der Gebäudepalette).
+| Anschluss | Akzeptierte Quellen |
+| --- | --- |
+| `in:*` | `COPYCAT`, `COPYCAT_MIRROR`, `COPYCAT_ROTATE`, `COPYCAT_UNION`, `COPYCAT_INTERSECTION`, `COPYCAT_DIFFERENCE`, `COPYCAT_SYMMETRIC_DIFFERENCE` |
 
-Drehungen und Spiegelungen vor oder nach der Operation bleiben wirksam. Ein leeres Zwischenergebnis kann als Eingabe weiterer Copycat-Operationen dienen. Das Ergebnis lässt sich an die Copycat-Eingänge von Segmenten, Böden, Decken und Dächern anschließen. Die Grenzen von acht Materialgruppen und 32 Formteilen pro Blockzelle gelten weiterhin.
+### Weitere Eigenschaften
+
+Die Eigenschaften werden unter **Aufbau und Geometrie** bearbeitet. Zusammengehörige Änderungen mit **Übernehmen** bestätigen. Die gemeinsamen Modregeln prüfen Werte und Verbindungen.
+
+- `materialMode` · `SEPARATED` / `GROUPED`
+- `role`
+
+## ROTATION
+
+**Rotation.**
+
+**Verfügbarkeit:** Mod und Graphstudio 0.6.1: vorhanden.
+
+**Ausgang:** `ROTATION`.
+
+### Weitere Eigenschaften
+
+Die Eigenschaften werden unter **Aufbau und Geometrie** bearbeitet. Zusammengehörige Änderungen mit **Übernehmen** bestätigen. Die gemeinsamen Modregeln prüfen Werte und Verbindungen.
+
+- `rotations`
+
+## MIRRORING
+
+**Spiegelungen.**
+
+**Verfügbarkeit:** Mod und Graphstudio 0.6.1: vorhanden.
+
+**Ausgang:** `MIRRORING`.
+
+### Weitere Eigenschaften
+
+Die Eigenschaften werden unter **Aufbau und Geometrie** bearbeitet. Zusammengehörige Änderungen mit **Übernehmen** bestätigen. Die gemeinsamen Modregeln prüfen Werte und Verbindungen.
+
+- `mirrors`
+
+## INT
+
+**Anzahl.** Liefert eine vorzeichenbehaftete 32-Bit-Ganzzahl als Wert.
+
+**Verfügbarkeit:** Mod und Graphstudio: implementiert.
+
+**Ausgang:** `INT`. Keine Eingänge. Im Inspektor bestimmt `countValue` den Wert
+(Standard beim Anlegen: 4; fehlt der Wert im JSON, gilt 0). Der Wertebereich
+des Verbrauchers gilt zusätzlich: eine Rotationssegment-Länge benötigt 1–128.
+
+## ROTATION_SEGMENT
+
+**Rotationssegment.** Vereint einen Copycat bei 0°, 90°, 180° und 270° um die
+Y-Achse und wiederholt das Ergebnis vertikal zu einer Säule.
+
+**Verfügbarkeit:** Mod und Graphstudio: implementiert.
+
+**Ausgang:** Segmentwert (`WALL`), mit lokaler Ausdehnung 1 × Länge × 1.
+
+| Anschluss | Akzeptiert | Speicherung |
+| --- | --- | --- |
+| `length` | `INT` | `dimensions.length` |
+| `in:0` | Copycat-Werte | `inputs[0]` |
+
+Im Inspektor ist `length` der lokale Ersatzwert (1–128 Blöcke) bei unverbundenem
+Anzahl-Eingang. Bei Verbindung zeigt er den abgeleiteten Wert; **Quelle bearbeiten**
+öffnet die Anzahlquelle. `materialMode` (`SEPARATED`/`GROUPED`) und `role` steuern
+die Materialübernahme wie bei Segmentoperationen. Vorhandene Copycat-Transformationen
+werden vor den vier Drehungen angewandt. Überlappende Volumen werden nur einmal
+gebaut und berechnet.
+
+Das Beispiel **Rotationssegment · Säule** ist bis zum Gebäudeausgang verbunden.
+Mit `SEGMENT_ROTATE` lässt sich die fertige Säule anschließend auch horizontal legen.

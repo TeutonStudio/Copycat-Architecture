@@ -5,7 +5,7 @@ import java.util.UUID
 
 /** Transactional authoring of the information which survives segment composition. */
 object SemanticPropertyEditors {
-    private val segmentKinds=(setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds)
+    private val segmentKinds=(setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds)
     private val copycatKinds=CopycatBooleans.sourceKinds
     private fun name(graph:BuildingGraph,id:String)=graph.nodes.firstOrNull { it.id==id }?.let { it.name.ifBlank { ui("bg_"+it.kind.name.lowercase()) } } ?: ui("bg_no_connection")
     private fun StructurePropertyScreen.source(label:String,value:String,graph:BuildingGraph,kinds:Set<BuildingKind>,change:(String)->Unit) {
@@ -112,6 +112,14 @@ object SemanticPropertyEditors {
     fun portLabel(key:String):String {
         val ref=key.removePrefix("semantic:")
         val label=when {
+            ref.startsWith("window:") -> "bg_window"
+            ref.startsWith("bay:") && ref.endsWith(":source") -> "bg_bay_window"
+            ref.startsWith("dormer:") && ref.endsWith(":source") -> "bg_dormer"
+            ref=="bay:wall" || ref=="dormer:wall" -> "special_wall_source"
+            ref=="bay:front" || ref=="dormer:front" -> "special_front_source"
+            ref=="bay:floor" -> "bg_floor"
+            ref=="bay:ceiling" -> "bg_ceiling"
+            ref=="dormer:roof" -> "special_roof_source"
             ref=="room:filler" || ref=="facade:filler" -> "semantic_filler_source"
             ref=="room:interior" -> "semantic_interior_source"
             ref=="room:partition" -> "semantic_partition_source"

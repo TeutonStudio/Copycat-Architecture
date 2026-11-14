@@ -2,7 +2,7 @@ package de.teutonstudio.copycatarchitect.domain
 
 import java.util.concurrent.ConcurrentHashMap
 
-enum class BuildingKind { INT,INT_ADD,INT_SUBTRACT,INT_MULTIPLY,INT_DIVIDE,INT_MIN,INT_MAX, AREA, COPYCAT, SEGMENT_LAYOUT, SEGMENT, PATTERN, ROOM_GEOMETRY, FLOOR, CEILING, ROOM, STOREY, ROOF_LEVEL, ROOF_LAYOUT, ROOF, STAIRWELL, ELEVATOR_SHAFT, SERVICE_SHAFT, BUILDING, GARDEN, PATH, SEGMENT_MIRROR, COPYCAT_MIRROR, SEGMENT_ROTATE, COPYCAT_ROTATE, ROOM_LAYOUT, SEGMENT_UNION, SEGMENT_INTERSECTION, SEGMENT_DIFFERENCE, SEGMENT_SYMMETRIC_DIFFERENCE, COPYCAT_UNION, COPYCAT_INTERSECTION, COPYCAT_DIFFERENCE, COPYCAT_SYMMETRIC_DIFFERENCE, ROTATION, MIRRORING }
+enum class BuildingKind { ROTATION_SEGMENT,BAY_WINDOW,DORMER,WINDOW,INT,INT_ADD,INT_SUBTRACT,INT_MULTIPLY,INT_DIVIDE,INT_MIN,INT_MAX, AREA, COPYCAT, SEGMENT_LAYOUT, SEGMENT, PATTERN, ROOM_GEOMETRY, FLOOR, CEILING, ROOM, STOREY, ROOF_LEVEL, ROOF_LAYOUT, ROOF, STAIRWELL, ELEVATOR_SHAFT, SERVICE_SHAFT, BUILDING, GARDEN, PATH, SEGMENT_MIRROR, COPYCAT_MIRROR, SEGMENT_ROTATE, COPYCAT_ROTATE, ROOM_LAYOUT, SEGMENT_UNION, SEGMENT_INTERSECTION, SEGMENT_DIFFERENCE, SEGMENT_SYMMETRIC_DIFFERENCE, COPYCAT_UNION, COPYCAT_INTERSECTION, COPYCAT_DIFFERENCE, COPYCAT_SYMMETRIC_DIFFERENCE, ROTATION, MIRRORING }
 data class SegmentLayoutCell(val x:Int=0,val y:Int=0,val sourceIndex:Int=0,val turn:Int=0)
 data class BuildingNode(
     val id:String="",val kind:BuildingKind=BuildingKind.SEGMENT,val name:String="",val x:Int=0,val y:Int=0,
@@ -31,8 +31,14 @@ data class BuildingNode(
     val features:SegmentFeatures?=null,val attachments:List<AttachmentSpec>?=null,
     val countValue:Int?=null,val dimensions:Map<String,String>?=null,
     val copycatArrangement:Boolean?=null,
+    val bayWindow:BayWindowConfig?=null,val dormer:DormerConfig?=null,
+    val bayWindows:List<BayWindowInstance>?=null,val dormers:List<DormerInstance>?=null,
+    val windows:List<WindowInstance>?=null,val roofPeak:String?=null,val roofEave:String?=null,
     val rotation:String?=null,val mirroring:String?=null,val rotations:List<SegmentRotation>?=null,val mirrors:List<CopycatMirror>?=null
 )
+/** Optional arrays stay absent in older JSON documents until the feature is used. */
+val BuildingNode.bayWindowInstances get()=bayWindows.orEmpty()
+val BuildingNode.dormerInstances get()=dormers.orEmpty()
 /** Optional Copycat and outdoor sequences grow through spare ports; unused tails are not required inputs. */
 internal fun BuildingNode.trimCopycatInputs():BuildingNode {
     if(kind !in setOf(BuildingKind.SEGMENT,BuildingKind.FLOOR,BuildingKind.CEILING,BuildingKind.ROOF,BuildingKind.ROOF_LAYOUT,BuildingKind.BUILDING,BuildingKind.ROOM_LAYOUT)) return this
@@ -41,14 +47,15 @@ internal fun BuildingNode.trimCopycatInputs():BuildingNode {
 }
 data class BuildingGraph(val schema:Int=1,val nodes:List<BuildingNode> = emptyList(),val projection:BuildingProjection=BuildingProjection(),
                          val nodeGroups:List<GraphGroup> = emptyList()) {
+    fun resultNode():BuildingNode=nodes.single { n -> n.kind==BuildingKind.BUILDING && nodeGroups.none { n.id in it.nodes } }
     fun replace(n:BuildingNode)=GraphGroups.synchronize(this,copy(nodes=nodes.map { if(it.id==n.id) n else it })).withCurrentSchema()
     fun remove(id:String):BuildingGraph=GraphGroups.synchronize(this,removeLocal(id))
     internal fun removeLocal(id:String):BuildingGraph {
-        require(id!="empty_wall" && nodes.first { it.id==id }.kind!=BuildingKind.BUILDING) { "Keep the result and Empty wall source" }
+        require(id!="empty_wall" && nodes.none { n -> n.id==id && n.kind==BuildingKind.BUILDING && nodeGroups.none { id in it.nodes } }) { "Keep the result and Empty wall source" }
         return copy(nodeGroups=GraphGroups.prune(nodeGroups,nodes.map { it.id }.toSet()-id),nodes=nodes.filter { it.id!=id }.map { original -> val n=BuildingSemantics.remapReferences(original) { _,ref->if(ref==id) "" else ref };n.copy(
             dimensions=n.dimensions?.filterValues { it!=id },inputs=n.inputs.map { if(it==id) "" else it },walls=n.walls.filterValues { it!=id },verticalEdges=n.verticalEdges?.filterValues { it!=id },
             floor=if(n.floor==id) "" else n.floor,ceiling=if(n.ceiling==id) "" else n.ceiling,corner=if(n.corner==id) "" else n.corner,
-            roof=if(n.roof==id) "" else n.roof,
+            roof=if(n.roof==id) "" else n.roof,roofPeak=if(n.roofPeak==id) null else n.roofPeak,roofEave=if(n.roofEave==id) null else n.roofEave,
             rotation=if(n.rotation==id) null else n.rotation,mirroring=if(n.mirroring==id) null else n.mirroring,
             layout=if(n.layout==id) "" else n.layout,geometry=if(n.geometry==id) "" else n.geometry,
             regionCopies=n.regionCopies.filterValues { it!=id },sitePaths=n.sitePaths.filterKeys { n.inputs.getOrNull(it)!=id },
@@ -79,6 +86,8 @@ data class BuildingGraph(val schema:Int=1,val nodes:List<BuildingNode> = emptyLi
             key=="ceiling" -> n.copy(ceiling=source)
             key=="corner" -> n.copy(corner=source)
             key.startsWith("edge:") -> n.copy(verticalEdges=if(source.isEmpty()) n.verticalEdges.orEmpty()-key.removePrefix("edge:") else n.verticalEdges.orEmpty()+(key.removePrefix("edge:") to source))
+            key=="roofPeak" -> n.copy(roofPeak=source.takeIf(String::isNotEmpty))
+            key=="roofEave" -> n.copy(roofEave=source.takeIf(String::isNotEmpty))
             key=="roof" -> n.copy(roof=source)
             key=="area" -> n.copy(roofLevel=(n.roofLevel ?: RoofLevelConfig()).copy(area=source))
             key.startsWith("access:") -> {
@@ -239,8 +248,10 @@ object BuildingPorts {
             port(n,"edge:${e.id}",n.verticalEdges.orEmpty()[e.id].orEmpty(),i,1,n.height)
         } else emptyList()
 
-    fun of(n:BuildingNode,graph:BuildingGraph,expanding:Boolean=false)=of(graph.resolvedNode(n),expanding)
-    fun of(n:BuildingNode,expanding:Boolean=false):List<BuildingPort> = (when(n.kind) {
+    fun of(n:BuildingNode,graph:BuildingGraph,expanding:Boolean=false,includeInactive:Boolean=false)=of(graph.resolvedNode(n),expanding,includeInactive)
+    fun of(n:BuildingNode,expanding:Boolean=false,includeInactive:Boolean=false):List<BuildingPort> = (when(n.kind) {
+        BuildingKind.WINDOW -> listOf(port(n,"in:0",n.inputs.firstOrNull().orEmpty()))
+        BuildingKind.ROTATION_SEGMENT -> listOf(port(n,"length",n.dimensions.orEmpty()["length"].orEmpty()),port(n,"in:0",n.inputs.firstOrNull().orEmpty()))
         BuildingKind.INT -> emptyList()
         BuildingKind.INT_ADD,BuildingKind.INT_SUBTRACT,BuildingKind.INT_MULTIPLY,BuildingKind.INT_DIVIDE,BuildingKind.INT_MIN,BuildingKind.INT_MAX -> inputs(n,expanding)
         BuildingKind.SEGMENT -> if(n.id=="empty_wall") emptyList() else {
@@ -262,7 +273,9 @@ object BuildingPorts {
         BuildingKind.ELEVATOR_SHAFT -> listOf(port(n,"enclosure",n.elevatorShaft?.enclosure.orEmpty()))
         BuildingKind.SERVICE_SHAFT -> listOf(port(n,"enclosure",n.serviceShaft?.enclosure.orEmpty()))
         BuildingKind.ROOF -> if(n.assembly) listOf(port(n,"layout",n.layout))+inputs(n,expanding)
-            else inputs(n,expanding)+(0..3).map { port(n,"wall:$it",n.walls[it.toString()].orEmpty(),it) }
+            else inputs(n,expanding)+
+                (if(includeInactive || n.roofType=="gable") listOf(port(n.copy(roofType="gable"),"roofPeak",n.roofPeak.orEmpty()),port(n.copy(roofType="gable"),"roofEave",n.roofEave.orEmpty())) else emptyList())+
+                (0..3).filter { includeInactive || n.roofType=="flat" || it%2==n.ridge }.map { port(n,"wall:$it",n.walls[it.toString()].orEmpty(),it) }
         BuildingKind.BUILDING -> {
             val levels=n.levels.keys+0+(if(expanding) setOf((n.levels.keys.maxOrNull() ?: 0)+1,(n.levels.keys.minOrNull() ?: 0)-1) else emptySet())
             val levelModel=GraphModels.buildingPort(n,"level:0")
@@ -273,7 +286,7 @@ object BuildingPorts {
                 levels.filter { it in checkNotNull(levelModel.min)..checkNotNull(levelModel.max) }.sortedDescending().map { i -> port(n,"level:$i",n.levels[i].orEmpty(),i) }+inputs(n,expanding)
         }
         else -> emptyList()
-    })+semanticPorts(n)+(if(BuildingCounts.hasDimensions(n)) BuildingCounts.axes.map { port(n,it,n.dimensions.orEmpty()[it].orEmpty()) } else emptyList())
+    })+semanticPorts(n)+(if(BuildingCounts.hasDimensions(n) && n.kind!=BuildingKind.ROTATION_SEGMENT) BuildingCounts.axes.map { port(n,it,n.dimensions.orEmpty()[it].orEmpty()) } else emptyList())
 
     private fun semanticPorts(n:BuildingNode):List<BuildingPort> {
         val refs=linkedMapOf<String,String>()
@@ -292,7 +305,7 @@ data class CompiledRoom(val plan:Plan,val footprint:Set<P>,val shell:Set<P>,val 
     val outerDepth get()=if(shell.isEmpty()) 0 else shell.maxOf { it.z }-shell.minOf { it.z }+1
     val totalHeight get()=maximum-minimum
 }
-data class CompiledStorey(val plan:Plan,val footprint:Set<P>,val minimum:Int,val maximum:Int,val bottomThickness:Int,val topThickness:Int)
+data class CompiledStorey(val plan:Plan,val footprint:Set<P>,val minimum:Int,val maximum:Int,val bottomThickness:Int,val topThickness:Int,val roofFootprint:Set<P> = footprint,val bayOpenings:Set<P> = emptySet())
 data class StoreyPosition(val level:Int,val base:Int,val minimum:Int,val maximum:Int)
 data class CompiledBuilding(val plan:Plan,val storeys:List<StoreyPosition>,val accessFootprints:Map<String,Set<P>> = emptyMap())
 object BuildingGraphCompiler {
@@ -302,23 +315,26 @@ object BuildingGraphCompiler {
         val nodes=graph.nodes.associateBy { it.id }
         require(nodes.size==graph.nodes.size && nodes.keys.all { it.matches(Regex("[a-zA-Z0-9_-]{1,36}")) }) { "Building node IDs must be unique" }
         GraphGroups.validate(graph)
-        require(graph.nodes.count { it.kind==BuildingKind.BUILDING }==1) { "Keep exactly one building result" }
+        require(graph.nodes.count { n -> n.kind==BuildingKind.BUILDING && graph.nodeGroups.none { n.id in it.nodes } }==1) { "Keep exactly one building result outside group graphs" }
         require(nodes["empty_wall"]?.let { it.kind==BuildingKind.SEGMENT && it.block=="minecraft:air" && it.inputs.isEmpty() }==true) { "Keep the standard Empty wall source" }
         for(n in graph.nodes) {
-            BuildingTransformValues.validate(n)
             BuildingCounts.validate(n)
+            if(n.kind==BuildingKind.ROTATION_SEGMENT) BuildingCounts.resolve(graph,n)
+            BuildingTransformValues.validate(n)
             require(n.copycatArrangement!=true || n.kind==BuildingKind.SEGMENT && n.regionCopies.isEmpty()) { "Copycat arrangement belongs to a segment without region overrides" }
             BuildingSemantics.validate(n,nodes)
+            SpecialRooms.validate(n,nodes)
+            StoreyWindows.validate(n,nodes)
             require(n.roomLayout==null || n.kind==BuildingKind.ROOM_LAYOUT) { "Room arrangements belong to a room layout" }
             require(n.roomConfig==null || n.kind==BuildingKind.ROOM) { "Room settings belong to a room" }
             require(n.facade==null || n.kind==BuildingKind.STOREY) { "Facade settings belong to a storey" }
-            require(n.features==null || n.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)) { "Bauteilregeln benötigen ein Segment" }
+            require(n.features==null || n.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)) { "Bauteilregeln benötigen ein Segment" }
             require(n.attachments.isNullOrEmpty() || n.kind in setOf(BuildingKind.CEILING,BuildingKind.SEGMENT)) { "Wandanschlüsse benötigen eine Deckenplatte oder ein Segment" }
             require(n.preview in listOf("all","walls","floor","ceiling","roof")) { "Invalid building preview filter" }
             require(n.name.length<=64 && n.x in -8192..8192 && n.y in -8192..8192 && n.materialMode in MaterialMode.entries) { "Invalid building node" }
             require(n.role.matches(Regex("[a-zA-Z0-9_-]{1,32}"))) { "Invalid node material role" }
             require(n.rotationAxis in listOf(RotationAxis.X,RotationAxis.Y,RotationAxis.Z) && n.quarterTurns in 0..3) { "Invalid Copycat rotation" }
-            val maximumHeight=if(n.kind in setOf(BuildingKind.SEGMENT,BuildingKind.SEGMENT_LAYOUT,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE) || n.assembly && n.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN)) 128 else 16
+            val maximumHeight=if(n.kind in setOf(BuildingKind.SEGMENT,BuildingKind.SEGMENT_LAYOUT,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE) || n.assembly && n.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN)) 128 else 16
             require(n.depth in 1..128 && n.length.toLong()*n.height*n.depth<=262144 && n.length in 1..128 && n.height in 1..maximumHeight && n.thickness in 1..4 && n.offsets.size<=GraphModels.building.maxInputs && n.inputs.size<=GraphModels.building.maxInputs) { "Invalid fixed dimensions" }
             require(n.regionCopies.isEmpty() || n.kind==BuildingKind.SEGMENT && n.regionCopies.size<=27 && n.regionCopies.keys.all { it.matches(Regex("region:x[01ib]_y[01ib]_z[01ib]")) }) { "Invalid segment region" }
             require(n.transforms.size<=n.inputs.size && n.transforms.all { it.quarterTurns in 0..3 && it.axis in listOf(RotationAxis.X,RotationAxis.Y,RotationAxis.Z) && listOf(it.offset.x,it.offset.y,it.offset.z).all { c -> c in -128..128 } }) { "Invalid segment transformation" }
@@ -359,6 +375,7 @@ object BuildingGraphCompiler {
             require(n.surfaces.isNullOrEmpty() || n.kind==BuildingKind.COPYCAT && n.surfaces.size<=8 && n.surfaces.all { (group,material) ->
                 group.isNotBlank() && group.length<=64 && material.matches(Regex("[a-z0-9_.-]+:[a-z0-9_./-]+")) && material!="minecraft:air"
             }) { "Invalid Copycat material assignment" }
+            if(n.kind==BuildingKind.ROTATION_SEGMENT) require(n.inputs.size==1) { "A rotation segment needs exactly one Copycat input" }
             if(n.kind in setOf(BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE)) require(n.inputs.size==1) { "A Copycat transform needs exactly one Copycat input" }
             if(n.kind in setOf(BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)) require(n.inputs.size==1) { "A segment transform needs exactly one segment input" }
             if(n.kind==BuildingKind.STOREY) {
@@ -372,23 +389,25 @@ object BuildingGraphCompiler {
             if(n.kind==BuildingKind.SERVICE_SHAFT) (n.serviceShaft ?: ServiceShaftConfig()).validate()
             if(n.kind==BuildingKind.BUILDING) { require(n.accessInstances.size<=16);n.accessInstances.forEach(VerticalAccess::validateInstance) }
             require(n.roofLevel==null || n.kind==BuildingKind.ROOF_LEVEL) { "Roof-level settings belong to a roof level" }
+            require(n.roofPeak.isNullOrEmpty() || n.kind==BuildingKind.ROOF && !n.assembly) { "A roof peak Copycat belongs to a simple roof; explicit roofs use their ridge template" }
+            require(n.roofEave.isNullOrEmpty() || n.kind==BuildingKind.ROOF && !n.assembly) { "A roof eave Copycat belongs to a simple roof; explicit roofs use their eave template" }
             require(n.roofConfig==null || n.kind==BuildingKind.ROOF) { "Roof templates belong to a roof" }
             if(n.roofConfig!=null) {
                 val refs=n.roofConfig.variants.values+n.roofConfig.families.flatMap { it.variants.values }
                 refs.filter(String::isNotEmpty).forEach { require(nodes[it]?.kind in CopycatBooleans.sourceKinds) { "Roof templates require a connected Copycat source" } }
-                if(n.roofConfig.wall.isNotEmpty()) require(nodes[n.roofConfig.wall]?.kind in (CopycatBooleans.sourceKinds+setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE))) { "Roof walls require a Copycat or wall segment source" }
+                if(n.roofConfig.wall.isNotEmpty()) require(nodes[n.roofConfig.wall]?.kind in (CopycatBooleans.sourceKinds+setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE))) { "Roof walls require a Copycat or wall segment source" }
             }
             if(n.kind==BuildingKind.ROOF_LEVEL) Roofs.validate(n.roofLevel ?: RoofLevelConfig())
             require(n.levelIds.isEmpty() || n.kind==BuildingKind.BUILDING && n.levelIds.keys.all { it in n.levels } && n.levelIds.values.distinct().size==n.levelIds.size) { "Invalid storey instance identities" }
             if(n.kind==BuildingKind.ROOF) require(n.roofType in listOf("flat","gable") && n.ridge in 0..1 && n.overhang in 0..2 && n.walls.keys.all { it in setOf("0","1","2","3") })
             require(n.finish.isEmpty() || n.kind==BuildingKind.FLOOR && n.finish in CARPETS && n.thickness>=2) { "Carpet floors need a structural layer below the carpet" }
-            for(p in BuildingPorts.of(n,graph)) if(p.source.isNotEmpty()) {
+            for(p in BuildingPorts.of(n,graph,includeInactive=true)) if(p.source.isNotEmpty()) {
                 val source=nodes[p.source] ?: error("Missing source for ${n.name.ifEmpty { n.kind.name }}")
                 require(source.kind in p.accepts) { "Incompatible ${source.kind} → ${n.kind} socket ${p.key}" }
             }
         }
         val done=mutableSetOf<String>();val active=mutableSetOf<String>()
-        fun visit(id:String) { if(id in done) return;require(active.add(id)) { "Cycle in building graph" };BuildingPorts.of(nodes.getValue(id),graph).filter { it.source.isNotEmpty() }.forEach { visit(it.source) };active.remove(id);done+=id }
+        fun visit(id:String) { if(id in done) return;require(active.add(id)) { "Cycle in building graph" };BuildingPorts.of(nodes.getValue(id),graph,includeInactive=true).filter { it.source.isNotEmpty() }.forEach { visit(it.source) };active.remove(id);done+=id }
         nodes.keys.forEach { visit(it) }
     }
     val CARPETS=listOf("white","orange","magenta","light_blue","yellow","lime","pink","gray","light_gray","cyan","purple","blue","brown","green","red","black").map { "minecraft:${it}_carpet" }
@@ -438,7 +457,7 @@ object BuildingGraphCompiler {
         require(parts.size<=32) { "Shared walls exceed 32 source parts in one block" }
         return first.copy(parts=Geometry.normalized(parts,groups),groups=groups,surfaces=surfaces)
     }
-    class Evaluation(val graph:BuildingGraph,val palette:Map<String,String>,forms:Map<String,Form>,val modules:Map<String,Module>) {
+    class Evaluation(val graph:BuildingGraph,val palette:Map<String,String>,forms:Map<String,Form>,val modules:Map<String,Module>,private val resultId:String=graph.resultNode().id) {
         val forms:MutableMap<String,Form> = forms.toMutableMap()
         private val nodes=graph.nodes.associate { it.id to BuildingCounts.resolve(graph,it,strict=true) }
         private var activeAccess:AccessCompilation?=null
@@ -455,6 +474,7 @@ object BuildingGraphCompiler {
         private val copycatResults=mutableMapOf<String,SegmentCell>()
         private data class RoofPreviewArea(val footprint:Set<P>,val sample:Boolean)
         private val roofPreviewAreas=mutableMapOf<String,RoofPreviewArea>()
+        private val dormerCeilingCuts=mutableMapOf<P,ExactVolume>()
         init { structure(graph) }
         fun node(id:String,kind:BuildingKind?=null):BuildingNode { val n=nodes[id] ?: error("Connect the missing input");require(kind==null || n.kind==kind);return n }
         fun copycat(id:String)=node(id).also { require(it.kind in CopycatBooleans.sourceKinds) { "Connect a Copycat source" } }
@@ -511,7 +531,16 @@ object BuildingGraphCompiler {
             FixedSegment(1,1,listOf(SegmentCell(sourceCell(P(),source),if(n.materialMode==MaterialMode.GROUPED) n.role else sourceOverride(source))))
         }
         private fun segmentRecipe(id:String):FixedSegment=run {
-            val n=node(id);require(n.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE))
+            val n=node(id);require(n.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE))
+            if(n.kind==BuildingKind.ROTATION_SEGMENT) {
+                val length=BuildingCounts.resolve(graph,n).length
+                val source=copycat(n.inputs.single())
+                val merged=CopycatBooleans.evaluate(n.copy(kind=BuildingKind.COPYCAT_UNION,offsets=emptyList()),(0..3).map { turn ->
+                    SegmentCell(sourceCell(P(),source,turn),sourceOverride(source))
+                },forms,palette)
+                val cells=(0 until length).map { y -> merged.copy(cell=merged.cell.copy(pos=P(0,y,0))) }
+                return@run FixedSegment(1,length,cells)
+            }
             if(n.kind in SegmentBooleans.kinds) {
                 require(n.inputs.all(String::isNotEmpty)) { "Connect every segment operation input" }
                 return@run SegmentBooleans.evaluate(n,n.inputs.map(::segment),forms,palette)
@@ -655,8 +684,10 @@ object BuildingGraphCompiler {
         fun preview(id:String):Plan=previews.getOrPut(id) {
             val n=node(id)
             when(n.kind) {
+                BuildingKind.WINDOW -> StoreyWindows.definition(n,::segment,
+                    { p,entries,turn,type->val c=entries.first().cell;if(c.block.isEmpty()) segmentUnionPlacement(p,entries,type,turn) else Placement(p,block=c.block,material="",component=type) },
+                    { source->sourcePlacement(P(),copycat(source),"wall") })
                 BuildingKind.INT,BuildingKind.INT_ADD,BuildingKind.INT_SUBTRACT,BuildingKind.INT_MULTIPLY,BuildingKind.INT_DIVIDE,BuildingKind.INT_MIN,BuildingKind.INT_MAX -> { BuildingCounts.Evaluation(graph).value(n.id);Plan(emptyList(),emptyList(),emptyList(),0,emptyMap()) }
-                BuildingKind.BUILDING -> building().plan
                 BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE -> Resolver().apply { if(sourceIsAir(n)) clear(P()) else add(sourcePlacement(P(),n,"wall")) }.plan(emptyList())
                 BuildingKind.FLOOR,BuildingKind.CEILING -> {
                     val copies=copycats(n);validateCarpet(n,copies)
@@ -664,7 +695,7 @@ object BuildingGraphCompiler {
                     val r=Resolver();addPlateLayers(r,n,copies,n.kind==BuildingKind.FLOOR,0,sample,sample,n.thickness)
                     r.plan(emptyList())
                 }
-                BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE -> {
+                BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE -> {
                     val value=segment(id);val r=Resolver()
                     if(value.air) for(x in 0 until value.length) for(y in 0 until value.height) for(z in 0 until value.depth) r.clear(P(x,y,z))
                     else for(entries in value.cells.groupBy { it.cell.pos }.values) {
@@ -676,6 +707,7 @@ object BuildingGraphCompiler {
                     r.plan(emptyList())
                 }
                 BuildingKind.GARDEN,BuildingKind.PATH -> landscape(n)
+                BuildingKind.BUILDING -> if(n.id==resultId) building().plan else Evaluation(graph,palette,forms,modules,n.id).building().plan
                 BuildingKind.ROOM_LAYOUT -> {
                     val resolved=RoomTopology.resolve(n,::segment);val r=Resolver()
                     for(item in resolved.instances) if(item.definition.policy!=WallPolicy.OPEN) for(entries in item.value.cells.groupBy { it.cell.pos }.values) {
@@ -685,6 +717,20 @@ object BuildingGraphCompiler {
                     }
                     r.plan(resolved.warnings)
                 }
+                BuildingKind.BAY_WINDOW -> {
+                    val c=n.bayWindow ?: BayWindowConfig()
+                    val host=BuildingNode("bay_sample",BuildingKind.ROOM,height=4,rectangles=listOf(Rect(width=c.width,length=1)),floor=c.floor,ceiling=c.ceiling,
+                        walls=RoomGeometry.edges(listOf(Rect(width=c.width,length=1))).associate { it.id to c.wall })
+                    // A one-cell repeated wall is sufficient for the sample enclosure.
+                    val base=sampleBayRoom(host,c)
+                    val sampleGraph=graph.copy(nodes=graph.nodes+host)
+                    val semantic=RoomTopology.legacy(host,base)
+                    val anchor=SpecialRooms.anchors(sampleGraph,host,semantic).first()
+                    val bay=SpecialRooms.bay(sampleGraph,host,semantic,BayWindowInstance("sample",id,anchor.edge,0),::segment,
+                        { p,entries,turn,type -> val cell=entries.first().cell;if(cell.block.isEmpty()) segmentUnionPlacement(p,entries,type,turn) else Placement(p,block=cell.block,material="",component=type) },::specialRoomPlates,{ source->sourcePlacement(P(),copycat(source),"wall") })
+                    SpecialRooms.attach(base.plan,listOf(bay)).copy(warnings=listOf("Beispielvorschau · Erker an einem Raum mit Höhe 4"))
+                }
+                BuildingKind.DORMER -> dormerSample(n)
                 BuildingKind.ROOM -> room(id).plan
                 BuildingKind.STOREY -> storey(id).plan
                 BuildingKind.ROOF -> {
@@ -715,13 +761,59 @@ object BuildingGraphCompiler {
                 ?: error("Connect this plate to a room or wall-based storey to provide its footprint")
             val copies=copycats(layer);validateCarpet(layer,copies)
             val start=if(floor) (if(layer.occupied) 1 else 0)-layer.thickness else context.height-(if(layer.occupied) 1 else 0)
-            val result=Resolver();addPlateLayers(result,layer,copies,floor,start,RoomGeometry.cells(context.rectangles),RoomGeometry.shell(context.rectangles),context.height)
+            val result=Resolver();addPlateLayers(result,layer,copies,floor,start,RoomGeometry.cells(graph.resolvedNode(context).rectangles),RoomGeometry.shell(graph.resolvedNode(context).rectangles),context.height)
             return result.plan(listOf("Grundriss: "+context.name.ifEmpty { context.id }))
+        }
+        fun validateDormerPlacement(id:String,full:Boolean=false) {
+            node(id,BuildingKind.ROOF_LEVEL)
+            val parentLayout=graph.nodes.firstOrNull { it.kind==BuildingKind.ROOF_LAYOUT && id in it.inputs }
+            val layout=(parentLayout ?: BuildingNode(kind=BuildingKind.ROOF_LAYOUT,inputs=listOf(id))).copy(id=java.util.UUID.randomUUID().toString())
+            val parent=graph.nodes.firstOrNull { it.kind==BuildingKind.ROOF && it.layout==parentLayout?.id }
+                ?: BuildingNode("dormer_validation_roof",BuildingKind.ROOF,assembly=true,role="roof")
+            val context=graph.copy(nodes=graph.nodes+layout)
+            explicitRoof(parent.copy(layout=layout.id),context,preview=true,validateDormersOnly=!full)
+        }
+        private fun specialRoomPlates(n:BuildingNode):CompiledRoom {
+            val interior=RoomGeometry.cells(n.rectangles);val shell=RoomGeometry.shell(n.rectangles)
+            val topology=ResolvedRoomLayout(emptyList(),emptyList(),emptyList(),shell,interior,shell-interior,shell,
+                shell.maxOf { it.x }-shell.minOf { it.x }+1,shell.maxOf { it.z }-shell.minOf { it.z }+1,n.height,true,emptyList())
+            val result=semanticPlates(n,topology,n.height)
+            return CompiledRoom(result.plan,interior,shell,result.minimum,result.maximum,result.bottomThickness,result.topThickness,result.usableHeight)
+        }
+        private fun sampleBayRoom(host:BuildingNode,c:BayWindowConfig):CompiledRoom {
+            require(c.wall.isNotEmpty()) { "Erkerwand anschließen" }
+            val base=specialRoomPlates(host.copy(walls=emptyMap()));val r=Resolver()
+            base.plan.placements.filter { it.component in setOf("floor","ceiling") }.forEach { r.add(it) }
+            val value=segment(c.wall)
+            require(!value.air) { "Erkerwand benötigt feste Geometrie" }
+            for(edge in RoomGeometry.edges(host.rectangles)) for(i in edge.cells.indices) for(y in 0 until host.height) for(z in 0 until value.depth) {
+                val entries=value.cells.filter { it.cell.pos==P(i%value.length,y%value.height,z) }
+                if(entries.isEmpty() || entries.first().cell.empty || entries.first().cell.block=="minecraft:air") continue
+                val p=edge.cells[i]+P(0,y,-(value.depth-1-z)).turn(edge.direction)
+                val cell=entries.first().cell
+                r.add(if(cell.block.isEmpty()) segmentUnionPlacement(p,entries,"wall",edge.direction) else Placement(p,block=cell.block,material="",component="wall"),true)
+            }
+            base.plan.clear.forEach(r::clear)
+            return base.copy(plan=r.plan(emptyList()))
+        }
+        private fun dormerSample(n:BuildingNode):Plan {
+            val c=n.dormer ?: DormerConfig();val length=2*(c.depth+3)
+            val minimumSlope=(c.wallHeight+(c.width+2)*0.5*c.slope.p/c.slope.q-0.125)/(c.depth+2)
+            val sampleSlope=RoofSlope.presets.firstOrNull { it.p.toDouble()/it.q>=minimumSlope } ?: RoofSlope(4,1)
+            val level=BuildingNode("dormer_sample_level",BuildingKind.ROOF_LEVEL,roofLevel=RoofLevelConfig(form=RoofForm.GABLE,axis=1,slope=sampleSlope,overhang16=0),
+                dormers=listOf(DormerInstance("sample",n.id)))
+            val layout=BuildingNode("dormer_sample_layout",BuildingKind.ROOF_LAYOUT,inputs=listOf(level.id))
+            val roof=BuildingNode("dormer_sample_roof",BuildingKind.ROOF,assembly=true,layout=layout.id,role="roof")
+            val context=graph.copy(nodes=graph.nodes+listOf(level,layout,roof))
+            val support=RoofSupport("sample",0,0,buildSet { for(x in 0 until c.width+2) for(z in 0 until length) add(P(x,0,z)) })
+            return Roofs.compile(context,roof,listOf(support),palette,{ id->sourcePlacement(P(),copycat(id),"roof") },wallSegment=::segment,
+                wallPlacement={ p,entries,turn -> val cell=entries.first().cell;if(cell.block.isEmpty()) segmentUnionPlacement(p,entries,"wall",turn) else Placement(p,block=cell.block,material="",component="wall") })
+                .copy(warnings=listOf("Beispielvorschau · Gaube auf einer Dachschräge"))
         }
         /** True when a legacy roof is shown on a labelled 5 × 5 example instead of a connected top storey. */
         fun roofPreviewUsesSample(id:String):Boolean = !node(id,BuildingKind.ROOF).assembly && roofPreviewArea(id).sample
         private fun roofPreviewArea(id:String):RoofPreviewArea=roofPreviewAreas.getOrPut(id) {
-            val result=graph.nodes.single { it.kind==BuildingKind.BUILDING }
+            val result=nodes.getValue(resultId)
             val top=if(result.roof==id) result.levels.filterValues(String::isNotEmpty).entries.maxByOrNull { it.key }?.value else null
             val connected=top?.let { runCatching { storeyPreviewFootprint(it) }.getOrNull() }?.takeIf { it.isNotEmpty() }
             if(connected!=null) RoofPreviewArea(connected,false)
@@ -748,9 +840,17 @@ object BuildingGraphCompiler {
                 }
             }
         }
-        fun room(id:String):CompiledRoom=rooms.getOrPut(id) {
+        private fun baseRoom(id:String):CompiledRoom=rooms.getOrPut(id) {
             val n=node(id,BuildingKind.ROOM)
             if(n.roomConfig?.mode==RoomMode.SEGMENTS) semanticRoom(id).compiled else enclosure(n)
+        }
+        private fun bayGeometry(host:BuildingNode):List<BayGeometry> = host.bayWindowInstances.map { instance ->
+            SpecialRooms.bay(graph,host,semanticRoom(host.id),instance,::segment,
+                { p,entries,turn,type -> val c=entries.first().cell;if(c.block.isEmpty()) segmentUnionPlacement(p,entries,type,turn) else Placement(p,block=c.block,material="",component=type) },::specialRoomPlates,{ id->sourcePlacement(P(),copycat(id),"wall") }).let { it.copy(plan=override(it.plan,host,palette)) }
+        }
+        fun room(id:String):CompiledRoom {
+            val base=baseRoom(id);val bays=bayGeometry(node(id))
+            return if(bays.isEmpty()) base else base.copy(plan=SpecialRooms.attach(base.plan,bays),footprint=base.footprint+bays.flatMap { it.interior },shell=base.shell+bays.flatMap { it.shell })
         }
         fun semanticRoom(id:String):SemanticRoom=semanticRooms.getOrPut(id) {
             val n=node(id,BuildingKind.ROOM)
@@ -764,7 +864,7 @@ object BuildingGraphCompiler {
             val shell=topology.shell;val footprint=topology.interior
             fun plate(id:String,isFloor:Boolean) {
                 if(id.isEmpty()) return
-                val layer=node(id);val isSegment=layer.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)
+                val layer=node(id);val isSegment=layer.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)
                 val value=if(isSegment) segment(id) else null
                 val thickness=value?.depth ?: layer.thickness
                 val occupied=!isSegment && layer.occupied
@@ -875,8 +975,8 @@ object BuildingGraphCompiler {
             }
             val n=graph.resolvedNode(original)
             val floor=node(n.floor);val ceiling=node(n.ceiling)
-            val floorSegment=floor.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)
-            val ceilingSegment=ceiling.kind in setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)
+            val floorSegment=floor.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)
+            val ceilingSegment=ceiling.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)
             require(floor.kind==BuildingKind.FLOOR || n.assembly && floorSegment) { "Connect a floor definition or horizontal segment" }
             require(ceiling.kind==BuildingKind.CEILING || n.assembly && ceilingSegment) { "Connect a ceiling definition or horizontal segment" }
             val floorCopies=if(floorSegment) emptyList() else copycats(floor);val ceilingCopies=if(ceilingSegment) emptyList() else copycats(ceiling)
@@ -1003,11 +1103,11 @@ object BuildingGraphCompiler {
             for(p in footprint) for(y in (if(floorOccupied) 1 else 0) until n.height-(if(ceilingOccupied) 1 else 0)) if(!reservedBody(p+P(0,y,0))) r.clear(p+P(0,y,0))
             return CompiledRoom(override(r.plan(emptyList()),n,palette),footprint,shell,minimum,maximum,(floorThickness-if(floorOccupied || !floorSegment && floor.finish.isNotEmpty()) 1 else 0).coerceAtLeast(0),(ceilingThickness-if(ceilingOccupied) 1 else 0).coerceAtLeast(0),usable)
         }
-        fun storey(id:String):CompiledStorey=storeys.getOrPut(id) {
+        private fun baseStorey(id:String):CompiledStorey {
             val n=node(id,BuildingKind.STOREY)
             if(n.storeyMode=="walls") {
                 val enclosed=enclosure(n)
-                return@getOrPut CompiledStorey(enclosed.plan,enclosed.shell,enclosed.minimum,enclosed.maximum,enclosed.bottomThickness,enclosed.topThickness)
+                return CompiledStorey(enclosed.plan,enclosed.shell,enclosed.minimum,enclosed.maximum,enclosed.bottomThickness,enclosed.topThickness)
             }
             require(n.inputs.isNotEmpty() && n.inputs.all { it.isNotEmpty() }) { "Connect every room input of the storey" }
             if(n.facade!=null || n.inputs.any { node(it).roomConfig?.mode==RoomMode.SEGMENTS }) {
@@ -1016,7 +1116,7 @@ object BuildingGraphCompiler {
                     if(activeAccess!=null) { semanticRooms.remove(source);rooms.remove(source) }
                     SemanticRoomInstance(semanticRoom(source),activeRoomOffset,"room:$index")
                 }
-                return@getOrPut SemanticStoreys.compile(n,instances,::segment,
+                return SemanticStoreys.compile(n,instances,::segment,
                     { p,entries,turn,type->val c=entries.first().cell;if(c.block.isEmpty()) segmentUnionPlacement(p,entries,type,turn) else Placement(p,block=c.block,material="",component=type) },
                     { source->sourcePlacement(P(),copycat(source),"wall") },{ p->activeAccess?.shouldSkipInteriorAir(activeStoreyId,p+P(0,activeStoreyBase,0))==true }).let { result -> result.copy(plan=override(result.plan,n,palette)) }
             }
@@ -1025,7 +1125,7 @@ object BuildingGraphCompiler {
                 val offset=n.offsets.getOrNull(i) ?: P()
                 activeRoomOffset=offset
                 if(activeAccess!=null) rooms.remove(source)
-                val room=room(source)
+                val room=baseRoom(source)
                 val translated=room.footprint.map { it+offset }.toSet()
                 require(translated.none { it in footprint }) { "Room interiors overlap; drag them apart in the storey preview" };footprint+=translated;shell+=room.shell.map { it+offset }
                 room.plan.placements.forEach { p -> val translated=p.copy(pos=p.pos+offset);placements.getOrPut(translated.pos) { mutableListOf() }+=translated };room.plan.clear.forEach { r.clear(it+offset) }
@@ -1035,15 +1135,35 @@ object BuildingGraphCompiler {
                 if(contributions.size>1 && contributions.all { it.block.isEmpty() && it.component in setOf("wall","trim") }) r.add(wallUnion(contributions))
                 else contributions.forEach { r.add(it,true) }
             }
-            CompiledStorey(override(r.plan(emptyList()),n,palette),shell,minimum,maximum,bottom,top)
+            return CompiledStorey(override(r.plan(emptyList()),n,palette),shell,minimum,maximum,bottom,top)
         }
+        fun storey(id:String):CompiledStorey=storeys.getOrPut(id) {
+            val n=node(id,BuildingKind.STOREY);val base=baseStorey(id)
+            if(n.storeyMode=="walls") return@getOrPut withWindows(n,base)
+            val bays=mutableListOf<BayGeometry>()
+            val hosts=n.inputs.mapIndexed { i,source -> node(source) to (n.offsets.getOrNull(i) ?: P()) }
+            for((host,offset) in hosts) for(bay in bayGeometry(host)) {
+                val moved=bay.copy(plan=bay.plan.copy(placements=bay.plan.placements.map { it.copy(pos=it.pos+offset) },clear=bay.plan.clear.map { it+offset }),
+                    opening=bay.opening.map { it+offset }.toSet(),interior=bay.interior.map { it+offset }.toSet(),shell=bay.shell.map { it+offset }.toSet())
+                val other=hosts.filter { it.first!==host || it.second!=offset }.flatMap { (room,p)->baseRoom(room.id).shell.map { it+p } }.toSet()
+                require(moved.shell.intersect(other).isEmpty()) { "Erker an ${host.name.ifBlank { host.id }}: Anschluss liegt an einer Innenwand oder überschneidet einen anderen Raum" }
+                require(bays.none { it.shell.intersect(moved.shell).isNotEmpty() }) { "Erker überschneiden sich" }
+                bays+=moved
+            }
+            withWindows(n,if(bays.isEmpty()) base else base.copy(plan=override(SpecialRooms.attach(base.plan,bays),n,palette),footprint=base.footprint+bays.flatMap { it.shell },roofFootprint=base.footprint,bayOpenings=bays.flatMap { it.opening }.toSet()))
+        }
+        private fun withWindows(n:BuildingNode,base:CompiledStorey):CompiledStorey = base.copy(plan=StoreyWindows.attach(graph,n,base.plan,::segment,
+            { p,entries,turn,type->val c=entries.first().cell;if(c.block.isEmpty()) segmentUnionPlacement(p,entries,type,turn) else Placement(p,block=c.block,material="",component=type) },
+            { source->sourcePlacement(P(),copycat(source),"wall") }))
         fun building():CompiledBuilding {
-            roofContacts.clear()
-            val attachments=BuildingAttachments(graph,::segment,palette) { id -> sourcePlacement(P(),copycat(id),"wall") }
-            val n=graph.nodes.single { it.kind==BuildingKind.BUILDING };require(n.levels[0]?.isNotEmpty()==true) { "Connect the ground floor" };require(n.levels.values.all { it.isNotEmpty() })
-            val r=Resolver();val positions=mutableListOf<StoreyPosition>();var previous:CompiledStorey?=null;var previousBase=0
+            roofContacts.clear();dormerCeilingCuts.clear()
+            val n=nodes.getValue(resultId)
+            val attachments=BuildingAttachments(graph,::segment,palette,n) { id -> sourcePlacement(P(),copycat(id),"wall") }
+            require(n.levels[0]?.isNotEmpty()==true || n.levels.isEmpty() && n.inputs.any { nodes[it]?.kind==BuildingKind.BUILDING }) { "Connect the ground floor or a building graph" }
+            require(n.levels.values.all { it.isNotEmpty() })
+            var r=Resolver();val positions=mutableListOf<StoreyPosition>();var previous:CompiledStorey?=null;var previousBase=0
             data class InstancePlan(val instance:BuildingStoreyInstance,val story:CompiledStorey,val base:Int)
-            val preliminary=graph.storeyInstances().map { instance->
+            val preliminary=graph.storeyInstances(resultId).map { instance->
                 val story=storey(instance.source)
                 val base=previous?.let { previousBase+it.maximum-story.minimum-minOf(it.topThickness,story.bottomThickness) } ?: -story.minimum
                 previous=story;previousBase=base
@@ -1078,8 +1198,12 @@ object BuildingGraphCompiler {
             // The top storey's ceiling already closes a building without a separate roof definition.
             if(n.roof.isNotEmpty()) {
                 val roofNode=node(n.roof,BuildingKind.ROOF)
-                val roof=roofPlan(roofNode,last!!.footprint,if(roofNode.assembly) 0 else roofBase)
-                roof.placements.forEach { r.add(it.copy(pos=it.pos+n.buildingOffset),true) };roof.clear.forEach { r.clear(it+n.buildingOffset) }
+                val roof=roofPlan(roofNode,last!!.roofFootprint,if(roofNode.assembly) 0 else roofBase)
+                if(dormerCeilingCuts.isNotEmpty()) {
+                    val carved=SpecialRooms.carveCeilings(r.plan(emptyList()),dormerCeilingCuts,n.buildingOffset)
+                    r=Resolver();carved.placements.forEach { r.add(it) };val roofPositions=roof.placements.map { it.pos+n.buildingOffset }.toSet();carved.clear.filterNot(roofPositions::contains).forEach(r::clear)
+                }
+                roof.placements.forEach { r.add(it.copy(pos=it.pos+n.buildingOffset),true) };val occupied=r.plan(emptyList()).placements.map { it.pos }.toSet();roof.clear.map { it+n.buildingOffset }.filterNot(occupied::contains).forEach(r::clear)
             }
             n.inputs.forEachIndexed { index,source ->
                 if(source.isEmpty()) return@forEachIndexed
@@ -1099,7 +1223,15 @@ object BuildingGraphCompiler {
                         require(before[p]?.sameVisual(after[p] ?: Placement(block="minecraft:air"))==true || before[p]==null && after[p]==null) { "A roof or wall attachment intersects reserved vertical access at $p" }
                 }
             }
-            return CompiledBuilding(override(attached,n,palette),positions,access?.footprints?.mapValues { (_,points)->points.map { it+n.buildingOffset }.toSet() } ?: emptyMap())
+            var finalPlan=SpecialRooms.carveCeilings(attached,dormerCeilingCuts,n.buildingOffset)
+            val bayCuts=preliminary.flatMap { entry -> entry.story.bayOpenings.map { it+P(0,entry.base,0)+n.buildingOffset } }.toSet()
+            if(bayCuts.isNotEmpty()) {
+                val kept=finalPlan.placements.filterNot { it.pos in bayCuts && it.component in setOf("wall","trim") }
+                val occupied=kept.map { it.pos }.toSet();val carved=Resolver()
+                kept.forEach { carved.add(it) };(finalPlan.clear+bayCuts).filterNot(occupied::contains).forEach(carved::clear)
+                finalPlan=carved.plan(finalPlan.warnings)
+            }
+            return CompiledBuilding(override(finalPlan,n,palette),positions,access?.footprints?.mapValues { (_,points)->points.map { it+n.buildingOffset }.toSet() } ?: emptyMap())
         }
         /** Ground layers extend to a fixed depth; clearance becomes explicit air requirements. */
         private fun landscape(n:BuildingNode):Plan {
@@ -1126,9 +1258,9 @@ object BuildingGraphCompiler {
                 require(node(roof.layout,BuildingKind.ROOF_LAYOUT).inputs.any(String::isNotEmpty)) { "Roof arrangement is pending definition; connect roof levels" }
             }
         }
-        private fun explicitRoof(roof:BuildingNode,context:BuildingGraph=graph,preview:Boolean=false):Plan {
+        private fun explicitRoof(roof:BuildingNode,context:BuildingGraph=graph,preview:Boolean=false,validateDormersOnly:Boolean=false):Plan {
             var previous:CompiledStorey?=null;var previousBase=0
-            val supports=graph.storeyInstances().map { instance->
+            val supports=graph.storeyInstances(resultId).map { instance->
                 val value=if(!preview) storey(instance.source) else runCatching { storey(instance.source) }.getOrElse {
                     val source=node(instance.source,BuildingKind.STOREY)
                     val roomHeight=if(source.storeyMode=="walls") source.height else source.inputs.mapNotNull { id->nodes[id]?.takeIf { it.kind==BuildingKind.ROOM }?.let(graph::resolvedNode)?.height }.maxOrNull() ?: 4
@@ -1139,7 +1271,7 @@ object BuildingGraphCompiler {
                 val tops=value.plan.placements.filter { it.component=="ceiling" }.groupBy { it.pos.copy(y=0) }.mapValues { (_,parts)->parts.maxOf { p->
                     (base+p.pos.y)*16+if(p.block.isNotEmpty()) 16 else kotlin.math.ceil(Geometry.exact(p.parts).cells.flatMap { it.vertices() }.maxOfOrNull { it.y.toDouble() } ?: 16.0).toInt()
                 } }
-                RoofSupport(instance.id,instance.level,base+value.maximum,value.footprint,ceilingByCell=tops)
+                RoofSupport(instance.id,instance.level,base+value.maximum,value.roofFootprint,ceilingByCell=tops)
             }
             return Roofs.compile(context,roof,if(supports.isEmpty() && preview) listOf(RoofSupport("sample",0,0,RoomGeometry.shell(listOf(Rect(width=3,length=3))))) else supports,palette,{ id->sourcePlacement(P(),copycat(id),"roof") },{ reference->placement(P(),reference,roof.role,"roof") },{ id->
                 val value=segment(id)
@@ -1147,14 +1279,18 @@ object BuildingGraphCompiler {
                     val cell=entries.first().cell
                     if(cell.empty || cell.block=="minecraft:air") null else pos to (if(cell.block.isEmpty()) segmentUnionPlacement(P(),entries,"roof") else Placement(block=cell.block,material="",component="roof"))
                 })
-            },contacts=if(preview) null else roofContacts)
+            },contacts=if(preview) null else roofContacts,
+                wallSegment={ id -> segment(id) },wallPlacement={ p,entries,turn -> val c=entries.first().cell;if(c.block.isEmpty()) segmentUnionPlacement(p,entries,"wall",turn) else Placement(p,block=c.block,material="",component="wall") },
+                ceilingCuts=if(preview) null else dormerCeilingCuts,validateDormersOnly=validateDormersOnly)
         }
         /** Shared by compilation and isolated previews, including the exact legacy gable rules. */
         private fun roofPlan(roof:BuildingNode,footprint:Set<P>,roofBase:Int):Plan {
             requireDefinedRoof(roof)
             if(roof.assembly) return explicitRoof(roof)
             val r=Resolver()
-            val coverage=buildSet { for(p in footprint) for(dx in -roof.overhang..roof.overhang) for(dz in -roof.overhang..roof.overhang) add(p+P(dx,0,dz)) }
+            val ex=if(roof.roofType=="gable" && roof.ridge==0) 0 else roof.overhang
+            val ez=if(roof.roofType=="gable" && roof.ridge==1) 0 else roof.overhang
+            val coverage=buildSet { for(p in footprint) for(dx in -ex..ex) for(dz in -ez..ez) add(p+P(dx,0,dz)) }
             require(coverage.size<=8192) { "Roof exceeds 8192 cells" }
             val copies=copycats(roof)
             val ordered=coverage.sortedWith(compareBy({it.z},{it.x}))
@@ -1176,17 +1312,23 @@ object BuildingGraphCompiler {
                     val (h,turn)=profile
                     val part=Part(if(turn<0) "copycats:copycat_slab" else "copycats:copycat_stairs",turn.coerceAtLeast(0))
                     for(t in 0 until roof.thickness) {
-                        val source=copies.getOrNull((t*ordered.size+index)%copies.size.coerceAtLeast(1))
+                        val peak=if(turn<0) roof.roofPeak?.takeIf(String::isNotEmpty)?.let(::copycat) else null
+                        val eave=if(h==0 && turn>=0) roof.roofEave?.takeIf(String::isNotEmpty)?.let(::copycat) else null
+                        val source=peak ?: eave ?: copies.getOrNull((t*ordered.size+index)%copies.size.coerceAtLeast(1))
                         if(source?.let(::sourceIsAir)==true) { r.clear(p+P(0,roofBase+h+t,0));continue }
                         r.add(if(source==null) Placement(p+P(0,roofBase+h+t,0),listOf(part),palette[roof.role] ?: error("Missing roof material"),component="roof")
-                            else sourcePlacement(p+P(0,roofBase+h+t,0),source,"roof",turn.coerceAtLeast(0),if(roof.materialMode==MaterialMode.GROUPED) roof.role else ""))
+                            else sourcePlacement(p+P(0,roofBase+h+t,0),source,"roof",if(peak!=null) roof.ridge else turn.coerceAtLeast(0),if(roof.materialMode==MaterialMode.GROUPED) roof.role else ""))
                     }
                     val lowest=RoomGeometry.directions.minOf { heights[p+it]?.first ?: -1 }
-                    val explicitWall=RoomGeometry.directions.indices.any { q -> p+RoomGeometry.directions[q] !in coverage && roof.walls[q.toString()].orEmpty().isNotEmpty() }
-                    if(!explicitWall) for(y in (lowest+1).coerceAtLeast(0) until h) r.add(placement(p+P(0,roofBase+y,0),"full@1",if(lowest<0) "gable" else roof.role,if(lowest<0) "gable" else "roof"))
+                    val boundary=p in footprint && RoomGeometry.directions.any { p+it !in footprint }
+                    val explicitWall=RoomGeometry.directions.indices.any { q -> q%2==roof.ridge && p+RoomGeometry.directions[q] !in footprint && roof.walls[q.toString()].orEmpty().isNotEmpty() }
+                    // Gable walls stay on the building perimeter; only the roof extends past them.
+                    if(boundary && !explicitWall) for(y in 0 until h) r.add(placement(p+P(0,roofBase+y,0),"full@1","gable","gable"))
+                    else if(!boundary && lowest>=0) for(y in lowest+1 until h) r.add(placement(p+P(0,roofBase+y,0),"full@1",roof.role,"roof"))
                 }
             }
-            for(edge in RoomGeometry.boundary(coverage)) {
+            for(edge in RoomGeometry.boundary(footprint)) {
+                if(roof.roofType=="gable" && edge.direction%2!=roof.ridge) continue
                 val source=roof.walls[edge.direction.toString()].orEmpty();if(source.isEmpty()) continue
                 val s=segment(source);val normal=RoomGeometry.directions[edge.direction]
                 val cells=edge.cells.map { it+P(-normal.x,0,-normal.z) }

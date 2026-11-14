@@ -8,7 +8,7 @@ Stand. Es gibt kein 0.7.0-Release; die Issues bleiben offen.
 | #11 Wandsegment-Raster | Implementiert; ursprüngliche Prüfungen und Browserregression bestehen. |
 | #12 Anzahl und Maße | Implementiert; Fachtests und Browserregression bestehen. |
 | CC-Unterdialoge | Gemeinsamer CC-Rahmen einschließlich neuer Referenz- und Versionsdialoge. |
-| #13 Untergraphen | Versionen, Referenzen, mehrere Ausgänge, Bibliothek, Pakete und Druck-/Bauübernahme implementiert und geprüft; vollständige Browser-Codecs und alle Bearbeitungs-/Fehlerabläufe noch nicht abgenommen. |
+| #13 Untergraphen | Versionen, Referenzen, mehrere Ausgänge, Bibliothek, Pakete und Druck-/Bauübernahme implementiert und geprüft; generierte native Browser-Codecs einschließlich exakter Geometrie integriert; vollständige Bearbeitungs-/Fehlerabläufe noch nicht abgenommen. |
 | #14 Züge | Noch nicht implementiert; Create-Bahnhofsmontage und Referenzzug fehlen. |
 | #15 Bewegungsmittel | Noch nicht implementiert; optionale Adapter und echte Fahrzeugmontage fehlen. |
 | #16 Contraptions | Noch nicht implementiert; Mechanismusadapter und Referenzaufbauten fehlen. |
@@ -16,8 +16,7 @@ Stand. Es gibt kein 0.7.0-Release; die Issues bleiben offen.
 
 Nächste Umsetzungsschritte bleiben in der vereinbarten Reihenfolge:
 
-1. #13 vervollständigen: alle nativen Daten im Browser verlustfrei lesen,
-   bearbeiten und exportieren; vollständige Parameter-/Schnittstellenbedienung,
+1. #13 vervollständigen: vollständige Parameter-/Schnittstellenbedienung,
    fehlende Referenzen und Reparaturpfade einschließlich Speichern prüfen.
 2. Gemeinsamen technischen Vertrag und nachgewiesene, optional ladbare Adapter
    schaffen; die vereinbarten Zusatzmod-Versionen samt Prüfsummen festhalten.
@@ -30,8 +29,16 @@ Nächste Umsetzungsschritte bleiben in der vereinbarten Reihenfolge:
 Prüfdetails und Aufnahmen stehen in [VALIDATION.md](../VALIDATION.md).
 
 
-Geprüft sind 563 Fachtests (561 bestanden, zwei optionale Snapshot-Skips),
+Der ursprüngliche Prüfstand umfasste 563 Fachtests (561 bestanden, zwei optionale Snapshot-Skips),
 beide getrennten GameTest-Läufe mit jeweils 64 bestandenen erforderlichen Tests,
 echte Turtle-Bauten mit 603 beziehungsweise 1115 Platzierungen, native
 Referenzdialoge in beiden GUI-Größen und die bisherigen sowie neuen
 Browserabläufe auf Desktop, Tablet und Mobilgerät.
+
+Integration am 14.11.2026 gegen Master `f81b373`: vollständiger Java-21-Build
+mit 3035 Tests (3033 bestanden, zwei optionale Snapshot-Skips), darunter 2415
+XOR-Matrixfälle. Alle 22 Browser-Testdateien, nativer Rückimport der Browserexporte,
+Produktionsbuild, Ressourcenprüfung und beide nativen Clientabnahmen für Anzahl
+und Referenzeditor bestehen. Die exakte WebGL-Schnittdarstellung und grundlegende
+Referenzbedienung wurden im integrierten Browser erneut geprüft. Die oben
+aufgeführten Weltläufe wurden bei dieser Integration nicht erneut ausgeführt.

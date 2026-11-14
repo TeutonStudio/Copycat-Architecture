@@ -42,6 +42,10 @@ internal object GraphPreviewThumbnails {
     @Volatile private var resourcesChanged=false
     private var level=WeakReference<Any>(null)
     private var reset=false
+    internal var renderSteps=0L
+        private set
+
+    internal fun hasPendingVisible():Boolean = reset || requests.isNotEmpty() || cache.values.any { it.step!=null && it.lastVisible>=frame-1 }
 
     fun invalidateResources() { resourcesChanged=true }
 
@@ -105,6 +109,7 @@ internal object GraphPreviewThumbnails {
                 RenderSystem.applyModelViewMatrix()
                 val thumbnail=GuiGraphics(Minecraft.getInstance(),g.bufferSource())
                 try {
+                    renderSteps++
                     if(entry.step?.invoke(thumbnail)==true) entry.step=null
                 } finally {
                     thumbnail.flush()

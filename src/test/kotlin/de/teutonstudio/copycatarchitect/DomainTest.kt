@@ -90,6 +90,21 @@ class DomainTest {
             assertEquals(p,Generator.generate(b,forms,modules))
         }
     }
+    @Test fun `classic roof extension preserves the entire roof and gables over the original footprint`() {
+        for(ridge in 0..1) {
+            val b=building(w=8,ridge=ridge).copy(overhang=0)
+            val zero=Generator.generate(b,forms,modules)
+            val extended=Generator.generate(b.copy(overhang=2),forms,modules)
+            val footprint=RoomGeometry.cells(b.wings)
+            assertEquals(zero.placements.filter { it.component=="roof" && it.pos.copy(y=0) in footprint },
+                extended.placements.filter { it.component=="roof" && it.pos.copy(y=0) in footprint })
+            assertEquals(zero.placements.filter { it.component=="gable" },extended.placements.filter { it.component=="gable" })
+            assertTrue(extended.placements.filter { it.component=="roof" }.all { p->
+                if(ridge==0) p.pos.x in footprint.minOf { it.x }..footprint.maxOf { it.x }
+                else p.pos.z in footprint.minOf { it.z }..footprint.maxOf { it.z }
+            })
+        }
+    }
     @Test fun `L footprint has connected plates and a single roof skin`() {
         val b=building().copy(wings=listOf(Rect(width=11,length=9),Rect(0,9,5,6)),trimForm="inner@1")
         val p=Generator.generate(b,forms,modules)
@@ -123,7 +138,7 @@ class DomainTest {
     @Test fun `seed library examples generate a deterministic complete L building`() {
         val lib=de.teutonstudio.copycatarchitect.server.Library();lib.seed()
         val b=lib.buildings.getValue("demo@1");val p=Generator.generate(b,lib.forms,lib.modules)
-        assertEquals(1115,p.placements.size)
+        assertEquals(1033,p.placements.size)
         assertTrue(p.placements.map { it.component }.containsAll(listOf("floor","ceiling","wall","corner","trim","gable","roof")))
         val out=java.nio.file.Path.of("build/examples");java.nio.file.Files.createDirectories(out)
         val gson=com.google.gson.GsonBuilder().setPrettyPrinting().create()

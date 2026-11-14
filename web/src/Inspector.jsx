@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { TransformValues } from './TransformValues.jsx'
 import { ArrangementGrid } from './ArrangementGrid.jsx'
+import { NativeFields } from './NativeFields.jsx'
 import { sourceMounting, mountSource, evaluateCount, inspectGraph } from './generated/engine.mjs'
 import { formGroups, model } from './model.js'
 import { MaterialField } from './Workspace.jsx'
 import { copycatShapeNames } from './copycat-options.js'
 
 export const names = {
-  INT:'Anzahl', INT_ADD:'Anzahl addieren', INT_SUBTRACT:'Anzahl subtrahieren', INT_MULTIPLY:'Anzahl multiplizieren', INT_DIVIDE:'Anzahl dividieren', INT_MIN:'Anzahl Minimum', INT_MAX:'Anzahl Maximum',
+  INT_ADD:'Anzahl addieren', INT_SUBTRACT:'Anzahl subtrahieren', INT_MULTIPLY:'Anzahl multiplizieren', INT_DIVIDE:'Anzahl dividieren', INT_MIN:'Anzahl Minimum', INT_MAX:'Anzahl Maximum',
+  WINDOW: 'Fenster', INT: 'Anzahl', ROTATION_SEGMENT: 'Rotationssegment', AREA: 'Fläche', SEGMENT_LAYOUT: 'Segmentanordnung', ROOM_GEOMETRY: 'Raumgrundriss', ROOF_LEVEL: 'Dachebene', ROOF_LAYOUT: 'Dachanordnung', STAIRWELL: 'Treppenhaus', ELEVATOR_SHAFT: 'Aufzugsschacht', SERVICE_SHAFT: 'Installationsschacht', GARDEN: 'Garten', PATH: 'Weg', ROOM_LAYOUT: 'Raumanordnung', BAY_WINDOW: 'Erker', DORMER: 'Gaube',
   INPUT: 'Grundform', UNION: 'Vereinigung', INTERSECTION: 'Schnitt', DIFFERENCE: 'Differenz',
   SYMMETRIC_DIFFERENCE: 'Symmetrische Differenz', ROTATE: 'Copycat rotieren', ROTATION: 'Rotation', OUTPUT: 'Ergebnis',
   SAVED: 'Gespeicherter Copycat', MIRROR: 'Copycat spiegeln',
@@ -15,22 +17,34 @@ export const names = {
   COPYCAT_UNION: 'Copycat-Vereinigung', COPYCAT_INTERSECTION: 'Copycat-Schnitt', COPYCAT_DIFFERENCE: 'Copycat-Differenz', COPYCAT_SYMMETRIC_DIFFERENCE: 'Symmetrische Copycat-Differenz',
   SEGMENT_MIRROR: 'Segment spiegeln', SEGMENT_ROTATE: 'Segment rotieren',
   SEGMENT_UNION: 'Segment-Vereinigung', SEGMENT_INTERSECTION: 'Segment-Schnitt', SEGMENT_DIFFERENCE: 'Segment-Differenz', SEGMENT_SYMMETRIC_DIFFERENCE: 'Symmetrische Segment-Differenz',
-  AREA:'Flächengebiet', SEGMENT_LAYOUT:'Segmentanordnung', COPYCAT: 'Copycat-Referenz', SEGMENT: 'Wandsegment', PATTERN: 'Wandmuster', FLOOR: 'Boden', CEILING: 'Decke',
+  REFERENCE: 'Referenz', COPYCAT: 'Referenz', SEGMENT: 'Segment', PATTERN: 'Wandmuster', FLOOR: 'Boden', CEILING: 'Decke',
   ROOM: 'Raum', STOREY: 'Geschoss', ROOF: 'Dach', BUILDING: 'Gebäude'
 }
 
 export function portName(port, node) {
-  if (['length','height','depth'].includes(port.id)) return ({length:'Länge · X',height:'Höhe · Y',depth:'Tiefe · Z'})[port.id]
+  if (['length','height','depth'].includes(port.id) && node.kind !== 'ROTATION_SEGMENT') return ({length:'Länge · X',height:'Höhe · Y',depth:'Tiefe · Z'})[port.id]
   if (node.kind.startsWith('INT') && port.id.startsWith('in:')) return `Anzahl ${Number(port.id.slice(3))+1}`
-  if (port.id === 'geometry') return 'Flächengeometrie'
-  if (port.id === 'layout') return 'Segmentanordnung'
-  if (port.id.startsWith('region:')) return port.id.replace('region:','Bereich ')
+  if (node.kind === 'WINDOW' && port.id === 'in:0') return 'Fenstergeometrie (Segment)'
+  if (port.name) return port.name
+  const native = { length: 'Länge (Y)', roofPeak: 'Dachspitze (optional)', roofEave: 'Dachendkante / Traufe (optional)', layout: 'Anordnung', geometry: 'Grundriss', area: 'Fläche', tread: 'Stufen', landing: 'Podest', enclosure: 'Schachtwände' }
+  if (native[port.id]) return native[port.id]
+  if (port.id.startsWith('region:')) return `Bereich ${port.id.slice(7)}`
+  if (port.id.startsWith('semantic:')) {
+    const words = { window: 'Fenster', bay: 'Erker', dormer: 'Gaube', wall: 'Wand', front: 'Front', floor: 'Boden', ceiling: 'Decke', roof: 'Dach', source: 'Quelle', opening: 'Öffnung', column: 'Säule', mask: 'Maske', inset: 'Einsatz' }
+    return port.id.slice(9).split(':').map(word => words[word] || word).join(' · ')
+  }
+  if (port.id.startsWith('edge:')) return `Wandkante ${port.id.slice(5)}`
   if (port.id === 'rotation') return 'Rotationen'
   if (port.id === 'mirroring') return 'Spiegelungen'
   const [kind, key] = port.id.split(':')
   if (node.kind === 'SEGMENT_DIFFERENCE' && kind === 'in') return key === '0' ? 'A · Grundsegment' : 'B · Abzug'
   if (node.kind === 'COPYCAT_DIFFERENCE' && kind === 'in') return key === '0' ? 'A · Grundform' : 'B · Abzug'
-  if (kind === 'in') return `${(node.kind === 'PATTERN' || node.kind.startsWith('SEGMENT_')) ? 'Segment' : node.kind === 'STOREY' ? 'Raum' : 'Copycat'} ${Number(key) + 1}`
+  if (kind === 'in') {
+    if (node.kind === 'ROOF' && node.assembly && Number(key) < 6) return ['Dachfläche', 'Dachendkante / Traufe', 'Ortgang', 'First', 'Grat', 'Kehle'][Number(key)]
+    const family = node.kind === 'BUILDING' ? 'Außenanlage' : node.kind === 'ROOF_LAYOUT' ? 'Dachebene' : node.kind === 'ROOM_LAYOUT' || node.kind === 'PATTERN' || node.kind.startsWith('SEGMENT_') ? 'Segment' : node.kind === 'STOREY' ? 'Raum' : 'Copycat'
+    return `${family} ${Number(key) + 1}`
+  }
+  if (kind === 'wall' && node.kind === 'ROOF') return `${node.roofType === 'gable' ? 'Giebel' : 'Dachrand'} · ${['Nord', 'Ost', 'Süd', 'West'][Number(key)]}`
   if (kind === 'wall') return `Wand ${port.id.slice(5)}${port.length ? ` · ${port.length} B` : ''}`
   if (kind === 'level') return Number(key) === 0 ? 'Erdgeschoss' : `Geschoss ${Number(key) > 0 ? '+' : ''}${key}`
   if (kind === 'access') return `Zugang ${Number(key) + 1}`
@@ -84,7 +98,7 @@ function NumberGrid({ entries, keys, ranges, update, prefix, scale = 1, unit = '
   </div>)
 }
 
-export function NodeFields({ mode, node, document, edit, library, onChooseCopycat, onImportCopycat }) {
+export function NodeFields({ mode, node, document, edit, library, onChooseCopycat, onImportCopycat, onInspectNode, onOpenSourceCopy }) {
   const field = (key, label, options, type, min, max) =>
     <Field key={key} label={label} value={node[key]} onChange={value => edit({ [key]: value })} {...{ options, type, min, max }} />
   const number = (key, label, min, max) => field(key, label, undefined, 'number', min, max)
@@ -92,8 +106,8 @@ export function NodeFields({ mode, node, document, edit, library, onChooseCopyca
   const source = model.shapes.find(shape => shape.id === node.part?.source)
   const sourceName = node.kind === 'INPUT' ? copycatShapeNames[source?.name] || source?.name
     : node.kind === 'SAVED' ? node.savedCopycat?.name : library.forms?.[node.form]?.name || node.form
-  const copycatPicker = <button type="button" className="copycat-source-button" aria-label="Copycat auswählen" onClick={onChooseCopycat}>
-    <span>Copycat auswählen …</span><small>{sourceName || 'Grundform oder gespeicherte Form'}</small>
+  const copycatPicker = <button type="button" className="copycat-source-button" aria-label={mode === 'building' ? 'Referenz auswählen' : 'Copycat auswählen'} onClick={onChooseCopycat}>
+    <span>{mode === 'building' ? 'Referenz auswählen …' : 'Copycat auswählen …'}</span><small>{sourceName || 'Grundform oder gespeicherte Form'}</small>
   </button>
   if (mode === 'form') {
     const part = node.part
@@ -102,10 +116,11 @@ export function NodeFields({ mode, node, document, edit, library, onChooseCopyca
         {...{ options, type, min, max }} />
     const adapter = model.shapes.find(shape => shape.id === part.source)
     const groupFields = ['UNION', 'SYMMETRIC_DIFFERENCE'].includes(node.kind)
-    return <>
-      {node.kind === 'SAVED' && copycatPicker}
-      {node.kind === 'MIRROR' && <Field label="Spiegelebene" value={node.mirror?.plane || 'X'} options={['X', 'Y', 'Z']} onChange={plane => edit({ mirror: { plane } })} />}
-      {node.kind === 'INPUT' && <>
+  return <>
+      <NativeFields {...{ mode, node, edit, document, library, onInspectNode }} />
+      {node.kind === 'SAVED' && <>{copycatPicker}<button onClick={onOpenSourceCopy}>Als Kopie im Graph öffnen/bearbeiten</button></>}
+      {node.kind === 'MIRROR' && <Field label="Spiegelebene" value={node.mirror?.plane || 'X'} options={model.mirrorPlanes} onChange={plane => edit({ mirror: { plane } })} />}
+      {node.kind === 'INPUT' && adapter && <>
         {copycatPicker}
         {partField('size', 'Größe', undefined, 'number', 1, adapter.max)}
         {partField('turn', 'Drehung um Y', directions)}
@@ -133,75 +148,21 @@ export function NodeFields({ mode, node, document, edit, library, onChooseCopyca
     </>
   }
 
-  if (node.kind.startsWith('INT')) {
+  if (node.id === 'empty_wall') return <p className="hint">Standardquelle für eine freie Wandöffnung.</p>
+    if (node.kind.startsWith('INT')) {
     let result
     try { result = evaluateCount(document, node.id) } catch (error) { result = error.message }
     return <>{field('name', 'Knotenname')}{node.kind === 'INT' && number('countValue','Anzahl',-2147483648,2147483647)}<p role="status">{result}</p><p className="hint">Ganzzahldivision rundet gegen null.</p></>
   }
-  if (['ROTATION', 'MIRRORING'].includes(node.kind)) return <>{field('name', 'Knotenname')}<TransformValues node={node} edit={edit} /></>
 
-  if (node.kind === 'AREA') return <AreaFields node={node} edit={edit} />
-  if (node.kind === 'SEGMENT_LAYOUT') return <>{field('name','Knotenname')}{number('length','Länge · Fallback X',1,128)}{number('height','Höhe · Fallback Y',1,128)}{number('depth','Tiefe · Fallback Z',1,128)}<DimensionInfo node={node} document={document} /><p className="hint">Verbundene Anzahl-Quellen steuern die Maße. Flächengeometrie muss dieselbe Länge und Höhe besitzen.</p></>
-  if (node.id === 'empty_wall') return <p className="hint">Standardquelle für eine freie Wandöffnung.</p>
-  const enclosure = node.kind === 'ROOM' || (node.kind === 'STOREY' && node.storeyMode === 'walls')
-  const references = key => Object.keys(library[key] ?? {})
-  const ref = (key, label, list) => <Field label={label} value={node[key]} list={list} onChange={value => edit({ [key]: value })} />
-  const updateRect = (index, rect) => edit({ rectangles: node.rectangles.map((item, i) => i === index ? rect : item) })
   return <>
-    <datalist id="library-forms">{references('forms').map(id => <option key={id} value={id} />)}</datalist>
-    <datalist id="library-modules">{references('modules').map(id => <option key={id} value={id} />)}</datalist>
     {field('name', 'Knotenname')}
-    {node.kind === 'COPYCAT' && <>
-      {copycatPicker}
-      <button type="button" onClick={onImportCopycat}>Formdatei laden</button>
-      <p className="hint">Grundformen und gespeicherte Formen lassen sich vor dem Laden in 3D ansehen.</p>
-    </>}
-    {node.kind === 'COPYCAT_MIRROR' && !node.mirroring && <Field label="Spiegelebene" value={node.mirror?.plane || 'X'} options={['X', 'Y', 'Z']} onChange={plane => edit({ mirror: { plane } })} />}
-    {node.kind === 'SEGMENT_MIRROR' && <>
-      {!node.mirroring && field('rotationAxis', 'Spiegelebene', ['X', 'Y', 'Z'])}
-      <Field label="Nur Blockpositionen spiegeln" type="checkbox" value={node.mirrorPositionsOnly === true} onChange={mirrorPositionsOnly => edit({ mirrorPositionsOnly })} />
-      <p className="hint">Ohne diese Option werden auch die Copycat-Formen innerhalb der Blockzellen gespiegelt.</p>
-    </>}
-    {['COPYCAT_ROTATE', 'SEGMENT_ROTATE'].includes(node.kind) && !node.rotation && <>{field('rotationAxis', 'Drehachse', ['X', 'Y', 'Z'])}{field('quarterTurns', 'Drehwinkel', angles)}</>}
-    {['COPYCAT_DIFFERENCE', 'SEGMENT_DIFFERENCE'].includes(node.kind) && <button type="button" onClick={() => edit({ inputs: [...node.inputs].reverse() })}>A / B tauschen</button>}
-    {field('role', 'Materialrolle')}
-    {field('materialMode', 'Materialmodus', materialModes)}
-    {node.kind === 'STOREY' && field('storeyMode', 'Zusammensetzung', [['rooms', 'Aus Räumen'], ['walls', 'Aus Wänden']])}
-    {['COPYCAT', 'SEGMENT', 'FLOOR', 'CEILING', 'ROOF'].includes(node.kind) && ref('form', 'Form aus Bibliothek', 'library-forms')}
-    {node.kind === 'SEGMENT' && <>
-      {ref('module', 'Modul aus Bibliothek', 'library-modules')}
-      <DimensionInfo node={node} document={document} />
-      {field('block', 'Vollblock-ID')}
-      {number('length', 'Länge', 1, 128)}
-      {number('depth', 'Tiefe', 1, 128)}
-    </>}
-    {(enclosure || ['SEGMENT', 'PATTERN'].includes(node.kind)) && number('height', 'Höhe', 1, node.kind === 'SEGMENT' ? 128 : 16)}
-    {['FLOOR', 'CEILING', 'ROOF'].includes(node.kind) && number('thickness', 'Dicke', 1, 4)}
-    {['FLOOR', 'CEILING'].includes(node.kind) && field('occupied', 'Raumhöhe belegen', undefined, 'checkbox')}
-    {node.kind === 'FLOOR' && field('finish', 'Bodenbelag', [['', 'Kein Belag'], ...model.carpets])}
-    {node.kind === 'ROOF' && <>
-      {field('roofType', 'Dachform', typeNames)}
-      {field('ridge', 'Firstrichtung', [[0, 'Nord–Süd (Z)'], [1, 'Ost–West (X)']])}
-      {number('overhang', 'Überhang', 0, 2)}
-    </>}
+    {node.kind === 'COPYCAT' && <>{copycatPicker}{!node.block && library.forms?.[node.form] && <button onClick={onOpenSourceCopy}>Als Kopie im Graph öffnen/bearbeiten</button>}<button type="button" onClick={onImportCopycat}>Formdatei laden</button></>}
+    <NativeFields {...{ mode, node, edit, document, library, onInspectNode }} />
+    {["SEGMENT", "SEGMENT_LAYOUT"].includes(node.kind) && <DimensionInfo node={node} document={document} />}
+    {node.kind === "SEGMENT" && node.inputs?.some(Boolean) && <ArrangementGrid key={node.id} {...{ node, document, library, edit }} />}
     {['ROOM', 'STOREY', 'BUILDING'].includes(node.kind) && field('preview', 'Vorschaufilter', viewFilters)}
-    {enclosure && <details open><summary>Grundriss</summary>
-      <NumberGrid entries={node.rectangles} keys={['x', 'z', 'width', 'length']}
-        ranges={{ x: [-32, 32], z: [-32, 32], width: [1, 32], length: [1, 32] }} prefix="Fläche" update={updateRect} />
-      <div className="button-row">
-        <button type="button" disabled={node.rectangles.length >= 16} onClick={() => edit({
-          rectangles: [...node.rectangles, { x: 3, z: 0, width: 3, length: 3 }]
-        })}>+ Fläche</button>
-        <button type="button" disabled={node.rectangles.length <= 1}
-          onClick={() => edit({ rectangles: node.rectangles.slice(0, -1) })}>Letzte entfernen</button>
-      </div>
-    </details>}
-    {(node.kind === 'SEGMENT' && node.inputs?.some(Boolean) || node.kind === 'PATTERN' || node.kind === 'SEGMENT_UNION' || node.kind === 'STOREY' && !enclosure) && <ArrangementGrid key={node.id} {...{ node, document, library, edit }} />}
-    {node.kind === 'STOREY' && !enclosure && <details><summary>Raumversatz</summary>
-      <NumberGrid entries={node.inputs.map((_, i) => node.offsets[i] ?? { x: 0, y: 0, z: 0 })}
-        keys={['x', 'z']} ranges={{ x: [-64, 64], z: [-64, 64] }} prefix="Raumversatz" scale={16} unit="hB · Raster 16" update={(index, offset) =>
-          edit({ offsets: node.inputs.map((_, i) => i === index ? offset : node.offsets[i] ?? { x: 0, y: 0, z: 0 }) })} />
-    </details>}
+    {['COPYCAT_DIFFERENCE', 'SEGMENT_DIFFERENCE'].includes(node.kind) && <button type="button" onClick={() => edit({ inputs: [...node.inputs].reverse() })}>A / B tauschen</button>}
   </>
 }
 
@@ -248,14 +209,6 @@ export function DocumentFields({ mode, document, edit, library, materials, setMa
       <p className="hint">{Object.keys(library.forms ?? {}).length} Formen · {Object.keys(library.modules ?? {}).length} Module geladen</p>
     </>}
   </details>
-}
-
-function AreaFields({node,edit}) {
-  const [text,setText]=useState(JSON.stringify(node.coordinates ?? []))
-  const [error,setError]=useState('')
-  return <><label>Rasterpunkte (JSON: x, y=0, z)<textarea value={text} onChange={e=>setText(e.target.value)} /></label>
-    <button type="button" onClick={()=>{try {const coordinates=JSON.parse(text);if(!Array.isArray(coordinates)) throw Error('Eine Liste von Rasterpunkten eingeben.');edit({coordinates});setError('')}catch(error){setError(error.message)}}}>Fläche übernehmen</button>
-    {error && <p role="alert">{error}</p>}</>
 }
 
 function DimensionInfo({node,document}) {

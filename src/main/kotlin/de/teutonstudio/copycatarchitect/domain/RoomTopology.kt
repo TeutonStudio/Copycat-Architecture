@@ -39,6 +39,7 @@ object RoomTopology {
                 val original=nodes[id] ?: error("Connect the missing segment source")
                 val n=graph.resolvedNode(original)
                 val value=when(n.kind) {
+                    BuildingKind.ROTATION_SEGMENT -> FixedSegment(1,n.length,emptyList())
                     BuildingKind.SEGMENT -> {
                         require(!n.assembly || n.layout.isNotEmpty() && nodes[n.layout]?.kind==BuildingKind.SEGMENT_LAYOUT) { "Connect a segment arrangement source" }
                         require(n.assembly || n.inputs.isNotEmpty() || n.block.isNotEmpty() || n.module.isEmpty()) { "Module-library dimensions are pending" }

@@ -12,12 +12,20 @@ object ClientSmoke {
         if(CommerceQuarterGraphProfile.enabled) CommerceQuarterGraphProfile.frame()
     }
     fun tick(event:ClientTickEvent.Post) {
+        if(java.lang.Boolean.getBoolean("architect.groupGraphInterfaceSmoke")) {
+            if(frames>lastFrame && GroupGraphInterfaceSmoke.tick()) lastFrame=frames+1
+            return
+        }
         if(CommerceQuarterGraphProfile.enabled) {
             if(frames>lastFrame) { lastFrame=frames;CommerceQuarterGraphProfile.tick() }
             return
         }
         if(java.lang.Boolean.getBoolean("architect.graphSelectionSmoke")) {
             if(frames>lastFrame && GraphSelectionSmoke.tick()) lastFrame=frames+1
+            return
+        }
+        if(java.lang.Boolean.getBoolean("architect.specialRoomsSmoke")) {
+            if(frames>lastFrame && SpecialRoomsSmoke.tick()) lastFrame=frames+1
             return
         }
         if(java.lang.Boolean.getBoolean("architect.roomMountingSmoke")) {

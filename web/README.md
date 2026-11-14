@@ -1,4 +1,4 @@
-# Copycat Architect Graphstudio 0.4
+# Copycat Architect Graphstudio 0.6.4
 
 Browsereditor für Form- und Gebäudegraphen. Die Beispieldateien stammen aus
 [`examples/`](../examples). Die beiden Editoren verwalten getrennte Entwürfe.
@@ -10,7 +10,9 @@ Benötigt werden Node.js 22.12 oder neuer, Java 21, Bash und curl.
 ```sh
 cd web
 npm ci
+../gradlew -p .. test --tests "*GraphstudioExchangeTest.nativeCorpus"
 npm test
+../gradlew -p .. test --tests "*GraphstudioExchangeTest.browserExports" --rerun
 npm run dev
 ```
 
@@ -22,8 +24,81 @@ der eingebundenen Kotlin-Standardbibliothek im Ausgabeverzeichnis ab.
 
 Der Workflow prüft außerdem mit `./gradlew test` die Minecraft-Seite der
 gemeinsamen Domänenlogik. Der Browser wird aus dem Fachkern desselben
-Repository-Stands gebaut. Seine Oberfläche gibt nur Knoten und Einstellungen
-frei, die der Browser verlustfrei lesen, bearbeiten und exportieren kann.
+Repository-Stands gebaut. Native Knoten und Einstellungen werden verlustfrei gelesen, bearbeitet und exportiert.
+Die unten beschriebene Referenzerweiterung hat einen eigenen Browservertrag.
+
+## Vorschau-HUD
+
+Die 3D-Vorschau besitzt zwei seitliche Panels: links die sechs Seitenansichten
+und **Einpassen**, rechts Status, Achsenlegende, Warnungen und Materialbedarf.
+Die Zeichenfläche nutzt dazwischen die volle Höhe; lange Inhalte und Ansichten
+werden mit Vor-/Zurück-Tasten in Seiten aufgeteilt. Das gilt auch bei schmaler Seitenleiste. Im Kopf schaltet
+**Graph / Selektiert** direkt zwischen Gesamtergebnis und ausgewähltem Knoten
+um. Der aktive Knopf ist hervorgehoben; Tab und Enter bzw. Leertaste bedienen
+den Schalter per Tastatur.
+
+Die Arbeitsfläche bleibt innerhalb des Browserfensters. Bei schmalen oder flachen
+Fenstern schalten **Graph / Vorschau / Eigenschaften** zwischen den Ansichten um.
+**Datei & Bibliothek** öffnet die vorhandenen Datei-, Beispiel-, Speicher- und
+Undo-Funktionen. Der **Inspektor scrollt innerhalb seiner Fläche**; alle Eigenschaften
+bleiben ohne Seitenwechsel erreichbar. Die Website selbst scrollt weder horizontal
+noch vertikal. Werkzeuge, Bibliotheken und Vorschau-HUD verwenden Seitensteuerungen.
+
+## Referenzknoten und Architekturvorlagen
+
+Im Gebäudegraph heißt die bisherige Copycat-Quelle **Referenz**. **Referenz auswählen**
+öffnet einen gemeinsamen Dialog mit Grundformen, gespeicherten Formen, Gebäudegraphen
+sowie gespeicherten Knotengruppen/Karten. Ordner entstehen aus Namen mit `/`.
+Der Ordner **deutsche Renaisance** enthält zwölf vollständige Bauteile, darunter
+Wandsegmente, Säule, Pilaster, Kreuzstock- und Rundbogenfenster, Portal, Gesims,
+Sockelband, Ziergiebel und Balustrade. Einzelne Copycat-Bauteile liegen im Unterordner
+**Bauteile**. Eine Vorlage setzt einen vollständigen Bauteilknoten ein.
+
+Bei Graphen und Gebäudegruppen wählt **Ergebnisausgang** den typisierten Ausgang.
+Die Instanz bleibt ein sichtbarer Knoten, hält ihre Definition samt Bibliothek und
+Versionsnummer fest und veröffentlicht offene Eingänge als typisierte Anschlüsse.
+Spätere Änderungen oder das Löschen des Bibliothekseintrags verändern bestehende
+Instanzen nicht. Die 3D-Vorschau wertet die eingebettete Definition aus; inkompatible
+Verbindungen, rekursive Definitionen und Überschreitungen der nativen Knotengrenze
+werden abgewiesen. Graphspeicherungen erhalten fortlaufende Versionen.
+
+**Als Kopie im Graph öffnen** öffnet die Auswahl als eigenen Entwurf. Bei einer
+vollständigen Architekturvorlage zeigt der Gebäudegraph die Copycat-Quellen,
+ihre Anordnung und das Segment. Im Inspektor einer Quelle führt
+**Als Kopie im Graph öffnen/bearbeiten** weiter in den Formgraphen.
+Die 32 Einzelprofile des Renaissance-Bausatzes werden aus ihren gespeicherten
+Rasterprofilen als bearbeitbare Grundformen, Schnitte, Differenzen und Vereinigungen
+rekonstruiert. Dies ist eine geometrisch geprüfte Konstruktion, keine wiederhergestellte
+ursprüngliche Bearbeitungshistorie. Komplexe Profile enthalten kleinere Baugruppen,
+die mit derselben Aktion bis zu ihren Grundformen geöffnet werden können.
+
+**In Bauteilkopie übernehmen** beziehungsweise **In Formkopie übernehmen** wendet
+eine bearbeitete Quelle ausdrücklich auf die eigene Kopie an. **Zurück ohne Übernahme**
+kehrt ohne diese Änderung zurück. Materialien, Rückweg und offene Kopie bleiben beim
+Neuladen erhalten. Bereits vorhandene, noch nicht gespeicherte Zielentwürfe werden vor
+dem Öffnen unter **Entwurf vor Kopie** in der Graphbibliothek gesichert. Vorlage und
+bestehende Referenzversionen werden nicht geändert; die Kopie kann unter eigenem Namen
+gespeichert und wiederverwendet werden. `editableGraph` und `editableMaterials` halten
+bei gespeicherten Formquellen die zugehörige bearbeitbare Konstruktion fest.
+
+Der Browservertrag verwendet `referenceSchema: 1` und `kind: "REFERENCE"` mit
+`reference: {schema, id, version, output, document, library, bindings}` sowie
+`referenceInputs` und optionalen `referenceOverrides` für Instanzeinstellungen. JSON-Export, Zwischenablage und Browsersicherung erhalten diese
+Definitionen. **Dieses erweiterte Format benötigt den in
+[Issue #26](https://github.com/TeutonStudio/Copycat-Architecture/issues/26)
+beschriebenen Modumbau, bevor es im Spiel importiert werden kann.** Dokumente ohne
+diese Erweiterung verwenden weiterhin den bisherigen Minecraft-Vertrag.
+
+Browserprüfung gegen einen gestarteten Entwicklungs- oder Produktionsserver:
+
+```sh
+python3 tools/verify-reference-browser.py --url http://127.0.0.1:4193/ --chromium /pfad/zu/chromium
+```
+
+Sie prüft Vorlagenauswahl, 3D-Vorschau, Übernahme, erneutes Laden und alle Seiten
+von Eigenschaften, Werkzeugen, HUD und Bibliothek bei zehn Fenstergrößen
+(einschließlich 320 × 568, 844 × 390 und den effektiven CSS-Fenstergrößen bei
+125/150/200 % Zoom auf einem 1280 × 720 Bildschirm).
 
 ## Austausch mit Minecraft
 
@@ -62,18 +137,29 @@ Ausrichtungs-Enums übersetzen weiterhin in das vorhandene Quellformat. Nicht un
 
 Die vollständige deutsche [Knotenreferenz](../docs/wiki/Knotenreferenz.md) dokumentiert den gemeinsamen Knotenvertrag einschließlich zusätzlicher nativer Funktionen; jede Knotenbeschreibung kennzeichnet ihre Browserverfügbarkeit.
 
-## Integration mit dem nativen Mod ab 0.6.0
+## Gemeinsamer Modellstand 0.6.1
 
-Der Browser kompiliert den vollständigen aktuellen Fachkern. Der Knoten- und
-Anschlussvertrag wird aus derselben `graph-models.json` wie im Mod geladen;
-Browseradapter ersetzen JVM-Caches, Bitsets und Ganzzahlarithmetik.
+Alle zehn Form- und 38 Gebäudeknoten werden aus dem Modkatalog angeboten.
+`generate-codec.mjs` erzeugt den vollständigen JSON-Codec und die Eigenschaftstypen
+aus den 52 erreichbaren nativen Datenklassen. Formdokumente 1–4, Formgraphen 1–3
+und Gebäudegraphen 1–4 werden mit denselben Kotlin-Validatoren bearbeitet.
+Gruppen, benannte Schnittstellen, Projektion, exakte Geometrie, Dachvorlagen,
+vertikale Erschließung und Erker/Gauben bleiben beim Austausch erhalten.
+`Knoteneinstellungen` erlaubt das Bearbeiten der zusätzlichen Eigenschaften;
+zusammengehörige Änderungen werden gemeinsam übernommen.
 
-Die Browseroberfläche unterstützt zehn Form- und einundzwanzig
-Gebäudeknotentypen; der gemeinsame Katalog enthält insgesamt 32 Gebäudetypen.
-Erweiterte native Graphen, Gruppen, exakte Geometrien und
-nicht unterstützte Knoteneinstellungen werden beim Import und vor dem Export
-mit einem Hinweis auf den nativen Editor abgewiesen. Dadurch können sie nicht
-unbemerkt vereinfacht oder mit fehlenden Einstellungen gespeichert werden.
+Native Knotengruppen können aus der Auswahl angelegt, umbenannt, instanziert und
+aufgelöst werden. Benannte Gruppeneingänge aktualisieren beim Neuverbinden alle
+gebundenen Anschlüsse. Die gemeinsamen Definitionen synchronisieren Einstellungen
+zwischen Instanzen. Die Browserbibliothek kann weiterhin Knotenauswahlen speichern.
+
+`compatibility.json` im Website-Build nennt Release, Schemata, Knotentypen und
+SHA-256-Fingerabdrücke des Katalogs und Fachkerns. CI prüft sieben echte native
+Dokumente in der Reihenfolge JVM → Browser → JVM und beide nativen Knotenfabriken.
+
+Die 3D-Ansicht stellt exakte Formen weiterhin konservativ im 16er-Raster dar;
+die exportierten rationalen Ebenen bleiben vollständig erhalten. Die visuelle
+Rasterdarstellung ist daher keine Prüfung der exakten Oberflächenqualität.
 
 ## Material and personal libraries
 
@@ -225,3 +311,113 @@ zwei Ausgänge, Versionspinning, bewussten Wechsel, Undo, dauerhafte Speicherung
 Desktop/Tablet/Mobilgerät sowie die Übernahme und den Export als Druckvorlage.
 Native Daten außerhalb der unterstützten Browser-Codecs werden weiterhin
 abgewiesen. Diese Einschränkung und #14–16 verhindern die Release-Freigabe.
+
+Ein- und Ausgangstypen werden direkt aus den nativen Anschlüssen übernommen.
+Die Paritätsprüfung vergleicht alle 72 Gebäudeknotenvarianten und sämtliche
+Inspektorfelder einschließlich Typen, Auswahlwerten und Grenzen. Referenzfelder
+bieten passende native Quellknoten an. Abgeleitete Maße öffnen ihre gemeinsame
+Quelle. Benannte Gruppenschnittstellen verwenden denselben Adapter wie der
+Architektentisch; Eingänge, Ausgänge, Typen und Bindungen lassen sich bearbeiten.
+
+## Optionale Dachspitze
+
+Bei einfachen Satteldächern (`assembly: false`) nimmt **Dachspitze (optional)**
+eine eigene Copycat-Quelle an. Sie ersetzt ausschließlich die mittlere Firstreihe,
+wenn die lokale Dachbreite quer zur Firstachse ungerade ist. Die Vorlage ist
+standardmäßig entlang Z ausgerichtet und dreht für einen First entlang X um 90°.
+Überhang und jede Deckungsschicht werden berücksichtigt. Ohne Anschluss sowie
+bei gerader Breite oder Flachdächern bleibt die bestehende Deckung erhalten.
+Die neueren Dächer aus Dachebenen verwenden weiterhin ihre sechs Segmentvorlagen
+einschließlich **First**.
+
+Unter **Beispiel öffnen → Dachspitze bei ungerader Breite** ist ein vollständiger
+Entwurf zum Vergleichen verfügbar. Am Dach im Inspektor die Dachspitze auf
+**Offen** setzen und mit **Rückgängig** vergleichen. Die Referenz `bar@1` stammt
+aus `examples/library.json`; beim Spielimport muss diese Bibliotheksversion
+vorhanden sein. Ältere Mod-Builds kennen das neue Feld `roofPeak` noch nicht.
+
+`python3 tools/verify-roof-peak-browser.py --url http://127.0.0.1:4186` prüft
+Beispiel, Anschluss, Vorschau, Trennen, Undo/Redo und JSON-Export im
+Produktionsbuild. `--chromium` wählt den Browserpfad.
+
+Beim Wechsel zwischen Flach- und Satteldach aktualisieren sich nach **Übernehmen**
+Knotenanschlüsse, Kanten und Inspektor. Die Dachspitze erscheint nur am Satteldach;
+dessen Giebelanschlüsse folgen der Firstachse (Z: Nord/Süd, X: Ost/West).
+Beim Flachdach stehen die vier Dachränder für Rand-/Attikavorlagen bereit.
+Ausgeblendete Verbindungen bleiben für einen späteren Rückwechsel erhalten und
+werden beim Löschen ihrer Quellen bereinigt. Typ- und Gruppenprüfung bleiben aktiv.
+
+## Dachendkante parallel zum First
+
+Bei einfachen Satteldächern nimmt **Dachendkante / Traufe (optional)** eine
+Copycat-Quelle auf. Sie ersetzt ausschließlich die beiden unteren Dachrandreihen
+parallel zum First, einschließlich der Verlängerung über die Giebelseiten.
+Die gegenüberliegenden Seiten werden passend gedreht; First und Giebelmauern
+bleiben unabhängig. Ohne Verbindung bleibt die normale Deckung erhalten.
+Beim Flachdach bleibt die ausgeblendete Verbindung gespeichert.
+Bei Dachebenen dient dafür weiterhin der zweite Vorlageneingang `in:1`.
+Das Beispiel **Dachendkante parallel zum First** zeigt den neuen Anschluss.
+Für den Spielimport wird Mod 0.6.4 mit demselben Knotenvertrag benötigt.
+
+## Rotationssegment für Säulen
+
+**Rotationssegment** (`ROTATION_SEGMENT`) besitzt den Copycat-Anschluss `in:0`
+und den Anzahl-Anschluss `length`. **Anzahl** (`INT`) liefert `countValue` als
+Ganzzahl. Die Verbindung wird als `dimensions.length` im Segment gespeichert.
+Ohne Verbindung gilt dessen lokaler `length`-Wert; erlaubt sind 1–128 Blöcke.
+
+Die gemeinsame Kotlin-Auswertung vereinigt die Copycat bei 0°, 90°, 180° und
+270° um die Y-Achse innerhalb einer Blockzelle und wiederholt das Profil entlang
+Y. Das Ergebnis hat die Segmentabmessungen **1 × Länge × 1**. Überlappungen
+zählen für Geometrie, Material und Zinkkosten einmal. Vorherige Copycat-Drehungen,
+Spiegelungen und Materialzuordnungen bleiben erhalten. Die Ausgabe lässt sich
+mit Segmentoperationen oder einer Segmentrotation weiterverarbeiten.
+
+Das Beispiel **Rotationssegment · Säule** verbindet eine Anzahlquelle und ein
+stehendes Panel bis zum Gebäudeausgang. **Quelle bearbeiten** am abgeleiteten
+Längenwert öffnet den Anzahl-Knoten.
+
+`python3 tools/verify-rotation-segment-browser.py` prüft Anschlüsse, Quellenwechsel,
+Trennen, Längenänderung, Rückgängig und JSON-Export im Chromium.
+
+
+## Fenster am Stockwerk (Issue #27)
+
+**Fenster** (`WINDOW`) nimmt ein **Segment** als Geometriequelle für Rahmen und
+Glas entgegen. Breite und Höhe geben die Öffnungsmaße in Blöcken an. Die Maße
+müssen ganze Vielfache des Quellsegments sein; die Geometrie wird wiederholt,
+ohne Rahmen zu strecken oder abzuschneiden.
+
+Am **Stockwerk** unter **Fenster am Stockwerk** eine Instanz hinzufügen und die
+Fensterdefinition wählen. Dieselbe Definition kann mehrfach verbunden werden.
+Im **Fenstergrundriss** die Zielwand anklicken oder die Instanz entlang der Wand
+ziehen; Pfeil links/rechts verschiebt die aktive Instanz um einen Block.
+Wandrichtung, Position entlang der Wand, Einbauhöhe und Tiefenversatz bestimmen
+jede Instanz unabhängig. **Übernehmen** speichert alle Einstellungen gemeinsam;
+Undo/Redo und erneutes Laden erhalten die Anschlüsse und Platzierungen.
+
+**Innenwand und Fassade automatisch öffnen** entfernt die betroffenen Wandzellen
+durch die Wandtiefe einschließlich getrennter Lagen innerhalb des Wandaufbaus.
+Nur der Bereich der Fensterbreite und -höhe wird geöffnet; Fenstergeometrie und
+übrige Wand bleiben erhalten. Jede Auswertung beginnt mit der ursprünglichen
+Wand, sodass Verschieben, Größenänderung und Entfernen keine alten Öffnungen
+hinterlassen. Unpassende Wände, überstehende Fenster und Überschneidungen werden
+in der Vorschau erklärt. Mod und Browser verwenden `StoreyWindows` gemeinsam für
+Vorschau, Bauplan und Materialberechnung.
+
+Das Beispiel **Fenster am Stockwerk** zeigt zwei Instanzen derselben Definition
+an unterschiedlich ausgerichteten Wänden. In der Mod gibt es am Stockwerk die
+Aktionen **Fensterinstanzen einstellen** und **Fenster im Grundriss platzieren**.
+Der Anzahl-Knoten hat ein direktes Feld für ganze Werte von 0 bis 2147483647;
+eine angeschlossene Säulenlänge benötigt weiterhin 1 bis 128 Blöcke.
+
+
+Browserprüfung für diese Bedienwege (laufender Produktionsbuild erforderlich):
+
+```bash
+python web/tools/verify-window-browser.py --url http://127.0.0.1:4194/ --chromium /pfad/zu/chromium
+```
+
+Der Check deckt Anzahl-Eingaben einschließlich 0, Säulenlängen, den scrollenden
+Inspektor ohne Seiten-Überlauf, Wandwahl, Ziehen im Fenstergrundriss,
+Undo/Redo, erneutes Laden und die Anzeige ungültiger Fensterpositionen ab.

@@ -27,12 +27,14 @@ for pid in "${pids[@]}"; do wait "$pid"; done
 
 domain=../src/main/kotlin/de/teutonstudio/copycatarchitect/domain
 node prepare-engine.mjs
+node generate-codec.mjs
 sources=()
 for file in "$domain"/*.kt; do
     case "$(basename "$file")" in GraphModels.kt|GraphPlatform.kt) continue ;; esac
     sources+=("$file")
 done
-sources+=(kotlin/*.kt "$out/Catalog.kt")
+sources+=(../src/main/kotlin/de/teutonstudio/copycatarchitect/client/{GraphDiagramModels,KilaGroupProjection,GroupGraphInterfaces}.kt)
+sources+=(kotlin/*.kt "$out/Catalog.kt" "$out/Codec.kt")
 stdlib="$cache/kotlin-stdlib-js-$version.klib"
 target="$out/engine.mjs"
 if [[ -f "$target" ]]; then

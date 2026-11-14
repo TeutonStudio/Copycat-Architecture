@@ -47,7 +47,7 @@ Im Hauptmenü **Einzelspieler → Architekt T-Testhaus** auswählen. Das Gebäud
 
 Eine vollständige Kopie des Spielstands liegt außerdem in `build/exports/Architekt-T-Testhaus.zip`. Zum Übernehmen in eine andere Minecraft-Installation den enthaltenen Ordner `Architekt T-Testhaus` in deren `saves`-Ordner entpacken und die in der [Projekt-README](../../README.md) aufgeführten Modversionen verwenden. Das gebaute Haus ist Bestandteil der Welt; die gespeicherte Entwurfsbibliothek gehört zum Entwicklungs-Spieler.
 
-Ansichten des tatsächlichen Spielstands: [Gebäude](../../docs/release-0.6.0/images/t-building-exterior.png), [T-Dachkontur von oben](../../docs/release-0.6.0/images/t-building-top.png), [Fassade mit Fenstern und Relief](../../docs/release-0.6.0/images/t-building-facade.png), [gespeicherter Gebäudegraph](../../docs/release-0.6.0/images/t-building-graph.png) und [T-Grundriss am Architektentisch](../../docs/release-0.6.0/images/t-building-floorplan.png).
+Ansichten des tatsächlichen Spielstands: [Gebäude](../../docs/images/t-building-exterior.png), [T-Dachkontur von oben](../../docs/images/t-building-top.png), [Fassade mit Fenstern und Relief](../../docs/images/t-building-facade.png), [gespeicherter Gebäudegraph](../../docs/images/t-building-graph.png) und [T-Grundriss am Architektentisch](../../docs/images/t-building-floorplan.png).
 
 ## Dateien und Verwendung
 

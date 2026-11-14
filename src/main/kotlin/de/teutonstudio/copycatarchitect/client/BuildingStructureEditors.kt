@@ -27,6 +27,7 @@ object BuildingStructureEditors {
             else blocks(ui("roof_knee_height"),c.knee16,0..2048) { c=c.copy(knee16=it) }
             hint(ui(if(c.mode==RoofMode.HEIGHT) "roof_height_mode_hint" else "roof_angle_mode_hint"))
             blocks(ui("roof_overhang"),c.overhang16,0..128) { c=c.copy(overhang16=it) }
+            if(c.form in setOf(RoofForm.GABLE,RoofForm.CROSS,RoofForm.PENT)) hint(ui("roof_overhang_hint"))
             choice(ui("roof_area"),c.area,listOf("")+graph().nodes.filter { it.kind==BuildingKind.AREA }.map { it.id },{ id -> if(id.isEmpty()) ui("roof_exposed_area") else graph().nodes.first { it.id==id }.name }) { c=c.copy(area=it) }
             val context=graph()
             val layouts=context.nodes.filter { it.kind==BuildingKind.ROOF_LAYOUT && node.id in it.inputs }.map { it.id }.toSet()
@@ -44,7 +45,7 @@ object BuildingStructureEditors {
     fun roofTemplates(node:BuildingNode,graph:()->BuildingGraph,commit:(BuildingNode)->Unit) {
         var c=node.roofConfig ?: RoofConfig()
         val sources=graph().nodes.filter { it.kind in CopycatBooleans.sourceKinds }
-        val walls=graph().nodes.filter { it.kind in (setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds) }
+        val walls=graph().nodes.filter { it.kind in (setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds) }
         StructurePropertyScreen.open(tr("roof_templates"),{
             choice(ui("roof_family"),c.family,listOf("builtin")+c.families.map { it.id },{ id -> if(id=="builtin") ui("structure_builtin") else c.families.firstOrNull { it.id==id }?.name ?: id }) { c=c.copy(family=it) }
             action(ui("roof_add_family")) { family(RoofTemplateFamily(id=UUID.randomUUID().toString(),name=ui("roof_new_family"))) { value -> c=c.copy(families=c.families+value,family=value.id) } }

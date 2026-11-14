@@ -1,0 +1,9 @@
+// Keep smoke-test game options, worlds and screenshots separate from development sessions.
+gradle.projectsEvaluated {
+    rootProject.tasks.withType(Test).configureEach { maxHeapSize = '1G' }
+    rootProject.extensions.getByName('neoForge').runs.configureEach {
+        if (name == 'client') gameDirectory.set(rootProject.file('build/special-rooms-client'))
+        if (name == 'gameTestServer') gameDirectory.set(rootProject.file('build/special-rooms-server'))
+        jvmArgument('-Xmx3G')
+    }
+}

@@ -176,6 +176,18 @@
           "priority": 1
         }
       ]
+    },
+    "column_profile@1": {
+      "schema": 3,
+      "id": "column_profile",
+      "version": 1,
+      "name": "Säulenprofil · stehendes Panel",
+      "parts": [
+        {
+          "source": "create:copycat_panel",
+          "tilt": 1
+        }
+      ]
     }
   },
   "modules": {

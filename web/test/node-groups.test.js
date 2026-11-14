@@ -1,3 +1,4 @@
+import { newNode } from '../src/generated/engine.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -63,4 +64,21 @@ test('building templates carry their library without silently replacing another 
   const template = saveNodeGroup('building', document, [source.id], 'Source', {}, library)
   assert.deepEqual(mergeLibraries({ forms: {}, modules: {} }, template.library), library)
   assert.throws(() => mergeLibraries({ forms: { a: { version: 1 } } }, { forms: { a: { version: 2 } } }), /Bibliothekskonflikt/)
+})
+
+test('native roof arrangement references are remapped when saving and inserting a browser selection', () => {
+  const document = { schema: 2, name: 'Roof', graph: { schema: 2, nodes: [
+    { ...newNode(true, 'SEGMENT', 'empty_wall', 0, 0), block: 'minecraft:air' },
+    newNode(true, 'BUILDING', 'building', 100, 0),
+    { ...newNode(true, 'AREA', 'area', 20, 0), coordinates: [{ x: 0, y: 0, z: 0 }] },
+    { ...newNode(true, 'ROOF_LEVEL', 'level', 40, 0), roofLevel: { area: 'area' } },
+    { ...newNode(true, 'ROOF_LAYOUT', 'layout', 60, 0), inputs: ['level'] },
+    { ...newNode(true, 'ROOF', 'roof', 80, 0), assembly: true, layout: 'layout' },
+  ] } }
+  const template = saveNodeGroup('building', document, ['area', 'level', 'layout', 'roof'], 'Dach')
+  let index = 0
+  const inserted = insertNodeGroup(document, template, () => `new_${index++}`).document
+  assert.equal(inserted.graph.nodes.find(node => node.id === 'new_1').roofLevel.area, 'new_0')
+  assert.deepEqual(inserted.graph.nodes.find(node => node.id === 'new_2').inputs, ['new_1'])
+  assert.equal(inserted.graph.nodes.find(node => node.id === 'new_3').layout, 'new_2')
 })

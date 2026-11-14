@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { createVersionedGraph, extractVersionedGraph, resolveVersionedGraph, exportGraphBundle, validateGraphBundle, switchGraphVersion, compareGraphVersions, previewGraph, inspectVersionedGraph } from '../src/generated/engine.mjs'
+import { createVersionedGraph, extractVersionedGraph, resolveVersionedGraph, exportGraphBundle, validateGraphBundle, switchGraphVersion, compareGraphVersions, previewGraph, inspectVersionedGraph, normalizeDocument, remapBuildingReferences } from '../src/generated/engine.mjs'
 import { readFileSync } from 'node:fs'
 const fixture = name => JSON.parse(readFileSync(new URL(`../../examples/${name}.json`, import.meta.url)))
 const source = { schema: 3, name: 'Ports', graph: { schema: 2, nodes: [
@@ -78,4 +78,31 @@ test('opening a recolored executable building retains its local palette without 
   const reopened = createVersionedGraph(true, { ...b, versionedGraph: bundle, palette }, 'ignored')
   assert.deepEqual(reopened.palette, palette)
   assert.notDeepEqual(bundle.root.palette, palette)
+})
+
+test('exact crossed roofs survive extraction and canonical package export with their cutout', async () => {
+  const { readGraph, writeGraph } = await import('../src/model.js')
+  const form = JSON.parse(readFileSync(new URL('./fixtures/crossed-roof-xor.json', import.meta.url)))
+  form.graph.nodes.find(node => node.kind === 'OUTPUT').inputs = [form.graph.nodes.find(node => node.kind === 'SYMMETRIC_DIFFERENCE').id]
+  const root = createVersionedGraph(false, form, 'exact-root')
+  const { parent, definition } = extractVersionedGraph(root, form.graph.nodes.filter(node => node.kind !== 'OUTPUT').map(node => node.id), 'exact-piece', 'Exact piece', 'instance')
+  const bundle = exportGraphBundle(parent, { 'exact-piece@1': definition }, library)
+  const loaded = readGraph({ ...form, graph: null, versionedGraph: bundle }, 'form')
+  const exported = writeGraph('form', loaded)
+  assert.equal(exported.schema, 4)
+  assert.equal(exported.graph, null)
+  assert.ok(exported.parts.every(part => part.exactClip?.cells.length > 0))
+  assert.deepEqual(previewGraph(false, readGraph(exported, 'form'), library, ''), previewGraph(false, form, library, ''))
+})
+
+test('current storey windows retain their native configuration in a versioned building', () => {
+  const building = fixture('building-windows')
+  const root = createVersionedGraph(true, building, 'windows-root')
+  const bundle = exportGraphBundle(root, {}, library)
+  validateGraphBundle(bundle)
+  const resolved = resolveVersionedGraph(root, {})
+  const normalized = normalizeDocument(true, building).graph
+  const ids = Object.fromEntries(normalized.nodes.map(node => [node.id, resolved.nodeOutputs[node.id].out]))
+  assert.deepEqual(resolved.graph.nodes, normalized.nodes.map(node => ({ ...remapBuildingReferences(node, ids), id: ids[node.id] })))
+  assert.deepEqual(previewGraph(true, resolved, library, ''), previewGraph(true, building, library, ''))
 })

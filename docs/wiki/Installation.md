@@ -12,7 +12,7 @@ Diese Anleitung gilt für den Entwicklungsstand **Copycat Architect 0.5.1**, **M
 | Create | 6.0.10 | ja | ja |
 | Create: Molten Metals – Neoforged | 1.0.1 | ja | ja |
 | Copycats+ | 3.0.9 | ja | ja |
-| CC:Tweaked | 1.120.0 | ja | ja |
+| CC:Tweaked | 1.120.0–1.120.2 | ja | ja |
 | KotlinForForge NeoForge | 5.10.0 | ja | ja |
 | KilaGraph | 21.1.0.16 | ja | nein |
 | LDLib2 | 2.2.44, Variante `all` | ja | nein |

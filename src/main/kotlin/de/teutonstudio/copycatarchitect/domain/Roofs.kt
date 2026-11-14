@@ -26,8 +26,8 @@ data class RoofTemplateFamily(val id:String="builtin",val name:String="Roof",val
     val slopes:List<RoofSlope> = RoofSlope.presets,val thickness16:Int=2,val cells:List<RoofTemplateCell> = emptyList())
 data class RoofConfig(val family:String="builtin",val families:List<RoofTemplateFamily> = emptyList(),val variants:Map<String,String> = emptyMap(),val wall:String="")
 data class BuildingStoreyInstance(val id:String,val level:Int,val source:String)
-fun BuildingGraph.storeyInstances():List<BuildingStoreyInstance> {
-    val result=nodes.single { it.kind==BuildingKind.BUILDING }
+fun BuildingGraph.storeyInstances(resultId:String=resultNode().id):List<BuildingStoreyInstance> {
+    val result=nodes.first { it.id==resultId && it.kind==BuildingKind.BUILDING }
     return result.levels.toSortedMap().map { (level,source)->BuildingStoreyInstance(result.levelIds[level] ?: "storey_$level",level,source) }
 }
 /** Preserve identity while logical floor numbers compact after a disconnection. */
@@ -89,7 +89,10 @@ object Roofs {
             return patches.fold(ExactVolume()) { all,p->all.union(ExactVolume.convex(p.planes.map { it.local(block,raise,shift) }).intersect(local)) }
         }
     }
-    fun compile(graph:BuildingGraph,roof:BuildingNode,supports:List<RoofSupport>,palette:Map<String,String>,source:(String)->Placement,formSource:(String)->Placement=source,segmentSource:(String)->RoofSegmentTemplate?={ null },contacts:MutableList<RoofContact>?=null):Plan {
+    fun compile(graph:BuildingGraph,roof:BuildingNode,supports:List<RoofSupport>,palette:Map<String,String>,source:(String)->Placement,formSource:(String)->Placement=source,segmentSource:(String)->RoofSegmentTemplate?={ null },contacts:MutableList<RoofContact>?=null,
+        wallSegment:(String)->FixedSegment={ error("Gaubenwand fehlt: $it") },
+        wallPlacement:(P,List<SegmentCell>,Int)->Placement={ _,_,_->error("Gaubenwand fehlt") },
+        ceilingCuts:MutableMap<P,ExactVolume>?=null,validateDormersOnly:Boolean=false):Plan {
         require(roof.layout.isNotEmpty()) { "Connect a roof arrangement source" }
         val layout=graph.nodes.first { it.id==roof.layout && it.kind==BuildingKind.ROOF_LAYOUT }
         require(layout.inputs.isNotEmpty() && layout.inputs.all(String::isNotEmpty)) { "Roof arrangement is pending definition; connect roof levels" }
@@ -128,13 +131,14 @@ object Roofs {
             require(c.slope.reduced() in family.slopes.map(RoofSlope::reduced) && (c.form!=RoofForm.MANSARD || c.upperSlope.reduced() in family.slopes.map(RoofSlope::reduced)) && family.thickness16 in 1..16) { "Roof family does not support this ratio" }
             val patches=patches(mask,c)
             val structuralRise=mask.flatMap { p->listOf(p.x*16 to p.z*16,(p.x+1)*16 to p.z*16,p.x*16 to (p.z+1)*16,(p.x+1)*16 to (p.z+1)*16,p.x*16+8 to p.z*16+8) }.maxOf { (x,z)->patches.maxOf { it.exactHeight(x,z) } }
-            val rise=if(c.form==RoofForm.PENT) structuralRise+Ratio(c.slope.p.toLong()*c.overhang16,c.slope.q.toLong()) else structuralRise
+            val rise=structuralRise
             val finished=rise+Ratio(family.thickness16.toLong())
             val knee=if(c.mode==RoofMode.HEIGHT) Ratio(c.height16.toLong())-finished else Ratio(c.knee16.toLong())
             require(knee.n>=0) { "Roof height needs at least ${ceil(finished.value())/16} blocks for this ratio and span" }
             require((knee+finished)<=Ratio(2048)) { "Roof exceeds 128 blocks above its storey" }
-            val e=ceil(c.overhang16/16.0).toInt()
-            val coverage=buildSet { for(p in mask) for(dx in -e..e) for(dz in -e..e) if(p+P(dx,0,dz) !in blocked) add(p+P(dx,0,dz)) }
+            val (overhangX,overhangZ)=overhangAxes(c)
+            val ex=ceil(overhangX/16.0).toInt();val ez=ceil(overhangZ/16.0).toInt()
+            val coverage=buildSet { for(p in mask) for(dx in -ex..ex) for(dz in -ez..ez) if(p+P(dx,0,dz) !in blocked) add(p+P(dx,0,dz)) }
             require(coverage.size<=8192) { "Roof exceeds 8192 cells" }
             Level(n,c,support,mask,coverage,patches,Ratio(support.ceiling16.toLong())+knee+Ratio(family.thickness16.toLong()),family,blocked,maximalRectangles(mask),Ratio(support.ceiling16.toLong())+knee+finished)
         }
@@ -147,9 +151,11 @@ object Roofs {
                 require(continuousEdge(a,b,x,z,if(d.x==0) 16 else 0,if(d.z==0) 16 else 0)) { "Roof levels end at different heights; align their height or knee wall" }
             }
         }
+        val dormers=prepareDormers(graph,levels,source,wallSegment,wallPlacement,ceilingCuts,validateDormersOnly)
+        if(validateDormersOnly) return Resolver().plan(emptyList())
         val wallNode=shared.wall.takeIf(String::isNotEmpty)?.let { id->graph.nodes.firstOrNull { it.id==id } ?: error("Missing roof wall template $id") }
         val wallCopycat=wallNode?.takeIf { it.kind in CopycatBooleans.sourceKinds }?.let { source(it.id) }
-        val wallPeriod=wallNode?.takeIf { it.kind in (setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds) }?.let { node->
+        val wallPeriod=wallNode?.takeIf { it.kind in (setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds) }?.let { node->
             segmentSource(node.id)?.also { require(it.width in 1..128 && it.height in 1..128 && it.depth==1) { "Roof wall periods need positive dimensions and depth 1" } } ?: error("Missing roof wall segment ${node.id}")
         }
         val result=Resolver()
@@ -186,7 +192,7 @@ object Roofs {
                 val backing=backingUpper.minus(down).intersect(visibleSkin)
                 val winner=active.maxBy { it.height((p.x+.5)*16,(p.z+.5)*16) }
                 if(!visibleSkin.isEmpty()) {
-                    val variant=if(p !in winner.mask) "eave" else if(RoomGeometry.directions.any { p+it !in winner.mask }) "edge" else "slope"
+                    val variant=if(isEave(winner,p)) "eave" else if(RoomGeometry.directions.any { p+it !in winner.coverage }) "edge" else "slope"
                     templatePlacement(winner,block,visibleSkin,variant,shared,roof,palette,source,formSource,::segmentOverride,required=backing)?.let(pieces::add)
 
                 }
@@ -252,8 +258,129 @@ object Roofs {
         if(contacts!=null) for(level in levels) contacts+=RoofContact(level.node.id,level.support.instanceId,level.coverage,
             level.support.ceiling16,ceil(level.expectedPeak.value()).toInt()+16,
             { block->clippedBody(level,block).minus(contactBlocking[block] ?: ExactVolume()) })
-        return result.plan(emptyList())
+        return withDormers(result.plan(emptyList()),dormers,contacts)
     }
+    private data class DormerGeometry(val definition:BuildingNode,val instance:DormerInstance,val level:Level,
+        val coverage:Set<P>,val body:(P,Int)->ExactVolume,val additions:List<Placement>,val maxY:Int)
+
+    private fun prepareDormers(graph:BuildingGraph,levels:List<Level>,source:(String)->Placement,
+        segment:(String)->FixedSegment,wallPlacement:(P,List<SegmentCell>,Int)->Placement,
+        ceilingCuts:MutableMap<P,ExactVolume>?,validateOnly:Boolean):List<DormerGeometry> {
+        val all=mutableListOf<DormerGeometry>()
+        for(level in levels) for(instance in level.node.dormerInstances) {
+            require(level.c.form in setOf(RoofForm.GABLE,RoofForm.PENT)) { "Gauben unterstützen Sattel- und Pultdächer" }
+            val definition=graph.nodes.firstOrNull { it.id==instance.source && it.kind==BuildingKind.DORMER } ?: error("Gaube ${instance.id}: Definitionsquelle anschließen")
+            val c=definition.dormer ?: DormerConfig()
+            require(listOf(c.wall,c.front,c.roof).all(String::isNotEmpty)) { "Gaube ${instance.id}: Wand, Fensterfront und Dachquelle anschließen" }
+            val width=c.width+2;val depth=c.depth+2
+            val q=instance.direction;val origin=instance.position
+            fun world(p:P)=origin+p.turn(q)
+            val coverage=buildSet { for(x in 0 until width) for(z in 0 until depth) add(world(P(x,0,z))) }
+            require(coverage.all { it in level.mask }) { "Gaube ${instance.id}: vollständig auf der gewählten Dachfläche platzieren" }
+            require(all.none { it.coverage.intersect(coverage).isNotEmpty() }) { "Gauben überschneiden sich" }
+            val center=world(P(width/2,0,0))
+            val main=level.patches.single().planes.minBy { it.height(center.x*16.0+8,center.z*16.0+8) }
+            val outward=RoomGeometry.directions[q]
+            require(main.x*outward.x+main.z*outward.z>0) { "Gaube ${instance.id}: die Vorderseite muss hangabwärts zeigen" }
+            val xAxis=P(1,0,0).turn(q);val zAxis=P(0,0,1).turn(q)
+            val frameOrigin=origin-P(minOf(0,xAxis.x)+minOf(0,zAxis.x),0,minOf(0,xAxis.z)+minOf(0,zAxis.z))
+            val frame=SemanticTransform(frameOrigin,xAxis,P(0,1,0),zAxis)
+            val corners=listOf(P(),P(width,0,0),P(0,0,depth),P(width,0,depth)).map(frame::point)
+            require(corners.all { p -> level.patches.single().planes.all { other -> main.exactHeight(p.x*16,p.z*16)<=other.exactHeight(p.x*16,p.z*16) } }) { "Gaube ${instance.id}: darf keinen First oder Dachknick überschreiten" }
+            val pitch=c.slope.reduced();val baseY=level.support.ceiling16
+            val eave=baseY+c.wallHeight*16
+            val front=listOf(P(),P(width,0,0)).map(frame::point).maxOf { level.raise.value()+main.height(it.x*16.0,it.z*16.0) }
+            val back=frame.point(P(width/2,0,depth))
+            val ridge=eave+width*8.0*pitch.p/pitch.q
+            require(front<eave && level.raise.value()+main.height(back.x*16.0,back.z*16.0)>=ridge) { "Gaube ${instance.id}: Wandhöhe und Tiefe müssen einen Anschluss an die Dachschräge ermöglichen" }
+            require(ridge<=level.expectedPeak.value()+1e-7) { "Gaube ${instance.id}: darf den Hauptfirst nicht überragen" }
+            fun plane(x:Long,y:Long,z:Long,d:Long,block:P):ExactPlane {
+                val v=P(x.toInt(),y.toInt(),z.toInt()).turn(q)
+                return ExactPlane(v.x.toLong(),v.y.toLong(),v.z.toLong(),d+v.x.toLong()*frameOrigin.x*16+v.z.toLong()*frameOrigin.z*16)
+                    .translated(P(-block.x*16,-block.y*16,-block.z*16))
+            }
+            fun body(block:P,shift:Int):ExactVolume {
+                if(block.copy(y=0) !in coverage) return ExactVolume()
+                return ExactVolume.convex(listOf(
+                    plane(-1,0,0,0,block),plane(1,0,0,width*16L,block),plane(0,0,-1,0,block),plane(0,0,1,depth*16L,block),
+                    ExactPlane(0,-1,0,block.y*16L-baseY),
+                    plane(-pitch.p.toLong(),pitch.q.toLong(),0,(eave-shift).toLong()*pitch.q,block),
+                    plane(pitch.p.toLong(),pitch.q.toLong(),0,(eave-shift).toLong()*pitch.q+width*16L*pitch.p,block)))
+            }
+            val additions=mutableListOf<Placement>();val top=ceil(ridge/16).toInt()
+            val roofSource=source(c.roof)
+            require(roofSource.block.isEmpty()) { "Gaubendach benötigt eine Copycat-Quelle" }
+            val walls=mapOf(c.wall to segment(c.wall),c.front to segment(c.front))
+            require(walls.values.all { !it.air && it.depth==1 }) { "Gaubenwände benötigen feste Segmentquellen mit Tiefe 1" }
+            val periods=if(validateOnly) emptyMap() else walls.mapValues { (_,value) -> SpecialRooms.wallPeriod(value,
+                { p,entries,turn,type -> wallPlacement(p,entries,turn).copy(component=type) },source) }
+            if(!validateOnly) for(p in coverage) for(y in floor(baseY/16.0).toInt()..top) {
+                val block=p.copy(y=y);val upper=body(block,0);if(upper.isEmpty()) continue
+                val lower=body(block,2)
+                // Keep only the visible addition and its exact seam with the existing roof skin.
+                val exterior=SpecialRooms.cube.minus(clippedBody(level,block,level.family.thickness16))
+                val skin=upper.minus(lower).intersect(exterior)
+                if(!skin.isEmpty()) {
+                    val available=Geometry.exact(roofSource.parts)
+                    require(available.contains(skin)) { "Gaubendachquelle deckt den Dachquerschnitt nicht ab; eine volle Copycat-Quelle wählen" }
+                    SpecialRooms.clipped(roofSource.copy(pos=block,component="roof"),skin)?.let(additions::add)
+                }
+                val local=(p-origin).turn(-q)
+                val direction=when { local.z==0->0;local.x==width-1->1;local.x==0->3;else->-1 }
+                if(direction>=0) {
+                    val id=if(direction==0) c.front else c.wall;val value=walls.getValue(id)
+                    val index=if(direction==0) local.x else if(direction==1) local.z else depth-1-local.z
+                    val row=Math.floorMod(y-floor(baseY/16.0).toInt(),value.height)
+                    val template=periods.getValue(id)[P(Math.floorMod(index,value.length),row,0)]
+                    if(template!=null) {
+                        val wall=SpecialRooms.mounted(template,block,(direction+q)%4)
+                        SpecialRooms.clipped(wall,lower.intersect(exterior))?.let(additions::add)
+                    }
+                }
+            }
+            val geometry=DormerGeometry(definition,instance,level,coverage,::body,additions,top)
+            // Other roof levels may not be silently carved by this instance.
+            for(other in levels.filter { it!==level }) require(coverage.intersect(other.mask).isEmpty()) { "Gaube ${instance.id} überschneidet eine andere Dachebene" }
+            all+=geometry
+            if(instance.openCeiling && ceilingCuts!=null) for(x in 1..c.width) for(z in 1..c.depth) {
+                val p=world(P(x,0,z))
+                for(y in floor(baseY/16.0).toInt()-4..ceil(baseY/16.0).toInt()) {
+                    val block=p.copy(y=y)
+                    val mask=ExactVolume.convex(listOf(ExactPlane(0,1,0,baseY-block.y*16L)))
+                    ceilingCuts[block]=(ceilingCuts[block] ?: ExactVolume()).union(mask)
+                }
+            }
+        }
+        return all
+    }
+    private fun withDormers(base:Plan,all:List<DormerGeometry>,contacts:MutableList<RoofContact>?):Plan {
+        if(all.isEmpty()) return base
+        val pieces=linkedMapOf<P,MutableList<Placement>>();val cleared=base.clear.toMutableSet()
+        fun add(p:Placement) { pieces.getOrPut(p.pos) { mutableListOf() }+=p;cleared-=p.pos }
+        for(p in base.placements) {
+            val mask=all.filter { p.pos.copy(y=0) in it.coverage }.fold(ExactVolume()) { v,g -> v.union(g.body(p.pos,0)) }
+            if(mask.isEmpty()) add(p) else SpecialRooms.clipped(p,SpecialRooms.cube.minus(mask))?.let(::add) ?: run { cleared+=p.pos }
+        }
+        all.flatMap { it.additions }.forEach(::add)
+        for(g in all) for(p in g.coverage) for(y in floor(g.level.support.ceiling16/16.0).toInt()..g.maxY) {
+            val block=p.copy(y=y)
+            if(block !in pieces && !g.body(block,2).isEmpty()) cleared+=block
+        }
+        val r=Resolver();pieces.values.forEach { r.add(RoomTopology.merge(it)) };cleared.filterNot(pieces::containsKey).forEach(r::clear)
+        if(contacts!=null) {
+            for(i in contacts.indices) {
+                val old=contacts[i];val related=all.filter { it.level.node.id==old.id && it.level.support.instanceId==old.instance }
+                if(related.isNotEmpty()) contacts[i]=old.copy(below={ block -> related.fold(old.below(block)) { v,g ->
+                    val occupied=pieces[block].orEmpty().fold(ExactVolume()) { volume,p -> volume.union(if(p.block.isEmpty()) Geometry.exact(p.parts) else SpecialRooms.cube) }
+                    v.minus(g.body(block,0)).union(g.body(block,2).minus(occupied))
+                } })
+            }
+            for(g in all) contacts+=RoofContact(g.definition.id,"${g.level.support.instanceId}/dormer:${g.instance.id}",g.coverage,g.level.support.ceiling16,g.maxY*16,
+                { block -> g.body(block,2).minus(pieces[block].orEmpty().fold(ExactVolume()) { v,p -> v.union(Geometry.exact(p.parts)) }) })
+        }
+        return r.plan(base.warnings)
+    }
+
     private data class EdgeLine(val offset:Ratio,val slope:Ratio) { fun at(t:Ratio)=offset+slope*t }
     private data class EdgeSegment(val from:Ratio,val to:Ratio,val line:EdgeLine)
     /** Exact min/max envelopes retain every hip, ridge and mansard kink along a cell edge. */
@@ -402,19 +529,32 @@ object Roofs {
         }
         return result
     }
+    /** Eaves follow the low edges parallel to the ridge, including the gable extension. */
+    private fun isEave(l:Level,p:P):Boolean {
+        val lowEdges=when(l.c.form) {
+            RoofForm.GABLE,RoofForm.CROSS -> if(l.c.axis%2==0) listOf(P(-1,0,0),P(1,0,0)) else listOf(P(0,0,-1),P(0,0,1))
+            RoofForm.PENT -> listOf(listOf(P(-1,0,0),P(0,0,-1),P(1,0,0),P(0,0,1))[l.c.axis])
+            else -> RoomGeometry.directions
+        }
+        return lowEdges.any { p+it !in l.coverage }
+    }
     private fun clippedBody(l:Level,block:P,shift:Int=0):ExactVolume {
         var body=l.body(block,shift)
-        // Fractional eaves use the original wall line, not a rounded block dilation.
-        val e=l.c.overhang16
+        // Fractional extensions use the original wall line, not a rounded block dilation.
         val coverage=coverageVolume(l,block)
         body=body.intersect(coverage)
         return body
     }
+    /** Gabled and pent roofs extend parallel to the ridge, beyond their gable ends. */
+    private fun overhangAxes(c:RoofLevelConfig):Pair<Int,Int> = when(c.form) {
+        RoofForm.GABLE,RoofForm.CROSS,RoofForm.PENT -> if(c.axis%2==0) 0 to c.overhang16 else c.overhang16 to 0
+        else -> c.overhang16 to c.overhang16
+    }
     private fun coverageVolume(l:Level,block:P):ExactVolume {
-        val e=l.c.overhang16
-        return l.rectangles.filter { r->r.x*16-e<(block.x+1)*16+2 && (r.x+r.width)*16+e>block.x*16-2 && r.z*16-e<(block.z+1)*16+2 && (r.z+r.length)*16+e>block.z*16-2 }.fold(ExactVolume()) { v,r->
+        val (ex,ez)=overhangAxes(l.c)
+        return l.rectangles.filter { r->r.x*16-ex<(block.x+1)*16+2 && (r.x+r.width)*16+ex>block.x*16-2 && r.z*16-ez<(block.z+1)*16+2 && (r.z+r.length)*16+ez>block.z*16-2 }.fold(ExactVolume()) { v,r->
             val x=r.x*16-block.x*16;val z=r.z*16-block.z*16
-            v.union(ExactVolume.box(x-e,0,z-e,x+r.width*16+e,16,z+r.length*16+e))
+            v.union(ExactVolume.box(x-ex,0,z-ez,x+r.width*16+ex,16,z+r.length*16+ez))
         }
     }
 
@@ -462,7 +602,8 @@ object Roofs {
 fun BuildingGraph.withCurrentSchema():BuildingGraph {
     val upgraded=nodes.any { it.kind in setOf(BuildingKind.ROOF_LEVEL,BuildingKind.STAIRWELL,BuildingKind.ELEVATOR_SHAFT,BuildingKind.SERVICE_SHAFT) || it.roofLevel!=null || it.roofConfig!=null || it.accessInstances.isNotEmpty() || it.levelIds.isNotEmpty() }
     val semantic=nodes.any { it.kind==BuildingKind.ROOM_LAYOUT || it.roomConfig!=null || it.roomLayout!=null || it.facade!=null || it.features!=null || !it.attachments.isNullOrEmpty() }
-    return if(semantic && schema<3) copy(schema=3) else if(upgraded && schema<2) copy(schema=2) else this
+    val special=nodes.any { it.kind in setOf(BuildingKind.BAY_WINDOW,BuildingKind.DORMER) || it.bayWindowInstances.isNotEmpty() || it.dormerInstances.isNotEmpty() }
+    return if(special && schema<4) copy(schema=4) else if(semantic && schema<3) copy(schema=3) else if(upgraded && schema<2) copy(schema=2) else this
 }
 
 internal fun freshAccessInstanceId(instances:List<VerticalAccessInstance>):String {

@@ -1,8 +1,10 @@
+import { PagedPanel } from './PagedPanel.jsx'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { useWorkspace } from './Workspace.jsx'
 import { axisColors, sides } from './orientation.js'
+import { exactGeometry } from './preview-geometry.js'
 
 const colors = {
   body: '#8ba4a2', cap: '#d29763', 'minecraft:stone_bricks': '#979999',
@@ -141,7 +143,7 @@ function groundCompass(group, bounds) {
     new THREE.Vector3(center.x + diameter * 0.55, plane.position.y, center.z + diameter * 0.55))
 }
 
-export function Viewer({ plan, blockFrame, catalog }) {
+export function Viewer({ plan, blockFrame, catalog, details }) {
   const container = useRef(null)
   const viewer = useRef(null)
   const [activeSide, setActiveSide] = useState('')
@@ -264,7 +266,7 @@ export function Viewer({ plan, blockFrame, catalog }) {
     const corner = new THREE.Vector3()
     for (const [material, meshes] of batches) {
       const count = meshes.reduce((sum, mesh) => sum + mesh.boxes.length * mesh.positions.length, 0)
-      if (!count) continue
+      if (!count && !meshes.some(mesh => mesh.faces?.length && mesh.positions.length)) continue
       const surfaceMaterials = Array.from({ length: 6 }, () => {
         const surface = new THREE.MeshLambertMaterial({ color: color(material), alphaTest: 0.1 })
         surface.onBeforeCompile = shader => {
@@ -272,38 +274,53 @@ export function Viewer({ plan, blockFrame, catalog }) {
           shader.vertexShader = shader.vertexShader.replace('#include <uv_vertex>', `#include <uv_vertex>
             #ifdef USE_MAP
               vec3 pointInBlock = position * blockSize + blockCenter;
-              vec2 blockUv = normal.x > 0.5 ? vec2(1.0-pointInBlock.z, pointInBlock.y)
-                : normal.x < -0.5 ? vec2(pointInBlock.z, pointInBlock.y)
-                : normal.y > 0.5 ? vec2(pointInBlock.x, 1.0-pointInBlock.z)
-                : normal.y < -0.5 ? vec2(pointInBlock.x, pointInBlock.z)
-                : normal.z > 0.5 ? vec2(pointInBlock.x, pointInBlock.y) : vec2(1.0-pointInBlock.x, pointInBlock.y);
+              vec3 magnitude = abs(normal);
+              vec2 blockUv = magnitude.x >= magnitude.y && magnitude.x >= magnitude.z
+                ? (normal.x > 0.0 ? vec2(1.0-pointInBlock.z, pointInBlock.y) : vec2(pointInBlock.z, pointInBlock.y))
+                : magnitude.y >= magnitude.z
+                  ? (normal.y > 0.0 ? vec2(pointInBlock.x, 1.0-pointInBlock.z) : vec2(pointInBlock.x, pointInBlock.z))
+                  : (normal.z > 0.0 ? vec2(pointInBlock.x, pointInBlock.y) : vec2(1.0-pointInBlock.x, pointInBlock.y));
               vMapUv = (mapTransform * vec3(blockUv, 1.0)).xy;
             #endif`)
         }
-        surface.customProgramCacheKey = () => 'copycat-block-uv-v1'
+        surface.customProgramCacheKey = () => 'copycat-block-uv-v2'
         return surface
       })
-      const geometry = new THREE.BoxGeometry()
-      const blockCenters = new Float32Array(count * 3), blockSizes = new Float32Array(count * 3)
-      geometry.setAttribute('blockCenter', new THREE.InstancedBufferAttribute(blockCenters, 3))
-      geometry.setAttribute('blockSize', new THREE.InstancedBufferAttribute(blockSizes, 3))
-      const draw = new THREE.InstancedMesh(geometry, surfaceMaterials, count)
-      let index = 0
-      for (const mesh of meshes) for (const [px, py, pz] of mesh.positions) {
-        for (const [x, y, z, maxX, maxY, maxZ] of mesh.boxes) {
-          scale.set((maxX - x) / 16, (maxY - y) / 16, (maxZ - z) / 16)
-          translation.set(px + (x + maxX) / 32, py + (y + maxY) / 32, pz + (z + maxZ) / 32)
-          matrix.makeScale(scale.x, scale.y, scale.z).setPosition(translation)
-          blockCenters.set([(x + maxX) / 32, (y + maxY) / 32, (z + maxZ) / 32], index * 3)
-          blockSizes.set([scale.x, scale.y, scale.z], index * 3)
-          draw.setMatrixAt(index++, matrix)
-          bounds.expandByPoint(corner.set(px + x / 16, py + y / 16, pz + z / 16))
-          bounds.expandByPoint(corner.set(px + maxX / 16, py + maxY / 16, pz + maxZ / 16))
+      if (count) {
+        const geometry = new THREE.BoxGeometry()
+        const blockCenters = new Float32Array(count * 3), blockSizes = new Float32Array(count * 3)
+        geometry.setAttribute('blockCenter', new THREE.InstancedBufferAttribute(blockCenters, 3))
+        geometry.setAttribute('blockSize', new THREE.InstancedBufferAttribute(blockSizes, 3))
+        const draw = new THREE.InstancedMesh(geometry, surfaceMaterials, count)
+        let index = 0
+        for (const mesh of meshes) for (const [px, py, pz] of mesh.positions) {
+          for (const [x, y, z, maxX, maxY, maxZ] of mesh.boxes) {
+            scale.set((maxX - x) / 16, (maxY - y) / 16, (maxZ - z) / 16)
+            translation.set(px + (x + maxX) / 32, py + (y + maxY) / 32, pz + (z + maxZ) / 32)
+            matrix.makeScale(scale.x, scale.y, scale.z).setPosition(translation)
+            blockCenters.set([(x + maxX) / 32, (y + maxY) / 32, (z + maxZ) / 32], index * 3)
+            blockSizes.set([scale.x, scale.y, scale.z], index * 3)
+            draw.setMatrixAt(index++, matrix)
+            bounds.expandByPoint(corner.set(px + x / 16, py + y / 16, pz + z / 16))
+            bounds.expandByPoint(corner.set(px + maxX / 16, py + maxY / 16, pz + maxZ / 16))
+          }
         }
+        draw.instanceMatrix.needsUpdate = true
+        draw.computeBoundingSphere()
+        view.model.add(draw)
       }
-      draw.instanceMatrix.needsUpdate = true
-      draw.computeBoundingSphere()
-      view.model.add(draw)
+      for (const mesh of meshes) {
+        if (!mesh.faces?.length || !mesh.positions.length) continue
+        const geometry = exactGeometry(mesh.faces)
+        const draw = new THREE.InstancedMesh(geometry, surfaceMaterials, mesh.positions.length)
+        mesh.positions.forEach(([x, y, z], index) => {
+          draw.setMatrixAt(index, matrix.makeTranslation(x, y, z))
+          bounds.union(geometry.boundingBox.clone().translate(corner.set(x, y, z)))
+        })
+        draw.instanceMatrix.needsUpdate = true
+        draw.computeBoundingSphere()
+        view.model.add(draw)
+      }
       if (catalog.ids.includes(material.split('[')[0])) catalog.resolve(material).then(resolved => {
         if (!live) return
         if (resolved.missing.length || resolved.warning) setTextureWarning(resolved.warning || `Fehlende Texturen: ${resolved.missing.join(', ')}`)
@@ -341,21 +358,30 @@ export function Viewer({ plan, blockFrame, catalog }) {
     view.bounds = blockFrame && singleBlock ? referenceFrame(view.guides) : bounds
     dispose(view.ground); view.ground.clear(); view.ground.userData.bounds = null
     groundCompass(view.ground, view.bounds)
-    if (!view.fitted) fit()
+    if (!view.fitted || plan && !view.hadGeometry) fit()
+    view.hadGeometry = Boolean(plan)
     view.render()
     return () => { live = false }
   }, [plan, blockFrame, catalog])
 
-  return <div className="viewer-with-sides">
-    <div className="preview-sides" role="group" aria-label="Seitenansicht wählen">
-      {sides.map(side => <button key={side.id} type="button" aria-pressed={activeSide === side.id}
-        aria-label={`Ansicht ${side.label}`} onClick={() => fit(side)}>{side.label}</button>)}
-    </div>
+  const hasDetails = !!details
+  return <div className={`viewer-with-sides${hasDetails ? ' has-details' : ''}`}>
+    <aside className="preview-hud preview-hud-left" aria-label="3D-Ansichten"><PagedPanel label="Ansichten">
+      <div className="preview-sides" role="group" aria-label="Seitenansicht wählen">
+        {sides.map(side => <button key={side.id} type="button" aria-pressed={activeSide === side.id}
+          aria-label={`Ansicht ${side.label}`} onClick={() => fit(side)}>{side.label}</button>)}
+      </div>
+      <button type="button" className="fit3d" aria-label="3D einpassen" onClick={() => fit()}>Einpassen</button>
+    </PagedPanel></aside>
     <div className="viewer" ref={container}>
-      <button type="button" className="fit3d" onClick={() => fit()}>3D einpassen</button>
+      {!hasDetails && error && <p className="preview-error" role="status">{error}</p>}
+      {!hasDetails && textureWarning && <p className="texture-warning" role="status">{textureWarning}</p>}
+    </div>
+    {hasDetails && <aside className="preview-hud preview-hud-right" aria-label="3D-Informationen"><PagedPanel label="Details">
+      {details}
       {error && <p className="preview-error" role="status">{error}</p>}
       {textureWarning && <p className="texture-warning" role="status">{textureWarning}</p>}
-    </div>
+    </PagedPanel></aside>}
   </div>
 }
 
@@ -418,13 +444,15 @@ export default function Preview({ mode, document, library, selected, previewMode
   const texturedPlan = useMemo(() => result.plan && mode === 'form' ? { ...result.plan, meshes: result.plan.meshes.map(mesh => ({ ...mesh, material: materials[mesh.material] || mesh.material })) } : result.plan, [result.plan, mode, materials])
   return <section className="preview-panel" aria-label="Gebäude- und Formvorschau">
     <div className="panel-heading"><span>3D-Vorschau</span><div className="button-row">
-      <select aria-label="Vorschauziel" value={previewMode} onChange={event => onMode(event.target.value)}>
-        <option value="graph">Graph</option><option value="selected">Selektiert</option>
-      </select>
+      <div className="preview-target-switch" role="group" aria-label="Vorschauziel">
+        {[['graph', 'Graph'], ['selected', 'Selektiert']].map(([value, label]) =>
+          <button key={value} type="button" aria-pressed={previewMode === value}
+            onClick={() => onMode(value)}>{label}</button>)}
+      </div>
       <button type="button" aria-expanded={!collapsed} aria-controls={`${mode}-preview`} aria-label={collapsed ? '3D-Vorschau ausklappen' : '3D-Vorschau einklappen'} onClick={onToggle}>{collapsed ? '▸' : '▾'}</button>
     </div></div>
     <div id={`${mode}-preview`} className="preview-body" hidden={collapsed}>
-    <Viewer plan={texturedPlan} blockFrame={blockFrame} catalog={catalog} />
+    <Viewer plan={texturedPlan} blockFrame={blockFrame} catalog={catalog} details={<>
     <div className="preview-meta" role="status">
       {result.error ? <><strong>{result.plan ? 'Letzter gültiger Stand' : 'Vorschau wartet auf einen gültigen Graphen'}</strong><br />{result.error}</>
         : result.pending ? 'Vorschau wird berechnet …'
@@ -433,11 +461,12 @@ export default function Preview({ mode, document, library, selected, previewMode
     </div>
     {result.plan?.value && <p className="preview-meta">{result.plan.value}</p>}
     {result.plan?.warnings?.map((warning, index) => <p className="preview-meta" key={index}>{warning}</p>)}
-    <p className="axis-legend"><span style={{color:axisColors.x}}>West (−X) · Ost (+X)</span> · <span style={{color:axisColors.y}}>Unten (−Y) · Oben (+Y)</span><br /><span style={{color:axisColors.z}}>Nord (−Z) · Süd (+Z)</span>
-      {blockFrame && <><br />Rahmen: 16 hB · lange Marke: 8 hB · kurze Marken: 4 / 12 hB</>}</p>
+    <div className="axis-legend" aria-label="Koordinatenachsen"><span style={{color:axisColors.x}}>West (−X) · Ost (+X)</span><span style={{color:axisColors.y}}>Unten (−Y) · Oben (+Y)</span><span style={{color:axisColors.z}}>Nord (−Z) · Süd (+Z)</span>
+      {blockFrame && <span>Rahmen: 16 hB · lange Marke: 8 hB · kurze Marken: 4 / 12 hB</span>}</div>
     {result.plan?.materials && <details className="materials"><summary>Materialbedarf</summary>
       {Object.entries(result.plan.materials).map(([id, count]) => <div key={id}><code>{id}</code><span>{count}</span></div>)}
     </details>}
+    </>} />
     </div>
   </section>
 }

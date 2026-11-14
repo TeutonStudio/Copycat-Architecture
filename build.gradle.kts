@@ -2,7 +2,7 @@ plugins {
     kotlin("jvm") version "2.2.20"
     id("net.neoforged.moddev") version "2.0.143"
 }
-version = "0.6.0"
+version = "0.6.4"
 group = "de.teutonstudio.copycatarchitect"
 base { archivesName.set("copycat_architect") }
 java { toolchain.languageVersion.set(JavaLanguageVersion.of(21)) }
@@ -26,6 +26,10 @@ neoForge {
         create("client") {
             client()
             sourceSet = clientSourceSet
+            if(project.hasProperty("specialRoomsSmoke")) {
+                systemProperty("architect.specialRoomsSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
             if(project.hasProperty("roomMountingSmoke")) {
                 systemProperty("architect.roomMountingSmoke", "true")
                 programArguments.addAll("--width", "854", "--height", "480")
@@ -71,6 +75,10 @@ neoForge {
             }
             if(project.hasProperty("graphGroupSmoke")) {
                 systemProperty("architect.graphGroupSmoke", "true")
+                programArguments.addAll("--width", "854", "--height", "480")
+            }
+            if(project.hasProperty("groupGraphInterfaceSmoke")) {
+                systemProperty("architect.groupGraphInterfaceSmoke", "true")
                 programArguments.addAll("--width", "854", "--height", "480")
             }
             if(project.hasProperty("graphSelectionSmoke")) {
@@ -152,7 +160,7 @@ neoForge {
     }
     mods { create("copycat_architect") { sourceSet(sourceSets.main.get()) } }
 }
-// Keep the locally verified CC:Tweaked compatibility while compiling against the oldest API.
+// Compile against the oldest supported CC API; override for compatibility checks.
 val ccTweakedVersion = providers.gradleProperty("ccTweakedVersion").getOrElse("1.120.0")
 dependencies {
     compileOnly("maven.modrinth:create:6.0.10+mc1.21.1") { isTransitive = false }

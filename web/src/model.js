@@ -1,13 +1,40 @@
-import { applyDiagram, compileForm, graphModels, inspectGraph, prepareForm, resolveVersionedGraph, validateGraphBundle } from './generated/engine.mjs'
+import { hasReferences, expandReferences, referenceEntries, referenceWires } from './references.js'
+import { resolveVersionedGraph, validateGraphBundle, applyGraphDiagram, replaceGraphNodes, exportDocument, editInspectorNode, normalizeDocument, wireModels, compileForm, graphModels, inspectGraph, prepareForm } from './generated/engine.mjs'
 
-export const model = graphModels()
+export const model = { ...graphModels(), mirrorPlanes: wireModels().enums.CopycatMirrorPlane }
 export const defaults = [{ id: 'body', name: 'Body', role: 'surface', priority: 0 }]
 export const formGroups = document => document.groups ?? defaults
 export const position = value => Math.max(model.positionMin, Math.min(model.positionMax, Math.round(value)))
-export const inspect = (mode, document) => inspectGraph(mode === 'building', document)
+export const inspect = (mode, document) => mode === 'building' && hasReferences(document) ? referenceEntries(document) : inspectGraph(mode === 'building', document)
 
+// Preserve absent defaults and extension metadata. Native operations still own every
+// recognized field, group reference and schema change. Arrays of nodes follow IDs.
+function retainShape(raw, before, after) {
+  if (JSON.stringify(before) === JSON.stringify(after)) return raw
+  if (after == null || typeof after !== 'object') return after
+  if (Array.isArray(after)) {
+    const byId = after.length && after.every(item => item?.id) && Array.isArray(before)
+    return after.map((item, i) => {
+      const old = byId ? before.findIndex(old => old.id === item.id) : i
+      return retainShape(raw?.[old], before?.[old], item)
+    })
+  }
+  const result = { ...raw }
+  for (const key of new Set([...Object.keys(before || {}), ...Object.keys(after)])) {
+    const value = retainShape(raw?.[key], before?.[key], after[key])
+    if (value === undefined) delete result[key]
+    else result[key] = value
+  }
+  return result
+}
+function retainedGraph(document, graph) {
+  const building = document.graph.nodes.some(node => node.kind === 'BUILDING')
+  return retainShape(document.graph, normalizeDocument(building, document).graph, graph)
+}
 export function replaceNodes(document, nodes) {
-  return { ...document, graph: { ...document.graph, nodes } }
+  const candidate = { ...document, graph: { ...document.graph, nodes } }
+  if (hasReferences(candidate)) { inspect('building', candidate); return {...candidate,referenceSchema:1} }
+  return { ...candidate, graph: retainedGraph(candidate, replaceGraphNodes(nodes.some(node => node.kind === 'BUILDING'), hasReferences(document) ? candidate : document, nodes)) }
 }
 
 export function readGraph(raw, mode) {
@@ -37,12 +64,9 @@ export function readGraph(raw, mode) {
 
 export function writeGraph(mode, document) {
   inspect(mode, document)
-  if (document.versionedGraph) {
-    validateGraphBundle(document.versionedGraph)
-    return { ...document, graph: null, ...(mode === 'form' ? { schema: 3, parts: compileForm(document) } : { schema: 2 }) }
-  }
-  if (mode === 'form') return { ...document, schema: 3, parts: compileForm(document) }
-  return { ...document, schema: 2 }
+  if (hasReferences(document)) return structuredClone(document)
+  const exported = retainShape(document, normalizeDocument(mode === 'building', document), exportDocument(mode === 'building', document))
+  return document.versionedGraph ? { ...exported, graph: null } : exported
 }
 
 export function connections(entries) {
@@ -57,17 +81,11 @@ export function protectedNode(node) {
 }
 
 export function applyWires(mode, document, entries, wires, removed = []) {
-  const previous = new Map(entries.map(({ node }) => [node.id, node]))
-  const originals = new Map(document.graph.nodes.map(node => [node.id, node]))
+  if (hasReferences(document)) return referenceWires(document, wires, removed)
   const layout = entries.map(({ node }) => node).filter(node => !removed.includes(node.id))
-  const next = applyDiagram(mode === 'building', document, layout, wires)
-  return replaceNodes(document, next.map(node => {
-    const before = previous.get(node.id)
-    const original = originals.get(node.id)
-    const fields = mode === 'building' ? ['inputs', 'offsets', 'walls', 'floor', 'ceiling', 'corner', 'levels', 'roof', 'rotation', 'mirroring', 'dimensions', 'layout', 'geometry', 'regionCopies', 'assembly'] : ['inputs']
-    const changed = fields.filter(key => JSON.stringify(before[key]) !== JSON.stringify(node[key]))
-    return { ...original, ...Object.fromEntries(changed.map(key => [key, node[key]])) }
-  }))
+  const graph = applyGraphDiagram(mode === 'building', document, layout, wires)
+  return { ...document, graph: retainedGraph(document, graph) }
+
 }
 
 export function validateLibrary(data) {
@@ -80,4 +98,14 @@ export function validateLibrary(data) {
     }
   }
   return data
+}
+
+export function editNode(mode, document, node) {
+  if (hasReferences(document)) {
+    if (node.kind === 'REFERENCE') return replaceNodes(document, document.graph.nodes.map(n => n.id === node.id ? node : n))
+    const expanded = expandReferences(document)
+    const edited = editInspectorNode(true, expanded.document, node)
+    return replaceNodes(document, document.graph.nodes.map(n => n.kind === 'REFERENCE' ? n : edited.nodes.find(v => v.id === n.id)))
+  }
+  return { ...document, graph: retainedGraph(document, editInspectorNode(mode === 'building', document, node)) }
 }

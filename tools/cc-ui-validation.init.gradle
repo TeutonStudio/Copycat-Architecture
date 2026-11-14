@@ -1,0 +1,14 @@
+// Shared isolated game directory for CC UI acceptance, without touching development worlds.
+// ./gradlew runClient -PworkshopSmoke -I tools/cc-ui-validation.init.gradle --offline
+gradle.projectsEvaluated {
+    rootProject.tasks.withType(Test).configureEach { maxHeapSize = '1G' }
+    rootProject.extensions.getByName('neoForge').runs.configureEach {
+        if (name == 'client') {
+            gameDirectory.set(rootProject.file('build/cc-ui-client'))
+            jvmArgument('-Xmx2G')
+            if (rootProject.hasProperty('workshopSmoke') || rootProject.hasProperty('printerSmoke')) {
+                programArguments.addAll('--width', '854', '--height', '480')
+            }
+        }
+    }
+}

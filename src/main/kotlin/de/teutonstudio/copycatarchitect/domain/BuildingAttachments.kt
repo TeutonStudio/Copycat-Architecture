@@ -1,7 +1,7 @@
 package de.teutonstudio.copycatarchitect.domain
 
 /** Instantiated semantic requests collected before room/storey caches are released. */
-internal class BuildingAttachments(private val graph:BuildingGraph,private val segment:(String)->FixedSegment,private val palette:Map<String,String> = emptyMap(),
+internal class BuildingAttachments(private val graph:BuildingGraph,private val segment:(String)->FixedSegment,private val palette:Map<String,String> = emptyMap(),private val result:BuildingNode?=graph.nodes.singleOrNull { n -> n.kind==BuildingKind.BUILDING && graph.nodeGroups.none { n.id in it.nodes } },
                                    private val copycat:(String)->Placement={ error("Missing opening mask Copycat $it") }) {
     val columns=mutableListOf<PlacedColumn>()
     val plates=mutableListOf<PlacedPlateAttachment>()
@@ -14,7 +14,7 @@ internal class BuildingAttachments(private val graph:BuildingGraph,private val s
 
     fun collect(storey:BuildingNode,story:CompiledStorey,offset:P,instance:String,room:(String)->SemanticRoom) {
         facadeDepth=storey.facade?.source?.takeIf(String::isNotEmpty)?.let { segment(it).depth } ?: 1
-        val material=forced(graph.nodes.singleOrNull { it.kind==BuildingKind.BUILDING }) ?: forced(storey)
+        val material=forced(result) ?: forced(storey)
         val storyWalls=story.plan.placements.filter { it.component in setOf("wall","trim") }
         recordWall(SurfaceRef(storey.id,instance),storyWalls.map { it.copy(pos=it.pos+offset) })
         if(storey.storeyMode=="walls") {

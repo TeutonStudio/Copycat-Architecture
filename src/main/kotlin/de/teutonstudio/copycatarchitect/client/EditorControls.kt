@@ -5,7 +5,7 @@ import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.components.Button
 import net.minecraft.network.chat.Component
 
-/** Raised machine keys share the same focus and selected states across every screen. */
+/** Compact CC-style keys share focus, selection and action states across every screen. */
 class EditorButton(x:Int,y:Int,w:Int,label:Component,action:()->Unit):
     Button(x,y,w,18,label,{ action() },DEFAULT_NARRATION) {
     var selected=false
@@ -16,7 +16,6 @@ class EditorButton(x:Int,y:Int,w:Int,label:Component,action:()->Unit):
         val highlighted=active && isHoveredOrFocused
         ArchitectTheme.button(g,x,y,width,height,highlighted,selected,active)
         if(primary && active) {
-            g.fill(x+2,y+2,x+width-2,y+height-3,if(highlighted) 0xff668454.toInt() else 0xff4c673f.toInt())
             g.fill(x+2,y+height-3,x+width-2,y+height-2,ArchitectTheme.green)
         }
         val color=if(active) ArchitectTheme.text else ArchitectTheme.disabled
@@ -63,7 +62,7 @@ class EditorButton(x:Int,y:Int,w:Int,label:Component,action:()->Unit):
 /** Native text editing inside an inset terminal display, including caret and selection rendering. */
 class EditorTextField(font:net.minecraft.client.gui.Font,x:Int,y:Int,w:Int,h:Int,label:Component):
     net.minecraft.client.gui.components.EditBox(font,x,y,w,h,label) {
-    init { setBordered(false);setTextColor(ArchitectTheme.green);setTextColorUneditable(ArchitectTheme.disabled) }
+    init { setBordered(false);setTextColor(ArchitectTheme.text);setTextColorUneditable(ArchitectTheme.disabled) }
     override fun renderWidget(g:GuiGraphics,mx:Int,my:Int,delta:Float) {
         ArchitectTheme.inset(g,x,y,width,height)
         if(isFocused) g.renderOutline(x,y,width,height,ArchitectTheme.brass)
@@ -95,7 +94,7 @@ class EditorDropdown(val anchor:Button,val options:List<Pair<String,()->Unit>>,s
         ArchitectTheme.panel(g,x-3,y-3,w+6,rows*20+6)
         for(i in 0 until rows) {
             val chosen=i+first;val hovered=mx in x until x+w && my in y+i*20 until y+(i+1)*20
-            g.fill(x,y+i*20,x+w,y+(i+1)*20,if(hovered) ArchitectTheme.raised else if(chosen==index) 0xff515d3f.toInt() else ArchitectTheme.well)
+            g.fill(x,y+i*20,x+w,y+(i+1)*20,if(hovered) ArchitectTheme.raised else if(chosen==index) ArchitectTheme.selected else ArchitectTheme.well)
             if(chosen==index) g.fill(x,y+i*20,x+2,y+(i+1)*20,ArchitectTheme.brass)
             g.drawString(font,font.plainSubstrByWidth(options[chosen].first,w-16),x+6,y+i*20+6,ArchitectTheme.text,false)
         }

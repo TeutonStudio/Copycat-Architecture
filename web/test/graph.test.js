@@ -174,29 +174,13 @@ test('empty intermediate geometry is inspectable but the empty final form cannot
   assert.throws(() => writeGraph('form', graph), /Result is empty/)
 })
 
-test('native-only nodes, schemas and geometry are rejected before browser import or export', () => {
-  const original = fixture('nodegraph-form')
-  const input = original.graph.nodes.find(node => node.kind === 'INPUT')
-  for (const kind of ['UNSUPPORTED_NODE']) {
-    const document = replaceNodes(original, original.graph.nodes.map(node => node.id === input.id ? { ...node, kind } : node))
-    assert.throws(() => readGraph(document, 'form'), /native editor/)
-  }
-  for (const field of ['exact', 'exactClip', 'roof']) {
-    const document = replaceNodes(original, original.graph.nodes.map(node => node.id === input.id ? { ...node, part: { ...node.part, [field]: {} } } : node))
-    assert.throws(() => writeGraph('form', document), /native editor/)
-  }
-  const groups = { ...original, graph: { ...original.graph, nodeGroups: [{ id: 'group' }] } }
-  assert.throws(() => readGraph(groups, 'form'), /existing editable nodes/)
-  const validGroup = { ...original, graph: { ...original.graph, nodeGroups: [{ id: 'group', name: 'Legacy', nodes: [input.id], definitionId: '' }] } }
-  assert.deepEqual(writeGraph('form', readGraph(validGroup, 'form')).graph.nodeGroups, validGroup.graph.nodeGroups)
+test('all native schemas, geometry fields and building kinds are available to the browser', () => {
   const graph = fixture('building-graph')
-  for (const change of [{ roomConfig: {mode:"SEGMENTS"} }, { roofConfig: {mode:"FLAT"} }]) {
-    const document = replaceNodes(graph, graph.graph.nodes.map((node, index) => index === 0 ? { ...node, ...change } : node))
-    assert.throws(() => writeGraph('building', document), /native editor/)
-  }
-  assert.throws(() => readGraph({ ...graph, graph: { ...graph.graph, schema: 55 } }, 'building'), /schema/)
+  const layout = newNode(true, 'ROOM_LAYOUT', 'layout', 0, 0)
+  const document = replaceNodes(graph, [...graph.graph.nodes, layout])
+  assert.equal(readGraph(document, 'building').graph.nodes.at(-1).kind, 'ROOM_LAYOUT')
   assert.equal(newNode(false, 'MIRROR', 'mirror', 0, 0).kind, 'MIRROR')
-  assert.throws(() => newNode(true, 'ROOM_LAYOUT', 'layout', 0, 0), /native editor/)
+  assert.throws(() => newNode(false, 'UNSUPPORTED_NODE', 'unknown', 0, 0), /enum constant/)
 })
 
 test('plate previews use the connected footprint while independent room branches stay incomplete', () => {
@@ -206,4 +190,27 @@ test('plate previews use the connected footprint while independent room branches
   const altered = replaceNodes(original, original.graph.nodes.map(node => node.id === room.id
     ? { ...node, rectangles: node.rectangles.map(rect => ({ ...rect, width: rect.width + 2 })), ceiling: '' } : node))
   assert.ok(previewGraph(true, altered, library, room.floor).count > full.count)
+})
+
+
+test('roof extension grows toward gables while fixed wall sources stay on the building', () => {
+  for (const ridge of [0, 1]) {
+    const doc = fixture('building-graph-assembly')
+    const roof = doc.graph.nodes.find(node => node.kind === 'ROOF')
+    Object.assign(roof, { ridge, overhang: 0, walls: Object.fromEntries((ridge === 0 ? ['0', '2'] : ['1', '3']).map(side => [side, 'gable_wall'])) })
+    const positions = plan => plan.meshes.filter(mesh => mesh.component === 'roof').flatMap(mesh => mesh.positions)
+    const gables = plan => plan.meshes.filter(mesh => mesh.component === 'gable')
+    const before = previewGraph(true, doc, library, '')
+    roof.overhang = 2
+    const exported = writeGraph('building', readGraph(doc, 'building'))
+    const after = previewGraph(true, exported, library, '')
+    const across = ridge === 0 ? 0 : 2
+    const along = ridge === 0 ? 2 : 0
+    const a = positions(before), b = positions(after)
+    assert.deepEqual(new Set(a.map(p => p[across])), new Set(b.map(p => p[across])))
+    assert.equal(Math.min(...b.map(p => p[along])), Math.min(...a.map(p => p[along])) - 2)
+    assert.equal(Math.max(...b.map(p => p[along])), Math.max(...a.map(p => p[along])) + 2)
+    assert.equal(Math.max(...b.map(p => p[1])), Math.max(...a.map(p => p[1])))
+    assert.deepEqual(gables(after), gables(before))
+  }
 })

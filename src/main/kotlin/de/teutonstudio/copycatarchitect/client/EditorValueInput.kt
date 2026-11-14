@@ -68,7 +68,7 @@ object EditorValueInput {
         override fun render(g:GuiGraphics,mx:Int,my:Int,delta:Float) {
             ArchitectTheme.background(g,width,height)
             ArchitectTheme.header(g,width,title.string,width-16)
-            ArchitectTheme.panel(g,left,top,panelWidth,panelHeight,title.string)
+            ArchitectTheme.dialog(g,left,top,panelWidth,panelHeight,title.string)
             g.drawString(font,tr("value_field"),left+12,top+34,ArchitectTheme.muted,false)
             val count="${draft.value.length} / $maxLength"
             g.drawString(font,count,left+panelWidth-12-font.width(count),top+34,ArchitectTheme.muted,false)

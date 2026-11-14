@@ -234,12 +234,32 @@ class BuildingGraphTest {
         assertEquals(p.placements.size,p.placements.map { it.pos }.distinct().size)
         val roof=g.nodes.first { it.id=="roof" }
         assertEquals(setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE),BuildingPorts.of(roof).first { it.key=="in:0" }.accepts)
-        assertEquals((setOf(BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds),BuildingPorts.of(roof).first { it.key=="wall:0" }.accepts)
+        assertEquals((setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds),BuildingPorts.of(roof).first { it.key=="wall:0" }.accepts)
         val wrong=g.nodes.first { it.id=="gable_wall" }.copy(length=4)
         assertFails { plan(g.replace(wrong)) }
         val grouped=roof.copy(materialMode=MaterialMode.GROUPED)
         val custom=g.nodes.first { it.id=="roof_copycat" }.copy(role="frame")
         assertTrue(plan(g.replace(grouped).replace(custom)).placements.filter { it.component=="roof" }.all { it.material==Building().palette.getValue("roof") })
+    }
+    @Test fun `gable extension preserves fixed wall lengths positions and roof width in both axes`() {
+        for(ridge in 0..1) for(explicit in listOf(false,true)) {
+            var graph=BuildingGraph.assembledStarter()
+            val roof=graph.nodes.first { it.id=="roof" }.copy(ridge=ridge,
+                walls=if(explicit) (if(ridge==0) listOf("0","2") else listOf("1","3")).associateWith { "gable_wall" } else emptyMap())
+            graph=graph.replace(roof)
+            val base=plan(graph)
+            val extended=plan(graph.replace(roof.copy(overhang=2)))
+            val before=base.placements.filter { it.component=="roof" }.map { it.pos }
+            val after=extended.placements.filter { it.component=="roof" }.map { it.pos }
+            fun across(p:P)=if(ridge==0) p.x else p.z
+            fun along(p:P)=if(ridge==0) p.z else p.x
+            assertEquals(before.map(::across).toSet(),after.map(::across).toSet())
+            assertEquals(before.minOf(::along)-2,after.minOf(::along))
+            assertEquals(before.maxOf(::along)+2,after.maxOf(::along))
+            assertEquals(before.maxOf { it.y },after.maxOf { it.y })
+            assertEquals(base.placements.filter { it.component=="gable" },extended.placements.filter { it.component=="gable" })
+            assertTrue(extended.placements.filter { it.component=="gable" }.all { across(it.pos) in -1..3 && along(it.pos) in -1..3 })
+        }
     }
     @Test fun `explicit empty gables and flat roof parapets use segment geometry`() {
         val g=BuildingGraph.assembledStarter();val roof=g.nodes.first { it.id=="roof" }

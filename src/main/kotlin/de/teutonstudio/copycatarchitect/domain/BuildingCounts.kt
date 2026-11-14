@@ -4,8 +4,10 @@ package de.teutonstudio.copycatarchitect.domain
 object BuildingCounts {
     val kinds=setOf(BuildingKind.INT,BuildingKind.INT_ADD,BuildingKind.INT_SUBTRACT,BuildingKind.INT_MULTIPLY,BuildingKind.INT_DIVIDE,BuildingKind.INT_MIN,BuildingKind.INT_MAX)
     val axes=listOf("length","height","depth")
-    fun hasDimensions(n:BuildingNode)=n.id!="empty_wall" && n.kind in setOf(BuildingKind.SEGMENT,BuildingKind.SEGMENT_LAYOUT)
+    fun hasDimensions(n:BuildingNode)=n.id!="empty_wall" && n.kind in setOf(BuildingKind.SEGMENT,BuildingKind.SEGMENT_LAYOUT,BuildingKind.ROTATION_SEGMENT)
     fun validate(n:BuildingNode) {
+        require(n.countValue==null || n.countValue==0 || n.kind==BuildingKind.INT) { "Anzahl values belong to INT nodes" }
+        require(n.kind!=BuildingKind.ROTATION_SEGMENT || n.dimensions.orEmpty().keys.all { it=="length" }) { "Rotation segments accept only an Anzahl length" }
         require(n.dimensions.orEmpty().isEmpty() || hasDimensions(n) && n.dimensions.orEmpty().keys.all { it in axes }) { "Only segments and layouts accept dimensions" }
         require(n.kind !in kinds || n.inputs.size==(if(n.kind==BuildingKind.INT) 0 else 2)) { "Anzahl operations need two inputs" }
         require(n.dimensions.orEmpty().isEmpty() || n.layout.isEmpty()) { "Connect dimensions on the segment layout, not its consumer" }
@@ -62,7 +64,7 @@ object BuildingCounts {
             if(n.kind !in kinds || !usage.getOrPut(id) { mutableSetOf() }.add(axis)) return
             n.inputs.filter(String::isNotEmpty).forEach { visit(it,axis) }
         }
-        graph.nodes.forEach { n -> n.dimensions.orEmpty().forEach { (axis,id) -> visit(id,axis) } }
+        graph.nodes.forEach { n -> n.dimensions.orEmpty().forEach { (axis,id) -> visit(id,if(n.kind==BuildingKind.ROTATION_SEGMENT && axis=="length") "height" else axis) } }
         return usage
     }
 }

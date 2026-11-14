@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {newNode, starterBuilding, evaluateCount, previewGraph} from '../src/generated/engine.mjs'
 import {inspect,applyWires,connections,readGraph,writeGraph} from '../src/model.js'
 const count=(id,value)=>({...newNode(true,'INT',id,0,0),countValue:value})
-function fixture(){ const d=starterBuilding();d.graph.nodes.push(count('a',2),count('b',3),{...newNode(true,'INT_ADD','sum',0,0),inputs:['a','b']});return d }
+function fixture(){ const d=starterBuilding();Object.assign(d.graph.nodes.find(n=>n.id==='wall'),{assembly:false,layout:''});d.graph.nodes.push(count('a',2),count('b',3),{...newNode(true,'INT_ADD','sum',0,0),inputs:['a','b']});return d }
 test('count expressions wire typed dimensions, color shared paths and round-trip without overwriting fallback',()=>{
  const d=fixture();const wall=d.graph.nodes.find(n=>n.id==='wall');wall.module='';wall.block='minecraft:stone';wall.inputs=[]
  let entries=inspect('building',d)

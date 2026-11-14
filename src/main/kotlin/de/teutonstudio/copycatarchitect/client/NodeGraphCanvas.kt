@@ -23,7 +23,7 @@ class NodeGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Form,pr
                       private val onCreateGroup:(name:String,nodeId:String,material:Boolean,slot:Int)->Unit={_,_,_,_->},
                       private val preview:(()->Result<Form>)?=null,private val readOnly:Boolean=false,
                       private val onSelectNode:(String)->Unit={},private val previewMaterials:()->Boolean={true},
-                      private val onSavedSource:(String,Int,Int)->Unit={_,_,_->}):AbstractWidget(x,y,w,h,tr("node_graph")) {
+                      private val onSavedSource:(String,Int,Int)->Unit={_,_,_->},private val allowedNodes:(()->Set<String>)?=null):AbstractWidget(x,y,w,h,tr("node_graph")) {
     private val font get()=Minecraft.getInstance().font
     private val graph get()=definition().graph!!
     private val nodePreviews=ShapeNodePreviews(definition) { graph }
@@ -52,6 +52,20 @@ class NodeGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Form,pr
     fun hasOpenMenu()=menu!=null
     fun groupMemberPoint(id:String)=groupInspector.memberPoint(id)
     private var cachedSourcePart:Part?=null;private var cachedSourceDefinition:Form?=null
+    private var outputPreviewForm:Form?=null
+    private var outputPreviewGroup=""
+    private var outputPreview:ShapeNodePreview?=null
+    private var costPreview:ShapeNodePreview?=null
+    private var costGroups:List<MaterialGroup>?=null
+    private var previewCost=0
+    private fun previewCost(value:ShapeNodePreview):Int {
+        val groups=definition().groups
+        if(costPreview!==value || costGroups!=groups) {
+            previewCost=if(value.parts.isEmpty()) 0 else Extrusion.cost(value.parts,groups)
+            costPreview=value;costGroups=groups
+        }
+        return previewCost
+    }
     private fun sourceDefinition(n:GraphNode):Form? {
         if(n.kind!=NodeKind.INPUT) return null
         if(cachedSourcePart!=n.part) { cachedSourcePart=n.part;cachedSourceDefinition=runCatching { SourceDefinitions.definition(n.part) }.getOrNull() }
@@ -59,7 +73,13 @@ class NodeGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Form,pr
     }
     private fun previewValue(n:GraphNode):ShapeNodePreview {
         if(n.kind==NodeKind.OUTPUT) preview?.let { legacy ->
-            return legacy().fold({ f -> ShapeNodePreview(parts=Geometry.previewParts(f.parts,f.groups,n.previewGroup)) },{ ShapeNodePreview(error=it.message.orEmpty()) })
+            return legacy().fold({ f ->
+                if(outputPreviewForm!==f || outputPreviewGroup!=n.previewGroup || outputPreview==null) {
+                    outputPreview=ShapeNodePreview(parts=Geometry.previewParts(f.parts,f.groups,n.previewGroup))
+                    outputPreviewForm=f;outputPreviewGroup=n.previewGroup
+                }
+                outputPreview!!
+            },{ ShapeNodePreview(error=it.message.orEmpty()) })
         }
         return nodePreviews.get(n.id)
     }
@@ -253,11 +273,11 @@ class NodeGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Form,pr
     private fun dropdown(field:Field)=field in setOf(Field.SELECT,Field.CONNECT,Field.TURN,Field.TOP,Field.GROUP,Field.TILT,Field.MATERIAL,Field.PREVIEW,Field.ROTATION_AXIS,Field.INPUT_GROUP,Field.MIRROR_PLANE)
     private fun screenControl(c:Control):Control=if(inspector) c else c.copy(x=(x+view.panX+c.x*view.zoom).roundToInt(),y=(y+view.panY+c.y*view.zoom).roundToInt(),w=(c.w*view.zoom).roundToInt())
     private fun choices(m:Menu):List<Choice> {
-        if(m.field==Field.SELECT) return graph.nodes.map { Choice(it.id,nodeLabel(it)) }
+        if(m.field==Field.SELECT) return graph.nodes.filter { allowedNodes==null || it.id in allowedNodes.invoke() }.map { Choice(it.id,nodeLabel(it)) }
         if(m.field==Field.INSERT) return listOf(Choice(NodeKind.SAVED.name,ui("node_saved")))+BaseShapes.all.map { Choice(it.id,ui(it.name)) }+GraphModels.shapeOperations.map { Choice(it.name,ui(GraphModels.shape(it).labelKey)) }
         val n=graph.nodes.firstOrNull { it.id==m.node } ?: return emptyList()
         return when(m.field) {
-            Field.CONNECT -> listOf(Choice("",ui("disconnected")))+graph.nodes.filter { source -> source.kind!=NodeKind.OUTPUT && source.id!=n.id && runCatching {
+            Field.CONNECT -> listOf(Choice("",ui("disconnected")))+graph.nodes.filter { source -> (allowedNodes==null || source.id in allowedNodes.invoke()) && source.kind!=NodeKind.OUTPUT && source.id!=n.id && runCatching {
                 GraphCompiler.structure(graph.replace(n.copy(inputs=n.inputs.mapIndexed { i,id -> if(i==m.slot) source.id else id })),definition().groups)
             }.isSuccess }.map { Choice(it.id,nodeLabel(it)) }
             Field.TURN,Field.TILT -> (0..3).map { Choice(it.toString(),"${it*90}°") }
@@ -416,13 +436,13 @@ class NodeGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Form,pr
     private fun drawPreview(g:GuiGraphics,n:GraphNode,px:Int,py:Int,w:Int) {
         val value=previewValue(n)
         ShapeNodePreviewRenderer.draw(g,px,py+23,w,115,value,definition().groups,surfaces(),view.yaw,showMaterials=previewMaterials())
-        if(value.error.isEmpty() && value.rotation==null) text(g,ui("total_cost",if(value.parts.isEmpty()) 0 else Extrusion.cost(value.parts,definition().groups)),px+2,py+145,ArchitectTheme.brass)
+        if(value.error.isEmpty() && value.rotation==null) text(g,ui("total_cost",previewCost(value)),px+2,py+145,ArchitectTheme.brass)
         text(g,ui("node_preview_hint"),px+2,py+158,ArchitectTheme.muted)
     }
     private fun drawInspectorPreview(g:GuiGraphics,n:GraphNode,px:Int,py:Int,w:Int) {
         val value=previewValue(n);val h=inspectorPreviewHeight()
-        ShapeNodePreviewRenderer.draw(g,px,py,w,h-34,value,definition().groups,surfaces(),view.yaw,showMaterials=previewMaterials())
-        if(value.error.isEmpty() && value.rotation==null) text(g,ui("total_cost",if(value.parts.isEmpty()) 0 else Extrusion.cost(value.parts,definition().groups)),px+2,py+h-27,ArchitectTheme.brass)
+        ShapeNodePreviewRenderer.drawThumbnail(g,px,py,w,h-34,value,definition().groups,surfaces(),showMaterials=previewMaterials(),yaw=view.yaw)
+        if(value.error.isEmpty() && value.rotation==null) text(g,ui("total_cost",previewCost(value)),px+2,py+h-27,ArchitectTheme.brass)
         text(g,font.plainSubstrByWidth(ui("node_preview_hint"),w),px+2,py+h-14,ArchitectTheme.muted)
     }
     private fun curve(g:GuiGraphics,a:Pair<Double,Double>,b:Pair<Double,Double>,color:Int) {

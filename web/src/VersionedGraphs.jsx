@@ -104,7 +104,9 @@ export default function VersionedGraphs({ initial, initialSelection = [], defini
           if (selectedChanges.length) setSelection(previous => { const next = new Set(previous); selectedChanges.forEach(c => c.selected ? next.add(c.id) : next.delete(c.id)); return [...next] })
           const moved = changes.filter(c => c.type === 'position' && c.position)
           if (moved.length) setPositions(previous => ({ ...previous, ...Object.fromEntries(moved.map(c => [c.id, c.position])) }))
-        }} selectionOnDrag multiSelectionKeyCode="Shift" fitView deleteKeyCode={null}
+        }}
+        onNodeClick={(event, node) => setSelection(event.shiftKey ? selection.includes(node.id) ? selection.filter(id => id !== node.id) : [...selection, node.id] : [node.id])}
+        selectionOnDrag multiSelectionKeyCode="Shift" fitView deleteKeyCode={null}
         onConnect={c => act(() => edit({ ...d, connections: [...d.connections.filter(w => w.target !== c.target || w.port !== c.targetHandle), { source: c.source, sourcePort: c.sourceHandle, target: c.target, port: c.targetHandle }] }))}
         onEdgeDoubleClick={(_, edge) => act(() => edit({ ...d, connections: d.connections.filter((_, i) => `wire${i}` !== edge.id) }))}
         onNodeDragStop={(_, node) => act(() => { const p = { x: Math.round(node.position.x), y: Math.round(node.position.y) }

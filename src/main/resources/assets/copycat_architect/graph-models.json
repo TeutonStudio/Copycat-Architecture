@@ -856,7 +856,9 @@
       3,
       4,
       5,
-      6
+      6,
+      7,
+      8
     ],
     "defaultSchema": 2,
     "documentSchemas": [
@@ -1306,12 +1308,93 @@
               "y": 0,
               "z": 2
             }
-          ]
+          ],
+          "areaMode": "SQUARE",
+          "length": 3,
+          "height": 3
         },
         "alwaysExplicit": true,
-        "ports": [],
+        "ports": [
+          {
+            "key": "length",
+            "path": [
+              "dimensions",
+              "length"
+            ],
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX",
+              "POSITION_X",
+              "POSITION_Y",
+              "POSITION_Z"
+            ],
+            "when": {
+              "areaMode": "SQUARE"
+            },
+            "labelKey": "length"
+          },
+          {
+            "key": "length",
+            "path": [
+              "dimensions",
+              "length"
+            ],
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX",
+              "POSITION_X",
+              "POSITION_Y",
+              "POSITION_Z"
+            ],
+            "when": {
+              "areaMode": "RECTANGLE"
+            },
+            "labelKey": "length"
+          },
+          {
+            "key": "height",
+            "path": [
+              "dimensions",
+              "height"
+            ],
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX",
+              "POSITION_X",
+              "POSITION_Y",
+              "POSITION_Z"
+            ],
+            "when": {
+              "areaMode": "RECTANGLE"
+            },
+            "labelKey": "height"
+          }
+        ],
         "fields": {
-          "coordinates": {}
+          "areaMode": {},
+          "length": {
+            "min": 1,
+            "max": 128
+          },
+          "height": {
+            "min": 1,
+            "max": 128
+          }
         }
       },
       "COPYCAT": {
@@ -1476,7 +1559,8 @@
             ]
           },
           "features": {},
-          "attachments": {}
+          "attachments": {},
+          "dynamicAxes": {}
         }
       },
       "PATTERN": {
@@ -2235,7 +2319,8 @@
         "output": "ROOF",
         "defaults": {
           "assembly": true,
-          "role": "roof"
+          "role": "roof",
+          "adaptiveRoof": true
         },
         "legacyDefaults": {
           "role": "roof"
@@ -2255,6 +2340,121 @@
             "labelKey": "bg_roof_layout"
           },
           {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "SEGMENT",
+              "PATTERN",
+              "SEGMENT_MIRROR",
+              "SEGMENT_ROTATE",
+              "SEGMENT_UNION",
+              "SEGMENT_INTERSECTION",
+              "SEGMENT_DIFFERENCE",
+              "SEGMENT_SYMMETRIC_DIFFERENCE",
+              "ROTATION_SEGMENT"
+            ],
+            "when": {
+              "assembly": true,
+              "adaptiveRoof": true
+            },
+            "labelKey": "roof"
+          },
+          {
+            "key": "in:1",
+            "path": [
+              "inputs",
+              "1"
+            ],
+            "accepts": [
+              "SEGMENT",
+              "PATTERN",
+              "SEGMENT_MIRROR",
+              "SEGMENT_ROTATE",
+              "SEGMENT_UNION",
+              "SEGMENT_INTERSECTION",
+              "SEGMENT_DIFFERENCE",
+              "SEGMENT_SYMMETRIC_DIFFERENCE",
+              "ROTATION_SEGMENT"
+            ],
+            "when": {
+              "assembly": true,
+              "adaptiveRoof": true
+            },
+            "labelKey": "roof"
+          },
+          {
+            "key": "in:2",
+            "path": [
+              "inputs",
+              "2"
+            ],
+            "accepts": [
+              "SEGMENT",
+              "PATTERN",
+              "SEGMENT_MIRROR",
+              "SEGMENT_ROTATE",
+              "SEGMENT_UNION",
+              "SEGMENT_INTERSECTION",
+              "SEGMENT_DIFFERENCE",
+              "SEGMENT_SYMMETRIC_DIFFERENCE",
+              "ROTATION_SEGMENT"
+            ],
+            "when": {
+              "assembly": true,
+              "adaptiveRoof": true
+            },
+            "labelKey": "roof"
+          },
+          {
+            "key": "in:3",
+            "path": [
+              "inputs",
+              "3"
+            ],
+            "accepts": [
+              "SEGMENT",
+              "PATTERN",
+              "SEGMENT_MIRROR",
+              "SEGMENT_ROTATE",
+              "SEGMENT_UNION",
+              "SEGMENT_INTERSECTION",
+              "SEGMENT_DIFFERENCE",
+              "SEGMENT_SYMMETRIC_DIFFERENCE",
+              "ROTATION_SEGMENT"
+            ],
+            "when": {
+              "assembly": true,
+              "adaptiveRoof": true
+            },
+            "labelKey": "roof"
+          },
+          {
+            "key": "in:4",
+            "path": [
+              "inputs",
+              "4"
+            ],
+            "accepts": [
+              "SEGMENT",
+              "PATTERN",
+              "SEGMENT_MIRROR",
+              "SEGMENT_ROTATE",
+              "SEGMENT_UNION",
+              "SEGMENT_INTERSECTION",
+              "SEGMENT_DIFFERENCE",
+              "SEGMENT_SYMMETRIC_DIFFERENCE",
+              "ROTATION_SEGMENT"
+            ],
+            "when": {
+              "assembly": true,
+              "adaptiveRoof": true
+            },
+            "labelKey": "roof"
+          },
+          {
             "key": "in:*",
             "path": [
               "inputs",
@@ -2272,7 +2472,10 @@
               "ROTATION_SEGMENT"
             ],
             "when": {
-              "assembly": true
+              "assembly": true,
+              "adaptiveRoof": {
+                "not": true
+              }
             },
             "max": 6,
             "expand": true
@@ -2558,6 +2761,386 @@
         "output": "BUILDING",
         "defaults": {},
         "ports": [
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "AREA"
+            ],
+            "when": {
+              "resultType": "AREA"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "COPYCAT",
+              "COPYCAT_MIRROR",
+              "COPYCAT_ROTATE",
+              "COPYCAT_UNION",
+              "COPYCAT_INTERSECTION",
+              "COPYCAT_DIFFERENCE",
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
+            ],
+            "when": {
+              "resultType": "COPYCAT"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "SEGMENT_LAYOUT"
+            ],
+            "when": {
+              "resultType": "SEGMENT_LAYOUT"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "SEGMENT",
+              "PATTERN",
+              "SEGMENT_MIRROR",
+              "SEGMENT_ROTATE",
+              "SEGMENT_UNION",
+              "SEGMENT_INTERSECTION",
+              "SEGMENT_DIFFERENCE",
+              "SEGMENT_SYMMETRIC_DIFFERENCE",
+              "ROTATION_SEGMENT"
+            ],
+            "when": {
+              "resultType": "WALL"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "ROOM_GEOMETRY"
+            ],
+            "when": {
+              "resultType": "ROOM_GEOMETRY"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "FLOOR"
+            ],
+            "when": {
+              "resultType": "FLOOR"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "CEILING"
+            ],
+            "when": {
+              "resultType": "CEILING"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "ROOM"
+            ],
+            "when": {
+              "resultType": "ROOM"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "STOREY"
+            ],
+            "when": {
+              "resultType": "STOREY"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "ROOF_LEVEL"
+            ],
+            "when": {
+              "resultType": "ROOF_LEVEL"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "ROOF_LAYOUT"
+            ],
+            "when": {
+              "resultType": "ROOF_LAYOUT"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "ROOF"
+            ],
+            "when": {
+              "resultType": "ROOF"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "STAIRWELL"
+            ],
+            "when": {
+              "resultType": "STAIRWELL"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "ELEVATOR_SHAFT"
+            ],
+            "when": {
+              "resultType": "ELEVATOR_SHAFT"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "SERVICE_SHAFT"
+            ],
+            "when": {
+              "resultType": "SERVICE_SHAFT"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "BUILDING"
+            ],
+            "when": {
+              "resultType": "BUILDING"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "GARDEN"
+            ],
+            "when": {
+              "resultType": "GARDEN"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "PATH"
+            ],
+            "when": {
+              "resultType": "PATH"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "ROOM_LAYOUT"
+            ],
+            "when": {
+              "resultType": "ROOM_LAYOUT"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "BAY_WINDOW"
+            ],
+            "when": {
+              "resultType": "BAY_WINDOW"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "DORMER"
+            ],
+            "when": {
+              "resultType": "DORMER"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "ROTATION"
+            ],
+            "when": {
+              "resultType": "ROTATION"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "MIRRORING"
+            ],
+            "when": {
+              "resultType": "MIRRORING"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX",
+              "POSITION_X",
+              "POSITION_Y",
+              "POSITION_Z"
+            ],
+            "when": {
+              "resultType": "INT"
+            },
+            "labelKey": "output"
+          },
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "POSITION",
+              "POSITION_ADD",
+              "POSITION_SUBTRACT",
+              "POSITION_MULTIPLY",
+              "POSITION_DIVIDE",
+              "POSITION_MIN",
+              "POSITION_MAX"
+            ],
+            "when": {
+              "resultType": "POSITION"
+            },
+            "labelKey": "output"
+          },
           {
             "key": "roof",
             "path": [

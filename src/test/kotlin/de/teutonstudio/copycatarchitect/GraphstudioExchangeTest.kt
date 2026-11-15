@@ -67,7 +67,8 @@ class GraphstudioExchangeTest {
         val duplicatedGroup=GraphDuplicates.shape(groupedCopySource.graph!!,groupedCopySource.groups,listOf("source","cut"),listOf("source_copy","cut_copy")).let { copied -> copied.replace(copied.nodes.first { it.id=="cut_copy" }.copy(copycatTransforms=listOf(CopycatTransform(CopycatTransformKind.POSITION,offset=P(1,0,0))))) }
         shape("duplicate-bound-group",groupedCopySource.copy(graph=duplicatedGroup.copy(nodeGroups=duplicatedGroup.nodeGroups.map {if(it.id=="group") it else it.copy(id="group_copy")})))
         fun building(name:String,value:Building,sourceForms:Map<String,Form> = forms,sourceModules:Map<String,Module> = modules) {
-            val plan=BuildingGraphCompiler.compile(value,sourceForms,sourceModules).plan
+            val graph=value.graph!!;val terminal=graph.resultNode()
+            val plan=if(terminal.resultType!=null && terminal.resultType!="BUILDING") BuildingGraphCompiler.Evaluation(graph,value.palette,sourceForms,sourceModules).preview(terminal.id) else BuildingGraphCompiler.compile(value,sourceForms,sourceModules).plan
             cases+=mapOf("name" to name,"building" to true,"document" to value,"library" to mapOf("forms" to sourceForms,"modules" to sourceModules),
                 "count" to plan.placements.size,"raw" to plan.raw)
         }
@@ -93,6 +94,31 @@ class GraphstudioExchangeTest {
         building("adjacent-column-arithmetic",adjacent.copy(graph=adjacent.graph!!.copy(nodes=adjacentNodes).withCurrentSchema()))
         building("roof-eave",gson.fromJson(File("examples/building-roof-eave.json").readText(),Building::class.java))
         building("semantic-T-house",TBuildingExample.building,TBuildingExample.forms,TBuildingExample.modules)
+        val areaCount=BuildingNode("area_count",BuildingKind.INT,countValue=4)
+        val area=BuildingNode("area",BuildingKind.AREA,areaMode=AreaMode.SQUARE,length=3,height=3,dimensions=mapOf("length" to areaCount.id))
+        val dynamic=BuildingGraph.explicitStarter().let { base -> base.copy(nodes=base.nodes.map { n -> when(n.id) {
+            "room_geometry" -> n.copy(geometry=area.id)
+            "wall","floor","ceiling" -> n.copy(dynamicAxes=setOf(RotationAxis.X,RotationAxis.Y))
+            else -> n
+        } }+area+areaCount).withCurrentSchema() }
+        building("square-dynamic-room",Building(schema=2,name="Dynamische Flächen",graph=dynamic))
+        val rectangle=dynamic.replace(area.copy(areaMode=AreaMode.RECTANGLE,height=2))
+        building("rectangle-dynamic-room",Building(schema=2,name="Rechteckfläche",graph=rectangle))
+        val roofLevel=BuildingNode("roof_level",BuildingKind.ROOF_LEVEL,roofLevel=RoofLevelConfig(form=RoofForm.HIP,overhang16=0))
+        val roofSource=BuildingNode("roof_source",BuildingKind.SEGMENT,assembly=true,module="",inputs=listOf("plate_copycat"),dynamicAxes=setOf(RotationAxis.X,RotationAxis.Y))
+        val automatic=dynamic.copy(nodes=dynamic.nodes.map { n -> when(n.id) {
+            "area_count" -> n.copy(countValue=2)
+            "roof_layout" -> n.copy(inputs=listOf(roofLevel.id))
+            "roof" -> n.copy(adaptiveRoof=true,inputs=List(5) { roofSource.id })
+            "building" -> n.copy(roof="roof")
+            else -> n
+        } }+roofLevel+roofSource).withCurrentSchema()
+        building("adaptive-roof-dynamic-segments",Building(schema=2,name="Automatische Dachsegmente",graph=automatic))
+        val mixed=GraphCards.starter().let { g -> g.copy(nodes=g.nodes+BuildingNode("number",BuildingKind.INT,countValue=4)+BuildingNode("vector",BuildingKind.POSITION,inputs=listOf("number","number","number"))) }
+        building("unified-copycat-card",Building(schema=2,name="Copycatkarte",graph=mixed))
+        building("unified-count-card",Building(schema=2,name="Anzahlkarte",graph=mixed.replace(mixed.resultNode().copy(resultType="INT",inputs=listOf("number")))))
+        val cardResult=BuildingNode("result",BuildingKind.BUILDING,name="Ergebnis",resultType="BUILDING",inputs=listOf("building"))
+        building("unified-building-card",Building(schema=2,name="Gebäudekarte",graph=automatic.copy(nodes=automatic.nodes+cardResult).withCurrentSchema()))
         val formNodes=NodeKind.entries.map { GraphModels.newShape(it).copy(id=it.name) }
         val buildingNodes=BuildingKind.entries.flatMap { kind -> listOf(false,true).map { explicit -> GraphModels.newBuilding(kind,explicit).copy(id=kind.name+if(explicit) "_explicit" else "_legacy") } }
         val buildingSpecs=buildingNodes.map { node ->
@@ -118,7 +144,8 @@ class GraphstudioExchangeTest {
                 val lib=original.getAsJsonObject("library")
                 val forms=lib.getAsJsonObject("forms").entrySet().associate { it.key to gson.fromJson(it.value,Form::class.java) }
                 val modules=lib.getAsJsonObject("modules").entrySet().associate { it.key to gson.fromJson(it.value,Module::class.java) }
-                val plan=BuildingGraphCompiler.compile(b,forms,modules).plan
+                val graph=b.graph!!;val terminal=graph.resultNode()
+                val plan=if(terminal.resultType!=null && terminal.resultType!="BUILDING") BuildingGraphCompiler.Evaluation(graph,b.palette,forms,modules).preview(terminal.id) else BuildingGraphCompiler.compile(b,forms,modules).plan
                 assertEquals(original["count"].asInt,plan.placements.size,item["name"].asString)
                 assertEquals(original["raw"].asInt,plan.raw,item["name"].asString)
                 assertEquals(original["document"].asJsonObject["graph"],gson.toJsonTree(b.graph),"All building fields survive")

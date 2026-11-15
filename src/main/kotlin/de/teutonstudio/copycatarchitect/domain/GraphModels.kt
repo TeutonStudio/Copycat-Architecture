@@ -82,6 +82,9 @@ internal object GraphModels {
                 "roomConfig.mode" -> node.roomConfig?.mode?.name
                 "storeyMode" -> node.storeyMode
                 "roofType" -> node.roofType
+                "areaMode" -> node.areaMode?.name
+                "adaptiveRoof" -> node.adaptiveRoof.toString()
+                "resultType" -> node.resultType
                 else -> error("Unknown graph port condition $field")
             }
             return (actual == expected) != inverted

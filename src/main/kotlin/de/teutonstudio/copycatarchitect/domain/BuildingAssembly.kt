@@ -20,7 +20,7 @@ object BuildingAssembly {
             newNode(BuildingKind.ROOM,"room","Room",620,30).copy(joinWallEnds=joinWallEnds,geometry="room_geometry",walls=RoomGeometry.edges(rectangles).associate { it.id to "wall" },floor="floor",ceiling="ceiling"),
             newNode(BuildingKind.STOREY,"storey","Storey",930,30).copy(inputs=listOf("room"),offsets=listOf(P())),
             newNode(BuildingKind.ROOF_LAYOUT,"roof_layout","Roof arrangement",620,630),
-            newNode(BuildingKind.ROOF,"roof","Roof",930,470).copy(layout="roof_layout",inputs=emptyList()),
+            newNode(BuildingKind.ROOF,"roof","Roof",930,470).copy(layout="roof_layout",inputs=emptyList(),adaptiveRoof=null),
             newNode(BuildingKind.BUILDING,"building","Building",1240,100).copy(levels=mapOf(0 to "storey"))
         ))
     }
@@ -31,12 +31,13 @@ private fun Collection<P>.orderedCoordinates()=sortedWith(compareBy({ it.z },{ i
 /** Resolve connected sources for display. Incomplete drafts retain their local preview until connected. */
 fun BuildingGraph.resolvedNode(node:BuildingNode):BuildingNode {
     var resolved=BuildingCounts.resolve(this,node)
-    if(node.kind==BuildingKind.SEGMENT && node.layout.isNotEmpty()) {
+    if(node.kind==BuildingKind.SEGMENT && node.dynamicAxes.isNullOrEmpty() && node.layout.isNotEmpty()) {
         nodes.firstOrNull { it.id==node.layout && it.kind==BuildingKind.SEGMENT_LAYOUT }?.let {
             val geometry=resolvedNode(it)
             resolved=resolved.copy(length=geometry.length,height=geometry.height,depth=geometry.depth)
         }
     }
+    if(node.kind==BuildingKind.AREA) resolved=resolved.copy(coordinates=areaOf(resolved)?.points.orEmpty())
     if(node.kind in setOf(BuildingKind.SEGMENT_LAYOUT,BuildingKind.ROOM_GEOMETRY)) {
         if(node.kind==BuildingKind.ROOM_GEOMETRY && node.geometry.isNotEmpty() && nodes.any { it.id==node.geometry && it.kind==BuildingKind.AREA && it.coordinates.isEmpty() })
             resolved=resolved.copy(coordinates=emptyList())
@@ -98,15 +99,16 @@ fun BuildingGraph.editRoomGeometry(id:String,coordinates:List<P>):BuildingGraph 
             ?: error("Connect a room geometry source before editing its cells")
     }
     val source=if(geometrySource.geometry.isNotEmpty()) nodes.first { it.id==geometrySource.geometry && it.kind==BuildingKind.AREA } else geometrySource
-    val area=Area(coordinates)
+    require(coordinates.isNotEmpty() || source.kind==BuildingKind.AREA) { "Room geometry needs occupied cells" }
+    val area=coordinates.takeIf { it.isNotEmpty() }?.let(::Area)
     val roomGeometries=nodes.filter { it.kind==BuildingKind.ROOM_GEOMETRY && (it.id==source.id || it.geometry==source.id) }
-    roomGeometries.forEach { RoomVolume(area,it.height) }
+    if(area!=null) roomGeometries.forEach { RoomVolume(area,it.height) }
     val changed=GraphGroups.synchronize(this,copy(nodes=nodes.map { node ->
-        if(node.id==source.id) node.copy(coordinates=coordinates.orderedCoordinates()) else node
+        if(node.id==source.id) node.copy(coordinates=coordinates.orderedCoordinates(),areaMode=if(node.kind==BuildingKind.AREA) AreaMode.DRAW else node.areaMode,dimensions=if(node.kind==BuildingKind.AREA) null else node.dimensions) else node
     }))
     // Definition edits also change the geometry sources in every linked instance. Rebuild and
     // validate all their room consumers before accepting the edit, including external consumers.
-    return changed.remapGeometryDependents(this)
+    return changed.withCurrentSchema().remapGeometryDependents(this)
 }
 
 internal fun BuildingGraph.validateRoomPlacements(affectedRooms:Set<String>) {

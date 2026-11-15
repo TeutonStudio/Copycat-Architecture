@@ -92,20 +92,23 @@ object Roofs {
     fun compile(graph:BuildingGraph,roof:BuildingNode,supports:List<RoofSupport>,palette:Map<String,String>,source:(String)->Placement,formSource:(String)->Placement=source,segmentSource:(String)->RoofSegmentTemplate?={ null },contacts:MutableList<RoofContact>?=null,
         wallSegment:(String)->FixedSegment={ error("Gaubenwand fehlt: $it") },
         wallPlacement:(P,List<SegmentCell>,Int)->Placement={ _,_,_->error("Gaubenwand fehlt") },
-        ceilingCuts:MutableMap<P,ExactVolume>?=null,validateDormersOnly:Boolean=false):Plan {
+        ceilingCuts:MutableMap<P,ExactVolume>?=null,validateDormersOnly:Boolean=false,sizedSegmentSource:((String,P)->RoofSegmentTemplate?)?=null):Plan {
         require(roof.layout.isNotEmpty()) { "Connect a roof arrangement source" }
         val layout=graph.nodes.first { it.id==roof.layout && it.kind==BuildingKind.ROOF_LAYOUT }
         require(layout.inputs.isNotEmpty() && layout.inputs.all(String::isNotEmpty)) { "Roof arrangement is pending definition; connect roof levels" }
-        require(roof.inputs.drop(6).all(String::isEmpty)) { "An explicit roof accepts six ordered variants: slope, eave, edge, ridge, hip, valley" }
+        require(roof.inputs.drop(if(roof.adaptiveRoof==true) 5 else 6).all(String::isEmpty)) { "An explicit roof accepts six ordered variants: slope, eave, edge, ridge, hip, valley" }
         val shared=roof.roofConfig ?: RoofConfig()
         require(shared.families.size<=16 && shared.families.map { it.id }.distinct().size==shared.families.size && shared.families.none { it.id=="builtin" }) { "Custom roof families need unique IDs" }
         val validatedPeriods=mutableSetOf<String>()
         val segmentCache=mutableMapOf<String,RoofSegmentTemplate>()
         val variantOrder=listOf("slope","eave","edge","ridge","hip","valley")
-        fun segmentOverride(variant:String):RoofSegmentTemplate? {
-            val index=variantOrder.indexOf(variant);if(index<0) return null
+        fun segmentOverride(variant:String,slope:RoofSlope):RoofSegmentTemplate? {
+            val index=if(roof.adaptiveRoof==true) when(variant) { "slope","eave"->0;"ridge"->1;"valley"->2;"edge","hip"->3;else->-1 } else variantOrder.indexOf(variant)
+            if(index<0) return null
             val id=roof.inputs.getOrNull(index)?.takeIf(String::isNotEmpty) ?: return null
-            return segmentCache.getOrPut(id) { segmentSource(id) ?: error("Missing roof segment template $id") }
+            val pitch=slope.reduced()
+            val key="$id:${pitch.p}:${pitch.q}"
+            return segmentCache.getOrPut(key) { (sizedSegmentSource?.invoke(id,P(pitch.q,pitch.p+2,1)) ?: segmentSource(id)) ?: error("Missing roof segment template $id") }
         }
         val levels=layout.inputs.map { id ->
             val n=graph.nodes.first { it.id==id && it.kind==BuildingKind.ROOF_LEVEL };val c=n.roofLevel ?: RoofLevelConfig();validate(c)
@@ -153,10 +156,17 @@ object Roofs {
         }
         val dormers=prepareDormers(graph,levels,source,wallSegment,wallPlacement,ceilingCuts,validateDormersOnly)
         if(validateDormersOnly) return Resolver().plan(emptyList())
-        val wallNode=shared.wall.takeIf(String::isNotEmpty)?.let { id->graph.nodes.firstOrNull { it.id==id } ?: error("Missing roof wall template $id") }
+        val wallId=if(roof.adaptiveRoof==true) roof.inputs.getOrNull(4).orEmpty() else shared.wall
+        val wallNode=wallId.takeIf(String::isNotEmpty)?.let { id->graph.nodes.firstOrNull { it.id==id } ?: error("Missing roof wall template $id") }
         val wallCopycat=wallNode?.takeIf { it.kind in CopycatBooleans.sourceKinds }?.let { source(it.id) }
-        val wallPeriod=wallNode?.takeIf { it.kind in (setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds) }?.let { node->
-            segmentSource(node.id)?.also { require(it.width in 1..128 && it.height in 1..128 && it.depth==1) { "Roof wall periods need positive dimensions and depth 1" } } ?: error("Missing roof wall segment ${node.id}")
+        val wallPeriods=mutableMapOf<P,RoofSegmentTemplate>()
+        fun wallPeriod(width:Int,height:Int):RoofSegmentTemplate? {
+            val node=wallNode ?: return null
+            if(node.kind !in (setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds)) return null
+            val size=P(width.coerceIn(1,128),height.coerceIn(1,128),1)
+            return wallPeriods.getOrPut(size) {
+                (sizedSegmentSource?.invoke(node.id,size) ?: segmentSource(node.id))?.also { require(it.width in 1..128 && it.height in 1..128 && it.depth==1) { "Roof wall periods need positive dimensions and depth 1" } } ?: error("Missing roof wall segment ${node.id}")
+            }
         }
         val result=Resolver()
         val wallAir=mutableSetOf<P>()
@@ -169,7 +179,7 @@ object Roofs {
             val coverage=group.flatMap { it.coverage }.toSet()
             val wallRuns=RoomGeometry.boundary(group.flatMap { it.mask }.toSet()).flatMap { run->
                 val normal=RoomGeometry.directions[run.direction]
-                run.cells.mapIndexed { index,p->(p+P(-normal.x,0,-normal.z)) to (run.direction to index) }
+                run.cells.mapIndexed { index,p->(p+P(-normal.x,0,-normal.z)) to Triple(run.direction,index,run.length) }
             }.groupBy({ it.first },{ it.second })
             for(p in coverage) {
                 val active=group.filter { p in it.coverage }
@@ -220,7 +230,8 @@ object Roofs {
                         if(wallNode==null) pieces+=semanticPlacement(block,listOf(Triple("roof_wall",wall,"gable")),Part("copycats:copycat_block"),palette,palette["gable"] ?: palette.getValue("wall"),"gable")
                         else {
                             var added=false
-                            for((direction,index) in wallRuns[p].orEmpty().filter { (direction,_)->p+RoomGeometry.directions[direction] !in winner.blocked }) {
+                            for((direction,index,width) in wallRuns[p].orEmpty().filter { (direction,_,_)->p+RoomGeometry.directions[direction] !in winner.blocked }) {
+                                val wallPeriod=wallPeriod(width,(ceil(winner.expectedPeak.value()/16).toInt()-floor(winner.support.ceiling16/16.0).toInt()).coerceAtLeast(1))
                                 val row=wallPeriod?.let { Math.floorMod(y-floor(winner.support.ceiling16/16.0).toInt(),it.height) }
                                 val templates=if(wallPeriod==null) listOfNotNull(wallCopycat) else wallPeriod.cells.filter { it.first.x==Math.floorMod(index,wallPeriod.width) && it.first.y==row }.map { it.second }
                                 for(template in templates) {
@@ -476,11 +487,11 @@ object Roofs {
         val materials=present.associate { (id,_,role)->id to (palette[id] ?: palette[role] ?: fallback) }
         return Placement(block,present.map { (id,volume,_)->prototype.copy(group=id,exact=volume) },materials.getValue(present.first().first),component=component,groups=groups,surfaces=materials)
     }
-    private fun templatePlacement(l:Level,block:P,target:ExactVolume,variant:String,shared:RoofConfig,roof:BuildingNode,palette:Map<String,String>,source:(String)->Placement,formSource:(String)->Placement,segmentOverride:(String)->RoofSegmentTemplate?,cap:Boolean=false,required:ExactVolume=target):Placement? {
+    private fun templatePlacement(l:Level,block:P,target:ExactVolume,variant:String,shared:RoofConfig,roof:BuildingNode,palette:Map<String,String>,source:(String)->Placement,formSource:(String)->Placement,segmentOverride:(String,RoofSlope)->RoofSegmentTemplate?,cap:Boolean=false,required:ExactVolume=target):Placement? {
         val face=selectFace(l,block)
         val period=if(shared.variants[variant].isNullOrEmpty()) l.family.cells.filter { it.slope.reduced()==face.slope && it.variant==variant } else emptyList()
         val override=shared.variants[variant] ?: l.family.variants[variant]
-        val segment=if(period.isEmpty() && override.isNullOrEmpty()) segmentOverride(variant) else null
+        val segment=if(period.isEmpty() && override.isNullOrEmpty()) segmentOverride(variant,face.slope) else null
         if(period.isEmpty() && override.isNullOrEmpty() && segment==null) {
             val prototype=Part(RoofPartParameters.SOURCE,roof=RoofPartParameters(face.slope.p,face.slope.q,Math.floorMod(face.slope.p*face.phase,face.slope.q),variant=variant,thickness=l.family.thickness16))
             val key=if(cap) when(variant) { "ridge"->"roof_ridge";"hip"->"roof_hip";"valley"->"roof_valley";else->"roof_transition" }
@@ -615,6 +626,8 @@ internal fun freshAccessInstanceId(instances:List<VerticalAccessInstance>):Strin
 
 fun BuildingGraph.withCurrentSchema():BuildingGraph {
     val value=withLegacySchema()
+    if(nodes.any { it.resultType!=null || it.inlinePart!=null }) return value.copy(schema=maxOf(value.schema,8))
+    if(nodes.any { it.areaMode!=null || !it.dynamicAxes.isNullOrEmpty() || it.adaptiveRoof==true }) return value.copy(schema=maxOf(value.schema,7))
     if(nodes.any { it.kind.name in GraphValues.kinds && (it.kind !in setOf(BuildingKind.INT,BuildingKind.POSITION) || it.kind==BuildingKind.POSITION && it.inputs.isNotEmpty()) || it.columnMode==RotationSegmentMode.ADJACENT }) return value.copy(schema=maxOf(value.schema,6))
     return if(nodeGroups.any { group -> group.graphInterface?.let { face -> face.inputs.any { it.type=="POSITION" } || face.outputs.any { it.type=="POSITION" } }==true } || nodes.any { !it.copycatTransforms.isNullOrEmpty() || it.kind in setOf(BuildingKind.POSITION,BuildingKind.COPYCAT_POSITION) || it.rotationPivot!=null && it.rotationPivot!=P(8,8,8) }) value.copy(schema=maxOf(value.schema,5)) else value
 }

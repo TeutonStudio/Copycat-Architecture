@@ -179,7 +179,7 @@ object GraphGroups {
         graph.copy(nodeGroups=create(graph.nodeGroups,graph.nodes.filter { it.kind!=NodeKind.OUTPUT }.map { it.id },selection,name))
 
     fun create(graph:BuildingGraph,selection:Set<String>,name:String="Gruppe"):BuildingGraph =
-        graph.copy(nodeGroups=create(graph.nodeGroups,graph.nodes.filter { it.kind!=BuildingKind.BUILDING && it.id!="empty_wall" }.map { it.id },selection,name))
+        graph.copy(nodeGroups=create(graph.nodeGroups,graph.nodes.filter { it.resultType==null && (graph.nodes.any { node->node.resultType!=null } || it.kind!=BuildingKind.BUILDING) && it.id!="empty_wall" }.map { it.id },selection,name))
 
     fun ungroup(graph:NodeGraph,id:String):NodeGraph=graph.copy(nodeGroups=graph.nodeGroups.filter { it.id!=id })
     fun ungroup(graph:BuildingGraph,id:String):BuildingGraph=graph.copy(nodeGroups=graph.nodeGroups.filter { it.id!=id })

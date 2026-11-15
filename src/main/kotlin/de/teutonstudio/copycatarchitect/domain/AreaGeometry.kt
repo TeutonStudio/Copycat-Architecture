@@ -1,5 +1,7 @@
 package de.teutonstudio.copycatarchitect.domain
 
+enum class AreaMode { SQUARE, RECTANGLE, DRAW }
+
 /** A two-dimensional raster domain, shared by room and segment geometry. */
 data class Area(val points:List<P>) {
     init {
@@ -36,7 +38,13 @@ data class SegmentVolume(val area:Area,val depth:Int) {
 
 fun BuildingGraph.areaOf(node:BuildingNode):Area? {
     val source=if(node.kind==BuildingKind.AREA) node else nodes.firstOrNull { it.id==node.geometry && it.kind==BuildingKind.AREA }
-    return source?.coordinates?.takeIf { it.isNotEmpty() }?.let(::Area)
+    return source?.let { BuildingCounts.resolve(this,it) }?.let { resolved ->
+        val points=when(resolved.areaMode) {
+            AreaMode.SQUARE,AreaMode.RECTANGLE -> (0 until if(resolved.areaMode==AreaMode.SQUARE) resolved.length else resolved.height).flatMap { z -> (0 until resolved.length).map { x -> P(x,0,z) } }
+            else -> resolved.coordinates
+        }
+        points.takeIf { it.isNotEmpty() }?.let(::Area)
+    }
 }
 
 /** Expand a collapsed choice to the logical boundaries it represents, retaining it after growth. */

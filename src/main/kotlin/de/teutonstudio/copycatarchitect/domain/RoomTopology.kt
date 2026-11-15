@@ -41,7 +41,7 @@ object RoomTopology {
                 val value=when(n.kind) {
                     BuildingKind.ROTATION_SEGMENT -> FixedSegment(1,n.length,emptyList())
                     BuildingKind.SEGMENT -> {
-                        require(!n.assembly || n.layout.isNotEmpty() && nodes[n.layout]?.kind==BuildingKind.SEGMENT_LAYOUT) { "Connect a segment arrangement source" }
+                        require(!n.assembly || !n.dynamicAxes.isNullOrEmpty() || n.layout.isNotEmpty() && nodes[n.layout]?.kind==BuildingKind.SEGMENT_LAYOUT) { "Connect a segment arrangement source" }
                         require(n.assembly || n.inputs.isNotEmpty() || n.block.isNotEmpty() || n.module.isEmpty()) { "Module-library dimensions are pending" }
                         FixedSegment(n.length,n.height,emptyList(),air=n.block=="minecraft:air",depth=n.depth)
                     }

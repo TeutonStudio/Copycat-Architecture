@@ -11,7 +11,7 @@ class LandscapeTest {
     private fun garden()=BuildingAssembly.newNode(BuildingKind.GARDEN,"garden")
     private fun path()=BuildingAssembly.newNode(BuildingKind.PATH,"path")
     private fun graph(vararg nodes:BuildingNode)=BuildingGraph.starter().let { g ->
-        g.copy(nodes=g.nodes.map { if(it.id=="wall") it.copy(module="") else it }+nodes)
+        g.copy(nodes=g.nodes.map { if(it.id=="wall") it.copy(module="") else it }+nodes).withCurrentSchema()
     }
     private val forms=mapOf("full@1" to Form(id="full",parts=listOf(Part("copycats:copycat_block"))))
     private fun evaluate(g:BuildingGraph)=BuildingGraphCompiler.Evaluation(g,Building().palette,forms,emptyMap())

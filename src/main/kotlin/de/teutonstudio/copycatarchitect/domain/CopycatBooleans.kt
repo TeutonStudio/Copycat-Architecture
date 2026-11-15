@@ -4,7 +4,7 @@ package de.teutonstudio.copycatarchitect.domain
 object CopycatBooleans {
     val kinds=setOf(BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,
         BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE)
-    val sourceKinds=setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE)+kinds
+    val sourceKinds=setOf(BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_POSITION)+kinds
 
     fun evaluate(node:BuildingNode,inputs:List<SegmentCell>,forms:MutableMap<String,Form>,palette:Map<String,String>):SegmentCell {
         require(node.kind in kinds)

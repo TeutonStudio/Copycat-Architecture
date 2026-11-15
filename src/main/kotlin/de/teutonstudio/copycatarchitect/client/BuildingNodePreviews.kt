@@ -26,6 +26,7 @@ class BuildingNodePreviews(private val definition:()->Building,private val libra
             val boxes=runCatching { BuildingNodePreviewGeometry.boxes(graph,n) }
             val plan=runCatching {
                 when(n.kind) {
+                    BuildingKind.ROTATION,BuildingKind.MIRRORING,BuildingKind.POSITION -> { BuildingGraphCompiler.structure(graph);emptyPlan() }
                     BuildingKind.AREA,BuildingKind.ROOM_GEOMETRY,BuildingKind.SEGMENT_LAYOUT -> {
                         boxes.getOrThrow();emptyPlan()
                     }
@@ -85,6 +86,20 @@ object BuildingNodePreviewRenderer {
     }
 
     fun draw(g:GuiGraphics,x:Int,y:Int,w:Int,h:Int,preview:BuildingNodePreview) {
+        if(preview.node.kind in setOf(BuildingKind.ROTATION,BuildingKind.MIRRORING,BuildingKind.POSITION) && preview.plan.isSuccess) {
+            val node=preview.node
+            val value=when(node.kind) {
+                BuildingKind.POSITION->(node.translation ?: P()).let {"${it.x}, ${it.y}, ${it.z} hB"}
+                BuildingKind.MIRRORING->node.mirrors?.joinToString(" → ") {it.plane.name} ?: (node.mirror ?: CopycatMirror()).plane.name
+                else->node.rotations?.joinToString(" → ") {"${it.axis}: ${it.quarterTurns*90}°"} ?: "${node.rotationAxis}: ${node.quarterTurns*90}°"
+            }.ifEmpty {"∅"}
+            ArchitectTheme.inset(g,x,y,w,h,ArchitectTheme.blueprint)
+            val font=net.minecraft.client.Minecraft.getInstance().font
+            val lines=font.split(net.minecraft.network.chat.Component.literal(value),(w-12).coerceAtLeast(1))
+            lines.take(((h-8)/11).coerceAtLeast(1)).forEachIndexed {index,line->g.drawCenteredString(font,line,x+w/2,y+h/2-lines.size*11/2+index*11,ArchitectTheme.brass)}
+            return
+        }
+
         if(preview.boxes.isEmpty() || preview.plan.isFailure) {
             BuildingPreviewRenderer.draw(g,BuildingPreviewViewport(x,y,w,h),preview.node,preview.plan,"3d",35f,clip=false)
             return

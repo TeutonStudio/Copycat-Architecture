@@ -18,6 +18,7 @@ internal object GraphModels {
 
     val copycat get() = catalog.copycat
     val building get() = catalog.building
+    val portStyles get() = catalog.portStyles
 
     fun shape(kind: NodeKind) = copycat.nodes.getValue(kind.name)
     fun building(kind: BuildingKind) = building.nodes.getValue(kind.name)
@@ -29,7 +30,7 @@ internal object GraphModels {
     fun newShape(kind: NodeKind): GraphNode {
         val model = shape(kind)
         return gson.fromJson(defaults(copycat, kind.name, model.defaults), GraphNode::class.java)
-            .copy(inputs = List(checkNotNull(model.inputs).min) { "" })
+            .copy(inputs = List(if(kind==NodeKind.MIRROR) 2 else checkNotNull(model.inputs).min) { "" })
     }
 
     private val assemblyTemplates by lazy { buildingTemplates(true) }
@@ -87,7 +88,8 @@ internal object GraphModels {
         }
     }
 
-    private class Catalog(val version: Int, val copycat: Model, val building: Model)
+    private class Catalog(val version: Int, val copycat: Model, val building: Model, val portStyles:Map<String,PortStyle>)
+    class PortStyle(val name:String,val symbol:String,val color:String,val labelKey:String)
 
     class Model(
         val graphSchemas: Set<Int>,

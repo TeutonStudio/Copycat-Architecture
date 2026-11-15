@@ -20,6 +20,8 @@ internal object GraphSelectionSmoke {
     private lateinit var state:KilaGraphState
     private var point=0.0 to 0.0
     private var before=""
+    private var duplicated=""
+    private val transforms=listOf(CopycatTransform(quarterTurns=0),CopycatTransform(CopycatTransformKind.MIRROR,false),CopycatTransform(CopycatTransformKind.POSITION,false))
     private val expected=setOf("first","second")
     private fun json()=when(val s=screen) {
         is ShapeScreen -> Json.encode(s.form)
@@ -36,8 +38,8 @@ internal object GraphSelectionSmoke {
     }
     private fun open(mc:Minecraft) {
         mc.options.guiScale().set(if(mode in setOf(2,3,5)) 2 else 1);mc.resizeDisplay()
-        val form=Form(graph=NodeGraph(nodes=listOf(
-                GraphNode("first",part=Part("copycats:copycat_block"),x=20,y=20),
+        val form=Form(graph=NodeGraph(schema=4,nodes=listOf(
+                GraphNode("first",part=Part("copycats:copycat_block"),x=20,y=20,copycatTransforms=transforms),
                 GraphNode("second",part=Part("copycats:copycat_slab"),x=250,y=20),
                 GraphNode("result",NodeKind.OUTPUT,listOf("first"),x=480,y=20))))
         val printer=if(mode>=4) PrinterView(form=form) else null
@@ -46,8 +48,9 @@ internal object GraphSelectionSmoke {
             this.form=form
             graphMode=true;graphInspector=false
         } else BuildingScreen().apply {
-            building=Building(schema=2,graph=BuildingGraph(nodes=listOf(
-                BuildingNode("first",BuildingKind.COPYCAT,"First",20,20),
+            building=Building(schema=2,graph=BuildingGraph(schema=5,nodes=listOf(
+                BuildingNode("empty_wall",BuildingKind.SEGMENT,block="minecraft:air",length=1),
+                BuildingNode("first",BuildingKind.COPYCAT,"First",20,20,copycatTransforms=transforms),
                 BuildingNode("second",BuildingKind.COPYCAT,"Second",250,20),
                 BuildingNode("result",BuildingKind.BUILDING,"Result",480,20))))
             graphMode=true;graphInspector=false
@@ -122,6 +125,36 @@ internal object GraphSelectionSmoke {
                     check(state.selection==setOf("second")) { "An explicit inspector choice must survive rebuilding" }
                     check(json()==before)
                     println("ARCHITECT GRAPH SELECTION MODE $mode PASSED: held Shift click, early modifier release, box selection, plain/blank clicks across rendered frames")
+                }
+                52 -> {
+                    check(editor.keyPressed(GLFW.GLFW_KEY_D,0,GLFW.GLFW_MOD_CONTROL))
+                    refreshEditor();duplicated=json()
+                    check(duplicated!=before) { "Duplicate must be a document command" }
+                    when(val s=screen) {
+                        is ShapeScreen -> {val copies=s.form.graph!!.nodes.filter {it.id !in setOf("first","second","result")};check(copies.size==1);check(copies.single().part.source=="copycats:copycat_slab");check(copies.single().x==282)}
+                        is BuildingScreen -> {val copies=s.building.graph!!.nodes.filter {it.id !in setOf("first","second","result","empty_wall")};check(copies.size==1);check(copies.single().form=="full@1");check(copies.single().x==282)}
+                    }
+                }
+                54 -> {
+                    when(val s=screen) {is ShapeScreen->s.undoGraphEdit();is BuildingScreen->s.undoGraphEdit()}
+                    refreshEditor();check(json()==before) { "Undo must restore the whole duplication" }
+                }
+                56 -> {
+                    when(val s=screen) {is ShapeScreen->s.redoGraphEdit();is BuildingScreen->s.redoGraphEdit()}
+                    refreshEditor();check(json()==duplicated) { "Redo must restore the exact duplicate IDs" }
+                    println("ARCHITECT GRAPH DUPLICATE MODE $mode PASSED: Ctrl+D, values, offset, atomic undo/redo")
+                    net.minecraft.client.Screenshot.grab(mc.gameDirectory,"architect-graphstudio-duplicate-$mode.png",mc.mainRenderTarget) {println(it.string)}
+                }
+                57 -> {
+                    when(val s=screen) {
+                        is ShapeScreen -> CopycatTransformEditor.open(s.form.graph!!.nodes.first {it.id=="first"}) {node -> s.commitShapeGraph(s.form.graph!!.replace(node))}
+                        is BuildingScreen -> CopycatTransformEditor.open(s.building.graph!!.nodes.first {it.id=="first"}) {node -> s.commitBuildingGraph(s.building.graph!!.replace(node))}
+                    }
+                    check(mc.screen is StructurePropertyScreen)
+                }
+                58 -> {
+                    net.minecraft.client.Screenshot.grab(mc.gameDirectory,"architect-graphstudio-transforms-$mode.png",mc.mainRenderTarget) {println(it.string)}
+                    mc.screen!!.onClose();check(mc.screen===screen);check(json()==duplicated)
                 }
                 59 -> {
                     mode++

@@ -6,7 +6,7 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.renderer.RenderType
 
-data class ShapeNodePreview(val parts:List<Part> = emptyList(),val rotation:RotationAxis?=null,val turns:Int=0,val error:String="")
+data class ShapeNodePreview(val parts:List<Part> = emptyList(),val rotation:RotationAxis?=null,val turns:Int=0,val error:String="",val parameter:NodeKind?=null,val value:String="")
 
 /** Cached by graph and groups, independently of the final output's validity and visibility filter. */
 class ShapeNodePreviews(private val definition:()->Form,private val disconnected:()->String={ui("disconnected")},private val graph:()->NodeGraph) {
@@ -19,6 +19,8 @@ class ShapeNodePreviews(private val definition:()->Form,private val disconnected
             val n=g.nodes.firstOrNull { it.id==id }
             when {
                 n==null -> ShapeNodePreview(error=disconnected())
+                n.kind==NodeKind.MIRRORING -> ShapeNodePreview(parameter=n.kind,value=(n.mirror ?: CopycatMirror()).plane.name)
+                n.kind==NodeKind.POSITION -> ShapeNodePreview(parameter=n.kind,value=(n.translation ?: P()).let {"${it.x}, ${it.y}, ${it.z} hB"})
                 n.kind==NodeKind.ROTATION -> ShapeNodePreview(rotation=n.rotationAxis,turns=n.quarterTurns)
                 else -> runCatching {
                     // Legacy clipped source parts remain viewable without converting the document.
@@ -57,6 +59,11 @@ object ShapeNodePreviewRenderer {
             preview.error.isNotEmpty() -> {
                 val lines=font.split(net.minecraft.network.chat.Component.literal(preview.error),(w-10).coerceAtLeast(1))
                 lines.take(((h-8)/11).coerceAtLeast(1)).forEachIndexed { i,line -> g.drawString(font,line,x+5,y+5+i*11,ArchitectTheme.danger,false) }
+            }
+            preview.parameter!=null -> {
+                val caption=ui(if(preview.parameter==NodeKind.POSITION) "position_hb" else "transform_plane")+": "+preview.value
+                val lines=font.split(net.minecraft.network.chat.Component.literal(caption),(w-12).coerceAtLeast(1))
+                lines.take(((h-8)/11).coerceAtLeast(1)).forEachIndexed { index,line -> g.drawCenteredString(font,line,x+w/2,y+h/2-lines.size*11/2+index*11,ArchitectTheme.brass) }
             }
             preview.rotation!=null -> {
                 rotation(g,x+w/2,y+h/2-3,minOf(w*0.35f,h*0.45f),yaw,preview.rotation,preview.turns)

@@ -137,7 +137,7 @@ object GraphGroups {
         }
         graph.nodeGroups.forEach { group -> group.graphInterface?.let { face ->
             face.inputs.forEach { input ->
-                require(input.type in setOf("shape","rotation")) { "Unknown Copycat graph input type" }
+                require(input.type in setOf("shape","rotation","mirroring","position")) { "Unknown Copycat graph input type" }
                 val connection=group.inputConnections[input.id].orEmpty()
                 require(connection.isEmpty() || GraphModels.shape(nodes.getValue(connection).kind).output==input.type) { "Incompatible Copycat group instance connection" }
                 input.targets.forEach { target ->
@@ -146,7 +146,7 @@ object GraphGroups {
                     require(node.inputs[slot]==connection) { "Connect named group inputs on the instance node" }
                 }
             }
-            face.outputs.forEach { output -> require(output.type in setOf("shape","rotation") && (output.member==-1 || GraphModels.shape(nodes.getValue(group.nodes[output.member]).kind).output==output.type)) { "Incompatible Copycat group output" } }
+            face.outputs.forEach { output -> require(output.type in setOf("shape","rotation","mirroring","position") && (output.member==-1 || GraphModels.shape(nodes.getValue(group.nodes[output.member]).kind).output==output.type)) { "Incompatible Copycat group output" } }
         } }
     }
 
@@ -250,7 +250,7 @@ object GraphGroups {
                 val changed=nodes.getValue(source.nodes[slot]);val mapping=source.nodes.withIndex().associate { it.value to it.index }
                 instances.filter { it.id!=source.id }.forEach { target ->
                     val current=nodes.getValue(target.nodes[slot]);val targetMembers=target.nodes.toSet()
-                    nodes[current.id]=changed.copy(id=current.id,x=current.x,y=current.y,inputs=changed.inputs.mapIndexed { index,ref ->
+                    nodes[current.id]=changed.copy(id=current.id,x=current.x,y=current.y,copycatTransforms=current.copycatTransforms,inputs=changed.inputs.mapIndexed { index,ref ->
                         mapping[ref]?.let { target.nodes[it] } ?: current.inputs.getOrNull(index).orEmpty().takeUnless { it in targetMembers }.orEmpty()
                     })
                 }
@@ -286,7 +286,7 @@ object GraphGroups {
                     }
                     // Sparse edge maps may use different external sockets in each instance.
                     val externalEdges=reshaped.verticalEdges.orEmpty().filterValues { it !in targetMembers }
-                    nodes[current.id]=transferred.copy(id=current.id,x=current.x,y=current.y,
+                    nodes[current.id]=transferred.copy(id=current.id,x=current.x,y=current.y,copycatTransforms=current.copycatTransforms,
                         verticalEdges=(externalEdges+transferred.verticalEdges.orEmpty()).filterValues(String::isNotEmpty).takeIf { it.isNotEmpty() })
                 }
             }
@@ -296,12 +296,12 @@ object GraphGroups {
 
     private fun shapeTemplate(node:GraphNode,group:GraphGroup):GraphNode {
         val members=group.nodes.withIndex().associate { it.value to "member_${it.index}" }
-        return node.copy(id="",x=0,y=0,inputs=node.inputs.map { members[it].orEmpty() })
+        return node.copy(id="",x=0,y=0,copycatTransforms=null,inputs=node.inputs.map { members[it].orEmpty() })
     }
 
     private fun buildingTemplate(node:BuildingNode,group:GraphGroup):BuildingNode {
         val members=group.nodes.withIndex().associate { it.value to "member_${it.index}" }
-        val mapped=remap(node) { _,ref -> members[ref].orEmpty() }.copy(id="",x=0,y=0).trimCopycatInputs()
+        val mapped=remap(node) { _,ref -> members[ref].orEmpty() }.copy(id="",x=0,y=0,copycatTransforms=null).trimCopycatInputs()
         // Map keys for external sockets can differ when their geometry inputs create different edges.
         return mapped.copy(walls=mapped.walls.filterValues(String::isNotEmpty),verticalEdges=mapped.verticalEdges.orEmpty().filterValues(String::isNotEmpty),regionCopies=mapped.regionCopies.filterValues(String::isNotEmpty),
             roofConfig=mapped.roofConfig?.let { config -> config.copy(variants=config.variants.filterValues(String::isNotEmpty),
@@ -315,6 +315,7 @@ object GraphGroups {
     /** All node references, including configuration references which have no visible input socket. */
     internal fun remap(node:BuildingNode,reference:(String,String)->String):BuildingNode = BuildingSemantics.remapReferences(node.copy(
         dimensions=node.dimensions?.mapValues { (key,ref) -> reference(key,ref) },
+        positionValue=node.positionValue?.let { reference("positionValue",it) },
         inputs=node.inputs.mapIndexed { i,ref -> reference("in:$i",ref) },
         rotation=node.rotation?.let { reference("rotation",it) },mirroring=node.mirroring?.let { reference("mirroring",it) },
         walls=node.walls.mapValues { (key,ref) -> reference("wall:$key",ref) },

@@ -30,6 +30,18 @@ class GraphstudioExchangeTest {
             GraphNode("mirror",NodeKind.MIRROR,listOf("source"),mirror=CopycatMirror(CopycatMirrorPlane.BODY_PPN)),
             GraphNode("result",NodeKind.OUTPUT,listOf("mirror"))
         ))))
+        val transformed=NodeGraph(schema=4,nodes=listOf(
+            GraphNode("source",part=Part("copycats:copycat_byte"),copycatTransforms=listOf(
+                CopycatTransform(CopycatTransformKind.POSITION,offset=P(2,0,0)),
+                CopycatTransform(axis=RotationAxis.Y,pivot=P(8,8,8)),
+                CopycatTransform(CopycatTransformKind.MIRROR,plane=CopycatMirrorPlane.Z),
+                CopycatTransform(CopycatTransformKind.POSITION,false,offset=P(-16,0,0)))),
+            GraphNode("result",NodeKind.OUTPUT,listOf("source"))))
+        shape("ordered-transforms",Form(name="Transformiert",graph=transformed))
+        shape("duplicate-transforms",Form(name="Duplikat",graph=GraphDuplicates.shape(transformed,DEFAULT_GROUPS,listOf("source"),listOf("duplicate"))))
+        shape("typed-position",Form(name="Position",graph=NodeGraph(schema=4,nodes=listOf(
+            GraphNode("source",part=Part("copycats:copycat_byte")),GraphNode("value",NodeKind.POSITION,translation=P(1,2,0)),
+            GraphNode("move",NodeKind.TRANSLATE,listOf("source","value")),GraphNode("result",NodeKind.OUTPUT,listOf("move"))))))
         shape("roof-template",Form(name="Dachvorlage",graph=NodeGraph.fromParts(listOf(Part(source=RoofPartParameters.SOURCE,roof=RoofPartParameters())))))
         shape("empty-saved",Form(name="Leer",graph=NodeGraph(nodes=listOf(
             GraphNode("air",NodeKind.SAVED,savedCopycat=SavedCopycat(parts=emptyList())),GraphNode("result",NodeKind.OUTPUT,listOf("air"))
@@ -40,11 +52,26 @@ class GraphstudioExchangeTest {
         // One named input fans out to two sockets on the same operator.
         shape("named-group",Form(name="Gruppe",graph=NodeGraph(nodes=listOf(GraphNode("source",part=Part("copycats:copycat_byte")),
             GraphNode("cut",NodeKind.UNION,listOf("source","source")),GraphNode("result",NodeKind.OUTPUT,listOf("cut"))),nodeGroups=listOf(named))))
+        val groupedCopySource=Form(name="Gruppenduplikat",graph=NodeGraph(nodes=listOf(GraphNode("source",part=Part("copycats:copycat_byte")),
+            GraphNode("cut",NodeKind.UNION,listOf("source","source")),GraphNode("result",NodeKind.OUTPUT,listOf("cut"))),nodeGroups=listOf(named)))
+        val duplicatedGroup=GraphDuplicates.shape(groupedCopySource.graph!!,groupedCopySource.groups,listOf("source","cut"),listOf("source_copy","cut_copy")).let { copied -> copied.replace(copied.nodes.first { it.id=="cut_copy" }.copy(copycatTransforms=listOf(CopycatTransform(CopycatTransformKind.POSITION,offset=P(1,0,0))))) }
+        shape("duplicate-bound-group",groupedCopySource.copy(graph=duplicatedGroup.copy(nodeGroups=duplicatedGroup.nodeGroups.map {if(it.id=="group") it else it.copy(id="group_copy")})))
         fun building(name:String,value:Building,sourceForms:Map<String,Form> = forms,sourceModules:Map<String,Module> = modules) {
             val plan=BuildingGraphCompiler.compile(value,sourceForms,sourceModules).plan
             cases+=mapOf("name" to name,"building" to true,"document" to value,"library" to mapOf("forms" to sourceForms,"modules" to sourceModules),
                 "count" to plan.placements.size,"raw" to plan.raw)
         }
+        val transformSource=Form(id="transform_byte",version=3,name="Byte v3",parts=listOf(Part("copycats:copycat_byte")))
+        val assembly=BuildingGraph.explicitStarter()
+        val transformedBuilding=assembly.copy(schema=5,nodes=assembly.nodes.map { node ->
+            when(node.id) {
+                "wall_copycat"->node.copy(form="transform_byte@3",copycatTransforms=listOf(CopycatTransform(axis=RotationAxis.Y),CopycatTransform(CopycatTransformKind.MIRROR,plane=CopycatMirrorPlane.X)))
+                "wall"->node.copy(inputs=listOf("positioned"))
+                else->node
+            }
+        }+BuildingNode("position_value",BuildingKind.POSITION,translation=P(1,0,0))+
+          BuildingNode("positioned",BuildingKind.COPYCAT_POSITION,inputs=listOf("wall_copycat"),positionValue="position_value"))
+        building("common-transformed-building",Building(schema=2,name="Transformationshaus",graph=transformedBuilding),forms+mapOf("transform_byte@3" to transformSource,"transform_byte@4" to transformSource.copy(version=4,parts=listOf(Part("copycats:copycat_block")))),modules)
         building("explicit-projection",Building(schema=2,name="Explizit",graph=BuildingGraph.explicitStarter().copy(projection=BuildingProjection(P(3,2,-7),3))))
         building("special-rooms",SpecialRoomsExample.building())
         building("roof-peak",gson.fromJson(File("examples/building-roof-peak.json").readText(),Building::class.java))
@@ -89,4 +116,24 @@ class GraphstudioExchangeTest {
         }
         assertEquals(cases.size,output.getAsJsonArray("cases").size())
     }
+    @Test fun localBrowserExports() {
+        val file=File(directory,"local-browser.json")
+        assumeTrue(file.exists(),"Run the local JVM and browser bridge first")
+        val output=gson.fromJson(file.readText(),JsonObject::class.java)
+        val corpus=gson.fromJson(File(directory,"native.json").readText(),JsonObject::class.java).getAsJsonArray("cases").associateBy {it.asJsonObject["name"].asString}
+        for(value in output.getAsJsonArray("cases")) {
+            val item=value.asJsonObject;val original=corpus.getValue(item["name"].asString).asJsonObject
+            if(item["building"].asBoolean) {
+                val lib=original.getAsJsonObject("library")
+                val forms=lib.getAsJsonObject("forms").entrySet().associate {it.key to gson.fromJson(it.value,Form::class.java)}
+                val modules=lib.getAsJsonObject("modules").entrySet().associate {it.key to gson.fromJson(it.value,Module::class.java)}
+                val plan=BuildingGraphCompiler.compile(gson.fromJson(item["document"],Building::class.java),forms,modules).plan
+                assertEquals(original["count"].asInt,plan.placements.size);assertEquals(original["raw"].asInt,plan.raw)
+            } else {
+                val form=Geometry.validate(gson.fromJson(item["document"],Form::class.java))
+                assertEquals(original["count"].asInt,Geometry.resolve(form.parts,form.groups).solid.count());assertEquals(original["raw"].asInt,if(form.parts.isEmpty()) 0 else Extrusion.cost(form.parts,form.groups))
+            }
+        }
+    }
+
 }

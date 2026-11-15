@@ -97,7 +97,7 @@ class GroupGraphInterfaceTest {
             val node=BuildingAssembly.newNode(kind,"value")
             val base=BuildingGraph.starter()
             val group=GraphGroup("module","Module",listOf(node.id),graphInterface=GraphGroupInterface(outputs=listOf(GraphGroupOutput("value","Value",buildingGraphType(kind),0))))
-            BuildingGraphCompiler.structure(base.copy(nodes=base.nodes+node,nodeGroups=listOf(group)))
+            BuildingGraphCompiler.structure(base.copy(nodes=base.nodes+node,nodeGroups=listOf(group)).withCurrentSchema())
         }
     }
 }

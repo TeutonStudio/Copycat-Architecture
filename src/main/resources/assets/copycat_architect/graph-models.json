@@ -4,7 +4,8 @@
     "graphSchemas": [
       1,
       2,
-      3
+      3,
+      4
     ],
     "defaultSchema": 2,
     "documentSchemas": [
@@ -376,7 +377,8 @@
             "labelKey": "rotation_angle",
             "min": 0,
             "max": 3
-          }
+          },
+          "rotationPivot": {}
         }
       },
       "ROTATION": {
@@ -402,7 +404,8 @@
             "labelKey": "rotation_angle",
             "min": 0,
             "max": 3
-          }
+          },
+          "rotationPivot": {}
         }
       },
       "OUTPUT": {
@@ -426,9 +429,10 @@
         "defaults": {},
         "inputs": {
           "min": 1,
-          "max": 1,
+          "max": 2,
           "types": [
-            "shape"
+            "shape",
+            "mirroring"
           ]
         },
         "fields": {
@@ -478,6 +482,58 @@
             "max": 3
           }
         }
+      },
+      "MIRRORING": {
+        "labelKey": "mirroring",
+        "output": "mirroring",
+        "inputs": {
+          "min": 0,
+          "max": 0,
+          "types": []
+        },
+        "defaults": {
+          "mirror": {
+            "plane": "X"
+          }
+        },
+        "fields": {
+          "mirror.plane": {}
+        }
+      },
+      "POSITION": {
+        "labelKey": "position",
+        "output": "position",
+        "inputs": {
+          "min": 0,
+          "max": 0,
+          "types": []
+        },
+        "defaults": {
+          "translation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          }
+        },
+        "fields": {
+          "translation": {}
+        }
+      },
+      "TRANSLATE": {
+        "labelKey": "translate",
+        "output": "shape",
+        "inputs": {
+          "min": 2,
+          "max": 2,
+          "types": [
+            "shape",
+            "position"
+          ]
+        },
+        "defaults": {},
+        "fields": {
+          "translation": {}
+        }
       }
     }
   },
@@ -486,7 +542,8 @@
       1,
       2,
       3,
-      4
+      4,
+      5
     ],
     "defaultSchema": 2,
     "documentSchemas": [
@@ -1042,7 +1099,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ],
             "when": {
               "id": {
@@ -1065,7 +1123,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ],
             "when": {
               "assembly": true,
@@ -1263,7 +1322,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ],
             "max": 16,
             "expand": true
@@ -1302,7 +1362,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ],
             "max": 16,
             "expand": true
@@ -1525,7 +1586,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ],
             "when": {
               "roomConfig.mode": {
@@ -1714,7 +1776,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ],
             "when": {
               "storeyMode": "walls"
@@ -1914,7 +1977,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ],
             "when": {
               "assembly": {
@@ -1936,7 +2000,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ],
             "when": {
               "roofType": "gable",
@@ -1958,7 +2023,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ],
             "when": {
               "roofType": "gable",
@@ -2055,7 +2121,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ]
           },
           {
@@ -2071,7 +2138,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ]
           },
           {
@@ -2087,7 +2155,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ]
           }
         ],
@@ -2128,7 +2197,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ]
           }
         ],
@@ -2161,7 +2231,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ]
           }
         ],
@@ -2401,7 +2472,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ],
             "labelKey": "bg_floor"
           }
@@ -2474,7 +2546,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ],
             "labelKey": "bg_floor"
           }
@@ -2598,7 +2671,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ]
           },
           {
@@ -2732,7 +2806,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ]
           },
           {
@@ -2768,7 +2843,8 @@
           },
           "role": {
             "labelKey": "role"
-          }
+          },
+          "rotationPivot": {}
         }
       },
       "ROOM_LAYOUT": {
@@ -3073,7 +3149,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ],
             "min": 2,
             "max": 16
@@ -3121,7 +3198,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ],
             "min": 2,
             "max": 16
@@ -3169,7 +3247,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ],
             "min": 2,
             "max": 2
@@ -3217,7 +3296,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ],
             "min": 2,
             "max": 16
@@ -3250,7 +3330,8 @@
         },
         "ports": [],
         "fields": {
-          "rotations": {}
+          "rotations": {},
+          "rotationPivot": {}
         }
       },
       "MIRRORING": {
@@ -3322,7 +3403,8 @@
               "COPYCAT_UNION",
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
-              "COPYCAT_SYMMETRIC_DIFFERENCE"
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
             ]
           }
         ],
@@ -3342,6 +3424,48 @@
           "role": {
             "labelKey": "role"
           }
+        }
+      },
+      "POSITION": {
+        "labelKey": "position",
+        "output": "POSITION",
+        "defaults": {},
+        "ports": [],
+        "fields": {
+          "translation": {}
+        }
+      },
+      "COPYCAT_POSITION": {
+        "labelKey": "copycat_position",
+        "output": "COPYCAT_POSITION",
+        "defaults": {
+          "inputs": [
+            ""
+          ]
+        },
+        "ports": [
+          {
+            "key": "in:0",
+            "accepts": [
+              "COPYCAT",
+              "COPYCAT_MIRROR",
+              "COPYCAT_ROTATE",
+              "COPYCAT_UNION",
+              "COPYCAT_INTERSECTION",
+              "COPYCAT_DIFFERENCE",
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION"
+            ]
+          },
+          {
+            "key": "positionValue",
+            "accepts": [
+              "POSITION"
+            ]
+          }
+        ],
+        "fields": {
+          "translation": {}
         }
       }
     }
@@ -3478,6 +3602,92 @@
     },
     "OpeningSpec": {
       "retainSource": {}
+    }
+  },
+  "portStyles": {
+    "shape": {
+      "label": "Copycat",
+      "symbol": "◆",
+      "color": "#38bdf8",
+      "name": "Copycat",
+      "labelKey": "port_style_shape"
+    },
+    "rotation": {
+      "label": "Rotation",
+      "symbol": "↻",
+      "color": "#f472b6",
+      "name": "Rotation",
+      "labelKey": "port_style_rotation"
+    },
+    "mirroring": {
+      "label": "Spiegelung",
+      "symbol": "◐",
+      "color": "#2dd4bf",
+      "name": "Spiegelung",
+      "labelKey": "port_style_mirroring"
+    },
+    "position": {
+      "label": "Position",
+      "symbol": "↗",
+      "color": "#fb923c",
+      "name": "Position",
+      "labelKey": "port_style_position"
+    },
+    "segment": {
+      "label": "Segment",
+      "symbol": "▦",
+      "color": "#f59e0b",
+      "name": "Segment",
+      "labelKey": "port_style_segment"
+    },
+    "INT": {
+      "label": "Anzahl",
+      "symbol": "#",
+      "color": "#a78bfa",
+      "name": "Anzahl",
+      "labelKey": "port_style_int"
+    },
+    "AREA": {
+      "label": "Fläche",
+      "symbol": "□",
+      "color": "#84cc16",
+      "name": "Fläche",
+      "labelKey": "port_style_area"
+    },
+    "room": {
+      "label": "Raum",
+      "symbol": "⌂",
+      "color": "#22c55e",
+      "name": "Raum",
+      "labelKey": "port_style_room"
+    },
+    "storey": {
+      "label": "Geschoss",
+      "symbol": "≡",
+      "color": "#e2e8f0",
+      "name": "Geschoss",
+      "labelKey": "port_style_storey"
+    },
+    "roof": {
+      "label": "Dach",
+      "symbol": "△",
+      "color": "#c084fc",
+      "name": "Dach",
+      "labelKey": "port_style_roof"
+    },
+    "material": {
+      "label": "Material",
+      "symbol": "▧",
+      "color": "#eab308",
+      "name": "Material",
+      "labelKey": "port_style_material"
+    },
+    "structure": {
+      "label": "Struktur",
+      "symbol": "◇",
+      "color": "#94a3b8",
+      "name": "Struktur",
+      "labelKey": "port_style_structure"
     }
   }
 }

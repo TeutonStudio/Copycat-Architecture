@@ -9,7 +9,7 @@ internal object ExactGraphCompiler {
         fun total(value:Map<Contribution,ExactVolume>)=value.values.fold(ExactVolume()) { a,b -> a.union(b) }
         fun evaluate(id:String):Map<Contribution,ExactVolume> = memo.getOrPut(id) {
             val n=nodes.getValue(id)
-            if(n.kind==NodeKind.INPUT || n.kind==NodeKind.SAVED) {
+            val base=if(n.kind==NodeKind.INPUT || n.kind==NodeKind.SAVED) {
                 val contributions=linkedMapOf<Contribution,ExactVolume>()
                 GraphCompiler.sources(n).forEach { (leaf,source) ->
                     val part=PartRotations.rotate(source,n.rotationAxis,n.quarterTurns)
@@ -18,20 +18,18 @@ internal object ExactGraphCompiler {
                     contributions[key]=(contributions[key] ?: ExactVolume()).union(ExactGeometry.part(part))
                 };contributions
             } else {
-                require(n.inputs.withIndex().all { (slot,input) -> input.isNotEmpty() || n.kind==NodeKind.ROTATE && slot==1 }) { "Connect every input of ${n.kind.name.lowercase()} node (${n.id.take(8)})" }
-                if(n.kind==NodeKind.ROTATE || n.kind==NodeKind.MIRROR) {
+                require(n.inputs.withIndex().all { (slot,input) -> input.isNotEmpty() || n.kind in CopycatTransforms.operatorKinds && slot==1 }) { "Connect every input of ${n.kind.name.lowercase()} node (${n.id.take(8)})" }
+                if(n.kind in CopycatTransforms.operatorKinds) {
                     val rotation=if(n.kind==NodeKind.ROTATE) n.inputs[1].takeIf(String::isNotEmpty)?.let(nodes::getValue) ?: n else n
                     val contributions=linkedMapOf<Contribution,ExactVolume>()
                     evaluate(n.inputs[0]).forEach { (source,volume) ->
                         val clipped=source.part.copy(exactClip=volume)
-                        val rotated=if(n.kind==NodeKind.MIRROR) PartRotations.mirror(clipped,(n.mirror ?: CopycatMirror()).plane)
-                            else PartRotations.rotate(clipped,rotation.rotationAxis,rotation.quarterTurns)
-                                ?: error("Copycat ${source.part.source} cannot rotate around ${rotation.rotationAxis}")
+                        val rotated=CopycatTransforms.apply(listOf(clipped),CopycatTransforms.operator(n,nodes)).single()
                         val key=source.copy(part=rotated.copy(cutMask="",exactClip=null))
                         contributions[key]=(contributions[key] ?: ExactVolume()).union(ExactGeometry.part(rotated))
                     };contributions
                 } else {
-                    require(n.kind!=NodeKind.ROTATION) { "A rotation value needs a rotation input" }
+                    require(n.kind !in CopycatTransforms.valueKinds) { "A rotation value needs a rotation input" }
                     val args=n.inputs.map { evaluate(it) }
                     if(n.kind==NodeKind.OUTPUT) args[0] else {
                         val visible=when(n.kind) {
@@ -53,6 +51,15 @@ internal object ExactGraphCompiler {
                         } };contributions
                     }
                 }
+            }
+            if(n.copycatTransforms.isNullOrEmpty()) base else {
+                val changed=linkedMapOf<Contribution,ExactVolume>()
+                base.forEach { (source,volume) ->
+                    val part=CopycatTransforms.apply(listOf(source.part.copy(exactClip=volume)),n.copycatTransforms).single()
+                    val key=source.copy(part=part.copy(cutMask="",exactClip=null))
+                    changed[key]=(changed[key] ?: ExactVolume()).union(ExactGeometry.part(part))
+                }
+                changed
             }
         }
         val result=evaluate(nodeId)

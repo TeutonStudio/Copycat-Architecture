@@ -47,6 +47,8 @@ import net.minecraft.client.gui.screens.Screen
 import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.util.Tuple
+import de.teutonstudio.copycatarchitect.domain.GraphModels
+import de.teutonstudio.copycatarchitect.domain.SemanticPorts
 import de.teutonstudio.copycatarchitect.domain.BaseShapes
 import de.teutonstudio.copycatarchitect.domain.Part
 import de.teutonstudio.copycatarchitect.domain.RotationAxis
@@ -96,22 +98,9 @@ private val machineSocket=PortConnectorUI(KilaSocketTexture(false),KilaSocketTex
 private object KilaPortTypes {
     private val handles=mutableMapOf<String,TypeHandle>()
     fun of(key:String):TypeHandle=handles.getOrPut(key) {
-        val label=key.split('|').joinToString(" / ") { type -> when(type) {
-            "shape","COPYCAT" -> ui("port_copycat")
-            "rotation" -> ui("port_rotation")
-            "WALL" -> ui("bg_segment")
-            else -> ui("bg_"+type.lowercase())
-        } }
-        TypeHandleHelpers.customType(Any::class.java,"copycat_architect:$key",label).also {
-            TypeHandleHelpers.setCustomColor(it,when(key) {
-                "rotation" -> ArchitectTheme.brass
-                "WALL","FLOOR","CEILING","SEGMENT_LAYOUT" -> 0xffff8a27.toInt()
-                "ROOM_GEOMETRY" -> 0xff74b4cf.toInt()
-                "ROOF_LAYOUT","ROOF","DORMER" -> 0xffb77865.toInt()
-                "ROOM","BAY_WINDOW" -> 0xff21b15b.toInt()
-                "STOREY" -> 0xffeeeeee.toInt()
-                else -> ArchitectTheme.green
-            })
+        val style=GraphModels.portStyles.getValue(SemanticPorts.type(key.substringBefore('|')))
+        TypeHandleHelpers.customType(Any::class.java,"copycat_architect:$key","${style.symbol} ${ui(style.labelKey)}").also {
+            TypeHandleHelpers.setCustomColor(it,(0xff000000L or style.color.removePrefix("#").toLong(16)).toInt())
         }
     }
 }
@@ -149,7 +138,7 @@ class KilaGraphEditor(x:Int,y:Int,w:Int,h:Int,screen:Screen,private val state:Ki
                       private val buildingNodePreview:((String)->BuildingNodePreview?)?=null,
                       private val instantiateGroup:(String)->Unit={},private val previewMaterials:()->Boolean={true},
                       private val dataRevision:(()->Any?)?=null,private val previewAvailable:(String)->Boolean={true},
-                      private val openGroup:((String)->Unit)?=null,private val groupScope:String?=null)
+                      private val openGroup:((String)->Unit)?=null,private val groupScope:String?=null,private val duplicateSelection:((Set<String>)->Unit)?=null)
     :AbstractWidget(x,y,w,h,Component.literal("KilaGraph")) {
     private var loadedRevision=dataRevision?.invoke()
     private var loaded=data()
@@ -214,6 +203,8 @@ class KilaGraphEditor(x:Int,y:Int,w:Int,h:Int,screen:Screen,private val state:Ki
                     }
                 }
             }
+            if(!readOnly && duplicateSelection!=null && getSelected().any { it is NodeModel && it.isDeletable }) menu.leaf(tr("duplicate")) { duplicateSelection.invoke(state.selection.ifEmpty { setOf(state.selected) }) }
+            menu.branch(tr("port_legend")) { branch -> GraphModels.portStyles.values.forEach { style -> branch.leaf(Component.literal("${style.symbol} ${ui(style.labelKey)}")) {} } }
             appendGroupMenu(menu)
             menu.leaf(tr("fit_graph")) { fitGraphChildren() }
             if(!readOnly && getSelected().any { it is WireModel || it is NodeModel && it.isDeletable }) {
@@ -915,6 +906,10 @@ class KilaGraphEditor(x:Int,y:Int,w:Int,h:Int,screen:Screen,private val state:Ki
         val result=ui.widget.mouseScrolled(mouseX,mouseY,scrollX,scrollY);afterInput();return menuOpen || result
     }
     override fun keyPressed(keyCode:Int,scanCode:Int,modifiers:Int):Boolean {
+        if(keyCode==GLFW.GLFW_KEY_D && modifiers and GLFW.GLFW_MOD_CONTROL!=0 && !readOnly && duplicateSelection!=null) {
+            if(Minecraft.getInstance().screen?.focused is net.minecraft.client.gui.components.EditBox) return false
+            duplicateSelection.invoke(state.selection.ifEmpty { setOf(state.selected) });return true
+        }
         if(keyCode==GLFW.GLFW_KEY_ESCAPE && hasOpenMenu()) {
             // LDLib's Menu handles focus loss but does not consume Escape itself.
             // Its close callback also clears GraphView's native isMenuOpen state.

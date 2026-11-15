@@ -274,7 +274,7 @@ object Geometry {
         if(f.graph!=null) {
             val parts=GraphCompiler.compile(f.graph,f.groups)
             val exact=parts.any(ExactGeometry::usesExact) || f.graph.nodes.any { GraphCompiler.sourceParts(it).any(ExactGeometry::usesExact) }
-            return f.copy(schema=if(exact) 4 else 3,graph=f.graph.copy(schema=if(exact) 3 else 2),parts=parts)
+            return f.copy(schema=if(exact) 4 else 3,graph=f.graph.copy(schema=if(exact) 3 else 2).withTransformSchema(),parts=parts)
         }
         require(f.parts.all { it.cutMask.isEmpty() && it.exactClip==null && it.recipeSource.isEmpty() }) { "Clipped parts require their editable node graph" }
         return f.copy(schema=if(f.parts.any(ExactGeometry::usesExact)) 4 else 3,parts=normalized(f.parts,f.groups))

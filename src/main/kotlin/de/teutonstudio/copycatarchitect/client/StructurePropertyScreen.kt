@@ -1,5 +1,6 @@
 package de.teutonstudio.copycatarchitect.client
 
+import de.teutonstudio.copycatarchitect.domain.P
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.Screen
@@ -36,6 +37,16 @@ class StructurePropertyScreen private constructor(
     fun hint(text:String)=row { y -> button(left,y,fieldWidth,Component.literal(text)) {}.active=false }
     fun int(text:String,value:Int,range:IntRange,change:(Int)->Unit)=row { y ->
         number(left,y,fieldWidth,value,range,{ "$text: $it" }) { change(it);rebuildWidgets() }
+    }
+    /** Equal coordinate columns above the compact breakpoint, labelled rows below it. */
+    fun point(text:String,value:P,range:IntRange,change:(P)->Unit) {
+        hint(text)
+        fun updated(axis:Int,n:Int)=when(axis) {0->value.copy(x=n);1->value.copy(y=n);else->value.copy(z=n)}
+        if(fieldWidth<260) for(axis in 0..2) int("${"XYZ"[axis]}",listOf(value.x,value.y,value.z)[axis],range) {change(updated(axis,it))}
+        else row { y ->
+            val column=(fieldWidth-12)/3
+            for(axis in 0..2) number(left+axis*(column+6),y,if(axis==2) fieldWidth-2*(column+6) else column,listOf(value.x,value.y,value.z)[axis],range,{ "${"XYZ"[axis]}: $it" }) {change(updated(axis,it));rebuildWidgets()}
+        }
     }
     fun blocks(text:String,value16:Int,range:IntRange,change:(Int)->Unit)=row { y ->
         val label="$text: ${blockText(value16)} ${ui("structure_blocks")}"

@@ -36,7 +36,7 @@ class NodeGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Form,pr
         get()=view.inspectorScroll
         set(value) { view.inspectorScroll=value }
     private var inspectorContentHeight=0
-    private enum class Field { SELECT,CONNECT,INSERT,SOURCE,DEFINITION,TURN,TOP,SIZE,GROUP,TILT,X,Y,Z,GROUPED,SEPARATED,MATERIAL,PREVIEW,ADD,REMOVE,SWAP,ROTATION_AXIS,ROTATE,INPUT_GROUP,ROOF_CONFIG,MIRROR_PLANE }
+    private enum class Field { SELECT,CONNECT,INSERT,SOURCE,DEFINITION,TURN,TOP,SIZE,GROUP,TILT,X,Y,Z,GROUPED,SEPARATED,MATERIAL,PREVIEW,ADD,REMOVE,SWAP,ROTATION_AXIS,ROTATE,INPUT_GROUP,ROOF_CONFIG,MIRROR_PLANE,TRANSFORMS }
     private data class Control(val field:Field,val x:Int,val y:Int,val w:Int,val label:String,val slot:Int=-1,val active:Boolean=false,val enabled:Boolean=true,val icon:String="",val floating:Boolean=false) {
         fun contains(px:Double,py:Double)=px>=x && px<x+w && py>=y && py<y+18
     }
@@ -192,7 +192,8 @@ class NodeGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Form,pr
                 listOf(Control(Field.GROUP,px,py+if(inspector) 126 else 63,w,ui("part_group",groupName(n.part.group))))+
                 (if(n.part.source==RoofPartParameters.SOURCE) listOf(Control(Field.ROOF_CONFIG,px,py+if(inspector) 147 else 84,w,ui("roof_source_settings"))) else emptyList())
             NodeKind.ROTATE,NodeKind.ROTATION -> rotationControls(n,px,py,w)
-            NodeKind.MIRROR -> listOf(Control(Field.MIRROR_PLANE,px,py,w,ui("mirror_plane",ui("mirror_plane_"+(n.mirror ?: CopycatMirror()).plane.name.lowercase()))))
+            NodeKind.MIRROR,NodeKind.MIRRORING -> listOf(Control(Field.MIRROR_PLANE,px,py,w,ui("mirror_plane",ui("mirror_plane_"+(n.mirror ?: CopycatMirror()).plane.name.lowercase()))))
+            NodeKind.POSITION,NodeKind.TRANSLATE -> emptyList()
             NodeKind.OUTPUT -> listOf(Control(Field.PREVIEW,px,py,w,definition().groups.firstOrNull { it.id==n.previewGroup }?.name ?: ui("all_groups")))
             NodeKind.UNION,NodeKind.SYMMETRIC_DIFFERENCE -> {
                 val assignments=if(n.materialMode==MaterialMode.GROUPED) listOf(Control(Field.MATERIAL,px,py+21,w,groupName(n.materialGroup)))
@@ -207,7 +208,7 @@ class NodeGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Form,pr
             NodeKind.INTERSECTION -> listOf(
                 Control(Field.ADD,px,py,half,"+ ${ui("input")}",enabled=n.inputs.size<checkNotNull(GraphModels.shape(n.kind).inputs).max),
                 Control(Field.REMOVE,px+half+4,py,w-half-4,"− ${ui("input")}",enabled=n.inputs.size>checkNotNull(GraphModels.shape(n.kind).inputs).min))
-        }).map { it.copy(enabled=it.enabled && (!readOnly || it.field==Field.DEFINITION)) }
+        }+(if(n.kind==NodeKind.OUTPUT) emptyList() else listOf(Control(Field.TRANSFORMS,px,py+propertyHeight(n)-21,w,ui("copycat_transforms"))))).map { it.copy(enabled=it.enabled && (!readOnly || it.field==Field.DEFINITION)) }
     }
     /** Actual inspector eye hit region, including scroll; absent for primitive sources. */
     fun sourceDefinitionPoint():Pair<Double,Double>? {
@@ -251,7 +252,7 @@ class NodeGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Form,pr
         revealSection(key)
         return x+width/2.0 to y+42+inspectorSections(selectedNode()).first { it.key==key }.top-inspectorScroll+11.0
     }
-    private fun propertyHeight(n:GraphNode)=when(n.kind) {
+    private fun propertyHeight(n:GraphNode)=(if(n.kind==NodeKind.OUTPUT) 0 else 21)+when(n.kind) {
         NodeKind.INPUT->(if(inspector) 147 else 84)+(if(n.part.source==RoofPartParameters.SOURCE) 21 else 0);NodeKind.SAVED->84;NodeKind.ROTATE,NodeKind.ROTATION->63;NodeKind.OUTPUT->171
         NodeKind.UNION,NodeKind.SYMMETRIC_DIFFERENCE->42+21*(if(n.materialMode==MaterialMode.GROUPED) 1 else n.inputs.size)+(if(uniformGroupWarning(n)) 48 else 0)
         else->21
@@ -265,7 +266,7 @@ class NodeGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Form,pr
         val sections=inspectorSections(n)
         val connections=sections.firstOrNull { it.key=="connections" && it.expanded }
         val inputs=if(connections==null) emptyList() else n.inputs.mapIndexed { i,id ->
-            Control(Field.CONNECT,x+12,y+42+connections.contentTop+4+i*21-inspectorScroll,inspectorColumnWidth(n),"${if(n.kind==NodeKind.ROTATE) ui(if(i==0) "port_copycat" else "port_rotation") else if(n.kind==NodeKind.DIFFERENCE) if(i==0) "A" else "B" else ui("input")+" "+(i+1)}: ${graph.nodes.firstOrNull { it.id==id }?.let { nodeLabel(it) } ?: ui("disconnected")}",slot=i,enabled=!readOnly)
+            Control(Field.CONNECT,x+12,y+42+connections.contentTop+4+i*21-inspectorScroll,inspectorColumnWidth(n),"${if(n.kind in CopycatTransforms.operatorKinds) ui("port_style_"+checkNotNull(GraphModels.shape(n.kind).inputs).type(i)) else if(n.kind==NodeKind.DIFFERENCE) if(i==0) "A" else "B" else ui("input")+" "+(i+1)}: ${graph.nodes.firstOrNull { it.id==id }?.let { nodeLabel(it) } ?: ui("disconnected")}",slot=i,enabled=!readOnly)
         }
         return listOf(Control(Field.SELECT,x+12,y+10,width-24,"${ui("selected_node")}: ${nodeLabel(n)}"))+inputs+
             if(sectionExpanded("properties")) propertyControls(n,x+12,inspectorPropertyY(n),inspectorColumnWidth(n)) else emptyList()
@@ -281,7 +282,7 @@ class NodeGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Form,pr
                 GraphCompiler.structure(graph.replace(n.copy(inputs=n.inputs.mapIndexed { i,id -> if(i==m.slot) source.id else id })),definition().groups)
             }.isSuccess }.map { Choice(it.id,nodeLabel(it)) }
             Field.TURN,Field.TILT -> (0..3).map { Choice(it.toString(),"${it*90}°") }
-            Field.ROTATION_AXIS -> RotationAxis.entries.map { Choice(it.name,axisLabel(it)) }
+            Field.ROTATION_AXIS -> RotationAxis.entries.filter { graph.schema<4 || n.kind in setOf(NodeKind.INPUT,NodeKind.SAVED) || it!=RotationAxis.NORMAL }.map { Choice(it.name,axisLabel(it)) }
             Field.MIRROR_PLANE -> CopycatMirrorPlane.entries.map { Choice(it.name,ui("mirror_plane_"+it.name.lowercase())) }
             Field.TOP -> listOf(Choice("false",ui("bottom")),Choice("true",ui("top")))
             Field.GROUP,Field.MATERIAL,Field.PREVIEW,Field.INPUT_GROUP -> (if(m.field==Field.INPUT_GROUP) listOf(Choice("",ui("inherit_groups"))) else if(m.field==Field.PREVIEW) listOf(Choice("",ui("all_groups"))) else emptyList())+definition().groups.map { Choice(it.id,it.name) }+
@@ -359,6 +360,7 @@ class NodeGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Form,pr
     private fun activate(n:GraphNode,c:Control,px:Double,button:Int) {
         if(!c.enabled) return
         if(readOnly && c.field!=Field.SELECT && c.field!=Field.DEFINITION) return
+        if(c.field==Field.TRANSFORMS) { CopycatTransformEditor.open(n) { edit(it) };return }
         if(c.field==Field.DEFINITION) { openSourceDefinition(n.id);return }
         if(c.field==Field.SOURCE) { openSourceSelection(n.id);return }
         if(c.field==Field.ROOF_CONFIG) { openRoofSource(n);return }

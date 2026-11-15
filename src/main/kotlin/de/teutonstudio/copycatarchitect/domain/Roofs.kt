@@ -599,7 +599,7 @@ object Roofs {
     }
 }
 
-fun BuildingGraph.withCurrentSchema():BuildingGraph {
+private fun BuildingGraph.withLegacySchema():BuildingGraph {
     val upgraded=nodes.any { it.kind in setOf(BuildingKind.ROOF_LEVEL,BuildingKind.STAIRWELL,BuildingKind.ELEVATOR_SHAFT,BuildingKind.SERVICE_SHAFT) || it.roofLevel!=null || it.roofConfig!=null || it.accessInstances.isNotEmpty() || it.levelIds.isNotEmpty() }
     val semantic=nodes.any { it.kind==BuildingKind.ROOM_LAYOUT || it.roomConfig!=null || it.roomLayout!=null || it.facade!=null || it.features!=null || !it.attachments.isNullOrEmpty() }
     val special=nodes.any { it.kind in setOf(BuildingKind.BAY_WINDOW,BuildingKind.DORMER) || it.bayWindowInstances.isNotEmpty() || it.dormerInstances.isNotEmpty() }
@@ -611,4 +611,9 @@ internal fun freshAccessInstanceId(instances:List<VerticalAccessInstance>):Strin
     var index=0
     while("access_$index" in used) index++
     return "access_$index"
+}
+
+fun BuildingGraph.withCurrentSchema():BuildingGraph {
+    val value=withLegacySchema()
+    return if(nodeGroups.any { group -> group.graphInterface?.let { face -> face.inputs.any { it.type=="POSITION" } || face.outputs.any { it.type=="POSITION" } }==true } || nodes.any { !it.copycatTransforms.isNullOrEmpty() || it.kind in setOf(BuildingKind.POSITION,BuildingKind.COPYCAT_POSITION) || it.rotationPivot!=null && it.rotationPivot!=P(8,8,8) }) value.copy(schema=5) else value
 }

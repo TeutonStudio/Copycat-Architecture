@@ -2,7 +2,7 @@ package de.teutonstudio.copycatarchitect.domain
 
 import java.util.concurrent.ConcurrentHashMap
 
-enum class BuildingKind { INT, ROTATION_SEGMENT, AREA, COPYCAT, SEGMENT_LAYOUT, SEGMENT, PATTERN, ROOM_GEOMETRY, FLOOR, CEILING, ROOM, STOREY, ROOF_LEVEL, ROOF_LAYOUT, ROOF, STAIRWELL, ELEVATOR_SHAFT, SERVICE_SHAFT, BUILDING, GARDEN, PATH, SEGMENT_MIRROR, COPYCAT_MIRROR, SEGMENT_ROTATE, COPYCAT_ROTATE, ROOM_LAYOUT, SEGMENT_UNION, SEGMENT_INTERSECTION, SEGMENT_DIFFERENCE, SEGMENT_SYMMETRIC_DIFFERENCE, COPYCAT_UNION, COPYCAT_INTERSECTION, COPYCAT_DIFFERENCE, COPYCAT_SYMMETRIC_DIFFERENCE, ROTATION, MIRRORING, BAY_WINDOW, DORMER, POSITION, COPYCAT_POSITION }
+enum class BuildingKind { INT, ROTATION_SEGMENT, AREA, COPYCAT, SEGMENT_LAYOUT, SEGMENT, PATTERN, ROOM_GEOMETRY, FLOOR, CEILING, ROOM, STOREY, ROOF_LEVEL, ROOF_LAYOUT, ROOF, STAIRWELL, ELEVATOR_SHAFT, SERVICE_SHAFT, BUILDING, GARDEN, PATH, SEGMENT_MIRROR, COPYCAT_MIRROR, SEGMENT_ROTATE, COPYCAT_ROTATE, ROOM_LAYOUT, SEGMENT_UNION, SEGMENT_INTERSECTION, SEGMENT_DIFFERENCE, SEGMENT_SYMMETRIC_DIFFERENCE, COPYCAT_UNION, COPYCAT_INTERSECTION, COPYCAT_DIFFERENCE, COPYCAT_SYMMETRIC_DIFFERENCE, ROTATION, MIRRORING, BAY_WINDOW, DORMER, POSITION, COPYCAT_POSITION, INT_ADD, INT_SUBTRACT, INT_MULTIPLY, INT_DIVIDE, INT_MIN, INT_MAX, POSITION_ADD, POSITION_SUBTRACT, POSITION_MULTIPLY, POSITION_DIVIDE, POSITION_MIN, POSITION_MAX, POSITION_X, POSITION_Y, POSITION_Z }
 data class SegmentLayoutCell(val x:Int=0,val y:Int=0,val sourceIndex:Int=0,val turn:Int=0)
 data class BuildingNode(
     val id:String="",val kind:BuildingKind=BuildingKind.SEGMENT,val name:String="",val x:Int=0,val y:Int=0,
@@ -33,7 +33,7 @@ data class BuildingNode(
     val features:SegmentFeatures?=null,val attachments:List<AttachmentSpec>?=null,
     val bayWindow:BayWindowConfig?=null,val dormer:DormerConfig?=null,
     val bayWindows:List<BayWindowInstance>?=null,val dormers:List<DormerInstance>?=null,
-    val countValue:Int?=null,val dimensions:Map<String,String>?=null,
+    val libraryReference:GraphLibraryReference?=null,val columnMode:RotationSegmentMode?=null,val countValue:Int?=null,val dimensions:Map<String,String>?=null,
     val roofPeak:String?=null,val roofEave:String?=null,
     val rotation:String?=null,val mirroring:String?=null,val rotations:List<SegmentRotation>?=null,val mirrors:List<CopycatMirror>?=null
 )
@@ -255,6 +255,9 @@ object BuildingPorts {
     fun of(n:BuildingNode,graph:BuildingGraph,expanding:Boolean=false,includeInactive:Boolean=false)=of(graph.resolvedNode(n),expanding,includeInactive)
     /** Inactive roof references remain stored and validated when the roof type or axis changes. */
     fun of(n:BuildingNode,expanding:Boolean=false,includeInactive:Boolean=false):List<BuildingPort> = (when(n.kind) {
+        BuildingKind.POSITION -> (0..2).map { i->port(n,"in:$i",n.inputs.getOrNull(i).orEmpty()) }
+        BuildingKind.COPYCAT_POSITION -> listOf(port(n,"in:0",n.inputs.firstOrNull().orEmpty()),port(n,"positionValue",n.positionValue.orEmpty()))
+        BuildingKind.INT_ADD,BuildingKind.INT_SUBTRACT,BuildingKind.INT_MULTIPLY,BuildingKind.INT_DIVIDE,BuildingKind.INT_MIN,BuildingKind.INT_MAX,BuildingKind.POSITION_ADD,BuildingKind.POSITION_SUBTRACT,BuildingKind.POSITION_MULTIPLY,BuildingKind.POSITION_DIVIDE,BuildingKind.POSITION_MIN,BuildingKind.POSITION_MAX,BuildingKind.POSITION_X,BuildingKind.POSITION_Y,BuildingKind.POSITION_Z -> inputs(n,false)
         BuildingKind.ROTATION_SEGMENT -> listOf(port(n,"length",n.dimensions.orEmpty()["length"].orEmpty()),port(n,"in:0",n.inputs.firstOrNull().orEmpty()))
         BuildingKind.SEGMENT -> if(n.id=="empty_wall") emptyList() else {
             val assigned=n.effectiveRegionCopies()
@@ -314,7 +317,8 @@ object BuildingGraphCompiler {
     fun structure(graph:BuildingGraph) {
         graph.projection.validate()
         require(graph.schema in GraphModels.building.graphSchemas && graph.nodes.size in 1..GraphModels.building.maxNodes) { "Unsupported building graph schema ${graph.schema} or node count; supported schemas: ${GraphModels.building.graphSchemas}" }
-        require(graph.withCurrentSchema().schema!=5 || graph.schema==5) { "Copycat transformations require building graph schema 5" }
+        val required=graph.withCurrentSchema().schema
+        require(required<5 || graph.schema>=required) { "These building functions require building graph schema $required" }
         val nodes=graph.nodes.associateBy { it.id }
         require(nodes.size==graph.nodes.size && nodes.keys.all { it.matches(Regex("[a-zA-Z0-9_-]{1,36}")) }) { "Building node IDs must be unique" }
         GraphGroups.validate(graph)
@@ -335,6 +339,7 @@ object BuildingGraphCompiler {
             require(n.name.length<=64 && n.x in -8192..8192 && n.y in -8192..8192 && n.materialMode in MaterialMode.entries) { "Invalid building node" }
             require(n.role.matches(Regex("[a-zA-Z0-9_-]{1,32}"))) { "Invalid node material role" }
             CopycatTransforms.validate(n.copycatTransforms.orEmpty())
+            if(n.kind.name in GraphValues.kinds) require(n.inputs.size in (if(n.kind==BuildingKind.POSITION) 0..3 else if(n.kind==BuildingKind.INT) 0..0 else if(n.kind.name in setOf("POSITION_X","POSITION_Y","POSITION_Z")) 1..1 else 2..2)) { "Invalid parameter socket count" }
             require(n.copycatTransforms.isNullOrEmpty() || n.kind in BuildingCopycatTransforms.sourceKinds) { "Only Copycat outputs accept transformations" }
             require(n.positionValue.isNullOrEmpty() || n.kind==BuildingKind.COPYCAT_POSITION) { "Position values require a positioning operator" }
             require(n.rotationAxis in listOf(RotationAxis.X,RotationAxis.Y,RotationAxis.Z) && n.quarterTurns in 0..3) { "Invalid Copycat rotation" }
@@ -378,6 +383,7 @@ object BuildingGraphCompiler {
             require(n.surfaces.isNullOrEmpty() || n.kind==BuildingKind.COPYCAT && n.surfaces.size<=8 && n.surfaces.all { (group,material) ->
                 group.isNotBlank() && group.length<=64 && material.matches(Regex("[a-z0-9_.-]+:[a-z0-9_./-]+")) && material!="minecraft:air"
             }) { "Invalid Copycat material assignment" }
+            require(n.columnMode==null || n.kind==BuildingKind.ROTATION_SEGMENT) { "Column modes belong to rotation segments" }
             if(n.kind==BuildingKind.ROTATION_SEGMENT) require(n.inputs.size==1) { "A rotation segment needs exactly one Copycat input" }
             if(n.kind in setOf(BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE)) require(n.inputs.size==1) { "A Copycat transform needs exactly one Copycat input" }
             if(n.kind in setOf(BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)) require(n.inputs.size==1) { "A segment transform needs exactly one segment input" }
@@ -545,8 +551,13 @@ object BuildingGraphCompiler {
         private fun segmentRecipe(id:String):FixedSegment=run {
             val n=node(id);require(n.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE))
             if(n.kind==BuildingKind.ROTATION_SEGMENT) {
-                val length=BuildingCounts.resolve(graph,n).length
+                val length=BuildingCounts.resolve(graph,n,true).length
                 val source=copycat(n.inputs.single())
+                if(n.columnMode==RotationSegmentMode.ADJACENT) {
+                    val positions=listOf(P(0,0,0),P(1,0,0),P(1,0,1),P(0,0,1))
+                    val cells=(0 until length).flatMap { y->positions.mapIndexed { turn,p->SegmentCell(sourceCell(P(p.x,y,p.z),source,turn),sourceOverride(source)) } }
+                    return@run FixedSegment(2,length,cells,depth=2)
+                }
                 val merged=CopycatBooleans.evaluate(n.copy(kind=BuildingKind.COPYCAT_UNION,offsets=emptyList()),(0..3).map { turn ->
                     SegmentCell(sourceCell(P(),source,turn),sourceOverride(source))
                 },forms,palette)
@@ -685,7 +696,7 @@ object BuildingGraphCompiler {
         fun preview(id:String):Plan=previews.getOrPut(id) {
             val n=node(id)
             when(n.kind) {
-                BuildingKind.INT -> Plan(emptyList(),emptyList(),emptyList(),0,emptyMap())
+                BuildingKind.INT,BuildingKind.INT_ADD,BuildingKind.INT_SUBTRACT,BuildingKind.INT_MULTIPLY,BuildingKind.INT_DIVIDE,BuildingKind.INT_MIN,BuildingKind.INT_MAX -> Plan(emptyList(),emptyList(),emptyList(),0,emptyMap())
                 BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_POSITION,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE -> Resolver().apply { if(sourceIsAir(n)) clear(P()) else add(sourcePlacement(P(),n,"wall")) }.plan(emptyList())
                 BuildingKind.FLOOR,BuildingKind.CEILING -> {
                     val copies=copycats(n);validateCarpet(n,copies)

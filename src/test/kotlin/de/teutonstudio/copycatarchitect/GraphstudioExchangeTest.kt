@@ -42,6 +42,16 @@ class GraphstudioExchangeTest {
         shape("typed-position",Form(name="Position",graph=NodeGraph(schema=4,nodes=listOf(
             GraphNode("source",part=Part("copycats:copycat_byte")),GraphNode("value",NodeKind.POSITION,translation=P(1,2,0)),
             GraphNode("move",NodeKind.TRANSLATE,listOf("source","value")),GraphNode("result",NodeKind.OUTPUT,listOf("move"))))))
+        val vectorNodes=listOf(GraphNode("source",part=Part("copycats:copycat_byte")),
+            GraphNode("one",NodeKind.INT,countValue=1),GraphNode("two",NodeKind.INT,countValue=2),
+            GraphNode("sum",NodeKind.INT_ADD,listOf("one","two")),GraphNode("vector",NodeKind.POSITION,listOf("sum","one","two")),
+            GraphNode("x",NodeKind.POSITION_X,listOf("vector")),GraphNode("y",NodeKind.POSITION_Y,listOf("vector")),GraphNode("z",NodeKind.POSITION_Z,listOf("vector")),
+            GraphNode("move",NodeKind.TRANSLATE,listOf("source","vector")),GraphNode("result",NodeKind.OUTPUT,listOf("move")))
+        val vectorGroup=GraphGroup("split","Position zerlegen",listOf("x","y","z"),graphInterface=GraphGroupInterface(
+            inputs=listOf(GraphGroupInput("vector","Vektor3","position",(0..2).map { GraphGroupTarget(it,"0") })),
+            outputs=listOf("X","Y","Z").mapIndexed { index,axis -> GraphGroupOutput(axis,axis,"INT",index) }),inputConnections=mapOf("vector" to "vector"),
+            libraryReference=GraphLibraryReference("vector_definition",2,"Vektor","nodeGroups"))
+        shape("integer-vector-reference",Form(name="Vektorrechnung",graph=NodeGraph(schema=5,nodes=vectorNodes,nodeGroups=listOf(vectorGroup))))
         shape("roof-template",Form(name="Dachvorlage",graph=NodeGraph.fromParts(listOf(Part(source=RoofPartParameters.SOURCE,roof=RoofPartParameters())))))
         shape("empty-saved",Form(name="Leer",graph=NodeGraph(nodes=listOf(
             GraphNode("air",NodeKind.SAVED,savedCopycat=SavedCopycat(parts=emptyList())),GraphNode("result",NodeKind.OUTPUT,listOf("air"))
@@ -76,6 +86,11 @@ class GraphstudioExchangeTest {
         building("special-rooms",SpecialRoomsExample.building())
         building("roof-peak",gson.fromJson(File("examples/building-roof-peak.json").readText(),Building::class.java))
         building("rotation-segment",gson.fromJson(File("examples/building-rotation-segment.json").readText(),Building::class.java))
+        val adjacent=gson.fromJson(File("examples/building-rotation-segment.json").readText(),Building::class.java)
+        val adjacentNodes=adjacent.graph!!.nodes.map { if(it.id=="column") it.copy(columnMode=RotationSegmentMode.ADJACENT,dimensions=mapOf("length" to "sum")) else it }+
+            BuildingNode("one",BuildingKind.INT,countValue=1)+BuildingNode("sum",BuildingKind.INT_ADD,inputs=listOf("count","one"))+
+            BuildingNode("vector",BuildingKind.POSITION,inputs=listOf("one","sum","one"))+BuildingNode("extracted",BuildingKind.POSITION_Y,inputs=listOf("vector"))
+        building("adjacent-column-arithmetic",adjacent.copy(graph=adjacent.graph!!.copy(nodes=adjacentNodes).withCurrentSchema()))
         building("roof-eave",gson.fromJson(File("examples/building-roof-eave.json").readText(),Building::class.java))
         building("semantic-T-house",TBuildingExample.building,TBuildingExample.forms,TBuildingExample.modules)
         val formNodes=NodeKind.entries.map { GraphModels.newShape(it).copy(id=it.name) }

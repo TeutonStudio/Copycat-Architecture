@@ -27,15 +27,19 @@ object DiagramEdits {
         require(connections.all { it.source in ids && it.target in ids }) { "Unknown diagram connection" }
         require(connections.map { it.target to it.port }.distinct().size==connections.size) { "An input accepts one connection" }
     }
-    fun shape(original:NodeGraph,groups:List<MaterialGroup>,positions:List<DiagramPosition>,connections:List<DiagramConnection>):NodeGraph {
+    fun shape(value:NodeGraph,groups:List<MaterialGroup>,positions:List<DiagramPosition>,connections:List<DiagramConnection>):NodeGraph {
+        val original=value
         validate(original.nodes.map { it.id }.toSet(),positions,connections)
         require(original.nodes.single { it.kind==NodeKind.OUTPUT }.id in positions.map { it.id }) { "Keep the result node" }
-        val ports=original.nodes.associate { it.id to it.inputs.indices.map(Int::toString).toSet() }
+        val ports=original.nodes.associate { it.id to it.withValueSockets().inputs.indices.map(Int::toString).toSet() }
         require(connections.all { it.port in ports.getValue(it.target) }) { "Unknown shape input" }
         val byId=positions.associateBy { it.id };val wires=connections.associateBy { it.target to it.port }
+        val previous=original.nodes.flatMap { n -> n.inputs.mapIndexedNotNull { i,id -> id.takeIf(String::isNotEmpty)?.let { DiagramConnection(it,n.id,i.toString()) } } }
+        if(positions.size==original.nodes.size && original.nodes.all { n -> byId[n.id]?.let { it.x==n.x && it.y==n.y }==true } && previous.toSet()==connections.toSet()) return original
         val changed=GraphGroups.synchronize(original,original.copy(nodeGroups=GraphGroups.prune(original.nodeGroups,byId.keys),nodes=original.nodes.filter { it.id in byId }.map { n ->
             val p=byId.getValue(n.id)
-            n.copy(x=p.x,y=p.y,inputs=n.inputs.mapIndexed { i,_ -> wires[n.id to i.toString()]?.source.orEmpty() })
+            val size=maxOf(n.inputs.size,(connections.filter { it.target==n.id }.maxOfOrNull { it.port.toInt() } ?: -1)+1)
+            n.copy(x=p.x,y=p.y,inputs=List(size) { i -> wires[n.id to i.toString()]?.source.orEmpty() })
         }))
         GraphCompiler.structure(changed.withTransformSchema(),groups)
         return changed.withTransformSchema()
@@ -101,7 +105,7 @@ object DiagramEdits {
                     port.key.startsWith("in:") -> {
                         val i=port.key.removePrefix("in:").toInt()
                         if(i<next.inputs.size || source.isNotEmpty()) {
-                            val inputs=next.inputs.toMutableList();if(i==inputs.size) inputs+="";inputs[i]=source
+                            val inputs=next.inputs.toMutableList();while(i>=inputs.size) inputs+="";inputs[i]=source
                             var offset=next.offsets.getOrNull(i) ?: P()
                             if(n.kind==BuildingKind.STOREY && n.storeyMode=="rooms" && source.isNotEmpty() && n.inputs.getOrNull(i).isNullOrEmpty() && i>0) {
                                 val room=original.nodes.first { it.id==source }

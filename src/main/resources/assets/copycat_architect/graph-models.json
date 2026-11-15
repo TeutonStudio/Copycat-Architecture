@@ -5,7 +5,8 @@
       1,
       2,
       3,
-      4
+      4,
+      5
     ],
     "defaultSchema": 2,
     "documentSchemas": [
@@ -354,7 +355,9 @@
       "ROTATE": {
         "labelKey": "node_rotate",
         "output": "shape",
-        "defaults": {},
+        "defaults": {
+          "rotationAxis": "Y"
+        },
         "inputs": {
           "min": 2,
           "max": 2,
@@ -384,7 +387,9 @@
       "ROTATION": {
         "labelKey": "node_rotation",
         "output": "rotation",
-        "defaults": {},
+        "defaults": {
+          "rotationAxis": "Y"
+        },
         "inputs": {
           "min": 0,
           "max": 0,
@@ -505,15 +510,24 @@
         "output": "position",
         "inputs": {
           "min": 0,
-          "max": 0,
-          "types": []
+          "max": 3,
+          "types": [
+            "INT",
+            "INT",
+            "INT"
+          ]
         },
         "defaults": {
           "translation": {
             "x": 0,
             "y": 0,
             "z": 0
-          }
+          },
+          "inputs": [
+            "",
+            "",
+            ""
+          ]
         },
         "fields": {
           "translation": {}
@@ -534,6 +548,304 @@
         "fields": {
           "translation": {}
         }
+      },
+      "INT": {
+        "labelKey": "int",
+        "output": "INT",
+        "defaults": {
+          "inputs": [],
+          "countValue": 0
+        },
+        "fields": {
+          "countValue": {
+            "min": -2147483648,
+            "max": 2147483647
+          }
+        },
+        "inputs": {
+          "min": 0,
+          "max": 0,
+          "types": []
+        }
+      },
+      "INT_ADD": {
+        "labelKey": "int_add",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "inputs": {
+          "min": 2,
+          "max": 2,
+          "types": [
+            "INT",
+            "INT"
+          ]
+        }
+      },
+      "INT_SUBTRACT": {
+        "labelKey": "int_subtract",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "inputs": {
+          "min": 2,
+          "max": 2,
+          "types": [
+            "INT",
+            "INT"
+          ]
+        }
+      },
+      "INT_MULTIPLY": {
+        "labelKey": "int_multiply",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "inputs": {
+          "min": 2,
+          "max": 2,
+          "types": [
+            "INT",
+            "INT"
+          ]
+        }
+      },
+      "INT_DIVIDE": {
+        "labelKey": "int_divide",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "inputs": {
+          "min": 2,
+          "max": 2,
+          "types": [
+            "INT",
+            "INT"
+          ]
+        }
+      },
+      "INT_MIN": {
+        "labelKey": "int_min",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "inputs": {
+          "min": 2,
+          "max": 2,
+          "types": [
+            "INT",
+            "INT"
+          ]
+        }
+      },
+      "INT_MAX": {
+        "labelKey": "int_max",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "inputs": {
+          "min": 2,
+          "max": 2,
+          "types": [
+            "INT",
+            "INT"
+          ]
+        }
+      },
+      "POSITION_ADD": {
+        "labelKey": "position_add",
+        "output": "position",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "inputs": {
+          "min": 2,
+          "max": 2,
+          "types": [
+            "position",
+            "position"
+          ]
+        }
+      },
+      "POSITION_SUBTRACT": {
+        "labelKey": "position_subtract",
+        "output": "position",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "inputs": {
+          "min": 2,
+          "max": 2,
+          "types": [
+            "position",
+            "position"
+          ]
+        }
+      },
+      "POSITION_MULTIPLY": {
+        "labelKey": "position_multiply",
+        "output": "position",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "inputs": {
+          "min": 2,
+          "max": 2,
+          "types": [
+            "position",
+            "position"
+          ]
+        }
+      },
+      "POSITION_DIVIDE": {
+        "labelKey": "position_divide",
+        "output": "position",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "inputs": {
+          "min": 2,
+          "max": 2,
+          "types": [
+            "position",
+            "position"
+          ]
+        }
+      },
+      "POSITION_MIN": {
+        "labelKey": "position_min",
+        "output": "position",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "inputs": {
+          "min": 2,
+          "max": 2,
+          "types": [
+            "position",
+            "position"
+          ]
+        }
+      },
+      "POSITION_MAX": {
+        "labelKey": "position_max",
+        "output": "position",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "inputs": {
+          "min": 2,
+          "max": 2,
+          "types": [
+            "position",
+            "position"
+          ]
+        }
+      },
+      "POSITION_X": {
+        "labelKey": "position_x",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            ""
+          ]
+        },
+        "fields": {},
+        "inputs": {
+          "min": 1,
+          "max": 1,
+          "types": [
+            "position"
+          ]
+        }
+      },
+      "POSITION_Y": {
+        "labelKey": "position_y",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            ""
+          ]
+        },
+        "fields": {},
+        "inputs": {
+          "min": 1,
+          "max": 1,
+          "types": [
+            "position"
+          ]
+        }
+      },
+      "POSITION_Z": {
+        "labelKey": "position_z",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            ""
+          ]
+        },
+        "fields": {},
+        "inputs": {
+          "min": 1,
+          "max": 1,
+          "types": [
+            "position"
+          ]
+        }
       }
     }
   },
@@ -543,7 +855,8 @@
       2,
       3,
       4,
-      5
+      5,
+      6
     ],
     "defaultSchema": 2,
     "documentSchemas": [
@@ -1002,7 +1315,7 @@
         }
       },
       "COPYCAT": {
-        "labelKey": "bg_copycat",
+        "labelKey": "reference",
         "output": "COPYCAT",
         "defaults": {},
         "ports": [],
@@ -3351,20 +3664,20 @@
         }
       },
       "INT": {
-        "labelKey": "bg_int",
+        "labelKey": "int",
         "output": "INT",
-        "alwaysExplicit": true,
         "defaults": {
+          "inputs": [],
           "countValue": 4
         },
-        "ports": [],
         "fields": {
           "countValue": {
-            "labelKey": "bg_count_value",
             "min": -2147483648,
             "max": 2147483647
           }
-        }
+        },
+        "ports": [],
+        "alwaysExplicit": true
       },
       "ROTATION_SEGMENT": {
         "labelKey": "bg_rotation_segment",
@@ -3377,7 +3690,8 @@
           "length": 4,
           "height": 1,
           "depth": 1,
-          "module": ""
+          "module": "",
+          "columnMode": "OVERLAY"
         },
         "ports": [
           {
@@ -3387,7 +3701,16 @@
               "length"
             ],
             "accepts": [
-              "INT"
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX",
+              "POSITION_X",
+              "POSITION_Y",
+              "POSITION_Z"
             ]
           },
           {
@@ -3423,14 +3746,49 @@
           },
           "role": {
             "labelKey": "role"
+          },
+          "columnMode": {
+            "choices": [
+              "OVERLAY",
+              "ADJACENT"
+            ]
           }
         }
       },
       "POSITION": {
         "labelKey": "position",
         "output": "POSITION",
-        "defaults": {},
-        "ports": [],
+        "defaults": {
+          "translation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "inputs": [
+            "",
+            "",
+            ""
+          ]
+        },
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX",
+              "POSITION_X",
+              "POSITION_Y",
+              "POSITION_Z"
+            ],
+            "max": 3,
+            "expand": false
+          }
+        ],
         "fields": {
           "translation": {}
         }
@@ -3460,13 +3818,454 @@
           {
             "key": "positionValue",
             "accepts": [
-              "POSITION"
+              "POSITION",
+              "POSITION_ADD",
+              "POSITION_SUBTRACT",
+              "POSITION_MULTIPLY",
+              "POSITION_DIVIDE",
+              "POSITION_MIN",
+              "POSITION_MAX"
             ]
           }
         ],
         "fields": {
           "translation": {}
         }
+      },
+      "INT_ADD": {
+        "labelKey": "int_add",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX",
+              "POSITION_X",
+              "POSITION_Y",
+              "POSITION_Z"
+            ],
+            "max": 2,
+            "expand": false
+          }
+        ],
+        "alwaysExplicit": true
+      },
+      "INT_SUBTRACT": {
+        "labelKey": "int_subtract",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX",
+              "POSITION_X",
+              "POSITION_Y",
+              "POSITION_Z"
+            ],
+            "max": 2,
+            "expand": false
+          }
+        ],
+        "alwaysExplicit": true
+      },
+      "INT_MULTIPLY": {
+        "labelKey": "int_multiply",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX",
+              "POSITION_X",
+              "POSITION_Y",
+              "POSITION_Z"
+            ],
+            "max": 2,
+            "expand": false
+          }
+        ],
+        "alwaysExplicit": true
+      },
+      "INT_DIVIDE": {
+        "labelKey": "int_divide",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX",
+              "POSITION_X",
+              "POSITION_Y",
+              "POSITION_Z"
+            ],
+            "max": 2,
+            "expand": false
+          }
+        ],
+        "alwaysExplicit": true
+      },
+      "INT_MIN": {
+        "labelKey": "int_min",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX",
+              "POSITION_X",
+              "POSITION_Y",
+              "POSITION_Z"
+            ],
+            "max": 2,
+            "expand": false
+          }
+        ],
+        "alwaysExplicit": true
+      },
+      "INT_MAX": {
+        "labelKey": "int_max",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "INT",
+              "INT_ADD",
+              "INT_SUBTRACT",
+              "INT_MULTIPLY",
+              "INT_DIVIDE",
+              "INT_MIN",
+              "INT_MAX",
+              "POSITION_X",
+              "POSITION_Y",
+              "POSITION_Z"
+            ],
+            "max": 2,
+            "expand": false
+          }
+        ],
+        "alwaysExplicit": true
+      },
+      "POSITION_ADD": {
+        "labelKey": "position_add",
+        "output": "POSITION",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "POSITION",
+              "POSITION_ADD",
+              "POSITION_SUBTRACT",
+              "POSITION_MULTIPLY",
+              "POSITION_DIVIDE",
+              "POSITION_MIN",
+              "POSITION_MAX"
+            ],
+            "max": 2,
+            "expand": false
+          }
+        ],
+        "alwaysExplicit": true
+      },
+      "POSITION_SUBTRACT": {
+        "labelKey": "position_subtract",
+        "output": "POSITION",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "POSITION",
+              "POSITION_ADD",
+              "POSITION_SUBTRACT",
+              "POSITION_MULTIPLY",
+              "POSITION_DIVIDE",
+              "POSITION_MIN",
+              "POSITION_MAX"
+            ],
+            "max": 2,
+            "expand": false
+          }
+        ],
+        "alwaysExplicit": true
+      },
+      "POSITION_MULTIPLY": {
+        "labelKey": "position_multiply",
+        "output": "POSITION",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "POSITION",
+              "POSITION_ADD",
+              "POSITION_SUBTRACT",
+              "POSITION_MULTIPLY",
+              "POSITION_DIVIDE",
+              "POSITION_MIN",
+              "POSITION_MAX"
+            ],
+            "max": 2,
+            "expand": false
+          }
+        ],
+        "alwaysExplicit": true
+      },
+      "POSITION_DIVIDE": {
+        "labelKey": "position_divide",
+        "output": "POSITION",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "POSITION",
+              "POSITION_ADD",
+              "POSITION_SUBTRACT",
+              "POSITION_MULTIPLY",
+              "POSITION_DIVIDE",
+              "POSITION_MIN",
+              "POSITION_MAX"
+            ],
+            "max": 2,
+            "expand": false
+          }
+        ],
+        "alwaysExplicit": true
+      },
+      "POSITION_MIN": {
+        "labelKey": "position_min",
+        "output": "POSITION",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "POSITION",
+              "POSITION_ADD",
+              "POSITION_SUBTRACT",
+              "POSITION_MULTIPLY",
+              "POSITION_DIVIDE",
+              "POSITION_MIN",
+              "POSITION_MAX"
+            ],
+            "max": 2,
+            "expand": false
+          }
+        ],
+        "alwaysExplicit": true
+      },
+      "POSITION_MAX": {
+        "labelKey": "position_max",
+        "output": "POSITION",
+        "defaults": {
+          "inputs": [
+            "",
+            ""
+          ]
+        },
+        "fields": {},
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "POSITION",
+              "POSITION_ADD",
+              "POSITION_SUBTRACT",
+              "POSITION_MULTIPLY",
+              "POSITION_DIVIDE",
+              "POSITION_MIN",
+              "POSITION_MAX"
+            ],
+            "max": 2,
+            "expand": false
+          }
+        ],
+        "alwaysExplicit": true
+      },
+      "POSITION_X": {
+        "labelKey": "position_x",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            ""
+          ]
+        },
+        "fields": {},
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "POSITION",
+              "POSITION_ADD",
+              "POSITION_SUBTRACT",
+              "POSITION_MULTIPLY",
+              "POSITION_DIVIDE",
+              "POSITION_MIN",
+              "POSITION_MAX"
+            ],
+            "max": 1,
+            "expand": false
+          }
+        ],
+        "alwaysExplicit": true
+      },
+      "POSITION_Y": {
+        "labelKey": "position_y",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            ""
+          ]
+        },
+        "fields": {},
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "POSITION",
+              "POSITION_ADD",
+              "POSITION_SUBTRACT",
+              "POSITION_MULTIPLY",
+              "POSITION_DIVIDE",
+              "POSITION_MIN",
+              "POSITION_MAX"
+            ],
+            "max": 1,
+            "expand": false
+          }
+        ],
+        "alwaysExplicit": true
+      },
+      "POSITION_Z": {
+        "labelKey": "position_z",
+        "output": "INT",
+        "defaults": {
+          "inputs": [
+            ""
+          ]
+        },
+        "fields": {},
+        "ports": [
+          {
+            "key": "in:*",
+            "accepts": [
+              "POSITION",
+              "POSITION_ADD",
+              "POSITION_SUBTRACT",
+              "POSITION_MULTIPLY",
+              "POSITION_DIVIDE",
+              "POSITION_MIN",
+              "POSITION_MAX"
+            ],
+            "max": 1,
+            "expand": false
+          }
+        ],
+        "alwaysExplicit": true
       }
     }
   },

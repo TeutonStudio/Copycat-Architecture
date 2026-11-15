@@ -867,5 +867,22 @@
   "gui.copycat_architect.port_style_storey": "Geschoss",
   "gui.copycat_architect.port_style_roof": "Dach",
   "gui.copycat_architect.port_style_material": "Material",
-  "gui.copycat_architect.port_style_structure": "Struktur"
+  "gui.copycat_architect.port_style_structure": "Struktur",
+  "gui.copycat_architect.int": "Anzahl",
+  "gui.copycat_architect.reference": "Referenz",
+  "gui.copycat_architect.int_add": "Anzahl addieren",
+  "gui.copycat_architect.int_subtract": "Anzahl subtrahieren",
+  "gui.copycat_architect.int_multiply": "Anzahl multiplizieren",
+  "gui.copycat_architect.int_divide": "Anzahl dividieren",
+  "gui.copycat_architect.int_min": "Anzahl Minimum",
+  "gui.copycat_architect.int_max": "Anzahl Maximum",
+  "gui.copycat_architect.position_add": "Position addieren",
+  "gui.copycat_architect.position_subtract": "Position subtrahieren",
+  "gui.copycat_architect.position_multiply": "Position multiplizieren",
+  "gui.copycat_architect.position_divide": "Position dividieren",
+  "gui.copycat_architect.position_min": "Position Minimum",
+  "gui.copycat_architect.position_max": "Position Maximum",
+  "gui.copycat_architect.position_x": "Position zerlegen · X",
+  "gui.copycat_architect.position_y": "Position zerlegen · Y",
+  "gui.copycat_architect.position_z": "Position zerlegen · Z"
 }

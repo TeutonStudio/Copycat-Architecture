@@ -24,7 +24,10 @@ internal object ExactGraphCompiler {
                     val contributions=linkedMapOf<Contribution,ExactVolume>()
                     evaluate(n.inputs[0]).forEach { (source,volume) ->
                         val clipped=source.part.copy(exactClip=volume)
-                        val rotated=CopycatTransforms.apply(listOf(clipped),CopycatTransforms.operator(n,nodes)).single()
+                        val rotated=if(n.kind==NodeKind.ROTATE && rotation.rotationAxis==RotationAxis.NORMAL) {
+                            // Preserve the per-source local axis of pre-schema-4 documents.
+                            PartRotations.rotate(clipped,RotationAxis.NORMAL,rotation.quarterTurns) ?: error("Copycat cannot rotate around its legacy normal")
+                        } else CopycatTransforms.apply(listOf(clipped),CopycatTransforms.operator(n,nodes)).single()
                         val key=source.copy(part=rotated.copy(cutMask="",exactClip=null))
                         contributions[key]=(contributions[key] ?: ExactVolume()).union(ExactGeometry.part(rotated))
                     };contributions

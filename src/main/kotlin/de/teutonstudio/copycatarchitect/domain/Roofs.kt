@@ -615,5 +615,6 @@ internal fun freshAccessInstanceId(instances:List<VerticalAccessInstance>):Strin
 
 fun BuildingGraph.withCurrentSchema():BuildingGraph {
     val value=withLegacySchema()
-    return if(nodeGroups.any { group -> group.graphInterface?.let { face -> face.inputs.any { it.type=="POSITION" } || face.outputs.any { it.type=="POSITION" } }==true } || nodes.any { !it.copycatTransforms.isNullOrEmpty() || it.kind in setOf(BuildingKind.POSITION,BuildingKind.COPYCAT_POSITION) || it.rotationPivot!=null && it.rotationPivot!=P(8,8,8) }) value.copy(schema=5) else value
+    if(nodes.any { it.kind.name in GraphValues.kinds && (it.kind !in setOf(BuildingKind.INT,BuildingKind.POSITION) || it.kind==BuildingKind.POSITION && it.inputs.isNotEmpty()) || it.columnMode==RotationSegmentMode.ADJACENT }) return value.copy(schema=maxOf(value.schema,6))
+    return if(nodeGroups.any { group -> group.graphInterface?.let { face -> face.inputs.any { it.type=="POSITION" } || face.outputs.any { it.type=="POSITION" } }==true } || nodes.any { !it.copycatTransforms.isNullOrEmpty() || it.kind in setOf(BuildingKind.POSITION,BuildingKind.COPYCAT_POSITION) || it.rotationPivot!=null && it.rotationPivot!=P(8,8,8) }) value.copy(schema=maxOf(value.schema,5)) else value
 }

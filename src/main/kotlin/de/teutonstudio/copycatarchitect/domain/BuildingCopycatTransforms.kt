@@ -13,8 +13,8 @@ object BuildingCopycatTransforms {
         val value=linked ?: node
         val primary=when {
             node.kind==BuildingKind.COPYCAT_POSITION->{
-                require(linked==null || linked.kind==BuildingKind.POSITION) { "Position input requires a position value" }
-                listOf(CopycatTransform(CopycatTransformKind.POSITION,offset=value.translation ?: P()))
+                require(linked==null || linked.kind.name in GraphValues.vectorKinds) { "Position input requires a position value" }
+                listOf(CopycatTransform(CopycatTransformKind.POSITION,offset=if(value.kind.name in GraphValues.vectorKinds) GraphValues.building(nodes).vector(value.id) else value.translation ?: P()))
             }
             node.kind==BuildingKind.COPYCAT_ROTATE && (modern || linked!=null || node.rotationPivot!=null && node.rotationPivot!=P(8,8,8) || !node.copycatTransforms.isNullOrEmpty())->{
                 require(linked==null || linked.kind==BuildingKind.ROTATION) { "Rotation input requires a rotation value" }

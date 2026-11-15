@@ -867,5 +867,22 @@
   "gui.copycat_architect.port_style_storey": "Storey",
   "gui.copycat_architect.port_style_roof": "Roof",
   "gui.copycat_architect.port_style_material": "Material",
-  "gui.copycat_architect.port_style_structure": "Structure"
+  "gui.copycat_architect.port_style_structure": "Structure",
+  "gui.copycat_architect.int": "Count",
+  "gui.copycat_architect.reference": "Reference",
+  "gui.copycat_architect.int_add": "Count add",
+  "gui.copycat_architect.int_subtract": "Count subtract",
+  "gui.copycat_architect.int_multiply": "Count multiply",
+  "gui.copycat_architect.int_divide": "Count divide",
+  "gui.copycat_architect.int_min": "Count minimum",
+  "gui.copycat_architect.int_max": "Count maximum",
+  "gui.copycat_architect.position_add": "Position add",
+  "gui.copycat_architect.position_subtract": "Position subtract",
+  "gui.copycat_architect.position_multiply": "Position multiply",
+  "gui.copycat_architect.position_divide": "Position divide",
+  "gui.copycat_architect.position_min": "Position minimum",
+  "gui.copycat_architect.position_max": "Position maximum",
+  "gui.copycat_architect.position_x": "Split position · X",
+  "gui.copycat_architect.position_y": "Split position · Y",
+  "gui.copycat_architect.position_z": "Split position · Z"
 }

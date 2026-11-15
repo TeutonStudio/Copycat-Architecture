@@ -351,3 +351,5 @@ object Extrusion {
         return (occupied+VOXELS_PER_MB-1)/VOXELS_PER_MB
     }
 }
+
+enum class RotationSegmentMode { OVERLAY, ADJACENT }

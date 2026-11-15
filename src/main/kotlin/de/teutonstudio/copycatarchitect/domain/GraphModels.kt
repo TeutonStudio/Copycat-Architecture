@@ -30,7 +30,7 @@ internal object GraphModels {
     fun newShape(kind: NodeKind): GraphNode {
         val model = shape(kind)
         return gson.fromJson(defaults(copycat, kind.name, model.defaults), GraphNode::class.java)
-            .copy(inputs = List(if(kind==NodeKind.MIRROR) 2 else checkNotNull(model.inputs).min) { "" })
+            .copy(inputs = List(if(kind==NodeKind.MIRROR) 2 else if(kind==NodeKind.POSITION) 3 else checkNotNull(model.inputs).min) { "" })
     }
 
     private val assemblyTemplates by lazy { buildingTemplates(true) }

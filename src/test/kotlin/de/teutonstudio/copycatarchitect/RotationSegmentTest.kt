@@ -41,7 +41,7 @@ class RotationSegmentTest {
     }
     @Test fun `length sockets enforce integer type and range and restore local fallback on deletion`() {
         val g=graph();val n=g.nodes.first { it.id=="column" }
-        assertEquals(setOf(BuildingKind.INT),BuildingPorts.of(n,g).first { it.key=="length" }.accepts)
+        assertEquals(BuildingKind.entries.filter { it.name in GraphValues.integerKinds }.toSet(),BuildingPorts.of(n,g).first { it.key=="length" }.accepts)
         assertEquals("WALL",buildingGraphType(n.kind))
         assertFails { g.connect("column","length","source") }
         assertFails { g.connect("column","in:0","count") }

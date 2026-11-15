@@ -14,8 +14,10 @@ data class GraphGroupInterface(val inputs:List<GraphGroupInput> = emptyList(),va
     val positions:List<GraphGroupPosition>?=null)
 
 /** Members are stored in compilation order; the editor opens their definition as a separate graph. */
+data class GraphLibraryReference(val documentId:String="",val version:Int=1,val name:String="Referenz",val collection:String="graphs")
+
 data class GraphGroup(val id:String="",val name:String="Gruppe",val nodes:List<String> = emptyList(),val definitionId:String="",
-    val graphInterface:GraphGroupInterface?=null,val inputConnections:Map<String,String> = emptyMap()) {
+    val graphInterface:GraphGroupInterface?=null,val inputConnections:Map<String,String> = emptyMap(),val libraryReference:GraphLibraryReference?=null) {
     val effectiveDefinitionId get()=definitionId.ifEmpty { id }
 }
 
@@ -137,7 +139,7 @@ object GraphGroups {
         }
         graph.nodeGroups.forEach { group -> group.graphInterface?.let { face ->
             face.inputs.forEach { input ->
-                require(input.type in setOf("shape","rotation","mirroring","position")) { "Unknown Copycat graph input type" }
+                require(input.type in setOf("shape","rotation","mirroring","position","INT")) { "Unknown Copycat graph input type" }
                 val connection=group.inputConnections[input.id].orEmpty()
                 require(connection.isEmpty() || GraphModels.shape(nodes.getValue(connection).kind).output==input.type) { "Incompatible Copycat group instance connection" }
                 input.targets.forEach { target ->
@@ -146,7 +148,7 @@ object GraphGroups {
                     require(node.inputs[slot]==connection) { "Connect named group inputs on the instance node" }
                 }
             }
-            face.outputs.forEach { output -> require(output.type in setOf("shape","rotation","mirroring","position") && (output.member==-1 || GraphModels.shape(nodes.getValue(group.nodes[output.member]).kind).output==output.type)) { "Incompatible Copycat group output" } }
+            face.outputs.forEach { output -> require(output.type in setOf("shape","rotation","mirroring","position","INT") && (output.member==-1 || GraphModels.shape(nodes.getValue(group.nodes[output.member]).kind).output==output.type)) { "Incompatible Copycat group output" } }
         } }
     }
 

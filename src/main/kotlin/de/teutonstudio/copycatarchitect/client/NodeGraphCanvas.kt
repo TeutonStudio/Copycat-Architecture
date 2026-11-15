@@ -193,7 +193,7 @@ class NodeGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Form,pr
                 (if(n.part.source==RoofPartParameters.SOURCE) listOf(Control(Field.ROOF_CONFIG,px,py+if(inspector) 147 else 84,w,ui("roof_source_settings"))) else emptyList())
             NodeKind.ROTATE,NodeKind.ROTATION -> rotationControls(n,px,py,w)
             NodeKind.MIRROR,NodeKind.MIRRORING -> listOf(Control(Field.MIRROR_PLANE,px,py,w,ui("mirror_plane",ui("mirror_plane_"+(n.mirror ?: CopycatMirror()).plane.name.lowercase()))))
-            NodeKind.POSITION,NodeKind.TRANSLATE -> emptyList()
+            NodeKind.POSITION,NodeKind.TRANSLATE,NodeKind.INT,NodeKind.INT_ADD,NodeKind.INT_SUBTRACT,NodeKind.INT_MULTIPLY,NodeKind.INT_DIVIDE,NodeKind.INT_MIN,NodeKind.INT_MAX,NodeKind.POSITION_ADD,NodeKind.POSITION_SUBTRACT,NodeKind.POSITION_MULTIPLY,NodeKind.POSITION_DIVIDE,NodeKind.POSITION_MIN,NodeKind.POSITION_MAX,NodeKind.POSITION_X,NodeKind.POSITION_Y,NodeKind.POSITION_Z -> emptyList()
             NodeKind.OUTPUT -> listOf(Control(Field.PREVIEW,px,py,w,definition().groups.firstOrNull { it.id==n.previewGroup }?.name ?: ui("all_groups")))
             NodeKind.UNION,NodeKind.SYMMETRIC_DIFFERENCE -> {
                 val assignments=if(n.materialMode==MaterialMode.GROUPED) listOf(Control(Field.MATERIAL,px,py+21,w,groupName(n.materialGroup)))

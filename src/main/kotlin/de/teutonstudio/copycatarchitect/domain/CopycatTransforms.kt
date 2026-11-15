@@ -7,7 +7,7 @@ data class CopycatTransform(val kind:CopycatTransformKind=CopycatTransformKind.R
 
 /** One ordered contract for inline operations and typed operator nodes, in sixteenths of a block. */
 object CopycatTransforms {
-    val valueKinds=setOf(NodeKind.ROTATION,NodeKind.MIRRORING,NodeKind.POSITION)
+    val valueKinds=NodeKind.entries.filter { it.name in GraphValues.kinds || it in setOf(NodeKind.ROTATION,NodeKind.MIRRORING) }.toSet()
     val operatorKinds=setOf(NodeKind.ROTATE,NodeKind.MIRROR,NodeKind.TRANSLATE)
     fun validate(steps:List<CopycatTransform>) {
         require(steps.size<=64) { "At most 64 Copycat transformations" }
@@ -51,10 +51,15 @@ object CopycatTransforms {
             NodeKind.ROTATE->CopycatTransform(axis=if(value.rotationAxis==RotationAxis.NORMAL) RotationAxis.Y else value.rotationAxis,
                 quarterTurns=value.quarterTurns,pivot=value.rotationPivot ?: P(8,8,8))
             NodeKind.MIRROR->CopycatTransform(CopycatTransformKind.MIRROR,plane=(value.mirror ?: CopycatMirror()).plane)
-            NodeKind.TRANSLATE->CopycatTransform(CopycatTransformKind.POSITION,offset=value.translation ?: P())
+            NodeKind.TRANSLATE->CopycatTransform(CopycatTransformKind.POSITION,offset=if(value.kind.name in GraphValues.vectorKinds) GraphValues.shape(nodes).vector(value.id) else value.translation ?: P())
             else->error("Not a Copycat operator")
         })
     }
 }
 
-fun NodeGraph.withTransformSchema()=if(nodeGroups.any { group -> group.graphInterface?.let { face -> face.inputs.any { it.type in setOf("position","mirroring") } || face.outputs.any { it.type in setOf("position","mirroring") } }==true } || nodes.any { !it.copycatTransforms.isNullOrEmpty() || it.kind in setOf(NodeKind.MIRRORING,NodeKind.POSITION,NodeKind.TRANSLATE) || it.rotationPivot!=null && it.rotationPivot!=P(8,8,8) || it.kind==NodeKind.MIRROR && it.inputs.size>1 }) copy(schema=4) else this
+fun NodeGraph.withTransformSchema():NodeGraph {
+    val modern=nodeGroups.any { group -> group.graphInterface?.let { face -> face.inputs.any { it.type in setOf("position","mirroring") } || face.outputs.any { it.type in setOf("position","mirroring") } }==true } || nodes.any { !it.copycatTransforms.isNullOrEmpty() || it.kind in setOf(NodeKind.MIRRORING,NodeKind.POSITION,NodeKind.TRANSLATE) || it.rotationPivot!=null && it.rotationPivot!=P(8,8,8) || it.kind==NodeKind.MIRROR && it.inputs.size>1 }
+    val arithmetic=nodes.any { it.kind.name in GraphValues.kinds && (it.kind!=NodeKind.POSITION || it.inputs.isNotEmpty()) }
+    val next=maxOf(schema,if(arithmetic) 5 else if(modern) 4 else schema)
+    return copy(schema=next)
+}

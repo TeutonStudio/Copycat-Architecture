@@ -63,6 +63,55 @@ class CopycatTransformContractTest {
         assertNotEquals(Geometry.solid(original.placements.single().parts).key(),Geometry.solid(a.placements.single().parts).key())
         assertEquals(listOf(byte),form.parts);assertEquals("source@3",source.form);assertEquals(a.materials,b.materials);assertEquals(a.raw,b.raw)
     }
+    @Test fun `building reference rotations retain clipped geometry through previews and downstream transforms`() {
+        val groups=listOf(MaterialGroup(),MaterialGroup("accent","Accent","glass",1))
+        val cutters=listOf(Part("copycats:copycat_byte"),
+            Part(RoofPartParameters.SOURCE,exact=ExactVolume.convex(listOf(ExactPlane(0,3,-2,1)))))
+        for(cutter in cutters) {
+            val form=Geometry.validate(Form(id="cut",version=3,groups=groups,graph=NodeGraph(nodes=listOf(
+                GraphNode("source",part=Part("copycats:copycat_slab")),GraphNode("cutter",part=cutter),
+                GraphNode("body",NodeKind.DIFFERENCE,listOf("source","cutter")),
+                GraphNode("accent",NodeKind.INTERSECTION,listOf("source","cutter")),
+                GraphNode("join",NodeKind.UNION,listOf("body","accent"),inputGroups=listOf("body","accent")),
+                GraphNode("result",NodeKind.OUTPUT,listOf("join"))))))
+            val original=Json.encode(form)
+            assertTrue(form.parts.any { it.cutMask.isNotEmpty() || it.exactClip!=null })
+            // The document boundary must still reject orphaned clipping data.
+            assertFailsWith<IllegalArgumentException> { Geometry.validate(form.copy(graph=null)) }
+            for(axis in listOf(RotationAxis.X,RotationAxis.Y,RotationAxis.Z)) {
+                val step=CopycatTransform(axis=axis,quarterTurns=1)
+                val source=BuildingNode("source",BuildingKind.COPYCAT,form="cut@3")
+                val inline=source.copy(id="inline",copycatTransforms=listOf(step))
+                val value=BuildingNode("value",BuildingKind.ROTATION,rotationAxis=axis,quarterTurns=1)
+                val rotated=BuildingNode("rotate",BuildingKind.COPYCAT_ROTATE,inputs=listOf(source.id),rotation="value")
+                val mirrored=BuildingNode("mirror",BuildingKind.COPYCAT_MIRROR,inputs=listOf(rotated.id),mirror=CopycatMirror(CopycatMirrorPlane.Z))
+                val segment=BuildingNode("segment",BuildingKind.SEGMENT,module="",inputs=listOf(mirrored.id),length=1,height=1)
+                val graph=BuildingGraph(schema=5,nodes=listOf(
+                    BuildingNode("empty_wall",BuildingKind.SEGMENT,block="minecraft:air",length=1),
+                    source,inline,value,rotated,mirrored,segment,BuildingNode("result",BuildingKind.BUILDING)))
+                val evaluation=BuildingGraphCompiler.Evaluation(Json.decode(Json.encode(graph)),Building().palette,mapOf("cut@3" to form),emptyMap())
+                val before=evaluation.preview(source.id)
+                val expected=CopycatTransforms.apply(form.parts,listOf(step))
+                for(id in listOf(inline.id,rotated.id)) {
+                    val plan=evaluation.preview(id);val placement=plan.placements.single()
+                    assertTrue(Geometry.exact(expected).equivalent(Geometry.exact(placement.parts)))
+                    assertEquals(groups,placement.groups)
+                    assertEquals(before.placements.single().surfaces,placement.surfaces)
+                    assertEquals(before.raw,plan.raw);assertEquals(before.materials,plan.materials)
+                    val owned=Geometry.resolve(expected,groups).exactMaterials("",groups.associate { it.id to it.id })
+                    val actual=Geometry.resolve(placement.parts,groups).exactMaterials("",groups.associate { it.id to it.id })
+                    assertEquals(owned.keys,actual.keys)
+                    owned.forEach { (group,volume) -> assertTrue(volume.equivalent(actual.getValue(group))) }
+                }
+                val chained=CopycatTransforms.apply(expected,listOf(CopycatTransform(CopycatTransformKind.MIRROR,plane=CopycatMirrorPlane.Z)))
+                val plan=evaluation.preview(segment.id)
+                assertTrue(Geometry.exact(chained).equivalent(Geometry.exact(plan.placements.single().parts)))
+                assertEquals(before.raw,plan.raw);assertEquals(before.materials,plan.materials)
+                assertEquals(original,Json.encode(form))
+                assertEquals("cut@3",source.form)
+            }
+        }
+    }
     @Test fun `new functions require their explicit schemas while legacy graphs retain theirs`() {
         val legacy=graph(GraphNode("source",part=byte)).copy(schema=2)
         assertEquals(2,legacy.withTransformSchema().schema)

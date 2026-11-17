@@ -511,7 +511,11 @@ object BuildingGraphCompiler {
             val form=Geometry.validate(forms[input.form] ?: error("Missing form ${input.form}"))
             val parts=CopycatTransforms.apply(SegmentGeometry.parts(input,form.parts),steps)
             val key="transform_${source.id}@1"
-            forms[key]=form.copy(id="transform_${source.id}",version=1,graph=null,parts=parts)
+            // Clipped results remain valid documents through the same bounded snapshot
+            // graph used by saved Copycat references, including chained transforms.
+            val snapshot=GraphNode("source",NodeKind.SAVED,savedCopycat=SavedCopycat(form.id,form.version,form.name,parts))
+            val transformedGraph=NodeGraph(nodes=listOf(snapshot,GraphNode("result",NodeKind.OUTPUT,listOf(snapshot.id))))
+            forms[key]=form.copy(id="transform_${source.id}",version=1,graph=transformedGraph,parts=parts)
             return input.copy(pos=pos,form=key,turn=turn,rotations=emptyList(),role=if(source.materialMode==MaterialMode.GROUPED) source.role else input.role)
         }
         private fun legacySourceCell(pos:P,source:BuildingNode,turn:Int=0):Cell {

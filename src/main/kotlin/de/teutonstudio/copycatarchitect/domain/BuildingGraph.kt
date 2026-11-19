@@ -2,7 +2,7 @@ package de.teutonstudio.copycatarchitect.domain
 
 import java.util.concurrent.ConcurrentHashMap
 
-enum class BuildingKind { INT, ROTATION_SEGMENT, AREA, COPYCAT, SEGMENT_LAYOUT, SEGMENT, PATTERN, ROOM_GEOMETRY, FLOOR, CEILING, ROOM, STOREY, ROOF_LEVEL, ROOF_LAYOUT, ROOF, STAIRWELL, ELEVATOR_SHAFT, SERVICE_SHAFT, BUILDING, GARDEN, PATH, SEGMENT_MIRROR, COPYCAT_MIRROR, SEGMENT_ROTATE, COPYCAT_ROTATE, ROOM_LAYOUT, SEGMENT_UNION, SEGMENT_INTERSECTION, SEGMENT_DIFFERENCE, SEGMENT_SYMMETRIC_DIFFERENCE, COPYCAT_UNION, COPYCAT_INTERSECTION, COPYCAT_DIFFERENCE, COPYCAT_SYMMETRIC_DIFFERENCE, ROTATION, MIRRORING, BAY_WINDOW, DORMER, POSITION, COPYCAT_POSITION, INT_ADD, INT_SUBTRACT, INT_MULTIPLY, INT_DIVIDE, INT_MIN, INT_MAX, POSITION_ADD, POSITION_SUBTRACT, POSITION_MULTIPLY, POSITION_DIVIDE, POSITION_MIN, POSITION_MAX, POSITION_X, POSITION_Y, POSITION_Z }
+enum class BuildingKind { INT, ROTATION_SEGMENT, AREA, COPYCAT, SEGMENT_LAYOUT, SEGMENT, PATTERN, ROOM_GEOMETRY, FLOOR, CEILING, ROOM, STOREY, ROOF_LEVEL, ROOF_LAYOUT, ROOF, STAIRWELL, ELEVATOR_SHAFT, SERVICE_SHAFT, BUILDING, GARDEN, PATH, SEGMENT_MIRROR, COPYCAT_MIRROR, SEGMENT_ROTATE, COPYCAT_ROTATE, ROOM_LAYOUT, SEGMENT_UNION, SEGMENT_INTERSECTION, SEGMENT_DIFFERENCE, SEGMENT_SYMMETRIC_DIFFERENCE, COPYCAT_UNION, COPYCAT_INTERSECTION, COPYCAT_DIFFERENCE, COPYCAT_SYMMETRIC_DIFFERENCE, ROTATION, MIRRORING, BAY_WINDOW, DORMER, POSITION, COPYCAT_POSITION, INT_ADD, INT_SUBTRACT, INT_MULTIPLY, INT_DIVIDE, INT_MIN, INT_MAX, POSITION_ADD, POSITION_SUBTRACT, POSITION_MULTIPLY, POSITION_DIVIDE, POSITION_MIN, POSITION_MAX, POSITION_X, POSITION_Y, POSITION_Z, COPYCAT_OPERATOR, SEGMENT_OPERATOR, POSITION_OPERATOR, NUMBER_OPERATOR, RELATION_OPERATOR, STATEMENT_OPERATOR }
 data class SegmentLayoutCell(val x:Int=0,val y:Int=0,val sourceIndex:Int=0,val turn:Int=0)
 data class BuildingNode(
     val id:String="",val kind:BuildingKind=BuildingKind.SEGMENT,val name:String="",val x:Int=0,val y:Int=0,
@@ -16,6 +16,7 @@ data class BuildingNode(
     val layoutCells:List<SegmentLayoutCell> = emptyList(),val assembly:Boolean=false,
     val depth:Int=1,val regionCopies:Map<String,String> = emptyMap(),val transforms:List<SegmentTransform> = emptyList(),
 
+    val operation:String?=null,val numberValue:Int?=null,val comparisonValue:Int?=null,val booleanValue:Boolean?=null,
     val rotationPivot:P?=null,val translation:P?=null,val positionValue:String?=null,val copycatTransforms:List<CopycatTransform>?=null,
     val rotationAxis:RotationAxis=RotationAxis.Y,val quarterTurns:Int=0,
     val fenced:Boolean=false,val fenceBlock:String="minecraft:oak_fence",val fenceHeight:Int=1,
@@ -256,7 +257,7 @@ object BuildingPorts {
 
     fun of(n:BuildingNode,graph:BuildingGraph,expanding:Boolean=false,includeInactive:Boolean=false)=of(graph.resolvedNode(n),expanding,includeInactive)
     /** Inactive roof references remain stored and validated when the roof type or axis changes. */
-    fun of(n:BuildingNode,expanding:Boolean=false,includeInactive:Boolean=false):List<BuildingPort> = (when(n.kind) {
+    fun of(n:BuildingNode,expanding:Boolean=false,includeInactive:Boolean=false):List<BuildingPort> = (if(n.kind.name in UnifiedOperators.kinds) UnifiedOperators.ports(n) else when(n.kind) {
         BuildingKind.AREA -> (when(n.areaMode) { AreaMode.SQUARE->listOf("length");AreaMode.RECTANGLE->listOf("length","height");else->emptyList() }).map { key->port(n,key,n.dimensions.orEmpty()[key].orEmpty()) }
         BuildingKind.POSITION -> (0..2).map { i->port(n,"in:$i",n.inputs.getOrNull(i).orEmpty()) }
         BuildingKind.COPYCAT_POSITION -> listOf(port(n,"in:0",n.inputs.firstOrNull().orEmpty()),port(n,"positionValue",n.positionValue.orEmpty()))
@@ -269,7 +270,7 @@ object BuildingPorts {
                 (if(n.assembly && (n.dynamicAxes.isNullOrEmpty() || includeInactive)) SegmentRegions.of(n.length,n.height,n.depth).mapIndexed { i,region -> port(n,region.key,assigned[region.key].orEmpty(),i) } else emptyList())
         }
         BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE -> listOf(port(n,"in:0",n.inputs.firstOrNull().orEmpty())) +
-            if(n.kind in setOf(BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT_ROTATE)) listOf(port(n,"rotation",n.rotation.orEmpty())) else listOf(port(n,"mirroring",n.mirroring.orEmpty()))
+            if(n.kind in setOf(BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT_ROTATE,BuildingKind.COPYCAT_OPERATOR)) listOf(port(n,"rotation",n.rotation.orEmpty())) else listOf(port(n,"mirroring",n.mirroring.orEmpty()))
         BuildingKind.GARDEN -> listOf(port(n,"geometry",n.geometry),port(n,"floor",n.floor))
         BuildingKind.PATH -> listOf(port(n,"floor",n.floor))
         BuildingKind.SEGMENT_LAYOUT,BuildingKind.ROOM_GEOMETRY -> listOf(port(n,"geometry",n.geometry))
@@ -308,7 +309,7 @@ object BuildingPorts {
     }
 }
 data class SegmentCell(val cell:Cell,val overrideRole:String="")
-data class FixedSegment(val length:Int,val height:Int,val cells:List<SegmentCell>,val air:Boolean=false,val depth:Int=1,val metadata:SegmentMetadata=SegmentMetadata())
+data class FixedSegment(val length:Int,val height:Int,val cells:List<SegmentCell>,val air:Boolean=false,val depth:Int=1,val metadata:SegmentMetadata=SegmentMetadata(),val origin:P=P())
 data class CompiledRoom(val plan:Plan,val footprint:Set<P>,val shell:Set<P>,val minimum:Int,val maximum:Int,val bottomThickness:Int,val topThickness:Int,val usableHeight:Int) {
     /** Dimensions include wall segments, their corner joints and structural plate layers. */
     val outerWidth get()=if(shell.isEmpty()) 0 else shell.maxOf { it.x }-shell.minOf { it.x }+1
@@ -340,17 +341,18 @@ object BuildingGraphCompiler {
             require(n.roomLayout==null || n.kind==BuildingKind.ROOM_LAYOUT) { "Room arrangements belong to a room layout" }
             require(n.roomConfig==null || n.kind==BuildingKind.ROOM) { "Room settings belong to a room" }
             require(n.facade==null || n.kind==BuildingKind.STOREY) { "Facade settings belong to a storey" }
-            require(n.features==null || n.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)) { "Bauteilregeln benötigen ein Segment" }
+            require(n.features==null || n.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.SEGMENT_OPERATOR)) { "Bauteilregeln benötigen ein Segment" }
             require(n.attachments.isNullOrEmpty() || n.kind in setOf(BuildingKind.CEILING,BuildingKind.SEGMENT)) { "Wandanschlüsse benötigen eine Deckenplatte oder ein Segment" }
             require(n.preview in listOf("all","walls","floor","ceiling","roof")) { "Invalid building preview filter" }
             require(n.name.length<=64 && n.x in -8192..8192 && n.y in -8192..8192 && n.materialMode in MaterialMode.entries) { "Invalid building node" }
             require(n.role.matches(Regex("[a-zA-Z0-9_-]{1,32}"))) { "Invalid node material role" }
             CopycatTransforms.validate(n.copycatTransforms.orEmpty())
-            if(n.kind.name in GraphValues.kinds) require(n.inputs.size in (if(n.kind==BuildingKind.POSITION) 0..3 else if(n.kind==BuildingKind.INT) 0..0 else if(n.kind.name in setOf("POSITION_X","POSITION_Y","POSITION_Z")) 1..1 else 2..2)) { "Invalid parameter socket count" }
+            if(n.kind.name in UnifiedOperators.kinds) UnifiedOperators.types(n.kind.name,n.operation,n.inputs.size)
+            if(n.kind.name in GraphValues.kinds && n.kind.name !in UnifiedOperators.kinds) require(n.inputs.size in (if(n.kind==BuildingKind.POSITION) 0..3 else if(n.kind==BuildingKind.INT) 0..0 else if(n.kind.name in setOf("POSITION_X","POSITION_Y","POSITION_Z")) 1..1 else 2..2)) { "Invalid parameter socket count" }
             require(n.copycatTransforms.isNullOrEmpty() || n.kind in BuildingCopycatTransforms.sourceKinds) { "Only Copycat outputs accept transformations" }
             require(n.positionValue.isNullOrEmpty() || n.kind==BuildingKind.COPYCAT_POSITION) { "Position values require a positioning operator" }
             require(n.rotationAxis in listOf(RotationAxis.X,RotationAxis.Y,RotationAxis.Z) && n.quarterTurns in 0..3) { "Invalid Copycat rotation" }
-            val maximumHeight=if(n.kind in setOf(BuildingKind.SEGMENT_LAYOUT,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE) || n.assembly && n.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN)) 128 else 16
+            val maximumHeight=if(n.kind in setOf(BuildingKind.SEGMENT_LAYOUT,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE) || n.assembly && n.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_OPERATOR)) 128 else 16
             require(n.depth in 1..128 && n.length.toLong()*n.height*n.depth<=262144 && n.length in 1..128 && n.height in 1..maximumHeight && n.thickness in 1..4 && n.offsets.size<=GraphModels.building.maxInputs && n.inputs.size<=GraphModels.building.maxInputs) { "Invalid fixed dimensions" }
             require(n.regionCopies.isEmpty() || n.kind==BuildingKind.SEGMENT && n.regionCopies.size<=27 && n.regionCopies.keys.all { it.matches(Regex("region:x[01ib]_y[01ib]_z[01ib]")) }) { "Invalid segment region" }
             require(n.transforms.size<=n.inputs.size && n.transforms.all { it.quarterTurns in 0..3 && it.axis in listOf(RotationAxis.X,RotationAxis.Y,RotationAxis.Z) && listOf(it.offset.x,it.offset.y,it.offset.z).all { c -> c in -128..128 } }) { "Invalid segment transformation" }
@@ -385,7 +387,7 @@ object BuildingGraphCompiler {
                 require(n.inputs.size in 2..16) { "A pattern needs 2–16 ordered segment inputs" }
                 require(n.patternAxis in listOf("horizontal","vertical","depth","transform")) { "Invalid wall pattern axis" }
             }
-            require(n.mirror==null || n.kind in setOf(BuildingKind.COPYCAT_MIRROR,BuildingKind.MIRRORING)) { "Copycat mirror settings belong to a Copycat mirror" }
+            require(n.mirror==null || n.kind in setOf(BuildingKind.COPYCAT_MIRROR,BuildingKind.MIRRORING,BuildingKind.COPYCAT_OPERATOR,BuildingKind.SEGMENT_OPERATOR,BuildingKind.POSITION_OPERATOR)) { "Copycat mirror settings belong to a Copycat mirror" }
             require(n.mirrorPositionsOnly==null || n.kind==BuildingKind.SEGMENT_MIRROR) { "Segment mirror mode belongs to a segment mirror" }
             require(n.verticalEdges.isNullOrEmpty() || n.kind==BuildingKind.ROOM && n.verticalEdges.size<=128 &&
                 n.verticalEdges.keys.all { key -> RoomVerticalEdges.of(graph.resolvedNode(n).rectangles).any { it.id==key } }) { "Invalid vertical room edge assignment" }
@@ -414,7 +416,7 @@ object BuildingGraphCompiler {
             if(n.roofConfig!=null) {
                 val refs=n.roofConfig.variants.values+n.roofConfig.families.flatMap { it.variants.values }
                 refs.filter(String::isNotEmpty).forEach { require(nodes[it]?.kind in CopycatBooleans.sourceKinds) { "Roof templates require a connected Copycat source" } }
-                if(n.roofConfig.wall.isNotEmpty()) require(nodes[n.roofConfig.wall]?.kind in (CopycatBooleans.sourceKinds+setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE))) { "Roof walls require a Copycat or wall segment source" }
+                if(n.roofConfig.wall.isNotEmpty()) require(nodes[n.roofConfig.wall]?.kind in (CopycatBooleans.sourceKinds+setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.SEGMENT_OPERATOR))) { "Roof walls require a Copycat or wall segment source" }
             }
             if(n.kind==BuildingKind.ROOF_LEVEL) Roofs.validate(n.roofLevel ?: RoofLevelConfig())
             require(n.levelIds.isEmpty() || n.kind==BuildingKind.BUILDING && n.levelIds.keys.all { it in n.levels } && n.levelIds.values.distinct().size==n.levelIds.size) { "Invalid storey instance identities" }
@@ -491,6 +493,21 @@ object BuildingGraphCompiler {
         private val roofContacts=mutableListOf<RoofContact>()
         private val previews=mutableMapOf<String,Plan>()
         private val copycatResults=mutableMapOf<String,SegmentCell>()
+        private val operatorForms=mutableSetOf<String>()
+        fun operatorValue(id:String):Any=UnifiedOperators.value(UnifiedOperators.buildingValueNodes(graph.nodes),id)
+        private fun storeOperatorCell(id:String,value:Placement):Cell {
+            val key="operator_${id}@1"
+            val snapshot=GraphNode("source",NodeKind.SAVED,savedCopycat=SavedCopycat(parts=value.parts))
+            val recipe=NodeGraph(nodes=listOf(snapshot,GraphNode("result",NodeKind.OUTPUT,listOf(snapshot.id))))
+            forms[key]=Form(id="operator_$id",parts=value.parts,groups=value.groups,graph=recipe)
+            operatorForms+=key
+            return Cell(form=key,role="wall",empty=value.parts.isEmpty(),surfaces=value.groups.associate { it.id to (value.surfaces[it.id] ?: value.material) })
+        }
+        private fun operatorParameter(n:BuildingNode)=n.inputs.getOrNull(1)?.takeIf(String::isNotEmpty)?.let(::node) ?: n
+        private fun operatorOffset(n:BuildingNode):P {
+            val parameter=operatorParameter(n)
+            return if(parameter.kind.name in GraphValues.vectorKinds) GraphValues.building(nodes).vector(parameter.id) else parameter.translation ?: P()
+        }
         private data class RoofPreviewArea(val footprint:Set<P>,val sample:Boolean)
         private val roofPreviewAreas=mutableMapOf<String,RoofPreviewArea>()
         private val dormerCeilingCuts=mutableMapOf<P,ExactVolume>()
@@ -503,6 +520,28 @@ object BuildingGraphCompiler {
         }
         /** Local Copycat orientation precedes layout turns and mounting on walls or roofs. */
         private fun sourceCell(pos:P,source:BuildingNode,turn:Int=0):Cell {
+            if(source.kind==BuildingKind.COPYCAT_OPERATOR) {
+                val op=source.operation ?: "UNION"
+                val spec=UnifiedOperators.spec(source.kind.name,op)
+                require(source.inputs.withIndex().all { (i,ref) -> ref.isNotEmpty() || i in spec.optional }) { "Connect required Copycat input" }
+                val result=if(op in setOf("ROTATE","MIRROR","TRANSLATE")) {
+                    val input=sourcePlacement(P(),copycat(source.inputs.first()),"wall")
+                    require(input.block.isEmpty()) { "Copycat operators require Copycat geometry" }
+                    val parameter=operatorParameter(source)
+                    val steps=when(op) {
+                        "ROTATE"->parameter.rotations?.map { CopycatTransform(axis=it.axis,quarterTurns=it.quarterTurns,pivot=parameter.rotationPivot ?: P(8,8,8)) } ?: listOf(CopycatTransform(axis=parameter.rotationAxis,quarterTurns=parameter.quarterTurns,pivot=parameter.rotationPivot ?: P(8,8,8)))
+                        "MIRROR"->parameter.mirrors?.map { CopycatTransform(CopycatTransformKind.MIRROR,plane=it.plane) } ?: listOf(CopycatTransform(CopycatTransformKind.MIRROR,plane=(parameter.mirror ?: CopycatMirror()).plane))
+                        else->listOf(CopycatTransform(CopycatTransformKind.POSITION,offset=operatorOffset(source)))
+                    }
+                    input.copy(parts=CopycatTransforms.apply(input.parts,steps))
+                } else {
+                    val args=source.inputs.map { sourcePlacement(P(),copycat(it),"wall") }
+                    require(args.all { it.block.isEmpty() }) { "Copycat operators require Copycat geometry" }
+                    val full=Placement(parts=listOf(Part("copycats:copycat_block")),material=palette[source.role] ?: error("Missing material role ${source.role}"))
+                    ExactOperatorGeometry.apply(op,args,full) ?: args.first().copy(parts=emptyList())
+                }
+                return storeOperatorCell(source.id,result.copy(parts=CopycatTransforms.apply(result.parts,source.copycatTransforms.orEmpty()))).copy(pos=pos,turn=turn)
+            }
             val steps=BuildingCopycatTransforms.operations(source,nodes,graph.schema>=5)
             if(steps.isEmpty()) return legacySourceCell(pos,source,turn)
             val input=if(source.kind in BuildingCopycatTransforms.operatorKinds) sourceCell(P(),copycat(source.inputs.single())) else legacySourceCell(P(),source)
@@ -562,8 +601,9 @@ object BuildingGraphCompiler {
             },forms,palette)
         }
         private fun sourceOverride(source:BuildingNode):String = when {
+            source.kind==BuildingKind.COPYCAT_OPERATOR -> if(source.materialMode==MaterialMode.GROUPED) source.role else ""
             source.kind in CopycatBooleans.kinds -> copycatResult(source).overrideRole
-            source.kind !in setOf(BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_POSITION) -> ""
+            source.kind !in setOf(BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_POSITION,BuildingKind.COPYCAT_OPERATOR) -> ""
             source.materialMode==MaterialMode.GROUPED -> source.role
             else -> sourceOverride(copycat(source.inputs.single()))
         }
@@ -577,9 +617,25 @@ object BuildingGraphCompiler {
         private fun segmentRecipe(id:String,requested:P?):FixedSegment=run {
             val sized=DynamicSegments.sized(node(id),requested)
             val n=if(sized.dynamicAxes.isNullOrEmpty()) sized else sized.copy(inputs=sized.inputs.take(1))
-            val requests=if(n.kind in SegmentBooleans.kinds || n.kind in setOf(BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.PATTERN)) DynamicSegments.requests(graph,n,requested) { source -> segment(source).let { P(it.length,it.height,it.depth) } } else emptyList()
+            if(n.kind==BuildingKind.SEGMENT_OPERATOR) {
+                val spec=UnifiedOperators.spec(n.kind.name,n.operation)
+                require(n.inputs.withIndex().all { (i,ref) -> ref.isNotEmpty() || i in spec.optional }) { "Connect required segment input" }
+                if(n.operation in setOf("ROTATE","MIRROR","TRANSLATE")) {
+                    val parameter=operatorParameter(n)
+                    val value=segment(n.inputs.first())
+                    if(n.operation=="ROTATE") return@run (parameter.rotations ?: listOf(SegmentRotation(parameter.rotationAxis,parameter.quarterTurns))).fold(value) { current,step -> ExactOperatorGeometry.transform(n,current,P(),step.axis,step.quarterTurns) }
+                    if(n.operation=="MIRROR") return@run (parameter.mirrors ?: listOf(parameter.mirror ?: CopycatMirror())).fold(value) { current,step ->
+                        val axis=when(step.plane) { CopycatMirrorPlane.X->RotationAxis.X;CopycatMirrorPlane.Y->RotationAxis.Y;CopycatMirrorPlane.Z->RotationAxis.Z;else->error("Segment mirroring requires X/Y/Z") }
+                        ExactOperatorGeometry.transform(n,current,P(),axis,0)
+                    }
+                    return@run ExactOperatorGeometry.transform(n,value,operatorOffset(n),RotationAxis.Y,0)
+                }
+                val args=n.inputs.map(::segment)
+                return@run ExactOperatorGeometry.segments(n,args,{ entry -> segmentPlacement(P(),entry.cell,"wall",entry.overrideRole) },::storeOperatorCell)
+            }
+            val requests=if(n.kind in SegmentBooleans.kinds || n.kind in setOf(BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.PATTERN,BuildingKind.SEGMENT_OPERATOR)) DynamicSegments.requests(graph,n,requested) { source -> segment(source).let { P(it.length,it.height,it.depth) } } else emptyList()
             fun operand(index:Int)=segment(n.inputs[index],requests.getOrNull(index))
-require(n.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE))
+require(n.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.SEGMENT_OPERATOR))
             if(n.kind==BuildingKind.ROTATION_SEGMENT) {
                 val length=BuildingCounts.resolve(graph,n,true).length
                 val source=copycat(n.inputs.single())
@@ -683,7 +739,7 @@ require(n.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,Build
             }
         }
         private fun placement(pos:P,form:String,role:String,type:String,turn:Int=0,forced:String="",surfaces:Map<String,String> = emptyMap()):Placement {
-            val f=Geometry.validate(forms[form] ?: error("Missing form $form"));val material=palette[forced.ifEmpty { role }] ?: error("Missing material role $role")
+            val original=forms[form] ?: error("Missing form $form");val f=if(form in operatorForms) original else Geometry.validate(original);val material=palette[forced.ifEmpty { role }] ?: error("Missing material role $role")
             return Placement(pos,Geometry.rotate(f.parts,turn),material,component=type,groups=f.groups,surfaces=f.groups.associate { it.id to if(forced.isNotEmpty()) material else surfaces[it.id] ?: palette[if(it.role=="surface") role else it.role].orEmpty().ifEmpty { error("Missing material role ${it.role}") } })
         }
         private fun segmentPlacement(pos:P,cell:Cell,type:String,forced:String="",worldTurn:Int=0):Placement {
@@ -728,14 +784,14 @@ require(n.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,Build
             val n=node(id)
             when(n.kind) {
                 BuildingKind.INT,BuildingKind.INT_ADD,BuildingKind.INT_SUBTRACT,BuildingKind.INT_MULTIPLY,BuildingKind.INT_DIVIDE,BuildingKind.INT_MIN,BuildingKind.INT_MAX -> Plan(emptyList(),emptyList(),emptyList(),0,emptyMap())
-                BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_POSITION,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE -> Resolver().apply { if(sourceIsAir(n)) clear(P()) else add(sourcePlacement(P(),n,"wall")) }.plan(emptyList())
+                BuildingKind.COPYCAT,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_POSITION,BuildingKind.COPYCAT_UNION,BuildingKind.COPYCAT_INTERSECTION,BuildingKind.COPYCAT_DIFFERENCE,BuildingKind.COPYCAT_SYMMETRIC_DIFFERENCE,BuildingKind.COPYCAT_OPERATOR -> Resolver().apply { if(sourceIsAir(n)) clear(P()) else add(sourcePlacement(P(),n,"wall")) }.plan(emptyList())
                 BuildingKind.FLOOR,BuildingKind.CEILING -> {
                     val copies=copycats(n);validateCarpet(n,copies)
                     val sample=(0..2).flatMap { x -> (0..2).map { z -> P(x,0,z) } }.toSet()
                     val r=Resolver();addPlateLayers(r,n,copies,n.kind==BuildingKind.FLOOR,0,sample,sample,n.thickness)
                     r.plan(emptyList())
                 }
-                BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE -> {
+                BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.SEGMENT_OPERATOR -> {
                     val value=segment(id);val r=Resolver()
                     if(value.air) for(x in 0 until value.length) for(y in 0 until value.height) for(z in 0 until value.depth) r.clear(P(x,y,z))
                     else for(entries in value.cells.groupBy { it.cell.pos }.values) {
@@ -911,7 +967,7 @@ require(n.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,Build
             val shell=topology.shell;val footprint=topology.interior
             fun plate(id:String,isFloor:Boolean) {
                 if(id.isEmpty()) return
-                val layer=node(id);val isSegment=layer.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)
+                val layer=node(id);val isSegment=layer.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.SEGMENT_OPERATOR)
                 val value=if(isSegment) segment(id,if(shell.isEmpty()) null else P(shell.maxOf { it.x }-shell.minOf { it.x }+1,shell.maxOf { it.z }-shell.minOf { it.z }+1,1)) else null
                 val thickness=value?.depth ?: layer.thickness
                 val occupied=!isSegment && layer.occupied
@@ -1023,8 +1079,8 @@ require(n.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,Build
             }
             val n=graph.resolvedNode(original)
             val floor=node(n.floor);val ceiling=node(n.ceiling)
-            val floorSegment=floor.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)
-            val ceilingSegment=ceiling.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)
+            val floorSegment=floor.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.SEGMENT_OPERATOR)
+            val ceilingSegment=ceiling.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE,BuildingKind.SEGMENT_OPERATOR)
             require(floor.kind==BuildingKind.FLOOR || n.assembly && floorSegment) { "Connect a floor definition or horizontal segment" }
             require(ceiling.kind==BuildingKind.CEILING || n.assembly && ceilingSegment) { "Connect a ceiling definition or horizontal segment" }
             val floorCopies=if(floorSegment) emptyList() else copycats(floor);val ceilingCopies=if(ceilingSegment) emptyList() else copycats(ceiling)

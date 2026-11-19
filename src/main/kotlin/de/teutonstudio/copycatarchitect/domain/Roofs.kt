@@ -162,7 +162,7 @@ object Roofs {
         val wallPeriods=mutableMapOf<P,RoofSegmentTemplate>()
         fun wallPeriod(width:Int,height:Int):RoofSegmentTemplate? {
             val node=wallNode ?: return null
-            if(node.kind !in (setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds)) return null
+            if(node.kind !in (setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_OPERATOR)+SegmentBooleans.kinds)) return null
             val size=P(width.coerceIn(1,128),height.coerceIn(1,128),1)
             return wallPeriods.getOrPut(size) {
                 (sizedSegmentSource?.invoke(node.id,size) ?: segmentSource(node.id))?.also { require(it.width in 1..128 && it.height in 1..128 && it.depth==1) { "Roof wall periods need positive dimensions and depth 1" } } ?: error("Missing roof wall segment ${node.id}")
@@ -626,6 +626,7 @@ internal fun freshAccessInstanceId(instances:List<VerticalAccessInstance>):Strin
 
 fun BuildingGraph.withCurrentSchema():BuildingGraph {
     val value=withLegacySchema()
+    if(nodes.any { it.kind.name in UnifiedOperators.kinds }) return value.copy(schema=maxOf(value.schema,9))
     if(nodes.any { it.resultType!=null || it.inlinePart!=null }) return value.copy(schema=maxOf(value.schema,8))
     if(nodes.any { it.areaMode!=null || !it.dynamicAxes.isNullOrEmpty() || it.adaptiveRoof==true }) return value.copy(schema=maxOf(value.schema,7))
     if(nodes.any { it.kind.name in GraphValues.kinds && (it.kind !in setOf(BuildingKind.INT,BuildingKind.POSITION) || it.kind==BuildingKind.POSITION && it.inputs.isNotEmpty()) || it.columnMode==RotationSegmentMode.ADJACENT }) return value.copy(schema=maxOf(value.schema,6))

@@ -6,14 +6,16 @@
       2,
       3,
       4,
-      5
+      5,
+      6
     ],
     "defaultSchema": 2,
     "documentSchemas": [
       1,
       2,
       3,
-      4
+      4,
+      5
     ],
     "defaultDocumentSchema": 3,
     "maxNodes": 64,
@@ -846,6 +848,139 @@
             "position"
           ]
         }
+      },
+      "COPYCAT_OPERATOR": {
+        "labelKey": "operator_copycat_operator",
+        "output": "shape",
+        "defaults": {
+          "operation": "UNION",
+          "inputs": [
+            "",
+            ""
+          ],
+          "numberValue": 0,
+          "comparisonValue": 0,
+          "booleanValue": false,
+          "translation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotationAxis": "Y",
+          "quarterTurns": 0
+        },
+        "fields": {},
+        "inputs": {
+          "min": 2,
+          "max": 16,
+          "types": [
+            "geometry"
+          ]
+        }
+      },
+      "POSITION_OPERATOR": {
+        "labelKey": "operator_position_operator",
+        "output": "position",
+        "defaults": {
+          "operation": "VALUE",
+          "inputs": [],
+          "numberValue": 0,
+          "comparisonValue": 0,
+          "booleanValue": false,
+          "translation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotationAxis": "Y",
+          "quarterTurns": 0
+        },
+        "fields": {},
+        "inputs": {
+          "min": 3,
+          "max": 3,
+          "types": [
+            "INT"
+          ]
+        }
+      },
+      "NUMBER_OPERATOR": {
+        "labelKey": "operator_number_operator",
+        "output": "INT",
+        "defaults": {
+          "operation": "VALUE",
+          "inputs": [],
+          "numberValue": 0,
+          "comparisonValue": 0,
+          "booleanValue": false,
+          "translation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotationAxis": "Y",
+          "quarterTurns": 0
+        },
+        "fields": {},
+        "inputs": {
+          "min": 0,
+          "max": 0,
+          "types": []
+        }
+      },
+      "RELATION_OPERATOR": {
+        "labelKey": "operator_relation_operator",
+        "output": "BOOLEAN",
+        "defaults": {
+          "operation": "EQUAL",
+          "inputs": [
+            "",
+            ""
+          ],
+          "numberValue": 0,
+          "comparisonValue": 0,
+          "booleanValue": false,
+          "translation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotationAxis": "Y",
+          "quarterTurns": 0
+        },
+        "fields": {},
+        "inputs": {
+          "min": 2,
+          "max": 2,
+          "types": [
+            "INT",
+            "INT"
+          ]
+        }
+      },
+      "STATEMENT_OPERATOR": {
+        "labelKey": "operator_statement_operator",
+        "output": "BOOLEAN",
+        "defaults": {
+          "operation": "VALUE",
+          "inputs": [],
+          "numberValue": 0,
+          "comparisonValue": 0,
+          "booleanValue": false,
+          "translation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotationAxis": "Y",
+          "quarterTurns": 0
+        },
+        "fields": {},
+        "inputs": {
+          "min": 0,
+          "max": 0,
+          "types": []
+        }
       }
     }
   },
@@ -858,7 +993,8 @@
       5,
       6,
       7,
-      8
+      8,
+      9
     ],
     "defaultSchema": 2,
     "documentSchemas": [
@@ -977,7 +1113,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_OPERATOR"
         ]
       },
       {
@@ -995,7 +1132,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_OPERATOR"
         ]
       },
       {
@@ -1013,7 +1151,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_OPERATOR"
         ]
       },
       {
@@ -1031,7 +1170,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_OPERATOR"
         ]
       },
       {
@@ -1049,7 +1189,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_OPERATOR"
         ]
       },
       {
@@ -1067,7 +1208,8 @@
           "COPYCAT_UNION",
           "COPYCAT_INTERSECTION",
           "COPYCAT_DIFFERENCE",
-          "COPYCAT_SYMMETRIC_DIFFERENCE"
+          "COPYCAT_SYMMETRIC_DIFFERENCE",
+          "COPYCAT_OPERATOR"
         ]
       },
       {
@@ -1085,7 +1227,8 @@
           "COPYCAT_UNION",
           "COPYCAT_INTERSECTION",
           "COPYCAT_DIFFERENCE",
-          "COPYCAT_SYMMETRIC_DIFFERENCE"
+          "COPYCAT_SYMMETRIC_DIFFERENCE",
+          "COPYCAT_OPERATOR"
         ]
       },
       {
@@ -1105,7 +1248,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_OPERATOR"
         ]
       },
       {
@@ -1123,7 +1267,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_OPERATOR"
         ]
       },
       {
@@ -1141,7 +1286,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_OPERATOR"
         ]
       },
       {
@@ -1160,7 +1306,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_OPERATOR"
         ]
       },
       {
@@ -1179,7 +1326,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_OPERATOR"
         ]
       },
       {
@@ -1197,7 +1345,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_OPERATOR"
         ]
       },
       {
@@ -1215,7 +1364,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_OPERATOR"
         ]
       },
       {
@@ -1231,7 +1381,8 @@
           "COPYCAT_UNION",
           "COPYCAT_INTERSECTION",
           "COPYCAT_DIFFERENCE",
-          "COPYCAT_SYMMETRIC_DIFFERENCE"
+          "COPYCAT_SYMMETRIC_DIFFERENCE",
+          "COPYCAT_OPERATOR"
         ]
       },
       {
@@ -1331,7 +1482,8 @@
               "INT_MAX",
               "POSITION_X",
               "POSITION_Y",
-              "POSITION_Z"
+              "POSITION_Z",
+              "NUMBER_OPERATOR"
             ],
             "when": {
               "areaMode": "SQUARE"
@@ -1354,7 +1506,8 @@
               "INT_MAX",
               "POSITION_X",
               "POSITION_Y",
-              "POSITION_Z"
+              "POSITION_Z",
+              "NUMBER_OPERATOR"
             ],
             "when": {
               "areaMode": "RECTANGLE"
@@ -1377,7 +1530,8 @@
               "INT_MAX",
               "POSITION_X",
               "POSITION_Y",
-              "POSITION_Z"
+              "POSITION_Z",
+              "NUMBER_OPERATOR"
             ],
             "when": {
               "areaMode": "RECTANGLE"
@@ -1496,7 +1650,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ],
             "when": {
               "id": {
@@ -1520,7 +1675,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ],
             "when": {
               "assembly": true,
@@ -1595,7 +1751,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "max": 16,
             "min": 2,
@@ -1720,7 +1877,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ],
             "max": 16,
             "expand": true
@@ -1760,7 +1918,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ],
             "max": 16,
             "expand": true
@@ -1815,7 +1974,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "when": {
               "roomConfig.mode": "SEGMENTS"
@@ -1837,7 +1997,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "when": {
               "roomConfig.mode": "SEGMENTS"
@@ -1875,7 +2036,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "when": {
               "roomConfig.mode": {
@@ -1900,7 +2062,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "when": {
               "roomConfig.mode": {
@@ -1943,7 +2106,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "when": {
               "roomConfig.mode": {
@@ -1984,7 +2148,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ],
             "when": {
               "roomConfig.mode": {
@@ -2008,7 +2173,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "when": {
               "roomConfig.mode": {
@@ -2075,7 +2241,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "when": {
               "storeyMode": "walls"
@@ -2098,7 +2265,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "when": {
               "storeyMode": "walls",
@@ -2137,7 +2305,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "when": {
               "storeyMode": "walls",
@@ -2174,7 +2343,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ],
             "when": {
               "storeyMode": "walls"
@@ -2354,7 +2524,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "when": {
               "assembly": true,
@@ -2377,7 +2548,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "when": {
               "assembly": true,
@@ -2400,7 +2572,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "when": {
               "assembly": true,
@@ -2423,7 +2596,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "when": {
               "assembly": true,
@@ -2446,7 +2620,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "when": {
               "assembly": true,
@@ -2469,7 +2644,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "when": {
               "assembly": true,
@@ -2494,7 +2670,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ],
             "when": {
               "assembly": {
@@ -2517,7 +2694,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ],
             "when": {
               "roofType": "gable",
@@ -2540,7 +2718,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ],
             "when": {
               "roofType": "gable",
@@ -2565,7 +2744,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "when": {
               "assembly": {
@@ -2638,7 +2818,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ]
           },
           {
@@ -2655,7 +2836,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ]
           },
           {
@@ -2672,7 +2854,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ]
           }
         ],
@@ -2714,7 +2897,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ]
           }
         ],
@@ -2748,7 +2932,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ]
           }
         ],
@@ -2761,6 +2946,21 @@
         "output": "BUILDING",
         "defaults": {},
         "ports": [
+          {
+            "key": "in:0",
+            "path": [
+              "inputs",
+              "0"
+            ],
+            "accepts": [
+              "RELATION_OPERATOR",
+              "STATEMENT_OPERATOR"
+            ],
+            "when": {
+              "resultType": "BOOLEAN"
+            },
+            "labelKey": "output"
+          },
           {
             "key": "in:0",
             "path": [
@@ -2789,7 +2989,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ],
             "when": {
               "resultType": "COPYCAT"
@@ -2825,7 +3026,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "when": {
               "resultType": "WALL"
@@ -3114,7 +3316,8 @@
               "INT_MAX",
               "POSITION_X",
               "POSITION_Y",
-              "POSITION_Z"
+              "POSITION_Z",
+              "NUMBER_OPERATOR"
             ],
             "when": {
               "resultType": "INT"
@@ -3134,7 +3337,8 @@
               "POSITION_MULTIPLY",
               "POSITION_DIVIDE",
               "POSITION_MIN",
-              "POSITION_MAX"
+              "POSITION_MAX",
+              "POSITION_OPERATOR"
             ],
             "when": {
               "resultType": "POSITION"
@@ -3369,7 +3573,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ],
             "labelKey": "bg_floor"
           }
@@ -3443,7 +3648,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ],
             "labelKey": "bg_floor"
           }
@@ -3505,7 +3711,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ]
           },
           {
@@ -3568,7 +3775,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ]
           },
           {
@@ -3638,7 +3846,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ]
           },
           {
@@ -3703,7 +3912,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ]
           },
           {
@@ -3764,7 +3974,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "max": 16,
             "expand": true
@@ -3847,7 +4058,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "min": 2,
             "max": 16
@@ -3897,7 +4109,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "min": 2,
             "max": 16
@@ -3947,7 +4160,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "min": 2,
             "max": 2
@@ -3997,7 +4211,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_OPERATOR"
             ],
             "min": 2,
             "max": 16
@@ -4046,7 +4261,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ],
             "min": 2,
             "max": 16
@@ -4095,7 +4311,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ],
             "min": 2,
             "max": 16
@@ -4144,7 +4361,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ],
             "min": 2,
             "max": 2
@@ -4193,7 +4411,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ],
             "min": 2,
             "max": 16
@@ -4293,7 +4512,8 @@
               "INT_MAX",
               "POSITION_X",
               "POSITION_Y",
-              "POSITION_Z"
+              "POSITION_Z",
+              "NUMBER_OPERATOR"
             ]
           },
           {
@@ -4310,7 +4530,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ]
           }
         ],
@@ -4366,7 +4587,8 @@
               "INT_MAX",
               "POSITION_X",
               "POSITION_Y",
-              "POSITION_Z"
+              "POSITION_Z",
+              "NUMBER_OPERATOR"
             ],
             "max": 3,
             "expand": false
@@ -4395,7 +4617,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_OPERATOR"
             ]
           },
           {
@@ -4407,7 +4630,8 @@
               "POSITION_MULTIPLY",
               "POSITION_DIVIDE",
               "POSITION_MIN",
-              "POSITION_MAX"
+              "POSITION_MAX",
+              "POSITION_OPERATOR"
             ]
           }
         ],
@@ -4438,7 +4662,8 @@
               "INT_MAX",
               "POSITION_X",
               "POSITION_Y",
-              "POSITION_Z"
+              "POSITION_Z",
+              "NUMBER_OPERATOR"
             ],
             "max": 2,
             "expand": false
@@ -4469,7 +4694,8 @@
               "INT_MAX",
               "POSITION_X",
               "POSITION_Y",
-              "POSITION_Z"
+              "POSITION_Z",
+              "NUMBER_OPERATOR"
             ],
             "max": 2,
             "expand": false
@@ -4500,7 +4726,8 @@
               "INT_MAX",
               "POSITION_X",
               "POSITION_Y",
-              "POSITION_Z"
+              "POSITION_Z",
+              "NUMBER_OPERATOR"
             ],
             "max": 2,
             "expand": false
@@ -4531,7 +4758,8 @@
               "INT_MAX",
               "POSITION_X",
               "POSITION_Y",
-              "POSITION_Z"
+              "POSITION_Z",
+              "NUMBER_OPERATOR"
             ],
             "max": 2,
             "expand": false
@@ -4562,7 +4790,8 @@
               "INT_MAX",
               "POSITION_X",
               "POSITION_Y",
-              "POSITION_Z"
+              "POSITION_Z",
+              "NUMBER_OPERATOR"
             ],
             "max": 2,
             "expand": false
@@ -4593,7 +4822,8 @@
               "INT_MAX",
               "POSITION_X",
               "POSITION_Y",
-              "POSITION_Z"
+              "POSITION_Z",
+              "NUMBER_OPERATOR"
             ],
             "max": 2,
             "expand": false
@@ -4621,7 +4851,8 @@
               "POSITION_MULTIPLY",
               "POSITION_DIVIDE",
               "POSITION_MIN",
-              "POSITION_MAX"
+              "POSITION_MAX",
+              "POSITION_OPERATOR"
             ],
             "max": 2,
             "expand": false
@@ -4649,7 +4880,8 @@
               "POSITION_MULTIPLY",
               "POSITION_DIVIDE",
               "POSITION_MIN",
-              "POSITION_MAX"
+              "POSITION_MAX",
+              "POSITION_OPERATOR"
             ],
             "max": 2,
             "expand": false
@@ -4677,7 +4909,8 @@
               "POSITION_MULTIPLY",
               "POSITION_DIVIDE",
               "POSITION_MIN",
-              "POSITION_MAX"
+              "POSITION_MAX",
+              "POSITION_OPERATOR"
             ],
             "max": 2,
             "expand": false
@@ -4705,7 +4938,8 @@
               "POSITION_MULTIPLY",
               "POSITION_DIVIDE",
               "POSITION_MIN",
-              "POSITION_MAX"
+              "POSITION_MAX",
+              "POSITION_OPERATOR"
             ],
             "max": 2,
             "expand": false
@@ -4733,7 +4967,8 @@
               "POSITION_MULTIPLY",
               "POSITION_DIVIDE",
               "POSITION_MIN",
-              "POSITION_MAX"
+              "POSITION_MAX",
+              "POSITION_OPERATOR"
             ],
             "max": 2,
             "expand": false
@@ -4761,7 +4996,8 @@
               "POSITION_MULTIPLY",
               "POSITION_DIVIDE",
               "POSITION_MIN",
-              "POSITION_MAX"
+              "POSITION_MAX",
+              "POSITION_OPERATOR"
             ],
             "max": 2,
             "expand": false
@@ -4788,7 +5024,8 @@
               "POSITION_MULTIPLY",
               "POSITION_DIVIDE",
               "POSITION_MIN",
-              "POSITION_MAX"
+              "POSITION_MAX",
+              "POSITION_OPERATOR"
             ],
             "max": 1,
             "expand": false
@@ -4815,7 +5052,8 @@
               "POSITION_MULTIPLY",
               "POSITION_DIVIDE",
               "POSITION_MIN",
-              "POSITION_MAX"
+              "POSITION_MAX",
+              "POSITION_OPERATOR"
             ],
             "max": 1,
             "expand": false
@@ -4842,12 +5080,146 @@
               "POSITION_MULTIPLY",
               "POSITION_DIVIDE",
               "POSITION_MIN",
-              "POSITION_MAX"
+              "POSITION_MAX",
+              "POSITION_OPERATOR"
             ],
             "max": 1,
             "expand": false
           }
         ],
+        "alwaysExplicit": true
+      },
+      "COPYCAT_OPERATOR": {
+        "labelKey": "operator_copycat_operator",
+        "output": "COPYCAT",
+        "defaults": {
+          "operation": "UNION",
+          "inputs": [
+            "",
+            ""
+          ],
+          "numberValue": 0,
+          "comparisonValue": 0,
+          "booleanValue": false,
+          "translation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotationAxis": "Y",
+          "quarterTurns": 0
+        },
+        "fields": {},
+        "alwaysExplicit": true
+      },
+      "SEGMENT_OPERATOR": {
+        "labelKey": "operator_segment_operator",
+        "output": "SEGMENT",
+        "defaults": {
+          "operation": "UNION",
+          "inputs": [
+            "",
+            ""
+          ],
+          "numberValue": 0,
+          "comparisonValue": 0,
+          "booleanValue": false,
+          "translation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotationAxis": "Y",
+          "quarterTurns": 0
+        },
+        "fields": {},
+        "alwaysExplicit": true
+      },
+      "POSITION_OPERATOR": {
+        "labelKey": "operator_position_operator",
+        "output": "POSITION",
+        "defaults": {
+          "operation": "VALUE",
+          "inputs": [
+            "",
+            "",
+            ""
+          ],
+          "numberValue": 0,
+          "comparisonValue": 0,
+          "booleanValue": false,
+          "translation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotationAxis": "Y",
+          "quarterTurns": 0
+        },
+        "fields": {},
+        "alwaysExplicit": true
+      },
+      "NUMBER_OPERATOR": {
+        "labelKey": "operator_number_operator",
+        "output": "INT",
+        "defaults": {
+          "operation": "VALUE",
+          "inputs": [],
+          "numberValue": 0,
+          "comparisonValue": 0,
+          "booleanValue": false,
+          "translation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotationAxis": "Y",
+          "quarterTurns": 0
+        },
+        "fields": {},
+        "alwaysExplicit": true
+      },
+      "RELATION_OPERATOR": {
+        "labelKey": "operator_relation_operator",
+        "output": "BOOLEAN",
+        "defaults": {
+          "operation": "EQUAL",
+          "inputs": [
+            "",
+            ""
+          ],
+          "numberValue": 0,
+          "comparisonValue": 0,
+          "booleanValue": false,
+          "translation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotationAxis": "Y",
+          "quarterTurns": 0
+        },
+        "fields": {},
+        "alwaysExplicit": true
+      },
+      "STATEMENT_OPERATOR": {
+        "labelKey": "operator_statement_operator",
+        "output": "BOOLEAN",
+        "defaults": {
+          "operation": "VALUE",
+          "inputs": [],
+          "numberValue": 0,
+          "comparisonValue": 0,
+          "booleanValue": false,
+          "translation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotationAxis": "Y",
+          "quarterTurns": 0
+        },
+        "fields": {},
         "alwaysExplicit": true
       }
     }
@@ -5070,6 +5442,605 @@
       "color": "#94a3b8",
       "name": "Struktur",
       "labelKey": "port_style_structure"
+    },
+    "BOOLEAN": {
+      "label": "Aussage",
+      "symbol": "?",
+      "color": "#f9a8d4",
+      "name": "Aussage",
+      "labelKey": "port_style_boolean"
+    }
+  },
+  "operators": {
+    "COPYCAT_OPERATOR": {
+      "label": "Copycat-Operator",
+      "output": "shape",
+      "default": "UNION",
+      "description": "Verrechnet oder transformiert Copycat-Geometrie exakt.",
+      "operations": {
+        "UNION": {
+          "label": "Vereinigung",
+          "description": "Vereinigt die belegten Volumen aller Eingaben.",
+          "types": [
+            "geometry"
+          ],
+          "min": 2,
+          "max": 16,
+          "optional": []
+        },
+        "INTERSECTION": {
+          "label": "Schnitt",
+          "description": "Behält nur das gemeinsame Volumen aller Eingaben. Materialien stammen aus A.",
+          "types": [
+            "geometry"
+          ],
+          "min": 2,
+          "max": 16,
+          "optional": []
+        },
+        "DIFFERENCE": {
+          "label": "Differenz",
+          "description": "Zieht B von A ab. Die Reihenfolge der Eingaben ist entscheidend.",
+          "types": [
+            "geometry",
+            "geometry"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        },
+        "SYMMETRIC_DIFFERENCE": {
+          "label": "Symmetrische Differenz",
+          "description": "Behält Volumen mit ungerader Überdeckung der Eingaben.",
+          "types": [
+            "geometry"
+          ],
+          "min": 2,
+          "max": 16,
+          "optional": []
+        },
+        "ROTATE": {
+          "label": "Rotieren",
+          "description": "Dreht die Eingabe in Vierteldrehungen um die gewählte Achse.",
+          "types": [
+            "geometry",
+            "rotation"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": [
+            1
+          ]
+        },
+        "MIRROR": {
+          "label": "Spiegeln",
+          "description": "Spiegelt die Eingabe an der gewählten Ebene.",
+          "types": [
+            "geometry",
+            "mirroring"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": [
+            1
+          ]
+        },
+        "TRANSLATE": {
+          "label": "Positionieren",
+          "description": "Verschiebt die Eingabe um den angeschlossenen oder lokalen Positionswert.",
+          "types": [
+            "geometry",
+            "position"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": [
+            1
+          ]
+        },
+        "INVERT": {
+          "label": "Invertieren",
+          "description": "Vollblock minus Eingabe. Das neue Volumen erhält die gewählte Materialgruppe.",
+          "types": [
+            "geometry"
+          ],
+          "min": 1,
+          "max": 1,
+          "optional": []
+        }
+      }
+    },
+    "SEGMENT_OPERATOR": {
+      "label": "Segment-Operator",
+      "output": "segment",
+      "default": "UNION",
+      "description": "Verrechnet Copycats räumlich passend. Normale Blöcke bleiben unverändert erhalten.",
+      "operations": {
+        "UNION": {
+          "label": "Vereinigung",
+          "description": "Vereinigt die belegten Volumen aller Eingaben. Die Operation gilt exakt für das Copycat-Volumen an denselben Koordinaten. Normale Blöcke bleiben an ihrer ursprünglichen Position erhalten.",
+          "types": [
+            "geometry"
+          ],
+          "min": 2,
+          "max": 16,
+          "optional": []
+        },
+        "INTERSECTION": {
+          "label": "Schnitt",
+          "description": "Behält nur das gemeinsame Volumen aller Eingaben. Materialien stammen aus A. Die Operation gilt exakt für das Copycat-Volumen an denselben Koordinaten. Normale Blöcke bleiben an ihrer ursprünglichen Position erhalten.",
+          "types": [
+            "geometry"
+          ],
+          "min": 2,
+          "max": 16,
+          "optional": []
+        },
+        "DIFFERENCE": {
+          "label": "Differenz",
+          "description": "Zieht B von A ab. Die Reihenfolge der Eingaben ist entscheidend. Die Operation gilt exakt für das Copycat-Volumen an denselben Koordinaten. Normale Blöcke bleiben an ihrer ursprünglichen Position erhalten.",
+          "types": [
+            "geometry",
+            "geometry"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        },
+        "SYMMETRIC_DIFFERENCE": {
+          "label": "Symmetrische Differenz",
+          "description": "Behält Volumen mit ungerader Überdeckung der Eingaben. Die Operation gilt exakt für das Copycat-Volumen an denselben Koordinaten. Normale Blöcke bleiben an ihrer ursprünglichen Position erhalten.",
+          "types": [
+            "geometry"
+          ],
+          "min": 2,
+          "max": 16,
+          "optional": []
+        },
+        "ROTATE": {
+          "label": "Rotieren",
+          "description": "Dreht die Eingabe in Vierteldrehungen um die gewählte Achse.",
+          "types": [
+            "geometry",
+            "rotation"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": [
+            1
+          ]
+        },
+        "MIRROR": {
+          "label": "Spiegeln",
+          "description": "Spiegelt die Eingabe an der gewählten Ebene.",
+          "types": [
+            "geometry",
+            "mirroring"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": [
+            1
+          ]
+        },
+        "TRANSLATE": {
+          "label": "Positionieren",
+          "description": "Verschiebt die Eingabe um den angeschlossenen oder lokalen Positionswert.",
+          "types": [
+            "geometry",
+            "position"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": [
+            1
+          ]
+        }
+      }
+    },
+    "POSITION_OPERATOR": {
+      "label": "Positionsoperator",
+      "output": "position",
+      "default": "VALUE",
+      "description": "Erzeugt und verrechnet ganzzahlige XYZ-Positionen. Die Einheit bestimmt der Zielanschluss.",
+      "operations": {
+        "VALUE": {
+          "label": "XYZ-Wert",
+          "description": "Führt X, Y und Z zu einer Position zusammen. Offene Zahleneingänge verwenden die eingestellten Koordinaten; 1 hB entspricht 1/16 Block.",
+          "types": [
+            "INT"
+          ],
+          "min": 3,
+          "max": 3,
+          "optional": [
+            0,
+            1,
+            2
+          ]
+        },
+        "ADD": {
+          "label": "Addieren",
+          "description": "Addieren",
+          "types": [
+            "position",
+            "position"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        },
+        "SUBTRACT": {
+          "label": "Subtrahieren",
+          "description": "Subtrahieren",
+          "types": [
+            "position",
+            "position"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        },
+        "SCALE": {
+          "label": "Skalieren",
+          "description": "Skalieren",
+          "types": [
+            "position",
+            "INT"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        },
+        "ROTATE": {
+          "label": "Rotieren",
+          "description": "Rotieren",
+          "types": [
+            "position",
+            "rotation"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": [
+            1
+          ]
+        },
+        "MIRROR": {
+          "label": "Spiegeln",
+          "description": "Spiegeln",
+          "types": [
+            "position",
+            "mirroring"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": [
+            1
+          ]
+        },
+        "MULTIPLY": {
+          "label": "Komponenten multiplizieren",
+          "description": "Wendet die Rechnung für jede Koordinate von A und B getrennt an.",
+          "types": [
+            "position"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        },
+        "DIVIDE": {
+          "label": "Komponenten dividieren",
+          "description": "Wendet die Rechnung für jede Koordinate von A und B getrennt an.",
+          "types": [
+            "position"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        },
+        "MIN": {
+          "label": "Komponentenminimum",
+          "description": "Wendet die Rechnung für jede Koordinate von A und B getrennt an.",
+          "types": [
+            "position"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        },
+        "MAX": {
+          "label": "Komponentenmaximum",
+          "description": "Wendet die Rechnung für jede Koordinate von A und B getrennt an.",
+          "types": [
+            "position"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        }
+      }
+    },
+    "NUMBER_OPERATOR": {
+      "label": "Anzahl-Operator",
+      "output": "INT",
+      "default": "VALUE",
+      "description": "Rechnet mit vorzeichenbehafteten ganzen 32-Bit-Zahlen. Überlauf und Division durch null sind Fehler.",
+      "operations": {
+        "VALUE": {
+          "label": "Ganzzahlwert",
+          "description": "Gibt eine ganze Zahl als Anzahl aus. Der Wert lässt sich im Inspektor einstellen.",
+          "types": [],
+          "min": 0,
+          "max": 0,
+          "optional": []
+        },
+        "ADD": {
+          "label": "Addition",
+          "description": "Addition",
+          "types": [
+            "INT",
+            "INT"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        },
+        "SUBTRACT": {
+          "label": "Subtraktion",
+          "description": "Subtraktion",
+          "types": [
+            "INT",
+            "INT"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        },
+        "MULTIPLY": {
+          "label": "Multiplikation",
+          "description": "Multiplikation",
+          "types": [
+            "INT",
+            "INT"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        },
+        "DIVIDE": {
+          "label": "Ganzzahldivision",
+          "description": "Ganzzahldivision",
+          "types": [
+            "INT",
+            "INT"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        },
+        "REMAINDER": {
+          "label": "Rest",
+          "description": "Rest",
+          "types": [
+            "INT",
+            "INT"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        },
+        "MIN": {
+          "label": "Minimum",
+          "description": "Minimum",
+          "types": [
+            "INT",
+            "INT"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        },
+        "MAX": {
+          "label": "Maximum",
+          "description": "Maximum",
+          "types": [
+            "INT",
+            "INT"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        },
+        "ABS": {
+          "label": "Betrag",
+          "description": "Betrag",
+          "types": [
+            "INT"
+          ],
+          "min": 1,
+          "max": 1,
+          "optional": []
+        }
+      }
+    },
+    "RELATION_OPERATOR": {
+      "label": "Relation",
+      "output": "BOOLEAN",
+      "default": "EQUAL",
+      "description": "Vergleicht Zahlen und liefert wahr oder falsch. Ohne zweites Kabel gilt der Vergleichswert im Inspektor.",
+      "operations": {
+        "EQUAL": {
+          "label": "Gleich",
+          "description": "Prüft, ob die Zahl A gleich B ist. Eingang A muss verbunden sein; für B kann der Vergleichswert im Inspektor verwendet werden.",
+          "types": [
+            "INT",
+            "INT"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": [
+            1
+          ]
+        },
+        "NOT_EQUAL": {
+          "label": "Ungleich",
+          "description": "Prüft, ob die Zahl A ungleich B ist. Eingang A muss verbunden sein; für B kann der Vergleichswert im Inspektor verwendet werden.",
+          "types": [
+            "INT",
+            "INT"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": [
+            1
+          ]
+        },
+        "LESS": {
+          "label": "Kleiner",
+          "description": "Prüft, ob die Zahl A kleiner als B ist. Eingang A muss verbunden sein; für B kann der Vergleichswert im Inspektor verwendet werden.",
+          "types": [
+            "INT",
+            "INT"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": [
+            1
+          ]
+        },
+        "LESS_EQUAL": {
+          "label": "Kleiner oder gleich",
+          "description": "Prüft, ob die Zahl A kleiner oder gleich B ist. Eingang A muss verbunden sein; für B kann der Vergleichswert im Inspektor verwendet werden.",
+          "types": [
+            "INT",
+            "INT"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": [
+            1
+          ]
+        },
+        "GREATER": {
+          "label": "Größer",
+          "description": "Prüft, ob die Zahl A größer als B ist. Eingang A muss verbunden sein; für B kann der Vergleichswert im Inspektor verwendet werden.",
+          "types": [
+            "INT",
+            "INT"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": [
+            1
+          ]
+        },
+        "GREATER_EQUAL": {
+          "label": "Größer oder gleich",
+          "description": "Prüft, ob die Zahl A größer oder gleich B ist. Eingang A muss verbunden sein; für B kann der Vergleichswert im Inspektor verwendet werden.",
+          "types": [
+            "INT",
+            "INT"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": [
+            1
+          ]
+        },
+        "DIVISIBLE": {
+          "label": "Ist teilbar durch",
+          "description": "Prüft, ob A ohne Rest durch B teilbar ist (A mod B = 0). B = 0 ist ein Fehler. Ein offener Eingang B verwendet den Vergleichswert im Inspektor.",
+          "types": [
+            "INT",
+            "INT"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": [
+            1
+          ]
+        }
+      }
+    },
+    "STATEMENT_OPERATOR": {
+      "label": "Aussage",
+      "output": "BOOLEAN",
+      "default": "VALUE",
+      "description": "Verknüpft ausschließlich Aussagen und Boolean-Ergebnisse, etwa die Ausgaben mehrerer Relationen.",
+      "operations": {
+        "VALUE": {
+          "label": "Wahr/Falsch",
+          "description": "Gibt die eingestellte Aussage Wahr oder Falsch aus. Es werden keine Zahleneingänge benötigt.",
+          "types": [],
+          "min": 0,
+          "max": 0,
+          "optional": []
+        },
+        "AND": {
+          "label": "UND",
+          "description": "UND",
+          "types": [
+            "BOOLEAN",
+            "BOOLEAN"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        },
+        "OR": {
+          "label": "ODER",
+          "description": "ODER",
+          "types": [
+            "BOOLEAN",
+            "BOOLEAN"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        },
+        "XOR": {
+          "label": "Entweder oder",
+          "description": "Entweder A oder B: wahr, wenn genau eine der beiden Aussagen wahr ist.",
+          "types": [
+            "BOOLEAN",
+            "BOOLEAN"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        },
+        "NOT": {
+          "label": "NICHT",
+          "description": "NICHT",
+          "types": [
+            "BOOLEAN"
+          ],
+          "min": 1,
+          "max": 1,
+          "optional": []
+        },
+        "IMPLIES": {
+          "label": "Implikation",
+          "description": "A impliziert B: Die Aussage ist nur dann falsch, wenn A wahr und B falsch ist.",
+          "types": [
+            "BOOLEAN",
+            "BOOLEAN"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        },
+        "EQUIVALENT": {
+          "label": "Äquivalenz",
+          "description": "Wahr genau dann, wenn A und B denselben Wahrheitswert haben.",
+          "types": [
+            "BOOLEAN",
+            "BOOLEAN"
+          ],
+          "min": 2,
+          "max": 2,
+          "optional": []
+        }
+      }
     }
   }
 }

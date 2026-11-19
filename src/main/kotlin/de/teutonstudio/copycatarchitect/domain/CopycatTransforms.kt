@@ -7,7 +7,7 @@ data class CopycatTransform(val kind:CopycatTransformKind=CopycatTransformKind.R
 
 /** One ordered contract for inline operations and typed operator nodes, in sixteenths of a block. */
 object CopycatTransforms {
-    val valueKinds=NodeKind.entries.filter { it.name in GraphValues.kinds || it in setOf(NodeKind.ROTATION,NodeKind.MIRRORING) }.toSet()
+    val valueKinds=UnifiedOperators.valueKinds.mapNotNull { runCatching { NodeKind.valueOf(it) }.getOrNull() }.toSet()+NodeKind.entries.filter { it.name in GraphValues.kinds || it in setOf(NodeKind.ROTATION,NodeKind.MIRRORING) }.toSet()
     val operatorKinds=setOf(NodeKind.ROTATE,NodeKind.MIRROR,NodeKind.TRANSLATE)
     fun validate(steps:List<CopycatTransform>) {
         require(steps.size<=64) { "At most 64 Copycat transformations" }
@@ -58,6 +58,7 @@ object CopycatTransforms {
 }
 
 fun NodeGraph.withTransformSchema():NodeGraph {
+    if(nodes.any { it.kind.name in UnifiedOperators.kinds }) return copy(schema=maxOf(schema,6))
     val modern=nodeGroups.any { group -> group.graphInterface?.let { face -> face.inputs.any { it.type in setOf("position","mirroring") } || face.outputs.any { it.type in setOf("position","mirroring") } }==true } || nodes.any { !it.copycatTransforms.isNullOrEmpty() || it.kind in setOf(NodeKind.MIRRORING,NodeKind.POSITION,NodeKind.TRANSLATE) || it.rotationPivot!=null && it.rotationPivot!=P(8,8,8) || it.kind==NodeKind.MIRROR && it.inputs.size>1 }
     val arithmetic=nodes.any { it.kind.name in GraphValues.kinds && (it.kind!=NodeKind.POSITION || it.inputs.isNotEmpty()) }
     val next=maxOf(schema,if(arithmetic) 5 else if(modern) 4 else schema)

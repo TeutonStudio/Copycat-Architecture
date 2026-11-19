@@ -8,8 +8,14 @@ internal object ExactGraphCompiler {
         val memo=mutableMapOf<String,Map<Contribution,ExactVolume>>()
         fun total(value:Map<Contribution,ExactVolume>)=value.values.fold(ExactVolume()) { a,b -> a.union(b) }
         fun evaluate(id:String):Map<Contribution,ExactVolume> = memo.getOrPut(id) {
-            val n=nodes.getValue(id)
-            val base=if(n.kind==NodeKind.INPUT || n.kind==NodeKind.SAVED) {
+            val originalNode=nodes.getValue(id)
+            val n=if(originalNode.kind==NodeKind.COPYCAT_OPERATOR) originalNode.copy(kind=UnifiedOperators.legacyKind(originalNode.operation ?: "UNION")) else originalNode
+            val base=if(originalNode.kind==NodeKind.COPYCAT_OPERATOR && originalNode.operation=="INVERT") {
+                require(n.inputs.single().isNotEmpty()) { "Connect the Copycat to invert" }
+                val part=Part("copycats:copycat_block",group=n.materialGroup.ifEmpty { groups.first().id })
+                val volume=ExactGeometry.part(part).minus(total(evaluate(n.inputs.single())))
+                if(volume.isEmpty()) emptyMap() else mapOf(Contribution(n.id,part.group,part) to volume)
+            } else if(n.kind==NodeKind.INPUT || n.kind==NodeKind.SAVED) {
                 val contributions=linkedMapOf<Contribution,ExactVolume>()
                 GraphCompiler.sources(n).forEach { (leaf,source) ->
                     val part=PartRotations.rotate(source,n.rotationAxis,n.quarterTurns)

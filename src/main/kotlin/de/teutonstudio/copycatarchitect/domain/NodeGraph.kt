@@ -1,14 +1,15 @@
 package de.teutonstudio.copycatarchitect.domain
 
 /** Edges point to source node IDs. Empty strings are unconnected editor sockets. */
-enum class NodeKind { INPUT, UNION, INTERSECTION, DIFFERENCE, SYMMETRIC_DIFFERENCE, ROTATE, ROTATION, OUTPUT, MIRROR, SAVED, MIRRORING, POSITION, TRANSLATE, INT, INT_ADD, INT_SUBTRACT, INT_MULTIPLY, INT_DIVIDE, INT_MIN, INT_MAX, POSITION_ADD, POSITION_SUBTRACT, POSITION_MULTIPLY, POSITION_DIVIDE, POSITION_MIN, POSITION_MAX, POSITION_X, POSITION_Y, POSITION_Z }
+enum class NodeKind { INPUT, UNION, INTERSECTION, DIFFERENCE, SYMMETRIC_DIFFERENCE, ROTATE, ROTATION, OUTPUT, MIRROR, SAVED, MIRRORING, POSITION, TRANSLATE, INT, INT_ADD, INT_SUBTRACT, INT_MULTIPLY, INT_DIVIDE, INT_MIN, INT_MAX, POSITION_ADD, POSITION_SUBTRACT, POSITION_MULTIPLY, POSITION_DIVIDE, POSITION_MIN, POSITION_MAX, POSITION_X, POSITION_Y, POSITION_Z, COPYCAT_OPERATOR, POSITION_OPERATOR, NUMBER_OPERATOR, RELATION_OPERATOR, STATEMENT_OPERATOR }
 enum class MaterialMode { SEPARATED, GROUPED }
 data class GraphNode(val id:String="",val kind:NodeKind=NodeKind.INPUT,val inputs:List<String> = emptyList(),
                      val part:Part=Part(),val x:Int=0,val y:Int=0,
                      val materialMode:MaterialMode=MaterialMode.SEPARATED,val materialGroup:String="",val previewGroup:String="",
                      val inputGroups:List<String> = emptyList(),val rotationAxis:RotationAxis=RotationAxis.NORMAL,val quarterTurns:Int=0,
                      val mirror:CopycatMirror?=null,val savedCopycat:SavedCopycat?=null,
-                     val libraryReference:GraphLibraryReference?=null,val countValue:Int?=null,val rotationPivot:P?=null,val translation:P?=null,val copycatTransforms:List<CopycatTransform>?=null)
+                     val operation:String?=null,val numberValue:Int?=null,val comparisonValue:Int?=null,val booleanValue:Boolean?=null,
+    val libraryReference:GraphLibraryReference?=null,val countValue:Int?=null,val rotationPivot:P?=null,val translation:P?=null,val copycatTransforms:List<CopycatTransform>?=null)
 data class NodeGraph(val schema:Int=GraphModels.copycat.defaultSchema,val nodes:List<GraphNode> = listOf(GraphNode("result",NodeKind.OUTPUT,listOf(""),x=520,y=70)),
                      val nodeGroups:List<GraphGroup> = emptyList()) {
     fun replace(node:GraphNode)=GraphGroups.synchronize(this,copy(nodes=nodes.map { if(it.id==node.id) node else it })).withTransformSchema()
@@ -82,7 +83,7 @@ object GraphCompiler {
             CopycatTransforms.validate(n.copycatTransforms.orEmpty())
             require(n.copycatTransforms.isNullOrEmpty() || GraphModels.shape(n.kind).output=="shape") { "Only Copycat outputs accept transformations" }
             require(listOf((n.rotationPivot ?: P(8,8,8)).x,(n.rotationPivot ?: P(8,8,8)).y,(n.rotationPivot ?: P(8,8,8)).z).all { it in 0..16 }) { "Invalid rotation pivot" }
-            require(n.kind.name in GraphValues.vectorKinds || listOf((n.translation ?: P()).x,(n.translation ?: P()).y,(n.translation ?: P()).z).all { it in -16..16 }) { "Invalid position" }
+            require(n.kind==NodeKind.POSITION_OPERATOR || n.kind.name in GraphValues.vectorKinds || listOf((n.translation ?: P()).x,(n.translation ?: P()).y,(n.translation ?: P()).z).all { it in -16..16 }) { "Invalid position" }
             require(n.materialMode in MaterialMode.entries) { "Invalid node material mode" }
             require(n.materialGroup.isEmpty() || groups.any { it.id==n.materialGroup }) { "Unknown node material group" }
             require(n.previewGroup.isEmpty() || groups.any { it.id==n.previewGroup }) { "Unknown preview material group" }
@@ -90,11 +91,11 @@ object GraphCompiler {
             // NORMAL is retained only for older serialized rotations. New nodes use X/Y/Z.
             require(n.countValue==null || n.kind==NodeKind.INT) { "Anzahl values belong to INT nodes" }
             require(n.rotationAxis in RotationAxis.entries && n.quarterTurns in 0..3) { "Invalid node rotation" }
-            require(n.mirror==null || n.kind in setOf(NodeKind.MIRROR,NodeKind.MIRRORING)) { "Mirror settings belong to a mirror node" }
+            require(n.mirror==null || n.kind in setOf(NodeKind.MIRROR,NodeKind.MIRRORING,NodeKind.COPYCAT_OPERATOR,NodeKind.POSITION_OPERATOR)) { "Mirror settings belong to a mirror node" }
             require(n.savedCopycat==null || n.kind==NodeKind.SAVED) { "Saved Copycats belong to a saved source node" }
             if(n.kind==NodeKind.MIRROR) require((n.mirror ?: CopycatMirror()).plane in CopycatMirrorPlane.entries) { "Invalid Copycat mirror plane" }
             require(n.x in -8192..8192 && n.y in -8192..8192) { "Node position exceeds graph bounds" }
-            val sockets=checkNotNull(GraphModels.shape(n.kind).inputs)
+            val sockets=UnifiedOperators.shapeInputs(n)
             require(n.inputs.size in sockets.min..sockets.max) { "Invalid socket count on ${n.id}" }
             if(n.kind==NodeKind.INPUT) {
                 require(n.part.cutMask.isEmpty() && n.part.exactClip==null && n.part.recipeSource.isEmpty()) { "Source nodes must use standard Copycat shapes" };Solid.part(n.part)
@@ -142,7 +143,7 @@ object GraphCompiler {
         val exactAncestors=mutableMapOf<String,Boolean>()
         fun needsExact(id:String):Boolean=exactAncestors.getOrPut(id) {
             val n=nodes.getValue(id)
-            if(graph.schema>=4 && n.kind in CopycatTransforms.operatorKinds || !n.copycatTransforms.isNullOrEmpty() || n.kind==NodeKind.TRANSLATE || n.rotationPivot!=null && n.rotationPivot!=P(8,8,8) || n.kind==NodeKind.MIRROR && n.inputs.size>1 ||
+            if(n.kind==NodeKind.COPYCAT_OPERATOR || graph.schema>=4 && n.kind in CopycatTransforms.operatorKinds || !n.copycatTransforms.isNullOrEmpty() || n.kind==NodeKind.TRANSLATE || n.rotationPivot!=null && n.rotationPivot!=P(8,8,8) || n.kind==NodeKind.MIRROR && n.inputs.size>1 ||
                 n.kind==NodeKind.ROTATE && n.inputs.getOrNull(1)?.let { nodes[it]?.rotationPivot!=null && nodes[it]?.rotationPivot!=P(8,8,8) }==true) true
             else if(n.kind==NodeKind.INPUT || n.kind==NodeKind.SAVED) sourceParts(n).any(ExactGeometry::usesExact)
             else n.kind==NodeKind.MIRROR && (n.mirror ?: CopycatMirror()).plane.requiresExact || n.inputs.filter(String::isNotEmpty).any(::needsExact)

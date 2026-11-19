@@ -884,5 +884,11 @@
   "gui.copycat_architect.position_max": "Position maximum",
   "gui.copycat_architect.position_x": "Split position · X",
   "gui.copycat_architect.position_y": "Split position · Y",
-  "gui.copycat_architect.position_z": "Split position · Z"
+  "gui.copycat_architect.position_z": "Split position · Z",
+  "gui.copycat_architect.operator_copycat_operator": "Copycat-Operator",
+  "gui.copycat_architect.operator_segment_operator": "Segment-Operator",
+  "gui.copycat_architect.operator_position_operator": "Positionsoperator",
+  "gui.copycat_architect.operator_number_operator": "Anzahl-Operator",
+  "gui.copycat_architect.operator_relation_operator": "Relation",
+  "gui.copycat_architect.operator_statement_operator": "Aussage"
 }

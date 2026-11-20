@@ -4,7 +4,7 @@ package de.teutonstudio.copycatarchitect.domain
 object BuildingTransformValues {
     fun validate(n:BuildingNode) {
         require(n.rotations==null || n.kind==BuildingKind.ROTATION && n.rotations.size<=64 && n.rotations.all { it.axis!=RotationAxis.NORMAL && it.quarterTurns in 0..3 && !it.reflected && it.mirror==null }) { "Invalid rotation value list" }
-        require(n.mirrors==null || n.kind==BuildingKind.MIRRORING && n.mirrors.size<=64 && n.mirrors.all { it.plane.name in listOf("X","Y","Z") }) { "Invalid mirror value list" }
+        require(n.mirrors==null || n.kind==BuildingKind.MIRRORING && n.mirrors.size<=64) { "Invalid mirror value list" }
         require(n.rotation.isNullOrEmpty() || n.kind in setOf(BuildingKind.COPYCAT_ROTATE,BuildingKind.SEGMENT_ROTATE,BuildingKind.COPYCAT_OPERATOR)) { "Only rotation operators accept rotation values" }
         require(n.mirroring.isNullOrEmpty() || n.kind in setOf(BuildingKind.COPYCAT_MIRROR,BuildingKind.SEGMENT_MIRROR)) { "Only mirror operators accept mirroring values" }
     }

@@ -12,8 +12,15 @@ data class RoomSegmentInstance(
 /** Boundary vertices are block-grid corners. The final vertex connects to the first. */
 data class RoomBoundaryRule(val start:P=P(),val end:P=P(1,0,0),val policy:WallPolicy=WallPolicy.OPEN)
 data class RoomLayoutConfig(val instances:List<RoomSegmentInstance> = emptyList(),val boundary:List<P> = emptyList(),val filler:String="",val boundaryRules:List<RoomBoundaryRule> = emptyList())
-data class RoomConfig(val mode:RoomMode=RoomMode.FOOTPRINT,val heightOverride:Int?=null,val interiorSource:String="",val defaultPartition:String="")
-data class FacadeConfig(val source:String="",val filler:String="")
+/** Thicknesses use sixteenths, measured from the room-facing side of the source. Missing entries retain the source. */
+data class RoomConfig(val mode:RoomMode=RoomMode.FOOTPRINT,val heightOverride:Int?=null,val interiorSource:String="",val defaultPartition:String="",
+                      val wallThickness:Map<String,Int>?=null) {
+    fun thickness(direction:Int,wall:String="",boundary:String=""):Int? = wallThickness.orEmpty().let {
+        it["wall:$wall"] ?: it["boundary:$boundary"] ?: it[listOf("north","east","south","west")[direction]]
+    }
+}
+/** Facade thickness is measured from the exterior of its source; null retains the complete source. */
+data class FacadeConfig(val source:String="",val filler:String="",val thickness:Int?=null)
 
 /** A node plus a concrete placement path and stable surface key, never a material role. */
 data class SurfaceRef(val node:String="",val instance:String="",val face:String="")
@@ -129,13 +136,18 @@ object BuildingSemantics {
     )
     fun validate(node:BuildingNode,nodes:Map<String,BuildingNode>) {
         require(references(node).values.all { it in nodes }) { "Unknown semantic source or attachment target" }
-        val segmentKinds=(setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_MIRROR)+SegmentBooleans.kinds)
+        val segmentKinds=(setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_TRANSFORM,BuildingKind.SEGMENT_MIRROR)+SegmentBooleans.kinds)
         val copycatKinds=CopycatBooleans.sourceKinds
         fun source(id:String,kinds:Set<BuildingKind>,message:String) { if(id.isNotEmpty()) require(nodes.getValue(id).kind in kinds) { message } }
         node.roomLayout?.let { source(it.filler,segmentKinds,"Room filler requires a segment source") }
         node.roomConfig?.let { source(it.interiorSource,segmentKinds,"Room interior requires a segment source");source(it.defaultPartition,segmentKinds,"Room partition requires a segment source") }
         node.facade?.let { source(it.source,segmentKinds,"Facade requires a segment source");source(it.filler,segmentKinds,"Facade filler requires a segment source") }
         node.roomConfig?.heightOverride?.let { require(it in 1..128) { "Room height must be between 1 and 128 blocks" } }
+        node.roomConfig?.wallThickness?.let { values ->
+            require(values.size<=512 && values.all { (key,value)->key.length<=128 && key.none(Char::isISOControl) &&
+                (key in setOf("north","east","south","west") || key.startsWith("wall:") || key.startsWith("boundary:")) && value in 0..2048 }) { "Invalid room wall thickness (0–128 blocks)" }
+        }
+        node.facade?.thickness?.let { require(it in 0..2048) { "Facade thickness must be between 0 and 128 blocks" } }
         node.roomLayout?.let { layout ->
             require(layout.instances.size<=256) { "A room layout accepts at most 256 segment instances" }
             require(layout.instances.map { it.id }.distinct().size==layout.instances.size && layout.instances.all { validId(it.id) }) { "Room segment instance IDs must be unique and visible" }

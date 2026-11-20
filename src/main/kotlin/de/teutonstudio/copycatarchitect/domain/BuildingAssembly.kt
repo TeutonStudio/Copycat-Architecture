@@ -5,6 +5,18 @@ object BuildingAssembly {
     fun newNode(kind:BuildingKind,id:String,name:String="",x:Int=0,y:Int=0):BuildingNode =
         GraphModels.newBuilding(kind,true).copy(id=id,name=name,x=x,y=y)
 
+    /** New authoring graphs connect their surfaces directly; saved starters keep their old DTOs. */
+    fun directStarter(joinWallEnds:Boolean=true):BuildingGraph {
+        val old=starter(joinWallEnds)
+        val nodes=old.nodes.filter { it.kind!=BuildingKind.ROOF_LAYOUT }.map { node -> when(node.kind) {
+            BuildingKind.SEGMENT_LAYOUT -> node.copy(kind=BuildingKind.AREA,name=node.name.replace("arrangement","area"),areaMode=AreaMode.RECTANGLE,geometry="")
+            BuildingKind.ROOM_GEOMETRY -> node.copy(kind=BuildingKind.AREA,name="Room area",areaMode=AreaMode.DRAW)
+            BuildingKind.ROOF -> node.copy(layout="",roofSections=listOf(RoofSection()),adaptiveRoof=true)
+            else -> node
+        } }
+        return old.copy(nodes=nodes).withCurrentSchema()
+    }
+
     fun starter(joinWallEnds:Boolean=true):BuildingGraph {
         val rectangles=listOf(Rect(width=3,length=3))
         return BuildingGraph(schema=GraphModels.building.defaultSchema,nodes=listOf(
@@ -32,8 +44,12 @@ private fun Collection<P>.orderedCoordinates()=sortedWith(compareBy({ it.z },{ i
 fun BuildingGraph.resolvedNode(node:BuildingNode):BuildingNode {
     var resolved=BuildingCounts.resolve(this,node)
     if(node.kind==BuildingKind.SEGMENT && node.dynamicAxes.isNullOrEmpty() && node.layout.isNotEmpty()) {
-        nodes.firstOrNull { it.id==node.layout && it.kind==BuildingKind.SEGMENT_LAYOUT }?.let {
-            val geometry=resolvedNode(it)
+        nodes.firstOrNull { it.id==node.layout && it.kind in setOf(BuildingKind.SEGMENT_LAYOUT,BuildingKind.AREA) }?.let {
+            val geometry=if(it.kind==BuildingKind.AREA) {
+                val area=areaOf(it) ?: return@let
+                SegmentVolume(area,node.depth)
+                node.copy(length=area.width,height=area.length)
+            } else resolvedNode(it)
             resolved=resolved.copy(length=geometry.length,height=geometry.height,depth=geometry.depth)
         }
     }
@@ -52,9 +68,12 @@ fun BuildingGraph.resolvedNode(node:BuildingNode):BuildingNode {
         }
     }
     if(node.kind==BuildingKind.ROOM && node.geometry.isNotEmpty()) {
-        nodes.firstOrNull { it.id==node.geometry && it.kind==BuildingKind.ROOM_GEOMETRY && (it.coordinates.isNotEmpty() || it.geometry.isNotEmpty()) }?.let {
+        nodes.firstOrNull { it.id==node.geometry && it.kind in setOf(BuildingKind.ROOM_GEOMETRY,BuildingKind.AREA) }?.let {
             val geometry=resolvedNode(it)
-            if(geometry.coordinates.isNotEmpty()) resolved=resolved.copy(rectangles=RoomGeometry.fromCells(geometry.coordinates.toSet()),height=geometry.height)
+            if(geometry.coordinates.isNotEmpty()) {
+                RoomVolume(Area(geometry.coordinates),if(it.kind==BuildingKind.AREA) node.height else geometry.height)
+                resolved=resolved.copy(rectangles=RoomGeometry.fromCells(geometry.coordinates.toSet()),height=if(it.kind==BuildingKind.AREA) node.height else geometry.height)
+            }
         }
     }
     return resolved
@@ -86,7 +105,8 @@ fun BuildingGraph.remapGeometryDependents(beforeGraph:BuildingGraph):BuildingGra
 private fun BuildingNode.hasRoomGeometry(graph:BuildingGraph):Boolean {
     if(roomConfig?.mode==RoomMode.SEGMENTS) return graph.nodes.any { it.id==layout && it.kind==BuildingKind.ROOM_LAYOUT }
     if(!assembly) return true
-    val source=graph.nodes.firstOrNull { it.id==geometry && it.kind==BuildingKind.ROOM_GEOMETRY } ?: return false
+    val source=graph.nodes.firstOrNull { it.id==geometry && it.kind in setOf(BuildingKind.ROOM_GEOMETRY,BuildingKind.AREA) } ?: return false
+    if(source.kind==BuildingKind.AREA) return graph.areaOf(source)!=null
     return if(source.geometry.isNotEmpty()) graph.areaOf(source)!=null else source.coordinates.isNotEmpty()
 }
 
@@ -95,7 +115,7 @@ fun BuildingGraph.editRoomGeometry(id:String,coordinates:List<P>):BuildingGraph 
     val selected=nodes.first { it.id==id }
     val geometrySource=if(selected.kind in setOf(BuildingKind.AREA,BuildingKind.ROOM_GEOMETRY)) selected else {
         require(selected.kind==BuildingKind.ROOM && selected.assembly && selected.geometry.isNotEmpty()) { "Connect a room geometry source before editing its cells" }
-        nodes.firstOrNull { it.id==selected.geometry && it.kind==BuildingKind.ROOM_GEOMETRY }
+        nodes.firstOrNull { it.id==selected.geometry && it.kind in setOf(BuildingKind.ROOM_GEOMETRY,BuildingKind.AREA) }
             ?: error("Connect a room geometry source before editing its cells")
     }
     val source=if(geometrySource.geometry.isNotEmpty()) nodes.first { it.id==geometrySource.geometry && it.kind==BuildingKind.AREA } else geometrySource

@@ -10,6 +10,24 @@ class BuildingTransformValuesTest {
     private fun graph(vararg nodes:BuildingNode)=BuildingGraph.starter().let { it.copy(nodes=it.nodes+nodes) }
     private fun eval(g:BuildingGraph)=BuildingGraphCompiler.Evaluation(g,Building().palette,forms,emptyMap())
 
+    @Test fun `mirror values accept every Copycat plane and retain list validation`() {
+        for(plane in CopycatMirrorPlane.entries) {
+            val value=BuildingNode("mirrors",BuildingKind.MIRRORING,mirrors=listOf(CopycatMirror(plane)))
+            val operator=BuildingAssembly.newNode(BuildingKind.COPYCAT_MIRROR,"reflect").copy(mirroring=value.id)
+            val g=graph(value,operator).withCurrentSchema()
+            BuildingGraphCompiler.structure(g)
+            assertEquals(listOf(CopycatTransform(CopycatTransformKind.MIRROR,plane=plane)),
+                BuildingCopycatTransforms.operations(operator,g.nodes.associateBy { it.id },modern=true))
+            val restored=Gson().fromJson(Gson().toJson(g),BuildingGraph::class.java)
+            BuildingGraphCompiler.structure(restored)
+            assertEquals(value.mirrors,restored.nodes.single { it.id==value.id }.mirrors)
+        }
+        val value=BuildingNode("mirrors",BuildingKind.MIRRORING,mirrors=List(64) { CopycatMirror(CopycatMirrorPlane.XY) })
+        BuildingTransformValues.validate(value)
+        assertFailsWith<IllegalArgumentException> { BuildingTransformValues.validate(value.copy(mirrors=List(65) { CopycatMirror() })) }
+        assertFailsWith<IllegalArgumentException> { BuildingTransformValues.validate(value.copy(kind=BuildingKind.COPYCAT)) }
+    }
+
     @Test fun `ordered values match chained operators and an empty list preserves geometry`() {
         val source=BuildingNode("source",BuildingKind.COPYCAT,form="byte@1")
         val segment=BuildingNode("segment",BuildingKind.SEGMENT,inputs=listOf(source.id),module="",length=2,height=3,depth=4)

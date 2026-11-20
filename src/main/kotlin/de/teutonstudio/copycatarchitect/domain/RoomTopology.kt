@@ -45,6 +45,14 @@ object RoomTopology {
                         require(n.assembly || n.inputs.isNotEmpty() || n.block.isNotEmpty() || n.module.isEmpty()) { "Module-library dimensions are pending" }
                         FixedSegment(n.length,n.height,emptyList(),air=n.block=="minecraft:air",depth=n.depth)
                     }
+                    BuildingKind.SEGMENT_TRANSFORM -> {
+                        val steps=n.transformationValue?.takeIf(String::isNotEmpty)?.let { TransformationValues.building(nodes.getValue(it),nodes) }.orEmpty()
+                        steps.fold(source(n.inputs.single()).copy(air=false,cells=emptyList())) { value,step -> when(step.kind) {
+                            CopycatTransformKind.ROTATE->SegmentGeometry.rotated(value,step.axis,step.quarterTurns)
+                            CopycatTransformKind.POSITION->SegmentPosition.translate(value,step.offset,mutableMapOf(),n.id)
+                            else->value
+                        } }
+                    }
                     BuildingKind.SEGMENT_MIRROR -> source(n.inputs.single()).copy(cells=emptyList())
                     BuildingKind.SEGMENT_ROTATE -> source(n.inputs.single()).let { SegmentGeometry.rotated(it.copy(air=false),n.rotationAxis,n.quarterTurns).copy(air=it.air) }
                     BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE -> {
@@ -182,11 +190,19 @@ object RoomTopology {
         for(item in topology.instances) {
             val isBoundary=item.definition.contribution in setOf(RoomContribution.BOUNDARY,RoomContribution.OPENING)
             if(item.definition.policy==WallPolicy.OPEN) continue
+            val direction=item.definition.quarterTurns
+            val face=maxOf(WallLayers.innerFace(item.position,direction),WallLayers.innerFace(item.position+P(item.value.length-1,0,item.value.depth-1),direction))
+            val sourceDepth=if(direction%2==0) item.value.depth else item.value.length
             for(entries in item.value.cells.groupBy { it.cell.pos }.values) {
                 val c=entries.first().cell;val p=c.pos+item.position
                 if(reserved(p)) continue
                 if(c.empty || c.block=="minecraft:air") { clears+=p;continue }
-                contributions.getOrPut(p) { mutableListOf() }+=placement(p,entries,0,if(isBoundary) "wall" else "trim")
+                val span=topology.spans.firstOrNull { it.instanceId==item.definition.id &&
+                    if(direction%2==0) p.x==minOf(it.start.x,it.end.x) else p.z==minOf(it.start.z,it.end.z) }
+                val thickness=if(isBoundary) room.roomConfig?.thickness(direction,item.definition.id,span?.id?.substringBefore(':').orEmpty()) else null
+                val original=placement(p,entries,0,if(isBoundary) "wall" else "trim")
+                val value=if(thickness==null) original else WallLayers.inside(original,direction,face,thickness,sourceDepth)
+                if(value==null) clears+=p else contributions.getOrPut(p) { mutableListOf() }+=value
             }
             for(feature in item.value.metadata.instances) for(opening in feature.features.openings) {
                 val frame=feature.transform.copy(origin=feature.transform.origin+item.position)
@@ -205,7 +221,13 @@ object RoomTopology {
                 for(entries in rotated.cells.groupBy { it.cell.pos }.values) {
                     val c=entries.first().cell;val target=p+c.pos
                     if(reserved(target)) continue
-                    if(c.empty || c.block=="minecraft:air") clears+=target else contributions.getOrPut(target) { mutableListOf() }+=placement(target,entries,0,"wall")
+                    if(c.empty || c.block=="minecraft:air") clears+=target else {
+                        val original=placement(target,entries,0,"wall")
+                        val thickness=room.roomConfig?.thickness(span.direction,boundary=span.id.substringBefore(':'))
+                        val face=maxOf(WallLayers.innerFace(p,span.direction),WallLayers.innerFace(p+P(rotated.length-1,0,rotated.depth-1),span.direction))
+                        val placed=if(thickness==null) original else WallLayers.inside(original,span.direction,face,thickness,value.depth)
+                        if(placed==null) clears+=target else contributions.getOrPut(target) { mutableListOf() }+=placed
+                    }
                 }
             }
         } else if(missing.isNotEmpty()) warnings+="Unspecified wall sections await a stockwork facade or a closure filler"

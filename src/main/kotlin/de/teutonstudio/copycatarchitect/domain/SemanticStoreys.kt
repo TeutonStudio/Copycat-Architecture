@@ -15,6 +15,8 @@ object SemanticStoreys {
                 placement:(P,List<SegmentCell>,Int,String)->Placement,copycat:(String)->Placement,
                 reserved:(P)->Boolean={false}):CompiledStorey {
         require(rooms.isNotEmpty()) { "Connect at least one room to the stockwork" }
+        val arrangement=rooms.mapIndexed { i,it -> RoomArrangementArea.of(i,it.room.definition ?: BuildingNode(it.id),it.room.compiled,it.offset) }
+        RoomArrangement.requireValid(arrangement)
         val occupied=linkedSetOf<P>();val shell=linkedSetOf<P>();val boundary=linkedMapOf<BoundaryKey,MutableList<Side>>()
         val contributions=linkedMapOf<P,MutableList<Contribution>>();val clears=linkedSetOf<P>();val warnings=mutableListOf<String>()
         var minimum=0;var maximum=0;var bottom=Int.MAX_VALUE;var top=Int.MAX_VALUE
@@ -46,9 +48,10 @@ object SemanticStoreys {
             require(sides.size<=2) { "More than two rooms share a wall section" }
             // OPEN omits this room's wall; it never removes an adjoining hall's explicit enclosure.
             val enclosed=sides.filter { it.span.policy!=WallPolicy.OPEN }
-            if(enclosed.isEmpty() || enclosed.any { it.span.policy==WallPolicy.EXPLICIT }) continue
-            val exterior=enclosed.size==1
-            val template=if(exterior) wall else filler ?: wall
+            val layered=facade?.thickness!=null || enclosed.any { thickness(it)!=null }
+            if(enclosed.isEmpty() || !layered && enclosed.any { it.span.policy==WallPolicy.EXPLICIT }) continue
+            val exterior=if(layered) sides.size==1 else enclosed.size==1
+            val template=if(exterior) wall else if(layered) filler else filler ?: wall
             if(template==null || template.air) continue
             require(template.length==1) { "Facade and partition defaults need a one-block source; place larger modules explicitly" }
             val side=enclosed.sortedBy { it.room.id+it.span.id }.first();val direction=side.span.direction
@@ -60,8 +63,10 @@ object SemanticStoreys {
             for(y in 0 until available step template.height) for(entries in rotated.cells.groupBy { it.cell.pos }.values) {
                 val c=entries.first().cell;val target=origin+c.pos+P(0,y,0)
                 if(reserved(target) || c.empty || c.block=="minecraft:air") continue
-                val value=placement(target,entries,0,"wall")
-                contributions.getOrPut(target) { mutableListOf() }+=Contribution(value,"facade",true,setOf(key))
+                val original=placement(target,entries,0,"wall")
+                val inner=maxOf(WallLayers.innerFace(origin,direction),WallLayers.innerFace(origin+P(rotated.length-1,0,rotated.depth-1),direction))
+                val value=if(exterior && facade?.thickness!=null) WallLayers.outside(original,direction,inner-template.depth*16,facade.thickness,template.depth) else original
+                if(value!=null) contributions.getOrPut(target) { mutableListOf() }+=Contribution(value,"facade",true,setOf(key))
                 shell+=target.copy(y=0)
                 physical.getOrPut(key) { linkedSetOf() }+=target
             }
@@ -81,7 +86,7 @@ object SemanticStoreys {
             if(value.placement.component in setOf("floor","ceiling") && value.placement.pos in physicalPositions) continue
             val sides=value.keys.mapNotNull { key->boundary[key].orEmpty().firstOrNull { owner(it.room,rooms.indexOf(it.room))==value.owner }?.let { key to it } }
             val inherited=sides.filter { (key,side)->side.span.policy==WallPolicy.AUTO && physical[key]?.isNotEmpty()==true }
-            if(value.owner=="facade" || value.placement.pos in retainedByOwner[value.owner].orEmpty() || inherited.isEmpty() || sides.any { it.second.span.policy==WallPolicy.EXPLICIT }) {
+            if(value.owner=="facade" || value.placement.pos in retainedByOwner[value.owner].orEmpty() || inherited.isEmpty() || sides.any { it.second.span.policy==WallPolicy.EXPLICIT || thickness(it.second)!=null }) {
                 finished.getOrPut(value.placement.pos) { mutableListOf() }+=value;continue
             }
             for((key,side) in inherited) {
@@ -108,7 +113,7 @@ object SemanticStoreys {
                 val target=cells.filter { it.y==y+side.room.offset.y }.maxByOrNull { inwardProjection(it,side.span.direction) } ?: continue
                 val entries=rotated.cells.filter { it.cell.pos.y==y%value.height }
                 if(entries.isEmpty()) continue
-                val finish=veneer(placement(target,entries,0,"wall"),side.span.direction) ?: continue
+                val finish=veneer(placement(target,entries,0,"wall"),side.span.direction,thickness(side) ?: 1) ?: continue
                 contributions.getOrPut(target) { mutableListOf() }.add(0,Contribution(finish,owner(side.room,rooms.indexOf(side.room)),true,setOf(key)))
             }
         }
@@ -118,6 +123,7 @@ object SemanticStoreys {
             Cut(moved,instance,openingVolume(moved,copycat,localNear,localFar),localNear,localFar,keysFor(instance,opening.instanceId),sourcePositions(instance,opening))
         } }
         val output=linkedMapOf<P,MutableList<Placement>>()
+        val intrusions=linkedMapOf<Pair<Int,Int>,MutableSet<P>>()
         val removedWallCells=linkedSetOf<P>()
         contributions.forEach { (position,values) ->
             // Relocated opposite-side finishes must precede the common body regardless of source-map order.
@@ -132,9 +138,19 @@ object SemanticStoreys {
                     remaining=cut(remaining,cut.volume)
                     if(remaining==null && before!=null) removedWallCells+=position
                 }
-                remaining?.let { output.getOrPut(position) { mutableListOf() }+=it }
+                remaining?.let {
+                    if(value.boundary) {
+                        val hosts=if(value.owner=="facade") value.keys.flatMap { key->boundary[key].orEmpty().map { side->rooms.indexOf(side.room) } }.toSet()
+                            else rooms.indices.filter { i->owner(rooms[i],i)==value.owner }.toSet()
+                        val first=hosts.minOrNull()
+                        if(first!=null) for((i,area) in arrangement.withIndex()) if(i !in hosts && position.y in area.minimum until area.maximum && position.copy(y=0) in area.interior)
+                            intrusions.getOrPut(first to i) { linkedSetOf() }+=position.copy(y=0)
+                    }
+                    output.getOrPut(position) { mutableListOf() }+=it
+                }
             }
         }
+        if(intrusions.isNotEmpty()) throw InvalidRoomArrangement(intrusions.map { (pair,cells)->RoomArrangementConflict(RoomConflictKind.WALL_IN_INTERIOR,arrangement[pair.first],arrangement[pair.second],cells) })
         val inserts=linkedMapOf<P,MutableList<Placement>>()
         for(cut in cuts) {
             val spec=cut.opening.spec
@@ -170,6 +186,19 @@ object SemanticStoreys {
     }
     private fun keysFor(instance:SemanticRoomInstance,id:String):Set<BoundaryKey> = instance.room.topology.spans.filter { it.instanceId==id }.map { key(it,instance.offset) }.toSet()
     private fun keysAt(instance:SemanticRoomInstance,position:P):Set<BoundaryKey> {
+        if(instance.room.topology.instances.isEmpty()) {
+            val local=(position-instance.offset).copy(y=0);val topology=instance.room.topology
+            return topology.spans.filter { span ->
+                val start=RoomTopology.interiorColumn(span.start,span.direction)
+                val distance=WallLayers.projection(local,span.direction)-WallLayers.projection(start,span.direction)
+                val aligned=if(span.direction%2==0) local.x==start.x else local.z==start.z
+                aligned && distance in 0..127 && (0..distance).all { d ->
+                    val normal=RoomGeometry.directions[span.direction]
+                    val p=start-P(normal.x*d,0,normal.z*d)
+                    p in topology.shell && p !in topology.interior
+                }
+            }.map { key(it,instance.offset) }.toSet()
+        }
         val ids=instance.room.topology.instances.filter { item->
             val p=position-P(item.position.x+instance.offset.x,item.position.y+instance.offset.y,item.position.z+instance.offset.z)
             p.x in 0 until item.value.length && p.y in 0 until item.value.height && p.z in 0 until item.value.depth
@@ -180,7 +209,18 @@ object SemanticStoreys {
         }.map { key(it,instance.offset) }.toSet()
     }
     private fun inwardProjection(p:P,direction:Int)=when(direction) { 0->p.z;1->-p.x;2->-p.z;else->p.x }
-    private fun veneer(value:Placement,direction:Int):Placement? {
+    private fun thickness(side:Side):Int? {
+        val room=side.room.room
+        if(room.topology.instances.isNotEmpty()) return room.definition?.roomConfig?.thickness(side.span.direction,side.span.instanceId,side.span.id.substringBefore(':'))
+        val definition=room.definition ?: return null
+        val start=RoomTopology.interiorColumn(side.span.start,side.span.direction)
+        val run=RoomWallJoints.runs(definition).filter { it.direction==side.span.direction }.minByOrNull { run ->
+            run.cells.minOf { kotlin.math.abs(it.x-start.x)+kotlin.math.abs(it.z-start.z) }
+        }
+        return definition.roomConfig?.thickness(side.span.direction,run?.id.orEmpty())
+    }
+    private fun veneer(value:Placement,direction:Int,thickness:Int=1):Placement? {
+        if(thickness!=1) return WallLayers.inside(value,direction,WallLayers.innerFace(value.pos,direction),thickness,1)
         val slab=when(direction) {
             0->ExactVolume.box(0,0,15,16,16,16);1->ExactVolume.box(0,0,0,1,16,16)
             2->ExactVolume.box(0,0,0,16,16,1);else->ExactVolume.box(15,0,0,16,16,16)

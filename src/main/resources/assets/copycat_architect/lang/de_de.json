@@ -884,5 +884,8 @@
   "gui.copycat_architect.position_max": "Position Maximum",
   "gui.copycat_architect.position_x": "Position zerlegen · X",
   "gui.copycat_architect.position_y": "Position zerlegen · Y",
-  "gui.copycat_architect.position_z": "Position zerlegen · Z"
+  "gui.copycat_architect.position_z": "Position zerlegen · Z",
+  "gui.copycat_architect.transformation": "Transformation",
+  "gui.copycat_architect.copycat_transform": "Copycat transformieren",
+  "gui.copycat_architect.segment_transform": "Segment transformieren"
 }

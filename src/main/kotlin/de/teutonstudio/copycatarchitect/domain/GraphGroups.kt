@@ -139,7 +139,7 @@ object GraphGroups {
         }
         graph.nodeGroups.forEach { group -> group.graphInterface?.let { face ->
             face.inputs.forEach { input ->
-                require(input.type in setOf("shape","rotation","mirroring","position","INT")) { "Unknown Copycat graph input type" }
+                require(input.type in setOf("shape","rotation","mirroring","position","transformation","INT")) { "Unknown Copycat graph input type" }
                 val connection=group.inputConnections[input.id].orEmpty()
                 require(connection.isEmpty() || GraphModels.shape(nodes.getValue(connection).kind).output==input.type) { "Incompatible Copycat group instance connection" }
                 input.targets.forEach { target ->
@@ -148,7 +148,7 @@ object GraphGroups {
                     require(node.inputs[slot]==connection) { "Connect named group inputs on the instance node" }
                 }
             }
-            face.outputs.forEach { output -> require(output.type in setOf("shape","rotation","mirroring","position","INT") && (output.member==-1 || GraphModels.shape(nodes.getValue(group.nodes[output.member]).kind).output==output.type)) { "Incompatible Copycat group output" } }
+            face.outputs.forEach { output -> require(output.type in setOf("shape","rotation","mirroring","position","transformation","INT") && (output.member==-1 || GraphModels.shape(nodes.getValue(group.nodes[output.member]).kind).output==output.type)) { "Incompatible Copycat group output" } }
         } }
     }
 
@@ -318,6 +318,7 @@ object GraphGroups {
     internal fun remap(node:BuildingNode,reference:(String,String)->String):BuildingNode = BuildingSemantics.remapReferences(node.copy(
         dimensions=node.dimensions?.mapValues { (key,ref) -> reference(key,ref) },
         positionValue=node.positionValue?.let { reference("positionValue",it) },
+        transformationValue=node.transformationValue?.let { reference("transformationValue",it) },
         inputs=node.inputs.mapIndexed { i,ref -> reference("in:$i",ref) },
         rotation=node.rotation?.let { reference("rotation",it) },mirroring=node.mirroring?.let { reference("mirroring",it) },
         walls=node.walls.mapValues { (key,ref) -> reference("wall:$key",ref) },
@@ -329,6 +330,7 @@ object GraphGroups {
         levels=node.levels.mapValues { (key,ref) -> reference("level:$key",ref) },
         regionCopies=node.regionCopies.mapValues { (key,ref) -> reference(key,ref) },
         roofLevel=node.roofLevel?.let { it.copy(area=reference("area",it.area)) },
+        roofSections=node.roofSections?.map { section -> section.copy(config=section.config.copy(area=reference("area:${section.id}",section.config.area)),dormers=section.dormers.map { it.copy(source=reference("sectionDormer:${section.id}:${it.id}",it.source)) }) },
         stairwell=node.stairwell?.let { it.copy(tread=reference("tread",it.tread),landing=reference("landing",it.landing),enclosure=reference("enclosure",it.enclosure)) },
         elevatorShaft=node.elevatorShaft?.let { it.copy(enclosure=reference("enclosure",it.enclosure)) },
         serviceShaft=node.serviceShaft?.let { it.copy(enclosure=reference("enclosure",it.enclosure)) },

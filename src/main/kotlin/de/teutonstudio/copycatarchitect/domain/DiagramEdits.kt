@@ -70,6 +70,7 @@ object DiagramEdits {
                     port.key=="rotation" -> next=next.copy(rotation=source.takeIf(String::isNotEmpty))
                     port.key=="mirroring" -> next=next.copy(mirroring=source.takeIf(String::isNotEmpty))
                     port.key=="positionValue" -> next=next.copy(positionValue=source.takeIf(String::isNotEmpty))
+                    port.key=="transformationValue" -> next=next.copy(transformationValue=source.takeIf(String::isNotEmpty))
                     port.key=="layout" -> next=next.copy(layout=source,assembly=true)
                     port.key.startsWith("region:") -> next=next.copy(regionCopies=original.resolvedNode(next).withRegionCopy(port.key,source).regionCopies)
                     port.key=="geometry" && n.kind!=BuildingKind.ROOM -> next=next.copy(geometry=source)

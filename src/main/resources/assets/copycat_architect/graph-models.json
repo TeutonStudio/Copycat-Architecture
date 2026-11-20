@@ -6,7 +6,9 @@
       2,
       3,
       4,
-      5
+      5,
+      6,
+      7
     ],
     "defaultSchema": 2,
     "documentSchemas": [
@@ -278,14 +280,15 @@
               "part.source": "copycat_architect:copycat_roof"
             }
           }
-        }
+        },
+        "commutativeAssociative": false
       },
       "UNION": {
         "labelKey": "node_union",
         "output": "shape",
         "defaults": {},
         "inputs": {
-          "min": 2,
+          "min": 0,
           "max": 16,
           "types": [
             "shape"
@@ -301,20 +304,22 @@
           },
           "materialGroup": {},
           "inputGroups": {}
-        }
+        },
+        "commutativeAssociative": true
       },
       "INTERSECTION": {
         "labelKey": "node_intersection",
         "output": "shape",
         "defaults": {},
         "inputs": {
-          "min": 2,
+          "min": 0,
           "max": 16,
           "types": [
             "shape"
           ]
         },
-        "fields": {}
+        "fields": {},
+        "commutativeAssociative": true
       },
       "DIFFERENCE": {
         "labelKey": "node_difference",
@@ -327,7 +332,8 @@
             "shape"
           ]
         },
-        "fields": {}
+        "fields": {},
+        "commutativeAssociative": false
       },
       "SYMMETRIC_DIFFERENCE": {
         "labelKey": "node_symmetric_difference",
@@ -350,7 +356,8 @@
           },
           "materialGroup": {},
           "inputGroups": {}
-        }
+        },
+        "commutativeAssociative": true
       },
       "ROTATE": {
         "labelKey": "node_rotate",
@@ -382,7 +389,8 @@
             "max": 3
           },
           "rotationPivot": {}
-        }
+        },
+        "commutativeAssociative": false
       },
       "ROTATION": {
         "labelKey": "node_rotation",
@@ -411,7 +419,8 @@
             "max": 3
           },
           "rotationPivot": {}
-        }
+        },
+        "commutativeAssociative": false
       },
       "OUTPUT": {
         "labelKey": "node_output",
@@ -426,7 +435,8 @@
         },
         "fields": {
           "previewGroup": {}
-        }
+        },
+        "commutativeAssociative": false
       },
       "MIRROR": {
         "labelKey": "node_mirror",
@@ -459,7 +469,8 @@
               "BODY_PNN"
             ]
           }
-        }
+        },
+        "commutativeAssociative": false
       },
       "SAVED": {
         "labelKey": "node_saved",
@@ -486,7 +497,8 @@
             "min": 0,
             "max": 3
           }
-        }
+        },
+        "commutativeAssociative": false
       },
       "MIRRORING": {
         "labelKey": "mirroring",
@@ -503,7 +515,8 @@
         },
         "fields": {
           "mirror.plane": {}
-        }
+        },
+        "commutativeAssociative": false
       },
       "POSITION": {
         "labelKey": "position",
@@ -531,7 +544,8 @@
         },
         "fields": {
           "translation": {}
-        }
+        },
+        "commutativeAssociative": false
       },
       "TRANSLATE": {
         "labelKey": "translate",
@@ -547,7 +561,8 @@
         "defaults": {},
         "fields": {
           "translation": {}
-        }
+        },
+        "commutativeAssociative": false
       },
       "INT": {
         "labelKey": "int",
@@ -566,7 +581,8 @@
           "min": 0,
           "max": 0,
           "types": []
-        }
+        },
+        "commutativeAssociative": false
       },
       "INT_ADD": {
         "labelKey": "int_add",
@@ -580,12 +596,13 @@
         "fields": {},
         "inputs": {
           "min": 2,
-          "max": 2,
+          "max": 16,
           "types": [
             "INT",
             "INT"
           ]
-        }
+        },
+        "commutativeAssociative": true
       },
       "INT_SUBTRACT": {
         "labelKey": "int_subtract",
@@ -604,7 +621,8 @@
             "INT",
             "INT"
           ]
-        }
+        },
+        "commutativeAssociative": false
       },
       "INT_MULTIPLY": {
         "labelKey": "int_multiply",
@@ -618,12 +636,13 @@
         "fields": {},
         "inputs": {
           "min": 2,
-          "max": 2,
+          "max": 16,
           "types": [
             "INT",
             "INT"
           ]
-        }
+        },
+        "commutativeAssociative": true
       },
       "INT_DIVIDE": {
         "labelKey": "int_divide",
@@ -642,7 +661,8 @@
             "INT",
             "INT"
           ]
-        }
+        },
+        "commutativeAssociative": false
       },
       "INT_MIN": {
         "labelKey": "int_min",
@@ -656,12 +676,13 @@
         "fields": {},
         "inputs": {
           "min": 2,
-          "max": 2,
+          "max": 16,
           "types": [
             "INT",
             "INT"
           ]
-        }
+        },
+        "commutativeAssociative": true
       },
       "INT_MAX": {
         "labelKey": "int_max",
@@ -675,12 +696,13 @@
         "fields": {},
         "inputs": {
           "min": 2,
-          "max": 2,
+          "max": 16,
           "types": [
             "INT",
             "INT"
           ]
-        }
+        },
+        "commutativeAssociative": true
       },
       "POSITION_ADD": {
         "labelKey": "position_add",
@@ -694,12 +716,13 @@
         "fields": {},
         "inputs": {
           "min": 2,
-          "max": 2,
+          "max": 16,
           "types": [
             "position",
             "position"
           ]
-        }
+        },
+        "commutativeAssociative": true
       },
       "POSITION_SUBTRACT": {
         "labelKey": "position_subtract",
@@ -718,7 +741,8 @@
             "position",
             "position"
           ]
-        }
+        },
+        "commutativeAssociative": false
       },
       "POSITION_MULTIPLY": {
         "labelKey": "position_multiply",
@@ -732,12 +756,13 @@
         "fields": {},
         "inputs": {
           "min": 2,
-          "max": 2,
+          "max": 16,
           "types": [
             "position",
             "position"
           ]
-        }
+        },
+        "commutativeAssociative": true
       },
       "POSITION_DIVIDE": {
         "labelKey": "position_divide",
@@ -756,7 +781,8 @@
             "position",
             "position"
           ]
-        }
+        },
+        "commutativeAssociative": false
       },
       "POSITION_MIN": {
         "labelKey": "position_min",
@@ -770,12 +796,13 @@
         "fields": {},
         "inputs": {
           "min": 2,
-          "max": 2,
+          "max": 16,
           "types": [
             "position",
             "position"
           ]
-        }
+        },
+        "commutativeAssociative": true
       },
       "POSITION_MAX": {
         "labelKey": "position_max",
@@ -789,12 +816,13 @@
         "fields": {},
         "inputs": {
           "min": 2,
-          "max": 2,
+          "max": 16,
           "types": [
             "position",
             "position"
           ]
-        }
+        },
+        "commutativeAssociative": true
       },
       "POSITION_X": {
         "labelKey": "position_x",
@@ -811,7 +839,8 @@
           "types": [
             "position"
           ]
-        }
+        },
+        "commutativeAssociative": false
       },
       "POSITION_Y": {
         "labelKey": "position_y",
@@ -828,7 +857,8 @@
           "types": [
             "position"
           ]
-        }
+        },
+        "commutativeAssociative": false
       },
       "POSITION_Z": {
         "labelKey": "position_z",
@@ -845,7 +875,43 @@
           "types": [
             "position"
           ]
-        }
+        },
+        "commutativeAssociative": false
+      },
+      "TRANSFORMATION": {
+        "labelKey": "transformation",
+        "output": "transformation",
+        "inputs": {
+          "min": 3,
+          "max": 3,
+          "types": [
+            "mirroring",
+            "rotation",
+            "position"
+          ]
+        },
+        "defaults": {
+          "rotationAxis": "Y",
+          "quarterTurns": 0,
+          "transformationOrder": "SRP"
+        },
+        "fields": {},
+        "commutativeAssociative": false
+      },
+      "COPYCAT_TRANSFORM": {
+        "labelKey": "copycat_transform",
+        "output": "shape",
+        "inputs": {
+          "min": 2,
+          "max": 2,
+          "types": [
+            "shape",
+            "transformation"
+          ]
+        },
+        "defaults": {},
+        "fields": {},
+        "commutativeAssociative": false
       }
     }
   },
@@ -858,7 +924,10 @@
       5,
       6,
       7,
-      8
+      8,
+      9,
+      10,
+      11
     ],
     "defaultSchema": 2,
     "documentSchemas": [
@@ -977,7 +1046,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_TRANSFORM"
         ]
       },
       {
@@ -995,7 +1065,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_TRANSFORM"
         ]
       },
       {
@@ -1013,7 +1084,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_TRANSFORM"
         ]
       },
       {
@@ -1031,7 +1103,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_TRANSFORM"
         ]
       },
       {
@@ -1049,7 +1122,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_TRANSFORM"
         ]
       },
       {
@@ -1105,7 +1179,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_TRANSFORM"
         ]
       },
       {
@@ -1123,7 +1198,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_TRANSFORM"
         ]
       },
       {
@@ -1141,7 +1217,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_TRANSFORM"
         ]
       },
       {
@@ -1160,7 +1237,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_TRANSFORM"
         ]
       },
       {
@@ -1179,7 +1257,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_TRANSFORM"
         ]
       },
       {
@@ -1197,7 +1276,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_TRANSFORM"
         ]
       },
       {
@@ -1215,7 +1295,8 @@
           "SEGMENT_INTERSECTION",
           "SEGMENT_DIFFERENCE",
           "SEGMENT_SYMMETRIC_DIFFERENCE",
-          "ROTATION_SEGMENT"
+          "ROTATION_SEGMENT",
+          "SEGMENT_TRANSFORM"
         ]
       },
       {
@@ -1395,7 +1476,8 @@
             "min": 1,
             "max": 128
           }
-        }
+        },
+        "commutativeAssociative": false
       },
       "COPYCAT": {
         "labelKey": "reference",
@@ -1421,7 +1503,8 @@
             "min": 0,
             "max": 3
           }
-        }
+        },
+        "commutativeAssociative": false
       },
       "SEGMENT_LAYOUT": {
         "labelKey": "bg_segment_layout",
@@ -1456,7 +1539,9 @@
             "max": 128
           },
           "layoutCells": {}
-        }
+        },
+        "commutativeAssociative": false,
+        "legacyOnly": true
       },
       "SEGMENT": {
         "labelKey": "bg_segment",
@@ -1472,6 +1557,7 @@
               "layout"
             ],
             "accepts": [
+              "AREA",
               "SEGMENT_LAYOUT"
             ],
             "when": {
@@ -1480,7 +1566,7 @@
                 "not": "empty_wall"
               }
             },
-            "labelKey": "bg_segment_layout"
+            "labelKey": "bg_area"
           },
           {
             "key": "in:*",
@@ -1496,7 +1582,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ],
             "when": {
               "id": {
@@ -1520,7 +1607,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ],
             "when": {
               "assembly": true,
@@ -1560,8 +1648,10 @@
           },
           "features": {},
           "attachments": {},
-          "dynamicAxes": {}
-        }
+          "dynamicAxes": {},
+          "layoutCells": {}
+        },
+        "commutativeAssociative": false
       },
       "PATTERN": {
         "labelKey": "bg_pattern",
@@ -1595,7 +1685,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "max": 16,
             "min": 2,
@@ -1624,7 +1715,8 @@
           },
           "transforms": {},
           "features": {}
-        }
+        },
+        "commutativeAssociative": false
       },
       "ROOM_GEOMETRY": {
         "labelKey": "bg_room_geometry",
@@ -1698,7 +1790,9 @@
             "min": 1,
             "max": 128
           }
-        }
+        },
+        "commutativeAssociative": false,
+        "legacyOnly": true
       },
       "FLOOR": {
         "labelKey": "bg_floor",
@@ -1720,7 +1814,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ],
             "max": 16,
             "expand": true
@@ -1738,7 +1833,8 @@
           "role": {
             "labelKey": "role"
           }
-        }
+        },
+        "commutativeAssociative": false
       },
       "CEILING": {
         "labelKey": "bg_ceiling",
@@ -1760,7 +1856,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ],
             "max": 16,
             "expand": true
@@ -1778,7 +1875,8 @@
             "labelKey": "role"
           },
           "attachments": {}
-        }
+        },
+        "commutativeAssociative": false
       },
       "ROOM": {
         "labelKey": "bg_room",
@@ -1815,7 +1913,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "when": {
               "roomConfig.mode": "SEGMENTS"
@@ -1837,7 +1936,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "when": {
               "roomConfig.mode": "SEGMENTS"
@@ -1850,6 +1950,7 @@
               "geometry"
             ],
             "accepts": [
+              "AREA",
               "ROOM_GEOMETRY"
             ],
             "when": {
@@ -1858,7 +1959,7 @@
               },
               "assembly": true
             },
-            "labelKey": "bg_room_geometry"
+            "labelKey": "bg_area"
           },
           {
             "key": "wall:*",
@@ -1875,7 +1976,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "when": {
               "roomConfig.mode": {
@@ -1900,7 +2002,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "when": {
               "roomConfig.mode": {
@@ -1943,7 +2046,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "when": {
               "roomConfig.mode": {
@@ -1984,7 +2088,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ],
             "when": {
               "roomConfig.mode": {
@@ -2008,7 +2113,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "when": {
               "roomConfig.mode": {
@@ -2044,7 +2150,8 @@
           "role": {
             "labelKey": "role"
           }
-        }
+        },
+        "commutativeAssociative": false
       },
       "STOREY": {
         "labelKey": "bg_storey",
@@ -2075,7 +2182,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "when": {
               "storeyMode": "walls"
@@ -2098,7 +2206,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "when": {
               "storeyMode": "walls",
@@ -2137,7 +2246,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "when": {
               "storeyMode": "walls",
@@ -2174,7 +2284,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ],
             "when": {
               "storeyMode": "walls"
@@ -2226,7 +2337,8 @@
           "role": {
             "labelKey": "role"
           }
-        }
+        },
+        "commutativeAssociative": false
       },
       "ROOF_LEVEL": {
         "labelKey": "bg_roof_level",
@@ -2289,7 +2401,9 @@
             ]
           },
           "dormers": {}
-        }
+        },
+        "commutativeAssociative": false,
+        "legacyOnly": true
       },
       "ROOF_LAYOUT": {
         "labelKey": "bg_roof_layout",
@@ -2312,7 +2426,9 @@
             "expand": true
           }
         ],
-        "fields": {}
+        "fields": {},
+        "commutativeAssociative": false,
+        "legacyOnly": true
       },
       "ROOF": {
         "labelKey": "bg_roof",
@@ -2326,6 +2442,33 @@
           "role": "roof"
         },
         "ports": [
+          {
+            "key": "area:*",
+            "path": [
+              "roofSections",
+              "*",
+              "config",
+              "area"
+            ],
+            "accepts": [
+              "AREA"
+            ],
+            "labelKey": "bg_area"
+          },
+          {
+            "key": "sectionDormer:*",
+            "path": [
+              "roofSections",
+              "*",
+              "dormers",
+              "*",
+              "source"
+            ],
+            "accepts": [
+              "DORMER"
+            ],
+            "labelKey": "bg_dormer"
+          },
           {
             "key": "layout",
             "path": [
@@ -2354,7 +2497,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "when": {
               "assembly": true,
@@ -2377,7 +2521,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "when": {
               "assembly": true,
@@ -2400,7 +2545,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "when": {
               "assembly": true,
@@ -2423,7 +2569,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "when": {
               "assembly": true,
@@ -2446,7 +2593,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "when": {
               "assembly": true,
@@ -2469,7 +2617,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "when": {
               "assembly": true,
@@ -2494,7 +2643,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ],
             "when": {
               "assembly": {
@@ -2517,7 +2667,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ],
             "when": {
               "roofType": "gable",
@@ -2540,7 +2691,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ],
             "when": {
               "roofType": "gable",
@@ -2565,7 +2717,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "when": {
               "assembly": {
@@ -2604,8 +2757,10 @@
               "SEPARATED",
               "GROUPED"
             ]
-          }
-        }
+          },
+          "roofSections": {}
+        },
+        "commutativeAssociative": false
       },
       "STAIRWELL": {
         "labelKey": "bg_stairwell",
@@ -2638,7 +2793,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ]
           },
           {
@@ -2655,7 +2811,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ]
           },
           {
@@ -2672,7 +2829,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ]
           }
         ],
@@ -2685,7 +2843,8 @@
               "U"
             ]
           }
-        }
+        },
+        "commutativeAssociative": false
       },
       "ELEVATOR_SHAFT": {
         "labelKey": "bg_elevator_shaft",
@@ -2714,13 +2873,15 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ]
           }
         ],
         "fields": {
           "elevatorShaft": {}
-        }
+        },
+        "commutativeAssociative": false
       },
       "SERVICE_SHAFT": {
         "labelKey": "bg_service_shaft",
@@ -2748,13 +2909,15 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ]
           }
         ],
         "fields": {
           "serviceShaft": {}
-        }
+        },
+        "commutativeAssociative": false
       },
       "BUILDING": {
         "labelKey": "bg_building",
@@ -2789,7 +2952,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ],
             "when": {
               "resultType": "COPYCAT"
@@ -2825,7 +2989,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "when": {
               "resultType": "WALL"
@@ -3209,7 +3374,8 @@
           "role": {
             "labelKey": "role"
           }
-        }
+        },
+        "commutativeAssociative": false
       },
       "GARDEN": {
         "labelKey": "bg_garden",
@@ -3369,7 +3535,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ],
             "labelKey": "bg_floor"
           }
@@ -3408,7 +3575,8 @@
             "min": 0,
             "max": 16
           }
-        }
+        },
+        "commutativeAssociative": false
       },
       "PATH": {
         "labelKey": "bg_path",
@@ -3443,7 +3611,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ],
             "labelKey": "bg_floor"
           }
@@ -3477,7 +3646,8 @@
             "min": -64,
             "max": 64
           }
-        }
+        },
+        "commutativeAssociative": false
       },
       "SEGMENT_MIRROR": {
         "labelKey": "bg_segment_mirror",
@@ -3505,7 +3675,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ]
           },
           {
@@ -3539,7 +3710,8 @@
             "labelKey": "role"
           },
           "features": {}
-        }
+        },
+        "commutativeAssociative": false
       },
       "COPYCAT_MIRROR": {
         "labelKey": "bg_copycat_mirror",
@@ -3568,7 +3740,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ]
           },
           {
@@ -3610,7 +3783,8 @@
           "role": {
             "labelKey": "role"
           }
-        }
+        },
+        "commutativeAssociative": false
       },
       "SEGMENT_ROTATE": {
         "labelKey": "bg_segment_rotate",
@@ -3638,7 +3812,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ]
           },
           {
@@ -3676,7 +3851,8 @@
           "role": {
             "labelKey": "role"
           }
-        }
+        },
+        "commutativeAssociative": false
       },
       "COPYCAT_ROTATE": {
         "labelKey": "bg_copycat_rotate",
@@ -3703,7 +3879,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ]
           },
           {
@@ -3741,7 +3918,8 @@
             "labelKey": "role"
           },
           "rotationPivot": {}
-        }
+        },
+        "commutativeAssociative": false
       },
       "ROOM_LAYOUT": {
         "labelKey": "bg_room_layout",
@@ -3764,7 +3942,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "max": 16,
             "expand": true
@@ -3772,7 +3951,8 @@
         ],
         "fields": {
           "roomLayout": {}
-        }
+        },
+        "commutativeAssociative": false
       },
       "BAY_WINDOW": {
         "labelKey": "bg_bay_window",
@@ -3791,7 +3971,8 @@
         "ports": [],
         "fields": {
           "bayWindow": {}
-        }
+        },
+        "commutativeAssociative": false
       },
       "DORMER": {
         "labelKey": "bg_dormer",
@@ -3814,7 +3995,8 @@
         "ports": [],
         "fields": {
           "dormer": {}
-        }
+        },
+        "commutativeAssociative": false
       },
       "SEGMENT_UNION": {
         "labelKey": "segment_union",
@@ -3847,7 +4029,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "min": 2,
             "max": 16
@@ -3864,7 +4047,8 @@
           "role": {
             "labelKey": "role"
           }
-        }
+        },
+        "commutativeAssociative": true
       },
       "SEGMENT_INTERSECTION": {
         "labelKey": "segment_intersection",
@@ -3897,7 +4081,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "min": 2,
             "max": 16
@@ -3914,7 +4099,8 @@
           "role": {
             "labelKey": "role"
           }
-        }
+        },
+        "commutativeAssociative": true
       },
       "SEGMENT_DIFFERENCE": {
         "labelKey": "segment_difference",
@@ -3947,7 +4133,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "min": 2,
             "max": 2
@@ -3964,7 +4151,8 @@
           "role": {
             "labelKey": "role"
           }
-        }
+        },
+        "commutativeAssociative": false
       },
       "SEGMENT_SYMMETRIC_DIFFERENCE": {
         "labelKey": "segment_symmetric_difference",
@@ -3997,7 +4185,8 @@
               "SEGMENT_INTERSECTION",
               "SEGMENT_DIFFERENCE",
               "SEGMENT_SYMMETRIC_DIFFERENCE",
-              "ROTATION_SEGMENT"
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
             ],
             "min": 2,
             "max": 16
@@ -4014,7 +4203,8 @@
           "role": {
             "labelKey": "role"
           }
-        }
+        },
+        "commutativeAssociative": true
       },
       "COPYCAT_UNION": {
         "labelKey": "copycat_union",
@@ -4046,9 +4236,10 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ],
-            "min": 2,
+            "min": 0,
             "max": 16
           }
         ],
@@ -4063,7 +4254,8 @@
           "role": {
             "labelKey": "role"
           }
-        }
+        },
+        "commutativeAssociative": true
       },
       "COPYCAT_INTERSECTION": {
         "labelKey": "copycat_intersection",
@@ -4095,9 +4287,10 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ],
-            "min": 2,
+            "min": 0,
             "max": 16
           }
         ],
@@ -4112,7 +4305,8 @@
           "role": {
             "labelKey": "role"
           }
-        }
+        },
+        "commutativeAssociative": true
       },
       "COPYCAT_DIFFERENCE": {
         "labelKey": "copycat_difference",
@@ -4144,7 +4338,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ],
             "min": 2,
             "max": 2
@@ -4161,7 +4356,8 @@
           "role": {
             "labelKey": "role"
           }
-        }
+        },
+        "commutativeAssociative": false
       },
       "COPYCAT_SYMMETRIC_DIFFERENCE": {
         "labelKey": "copycat_symmetric_difference",
@@ -4193,7 +4389,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ],
             "min": 2,
             "max": 16
@@ -4210,7 +4407,8 @@
           "role": {
             "labelKey": "role"
           }
-        }
+        },
+        "commutativeAssociative": true
       },
       "ROTATION": {
         "labelKey": "bg_rotation",
@@ -4228,7 +4426,8 @@
         "fields": {
           "rotations": {},
           "rotationPivot": {}
-        }
+        },
+        "commutativeAssociative": false
       },
       "MIRRORING": {
         "labelKey": "bg_mirroring",
@@ -4244,7 +4443,8 @@
         "ports": [],
         "fields": {
           "mirrors": {}
-        }
+        },
+        "commutativeAssociative": false
       },
       "INT": {
         "labelKey": "int",
@@ -4260,7 +4460,8 @@
           }
         },
         "ports": [],
-        "alwaysExplicit": true
+        "alwaysExplicit": true,
+        "commutativeAssociative": false
       },
       "ROTATION_SEGMENT": {
         "labelKey": "bg_rotation_segment",
@@ -4310,7 +4511,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ]
           }
         ],
@@ -4336,7 +4538,8 @@
               "ADJACENT"
             ]
           }
-        }
+        },
+        "commutativeAssociative": false
       },
       "POSITION": {
         "labelKey": "position",
@@ -4374,7 +4577,8 @@
         ],
         "fields": {
           "translation": {}
-        }
+        },
+        "commutativeAssociative": false
       },
       "COPYCAT_POSITION": {
         "labelKey": "copycat_position",
@@ -4395,7 +4599,8 @@
               "COPYCAT_INTERSECTION",
               "COPYCAT_DIFFERENCE",
               "COPYCAT_SYMMETRIC_DIFFERENCE",
-              "COPYCAT_POSITION"
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
             ]
           },
           {
@@ -4413,7 +4618,8 @@
         ],
         "fields": {
           "translation": {}
-        }
+        },
+        "commutativeAssociative": false
       },
       "INT_ADD": {
         "labelKey": "int_add",
@@ -4440,11 +4646,13 @@
               "POSITION_Y",
               "POSITION_Z"
             ],
-            "max": 2,
-            "expand": false
+            "max": 16,
+            "expand": false,
+            "min": 2
           }
         ],
-        "alwaysExplicit": true
+        "alwaysExplicit": true,
+        "commutativeAssociative": true
       },
       "INT_SUBTRACT": {
         "labelKey": "int_subtract",
@@ -4475,7 +4683,8 @@
             "expand": false
           }
         ],
-        "alwaysExplicit": true
+        "alwaysExplicit": true,
+        "commutativeAssociative": false
       },
       "INT_MULTIPLY": {
         "labelKey": "int_multiply",
@@ -4502,11 +4711,13 @@
               "POSITION_Y",
               "POSITION_Z"
             ],
-            "max": 2,
-            "expand": false
+            "max": 16,
+            "expand": false,
+            "min": 2
           }
         ],
-        "alwaysExplicit": true
+        "alwaysExplicit": true,
+        "commutativeAssociative": true
       },
       "INT_DIVIDE": {
         "labelKey": "int_divide",
@@ -4537,7 +4748,8 @@
             "expand": false
           }
         ],
-        "alwaysExplicit": true
+        "alwaysExplicit": true,
+        "commutativeAssociative": false
       },
       "INT_MIN": {
         "labelKey": "int_min",
@@ -4564,11 +4776,13 @@
               "POSITION_Y",
               "POSITION_Z"
             ],
-            "max": 2,
-            "expand": false
+            "max": 16,
+            "expand": false,
+            "min": 2
           }
         ],
-        "alwaysExplicit": true
+        "alwaysExplicit": true,
+        "commutativeAssociative": true
       },
       "INT_MAX": {
         "labelKey": "int_max",
@@ -4595,11 +4809,13 @@
               "POSITION_Y",
               "POSITION_Z"
             ],
-            "max": 2,
-            "expand": false
+            "max": 16,
+            "expand": false,
+            "min": 2
           }
         ],
-        "alwaysExplicit": true
+        "alwaysExplicit": true,
+        "commutativeAssociative": true
       },
       "POSITION_ADD": {
         "labelKey": "position_add",
@@ -4623,11 +4839,13 @@
               "POSITION_MIN",
               "POSITION_MAX"
             ],
-            "max": 2,
-            "expand": false
+            "max": 16,
+            "expand": false,
+            "min": 2
           }
         ],
-        "alwaysExplicit": true
+        "alwaysExplicit": true,
+        "commutativeAssociative": true
       },
       "POSITION_SUBTRACT": {
         "labelKey": "position_subtract",
@@ -4655,7 +4873,8 @@
             "expand": false
           }
         ],
-        "alwaysExplicit": true
+        "alwaysExplicit": true,
+        "commutativeAssociative": false
       },
       "POSITION_MULTIPLY": {
         "labelKey": "position_multiply",
@@ -4679,11 +4898,13 @@
               "POSITION_MIN",
               "POSITION_MAX"
             ],
-            "max": 2,
-            "expand": false
+            "max": 16,
+            "expand": false,
+            "min": 2
           }
         ],
-        "alwaysExplicit": true
+        "alwaysExplicit": true,
+        "commutativeAssociative": true
       },
       "POSITION_DIVIDE": {
         "labelKey": "position_divide",
@@ -4711,7 +4932,8 @@
             "expand": false
           }
         ],
-        "alwaysExplicit": true
+        "alwaysExplicit": true,
+        "commutativeAssociative": false
       },
       "POSITION_MIN": {
         "labelKey": "position_min",
@@ -4735,11 +4957,13 @@
               "POSITION_MIN",
               "POSITION_MAX"
             ],
-            "max": 2,
-            "expand": false
+            "max": 16,
+            "expand": false,
+            "min": 2
           }
         ],
-        "alwaysExplicit": true
+        "alwaysExplicit": true,
+        "commutativeAssociative": true
       },
       "POSITION_MAX": {
         "labelKey": "position_max",
@@ -4763,11 +4987,13 @@
               "POSITION_MIN",
               "POSITION_MAX"
             ],
-            "max": 2,
-            "expand": false
+            "max": 16,
+            "expand": false,
+            "min": 2
           }
         ],
-        "alwaysExplicit": true
+        "alwaysExplicit": true,
+        "commutativeAssociative": true
       },
       "POSITION_X": {
         "labelKey": "position_x",
@@ -4794,7 +5020,8 @@
             "expand": false
           }
         ],
-        "alwaysExplicit": true
+        "alwaysExplicit": true,
+        "commutativeAssociative": false
       },
       "POSITION_Y": {
         "labelKey": "position_y",
@@ -4821,7 +5048,8 @@
             "expand": false
           }
         ],
-        "alwaysExplicit": true
+        "alwaysExplicit": true,
+        "commutativeAssociative": false
       },
       "POSITION_Z": {
         "labelKey": "position_z",
@@ -4848,7 +5076,131 @@
             "expand": false
           }
         ],
-        "alwaysExplicit": true
+        "alwaysExplicit": true,
+        "commutativeAssociative": false
+      },
+      "TRANSFORMATION": {
+        "labelKey": "transformation",
+        "output": "TRANSFORMATION",
+        "alwaysExplicit": true,
+        "defaults": {
+          "rotationAxis": "Y",
+          "quarterTurns": 0,
+          "transformationOrder": "SRP"
+        },
+        "ports": [
+          {
+            "key": "mirroring",
+            "accepts": [
+              "MIRRORING"
+            ]
+          },
+          {
+            "key": "rotation",
+            "accepts": [
+              "ROTATION"
+            ]
+          },
+          {
+            "key": "positionValue",
+            "accepts": [
+              "POSITION",
+              "POSITION_ADD",
+              "POSITION_SUBTRACT",
+              "POSITION_MULTIPLY",
+              "POSITION_DIVIDE",
+              "POSITION_MIN",
+              "POSITION_MAX"
+            ]
+          }
+        ],
+        "fields": {},
+        "commutativeAssociative": false
+      },
+      "COPYCAT_TRANSFORM": {
+        "labelKey": "copycat_transform",
+        "output": "COPYCAT_TRANSFORM",
+        "alwaysExplicit": true,
+        "defaults": {
+          "inputs": [
+            ""
+          ]
+        },
+        "ports": [
+          {
+            "key": "in:0",
+            "accepts": [
+              "COPYCAT",
+              "COPYCAT_MIRROR",
+              "COPYCAT_ROTATE",
+              "COPYCAT_UNION",
+              "COPYCAT_INTERSECTION",
+              "COPYCAT_DIFFERENCE",
+              "COPYCAT_SYMMETRIC_DIFFERENCE",
+              "COPYCAT_POSITION",
+              "COPYCAT_TRANSFORM"
+            ]
+          },
+          {
+            "key": "transformationValue",
+            "accepts": [
+              "TRANSFORMATION"
+            ]
+          }
+        ],
+        "fields": {
+          "materialMode": {
+            "choices": [
+              "SEPARATED",
+              "GROUPED"
+            ]
+          },
+          "role": {}
+        },
+        "commutativeAssociative": false
+      },
+      "SEGMENT_TRANSFORM": {
+        "labelKey": "segment_transform",
+        "output": "SEGMENT_TRANSFORM",
+        "alwaysExplicit": true,
+        "defaults": {
+          "inputs": [
+            ""
+          ]
+        },
+        "ports": [
+          {
+            "key": "in:0",
+            "accepts": [
+              "SEGMENT",
+              "PATTERN",
+              "SEGMENT_MIRROR",
+              "SEGMENT_ROTATE",
+              "SEGMENT_UNION",
+              "SEGMENT_INTERSECTION",
+              "SEGMENT_DIFFERENCE",
+              "SEGMENT_SYMMETRIC_DIFFERENCE",
+              "ROTATION_SEGMENT",
+              "SEGMENT_TRANSFORM"
+            ]
+          },
+          {
+            "key": "transformationValue",
+            "accepts": [
+              "TRANSFORMATION"
+            ]
+          }
+        ],
+        "fields": {
+          "materialMode": {
+            "choices": [
+              "SEPARATED",
+              "GROUPED"
+            ]
+          },
+          "role": {}
+        },
+        "commutativeAssociative": false
       }
     }
   },
@@ -4984,6 +5336,13 @@
     },
     "OpeningSpec": {
       "retainSource": {}
+    },
+    "FacadeConfig": {
+      "thickness": {
+        "min": 0,
+        "max": 2048,
+        "unit": "sixteenths"
+      }
     }
   },
   "portStyles": {
@@ -5070,6 +5429,12 @@
       "color": "#94a3b8",
       "name": "Struktur",
       "labelKey": "port_style_structure"
+    },
+    "transformation": {
+      "name": "Transformation",
+      "symbol": "✥",
+      "color": "#f2c66d",
+      "labelKey": "transformation"
     }
   }
 }

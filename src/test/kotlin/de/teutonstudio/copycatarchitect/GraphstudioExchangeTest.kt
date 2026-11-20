@@ -119,6 +119,16 @@ class GraphstudioExchangeTest {
         building("unified-count-card",Building(schema=2,name="Anzahlkarte",graph=mixed.replace(mixed.resultNode().copy(resultType="INT",inputs=listOf("number")))))
         val cardResult=BuildingNode("result",BuildingKind.BUILDING,name="Ergebnis",resultType="BUILDING",inputs=listOf("building"))
         building("unified-building-card",Building(schema=2,name="Gebäudekarte",graph=automatic.copy(nodes=automatic.nodes+cardResult).withCurrentSchema()))
+        for(kind in SegmentBooleans.kinds) {
+            val a=BuildingNode("operand_a",BuildingKind.SEGMENT,module="",form="full@1",length=3,height=2)
+            val b=a.copy(id="operand_b",length=2)
+            val op=BuildingNode("spatial_op",kind,inputs=listOf(a.id,b.id),operandOffsets=listOf(P(-3,-2,1),P(-1,-2,1)))
+            val base=BuildingGraph.starter()
+            val g=base.copy(nodes=base.nodes.map { if(it.id=="building") it.copy(resultType="WALL",levels=emptyMap(),roof="",inputs=listOf(op.id)) else it }+listOf(a,b,op)).withCurrentSchema()
+            building("relative-${kind.name.lowercase()}",Building(schema=2,graph=g))
+        }
+        val direct=BuildingAssembly.directStarter().let { g -> g.copy(nodes=g.nodes.map { if(it.id=="building") it.copy(roof="roof") else it }) }
+        building("direct-area-roof-building",Building(schema=2,graph=direct))
         val formNodes=NodeKind.entries.map { GraphModels.newShape(it).copy(id=it.name) }
         val buildingNodes=BuildingKind.entries.flatMap { kind -> listOf(false,true).map { explicit -> GraphModels.newBuilding(kind,explicit).copy(id=kind.name+if(explicit) "_explicit" else "_legacy") } }
         val buildingSpecs=buildingNodes.map { node ->

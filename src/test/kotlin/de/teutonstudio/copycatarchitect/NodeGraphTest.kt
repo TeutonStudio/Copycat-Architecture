@@ -68,7 +68,7 @@ class NodeGraphTest {
         assertFails { GraphCompiler.compile(g.replace(g.nodes.first { it.id=="op" }.copy(inputs=listOf("op","in0")))) }
         assertFails { GraphCompiler.compile(g.replace(g.nodes.first { it.id=="op" }.copy(inputs=listOf("missing","in0")))) }
         assertFails { GraphCompiler.compile(g.replace(g.nodes.first { it.id=="op" }.copy(inputs=listOf("result","in0")))) }
-        assertFails { GraphCompiler.compile(g.replace(g.nodes.first { it.id=="op" }.copy(inputs=listOf("in0")))) }
+        assertEquals(Geometry.solid(listOf(slab)).key(),Geometry.solid(GraphCompiler.compile(g.replace(g.nodes.first { it.id=="op" }.copy(inputs=listOf("in0"))))).key())
         assertFails { GraphCompiler.compile(NodeGraph()) }
         assertFails { GraphCompiler.compile(g.copy(nodes=g.nodes+g.nodes[0])) }
         assertFails { GraphCompiler.compile(g.copy(nodes=g.nodes+GraphNode("other",NodeKind.OUTPUT,listOf("in0")))) }

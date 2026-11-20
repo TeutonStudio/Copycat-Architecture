@@ -162,7 +162,7 @@ object Roofs {
         val wallPeriods=mutableMapOf<P,RoofSegmentTemplate>()
         fun wallPeriod(width:Int,height:Int):RoofSegmentTemplate? {
             val node=wallNode ?: return null
-            if(node.kind !in (setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_TRANSFORM)+SegmentBooleans.kinds)) return null
+            if(node.kind !in (setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_TRANSFORM,BuildingKind.SEGMENT_OPERATOR)+SegmentBooleans.kinds)) return null
             val size=P(width.coerceIn(1,128),height.coerceIn(1,128),1)
             return wallPeriods.getOrPut(size) {
                 (sizedSegmentSource?.invoke(node.id,size) ?: segmentSource(node.id))?.also { require(it.width in 1..128 && it.height in 1..128 && it.depth==1) { "Roof wall periods need positive dimensions and depth 1" } } ?: error("Missing roof wall segment ${node.id}")
@@ -636,6 +636,7 @@ fun BuildingGraph.withCurrentSchema():BuildingGraph {
     if(nodes.any { it.kind in setOf(BuildingKind.TRANSFORMATION,BuildingKind.COPYCAT_TRANSFORM,BuildingKind.SEGMENT_TRANSFORM) } || nodeGroups.any { g->g.graphInterface?.let { it.inputs.any { p->p.type=="TRANSFORMATION" } || it.outputs.any { p->p.type=="TRANSFORMATION" } }==true }) return copy(schema=maxOf(schema,10))
     val value=withLegacySchema()
     if(nodes.any { it.kind.name in GraphValues.variadicKinds && it.inputs.size>2 || it.kind in CopycatSetInputs.buildingKinds && it.inputs.size<2 }) return value.copy(schema=maxOf(value.schema,9))
+    if(nodes.any { it.kind.name in UnifiedOperators.kinds }) return value.copy(schema=maxOf(value.schema,9))
     if(nodes.any { it.resultType!=null || it.inlinePart!=null }) return value.copy(schema=maxOf(value.schema,8))
     if(nodes.any { it.areaMode!=null || !it.dynamicAxes.isNullOrEmpty() || it.adaptiveRoof==true }) return value.copy(schema=maxOf(value.schema,7))
     if(nodes.any { it.kind.name in GraphValues.kinds && (it.kind !in setOf(BuildingKind.INT,BuildingKind.POSITION) || it.kind==BuildingKind.POSITION && it.inputs.isNotEmpty()) || it.columnMode==RotationSegmentMode.ADJACENT }) return value.copy(schema=maxOf(value.schema,6))

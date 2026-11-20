@@ -86,4 +86,24 @@ class DirectAreaInputsTest {
         assertTrue(g.nodes.none { it.kind in setOf(BuildingKind.SEGMENT_LAYOUT,BuildingKind.ROOM_GEOMETRY,BuildingKind.ROOF_LEVEL,BuildingKind.ROOF_LAYOUT) })
         assertTrue(BuildingAssembly.starter().nodes.any { it.kind==BuildingKind.SEGMENT_LAYOUT })
     }
+    @Test fun `published operator family applies independent offsets before exact set evaluation`() {
+        val expected=mapOf("UNION" to 8,"INTERSECTION" to 2,"DIFFERENCE" to 4,"SYMMETRIC_DIFFERENCE" to 6)
+        for((operation,count) in expected) {
+            val op=BuildingNode("op",BuildingKind.SEGMENT_OPERATOR,operation=operation,inputs=listOf("a","b"),operandOffsets=listOf(P(-3,-2,1),P(-1,-2,1)))
+            val g=graph(source("a"),source("b",2),op)
+            val preview=eval(g).preview("op")
+            assertEquals(count,preview.placements.size,operation)
+            assertTrue(preview.placements.any { it.pos.x<0 })
+        }
+    }
+    @Test fun `published operator input permutations and switches retain repeated source positions`() {
+        val op=BuildingNode("op",BuildingKind.SEGMENT_OPERATOR,operation="INTERSECTION",inputs=listOf("a","a"),operandOffsets=listOf(P(),P(4,0,0)))
+        val g=graph(source("a",1),op)
+        assertTrue(eval(g).preview("op").placements.isEmpty())
+        assertEquals(listOf(P(4,0,0),P()),GraphInputEdits.building(g,"op",listOf(1,0)).nodes.last().operandOffsets)
+        val changed=UnifiedOperators.switch(op,"DIFFERENCE",g.nodes.associateBy { it.id })
+        assertEquals(op.operandOffsets,changed.operandOffsets)
+        assertEquals(2,eval(g.replace(changed)).preview("op").placements.size)
+        assertNull(UnifiedOperators.switch(op,"ROTATE",g.nodes.associateBy { it.id }).operandOffsets)
+    }
 }

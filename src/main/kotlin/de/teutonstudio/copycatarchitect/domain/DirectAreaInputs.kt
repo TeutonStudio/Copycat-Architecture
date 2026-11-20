@@ -38,7 +38,7 @@ object RoofSections {
         } }
         require(roof.layout.isNotEmpty()) { "Connect a roof arrangement source" }
         val layout=graph.nodes.first { it.id==roof.layout && it.kind==BuildingKind.ROOF_LAYOUT }
-        require(layout.inputs.all(String::isNotEmpty)) { "Connect every legacy roof level" }
+        require(layout.inputs.isNotEmpty() && layout.inputs.all(String::isNotEmpty)) { "Roof arrangement is pending definition; connect roof levels" }
         return layout.inputs.map { id -> graph.nodes.first { it.id==id && it.kind==BuildingKind.ROOF_LEVEL } }
     }
 }

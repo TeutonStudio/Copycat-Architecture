@@ -2,7 +2,7 @@ package de.teutonstudio.copycatarchitect.domain
 
 object BuildingCopycatTransforms {
     val sourceKinds=BuildingKind.entries.filter { it.name.startsWith("COPYCAT") }.toSet()
-    val operatorKinds=setOf(BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_POSITION,BuildingKind.COPYCAT_TRANSFORM)
+    val operatorKinds=setOf(BuildingKind.COPYCAT_ROTATE,BuildingKind.COPYCAT_MIRROR,BuildingKind.COPYCAT_POSITION,BuildingKind.COPYCAT_TRANSFORM,BuildingKind.COPYCAT_OPERATOR)
     fun operations(node:BuildingNode,nodes:Map<String,BuildingNode>,modern:Boolean=false):List<CopycatTransform> {
         if(node.kind==BuildingKind.COPYCAT_TRANSFORM) return node.transformationValue?.takeIf(String::isNotEmpty)?.let { TransformationValues.building(nodes.getValue(it),nodes) }.orEmpty()+node.copycatTransforms.orEmpty()
         val linked=when(node.kind) {
@@ -42,6 +42,7 @@ object SemanticPorts {
         raw.equals("position",true)->"position"
         raw.equals("transformation",true)->"transformation"
         raw=="INT"->"INT"
+        raw=="BOOLEAN"->"BOOLEAN"
         raw.startsWith("SEGMENT") || raw in setOf("WALL","FLOOR","CEILING","PATTERN","ROTATION_SEGMENT")->"segment"
         raw in setOf("ROOM","BAY_WINDOW","ROOM_LAYOUT","ROOM_GEOMETRY")->"room"
         raw=="STOREY"->"storey"

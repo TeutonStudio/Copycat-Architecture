@@ -127,6 +127,14 @@ class GraphstudioExchangeTest {
             val g=base.copy(nodes=base.nodes.map { if(it.id=="building") it.copy(resultType="WALL",levels=emptyMap(),roof="",inputs=listOf(op.id)) else it }+listOf(a,b,op)).withCurrentSchema()
             building("relative-${kind.name.lowercase()}",Building(schema=2,graph=g))
         }
+        for(operation in SegmentBooleans.operations) {
+            val a=BuildingNode("operand_a",BuildingKind.SEGMENT,module="",form="full@1",length=3,height=2)
+            val b=a.copy(id="operand_b",length=2)
+            val op=BuildingNode("spatial_op",BuildingKind.SEGMENT_OPERATOR,operation=operation,inputs=listOf(a.id,b.id),operandOffsets=listOf(P(-3,-2,1),P(-1,-2,1)))
+            val base=BuildingGraph.starter()
+            val g=base.copy(nodes=base.nodes.map { if(it.id=="building") it.copy(resultType="WALL",levels=emptyMap(),roof="",inputs=listOf(op.id)) else it }+listOf(a,b,op)).withCurrentSchema()
+            building("operator-family-relative-${operation.lowercase()}",Building(schema=2,graph=g))
+        }
         val direct=BuildingAssembly.directStarter().let { g -> g.copy(nodes=g.nodes.map { if(it.id=="building") it.copy(roof="roof") else it }) }
         building("direct-area-roof-building",Building(schema=2,graph=direct))
         val formNodes=NodeKind.entries.map { GraphModels.newShape(it).copy(id=it.name) }

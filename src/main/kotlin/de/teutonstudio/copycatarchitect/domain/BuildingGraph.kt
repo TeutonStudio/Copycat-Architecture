@@ -2,7 +2,7 @@ package de.teutonstudio.copycatarchitect.domain
 
 import java.util.concurrent.ConcurrentHashMap
 
-enum class BuildingKind { COUNT, INT_ABS, INT_TO_COUNT, INT_REMAINDER, BOOLEAN, INT_COMPARE, BOOLEAN_LOGIC, CONDITIONAL, ROOF_TEMPLATE, SERVICE_SHAFT_SEGMENT, ELEVATOR_SHAFT_SEGMENT, INT, ROTATION_SEGMENT, AREA, COPYCAT, SEGMENT_LAYOUT, SEGMENT, PATTERN, ROOM_GEOMETRY, FLOOR, CEILING, ROOM, STOREY, ROOF_LEVEL, ROOF_LAYOUT, ROOF, STAIRWELL, ELEVATOR_SHAFT, SERVICE_SHAFT, BUILDING, GARDEN, PATH, SEGMENT_MIRROR, COPYCAT_MIRROR, SEGMENT_ROTATE, COPYCAT_ROTATE, ROOM_LAYOUT, SEGMENT_UNION, SEGMENT_INTERSECTION, SEGMENT_DIFFERENCE, SEGMENT_SYMMETRIC_DIFFERENCE, COPYCAT_UNION, COPYCAT_INTERSECTION, COPYCAT_DIFFERENCE, COPYCAT_SYMMETRIC_DIFFERENCE, ROTATION, MIRRORING, BAY_WINDOW, DORMER, POSITION, COPYCAT_POSITION, INT_ADD, INT_SUBTRACT, INT_MULTIPLY, INT_DIVIDE, INT_MIN, INT_MAX, POSITION_ADD, POSITION_SUBTRACT, POSITION_MULTIPLY, POSITION_DIVIDE, POSITION_MIN, POSITION_MAX, POSITION_X, POSITION_Y, POSITION_Z, TRANSFORMATION, COPYCAT_TRANSFORM, SEGMENT_TRANSFORM, COPYCAT_OPERATOR, SEGMENT_OPERATOR, POSITION_OPERATOR, NUMBER_OPERATOR, RELATION_OPERATOR, STATEMENT_OPERATOR }
+enum class BuildingKind { RESULT, GROUP_INPUT, GRAPH_REFERENCE, COUNT, INT_ABS, INT_TO_COUNT, INT_REMAINDER, BOOLEAN, INT_COMPARE, BOOLEAN_LOGIC, CONDITIONAL, ROOF_TEMPLATE, SERVICE_SHAFT_SEGMENT, ELEVATOR_SHAFT_SEGMENT, INT, ROTATION_SEGMENT, AREA, COPYCAT, SEGMENT_LAYOUT, SEGMENT, PATTERN, ROOM_GEOMETRY, FLOOR, CEILING, ROOM, STOREY, ROOF_LEVEL, ROOF_LAYOUT, ROOF, STAIRWELL, ELEVATOR_SHAFT, SERVICE_SHAFT, BUILDING, GARDEN, PATH, SEGMENT_MIRROR, COPYCAT_MIRROR, SEGMENT_ROTATE, COPYCAT_ROTATE, ROOM_LAYOUT, SEGMENT_UNION, SEGMENT_INTERSECTION, SEGMENT_DIFFERENCE, SEGMENT_SYMMETRIC_DIFFERENCE, COPYCAT_UNION, COPYCAT_INTERSECTION, COPYCAT_DIFFERENCE, COPYCAT_SYMMETRIC_DIFFERENCE, ROTATION, MIRRORING, BAY_WINDOW, DORMER, POSITION, COPYCAT_POSITION, INT_ADD, INT_SUBTRACT, INT_MULTIPLY, INT_DIVIDE, INT_MIN, INT_MAX, POSITION_ADD, POSITION_SUBTRACT, POSITION_MULTIPLY, POSITION_DIVIDE, POSITION_MIN, POSITION_MAX, POSITION_X, POSITION_Y, POSITION_Z, TRANSFORMATION, COPYCAT_TRANSFORM, SEGMENT_TRANSFORM, COPYCAT_OPERATOR, SEGMENT_OPERATOR, POSITION_OPERATOR, NUMBER_OPERATOR, RELATION_OPERATOR, STATEMENT_OPERATOR }
 data class SegmentLayoutCell(val x:Int=0,val y:Int=0,val sourceIndex:Int=0,val turn:Int=0)
 data class BuildingNode(
     val id:String="",val kind:BuildingKind=BuildingKind.SEGMENT,val name:String="",val x:Int=0,val y:Int=0,
@@ -37,6 +37,9 @@ data class BuildingNode(
     val roofInputMode:RoofInputMode?=null,val roofTemplate:String?=null,val roofSettings:RoofTemplateSettings?=null,
     val libraryReference:GraphLibraryReference?=null,val columnMode:RotationSegmentMode?=null,val countValue:Int?=null,val dimensions:Map<String,String>?=null,
     val resultType:String?=null,val inlinePart:Part?=null,
+    val resultMode:GraphResultMode?=null,val producerKind:BuildingKind?=null,val producerOutput:String?=null,val resultSource:String?=null,
+    val valueType:String?=null,val defaultSource:String?=null,val boundSource:String?=null,
+    val referenceKey:String?=null,val arguments:Map<String,String>?=null,
     val areaMode:AreaMode?=null,val dynamicAxes:Set<RotationAxis>?=null,val adaptiveRoof:Boolean?=null,
     val roofPeak:String?=null,val roofEave:String?=null,
     val rotation:String?=null,val mirroring:String?=null,val rotations:List<SegmentRotation>?=null,val mirrors:List<CopycatMirror>?=null
@@ -51,13 +54,15 @@ internal fun BuildingNode.trimCopycatInputs():BuildingNode {
     return if(trimmed.size==inputs.size) this else copy(inputs=trimmed,offsets=offsets.take(trimmed.size),sitePaths=sitePaths.filterKeys { it<trimmed.size })
 }
 data class BuildingGraph(val schema:Int=1,val nodes:List<BuildingNode> = emptyList(),val projection:BuildingProjection=BuildingProjection(),
-                         val nodeGroups:List<GraphGroup> = emptyList()) {
+                         val nodeGroups:List<GraphGroup> = emptyList(),val groupInputOrder:List<String>?=null,
+                         val graphDefinitions:Map<String,GraphDefinition>?=null) {
     fun resultNode():BuildingNode=nodes.singleOrNull { it.resultType!=null } ?: nodes.single { n -> n.kind==BuildingKind.BUILDING && nodeGroups.none { n.id in it.nodes } }
     fun replace(n:BuildingNode)=GraphNumbers.edit(this,GraphGroups.synchronize(this,copy(nodes=nodes.map { if(it.id==n.id) n else it })).withCurrentSchema())
     fun remove(id:String):BuildingGraph=GraphGroups.synchronize(this,removeLocal(id))
     internal fun removeLocal(id:String):BuildingGraph {
         require(id!="empty_wall" && id!=resultNode().id) { "Keep the result and Empty wall source" }
-        return copy(nodeGroups=GraphGroups.prune(nodeGroups,nodes.map { it.id }.toSet()-id),nodes=nodes.filter { it.id!=id }.map { original -> val n=BuildingSemantics.remapReferences(original) { _,ref->if(ref==id) "" else ref };n.copy(
+        return copy(groupInputOrder=groupInputOrder?.filter { it!=id },nodeGroups=GraphGroups.prune(nodeGroups,nodes.map { it.id }.toSet()-id),nodes=nodes.filter { it.id!=id }.map { original -> val n=BuildingSemantics.remapReferences(original) { _,ref->if(ref==id) "" else ref };n.copy(
+            resultSource=n.resultSource?.takeUnless { it==id },defaultSource=n.defaultSource?.takeUnless { it==id },boundSource=n.boundSource?.takeUnless { it==id },arguments=n.arguments?.mapValues { (_,ref)->if(ref==id) "" else ref },
             dimensions=n.dimensions?.filterValues { it!=id },
             positionValue=n.positionValue?.takeUnless { it==id },transformationValue=n.transformationValue?.takeUnless { it==id },
             inputs=n.inputs.map { if(it==id) "" else it },walls=n.walls.filterValues { it!=id },verticalEdges=n.verticalEdges?.filterValues { it!=id },
@@ -73,9 +78,12 @@ data class BuildingGraph(val schema:Int=1,val nodes:List<BuildingNode> = emptyLi
             roofConfig=n.roofConfig?.let { it.copy(wall=it.wall.takeUnless { s->s==id }.orEmpty(),variants=it.variants.filterValues { s->s!=id },families=it.families.map { family->family.copy(variants=family.variants.filterValues { s->s!=id }) }) }).withLevels(n.levels.filterValues { it!=id }).trimCopycatInputs() }).withCurrentSchema()
     }
     fun connect(target:String,key:String,source:String):BuildingGraph {
-        val n=nodes.first { it.id==target }
+        val original=nodes.first { it.id==target };val n=GraphPrograms.producer(original)
         require(BuildingPorts.of(n,this,true).any { it.key==key }) { "Unknown building socket" }
         var changed=when {
+            key=="resultSource" -> n.copy(resultSource=source)
+            key=="defaultSource" -> n.copy(defaultSource=source)
+            key.startsWith("arg:") -> n.copy(arguments=n.arguments.orEmpty()+(key.removePrefix("arg:") to source))
             key in setOf("length","height") -> n.copy(dimensions=if(source.isEmpty()) n.dimensions.orEmpty()-key else n.dimensions.orEmpty()+(key to source))
             key=="rotation" -> n.copy(rotation=source.takeIf(String::isNotEmpty))
             key=="mirroring" -> n.copy(mirroring=source.takeIf(String::isNotEmpty))
@@ -128,10 +136,10 @@ data class BuildingGraph(val schema:Int=1,val nodes:List<BuildingNode> = emptyLi
             else -> error("Unknown building socket")
         }
         if(key=="geometry" && n.kind==BuildingKind.ROOM && source.isNotEmpty()) {
-            val connected=replace(changed).resolvedNode(changed)
+            val connected=replace(GraphPrograms.restore(original,changed)).resolvedNode(changed)
             changed=RoomGeometry.reshape(resolvedNode(n),connected.rectangles).copy(geometry=source,assembly=true,rectangles=n.rectangles)
         }
-        val graph=replace(changed.trimCopycatInputs());BuildingGraphCompiler.structure(graph)
+        val graph=replace(GraphPrograms.restore(original,changed).trimCopycatInputs());BuildingGraphCompiler.structure(graph)
         if(key=="geometry" && n.kind==BuildingKind.ROOM && n.geometry!=changed.geometry) graph.validateRoomPlacements(setOf(target))
         return graph.remapGeometryDependents(this)
     }
@@ -264,26 +272,39 @@ object BuildingPorts {
         } else emptyList()
 
     fun of(n:BuildingNode,graph:BuildingGraph,expanding:Boolean=false,includeInactive:Boolean=false):List<BuildingPort> {
+        val programKinds=if(graph.schema>=14) setOf(BuildingKind.GROUP_INPUT,BuildingKind.GRAPH_REFERENCE) else emptySet()
+        fun typed(key:String,source:String,type:String?)=BuildingPort(key,source,BuildingKind.entries.filter { it in programKinds || it==BuildingKind.CONDITIONAL || type==null || GraphNumbers.producer(it.name,type) || GraphNumbers.compatible(buildingGraphType(it),type) }.toSet(),valueType=type)
+        if(n.kind==BuildingKind.RESULT) {
+            if(n.resultMode==GraphResultMode.VALUE) return listOf(typed("resultSource",n.resultSource.orEmpty(),n.resultType))
+            return of(GraphPrograms.producer(n).copy(resultType=null),graph,expanding,includeInactive)
+        }
+        if(n.kind==BuildingKind.GROUP_INPUT) return listOf(typed("defaultSource",n.defaultSource.orEmpty(),n.valueType))+
+            if(includeInactive && !n.boundSource.isNullOrEmpty()) listOf(typed("boundSource",n.boundSource,n.valueType)) else emptyList()
+        if(n.kind==BuildingKind.GRAPH_REFERENCE) {
+            val definition=graph.graphDefinitions.orEmpty()[n.referenceKey]?.document?.graph
+            return definition?.let { GraphPrograms.parameters(it).map { p -> typed("arg:${p.id}",n.arguments.orEmpty()[p.id].orEmpty(),p.type) } }.orEmpty()+
+                if(includeInactive && !n.boundSource.isNullOrEmpty()) listOf(typed("boundSource",n.boundSource,n.valueType)) else emptyList()
+        }
         if(n.kind==BuildingKind.ROOF_TEMPLATE || n.kind==BuildingKind.ROOF && n.roofInputMode!=null) {
-            val geometry=BuildingKind.entries.filter { buildingGraphType(it) in setOf("COPYCAT","WALL","ROOF") || it==BuildingKind.CONDITIONAL }.toSet()
+            val geometry=BuildingKind.entries.filter { it in programKinds || buildingGraphType(it) in setOf("COPYCAT","WALL","ROOF") || it==BuildingKind.CONDITIONAL }.toSet()
             val variants=(0..7).map { i->BuildingPort("in:$i",n.inputs.getOrNull(i).orEmpty(),geometry,i) }
             if(n.kind==BuildingKind.ROOF_TEMPLATE) return variants
-            return listOf(BuildingPort("geometry",n.geometry,setOf(BuildingKind.AREA,BuildingKind.CONDITIONAL)))+
-                (if(n.roofInputMode==RoofInputMode.TEMPLATE || includeInactive) listOf(BuildingPort("roofTemplate",n.roofTemplate.orEmpty(),setOf(BuildingKind.ROOF_TEMPLATE,BuildingKind.CONDITIONAL))) else emptyList())+
+            return listOf(BuildingPort("geometry",n.geometry,setOf(BuildingKind.AREA,BuildingKind.CONDITIONAL)+programKinds))+
+                (if(n.roofInputMode==RoofInputMode.TEMPLATE || includeInactive) listOf(BuildingPort("roofTemplate",n.roofTemplate.orEmpty(),setOf(BuildingKind.ROOF_TEMPLATE,BuildingKind.CONDITIONAL)+programKinds)) else emptyList())+
                 if(n.roofInputMode==RoofInputMode.SEGMENTS || includeInactive) variants else emptyList()
         }
         val nodes=GraphNumbers.buildingContext(graph)
         if(n.kind==BuildingKind.BUILDING && n.resultType!=null) return listOf(BuildingPort("in:0",n.inputs.firstOrNull().orEmpty(),
-            BuildingKind.entries.filter { it==BuildingKind.CONDITIONAL || GraphNumbers.producer(it.name,n.resultType!!) || buildingGraphType(it)==n.resultType }.toSet(),valueType=n.resultType))
+            BuildingKind.entries.filter { it in programKinds || it==BuildingKind.CONDITIONAL || GraphNumbers.producer(it.name,n.resultType!!) || buildingGraphType(it)==n.resultType }.toSet(),valueType=n.resultType))
         if(n.kind==BuildingKind.CONDITIONAL) {
             val type=GraphTypes.building(nodes,n.id)
             return (0..2).map { i -> BuildingPort("in:$i",n.inputs.getOrNull(i).orEmpty(),BuildingKind.entries.filter { candidate ->
-                candidate==BuildingKind.CONDITIONAL || if(i==1) buildingGraphType(candidate)=="BOOLEAN" else type==null || GraphNumbers.producer(candidate.name,type) || buildingGraphType(candidate)==type
+                candidate in programKinds || candidate==BuildingKind.CONDITIONAL || if(i==1) buildingGraphType(candidate)=="BOOLEAN" else type==null || GraphNumbers.producer(candidate.name,type) || buildingGraphType(candidate)==type
             }.toSet(),i) }
         }
         return of(graph.resolvedNode(n),expanding,includeInactive).map { port ->
             val expected=GraphNumbers.expected(graph,n,port)
-            port.copy(accepts=port.accepts+BuildingKind.CONDITIONAL+(if(expected in setOf("INT","COUNT")) BuildingCounts.kinds else emptySet()),valueType=expected)
+            port.copy(accepts=port.accepts+BuildingKind.CONDITIONAL+programKinds+(if(expected in setOf("INT","COUNT")) BuildingCounts.kinds else emptySet()),valueType=expected)
         }
     }
     /** Inactive roof references remain stored and validated when the roof type or axis changes. */
@@ -359,17 +380,21 @@ data class StoreyPosition(val level:Int,val base:Int,val minimum:Int,val maximum
 data class CompiledBuilding(val plan:Plan,val storeys:List<StoreyPosition>,val accessFootprints:Map<String,Set<P>> = emptyMap())
 object BuildingGraphCompiler {
     fun structure(graph:BuildingGraph) {
+        GraphPrograms.validate(graph)
+        val expanded=GraphPrograms.expand(graph).graph
+        if(expanded!==graph) { structure(expanded);return }
         graph.projection.validate()
-        require(graph.schema in GraphModels.building.graphSchemas && graph.nodes.size in 1..GraphModels.building.maxNodes) { "Unsupported building graph schema ${graph.schema} or node count; supported schemas: ${GraphModels.building.graphSchemas}" }
+        require(graph.schema in GraphModels.building.graphSchemas && graph.nodes.size in 1..if(graph.nodes.any { GraphPrograms.producer(it).kind==BuildingKind.GRAPH_REFERENCE && it.boundSource!=null }) 3072 else GraphModels.building.maxNodes) { "Unsupported building graph schema ${graph.schema} or node count; supported schemas: ${GraphModels.building.graphSchemas}" }
         val required=graph.withCurrentSchema().schema
         require(required<5 || graph.schema>=required) { "These building functions require building graph schema $required" }
         val nodes=GraphNumbers.buildingContext(graph)
         require(nodes.size==graph.nodes.size && nodes.keys.all { it.matches(Regex("[a-zA-Z0-9_-]{1,36}")) }) { "Building node IDs must be unique" }
         GraphGroups.validate(graph)
         val cardResults=graph.nodes.filter { it.resultType!=null }
-        require(if(cardResults.isNotEmpty()) cardResults.size==1 && cardResults.single().kind==BuildingKind.BUILDING && graph.nodeGroups.none { cardResults.single().id in it.nodes } else graph.nodes.count { n -> n.kind==BuildingKind.BUILDING && graph.nodeGroups.none { n.id in it.nodes } }==1) { "Keep exactly one graph result outside group graphs" }
+        require(if(cardResults.isNotEmpty()) cardResults.size==1 && (cardResults.single().kind==BuildingKind.BUILDING || cardResults.single().kind==BuildingKind.RESULT) && graph.nodeGroups.none { cardResults.single().id in it.nodes } else graph.nodes.count { n -> n.kind==BuildingKind.BUILDING && graph.nodeGroups.none { n.id in it.nodes } }==1) { "Keep exactly one graph result outside group graphs" }
         require(nodes["empty_wall"]?.let { it.kind==BuildingKind.SEGMENT && it.block=="minecraft:air" && it.inputs.isEmpty() }==true) { "Keep the standard Empty wall source" }
-        for(n in graph.nodes) {
+        for(raw in graph.nodes) {
+            val n=GraphPrograms.producer(raw)
             GraphCards.validate(n)
             require(n.booleanValue==null || n.kind==BuildingKind.BOOLEAN || n.kind.name in UnifiedOperators.kinds) { "Booleanwerte gehören an Booleanquellen" }
             if(n.kind.name in GraphTypes.logicKinds || n.kind==BuildingKind.CONDITIONAL) {
@@ -530,8 +555,10 @@ object BuildingGraphCompiler {
         require(parts.size<=32) { "Shared walls exceed 32 source parts in one block" }
         return first.copy(parts=Geometry.normalized(parts,groups),groups=groups,surfaces=surfaces)
     }
-    class Evaluation(val graph:BuildingGraph,val palette:Map<String,String>,forms:Map<String,Form>,val modules:Map<String,Module>,private val resultId:String=graph.resultNode().id) {
-        val forms:MutableMap<String,Form> = forms.toMutableMap()
+    class Evaluation(graph:BuildingGraph,palette:Map<String,String>,forms:Map<String,Form>,modules:Map<String,Module>,private val resultId:String=graph.resultNode().id) {
+        private val prepared=GraphPrograms.expand(graph,palette,forms,modules)
+        val graph=prepared.graph;val palette=prepared.palette;val modules=prepared.modules
+        val forms:MutableMap<String,Form> = prepared.forms.toMutableMap()
         private val nodes=GraphConditions.buildingNodes(GraphNumbers.buildingContext(graph))
         private var activeAccess:AccessCompilation?=null
         private var activeStoreyId=""
@@ -885,7 +912,7 @@ require(n.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,Build
                     r.plan(if(n.kind in ShaftSegments.kinds) listOf("Vorschauhöhe: ${value.height} Blöcke; die geschossgebundene Platzierung bestimmt die dynamische Höhe und Haltestellen") else emptyList())
                 }
                 BuildingKind.GARDEN,BuildingKind.PATH -> landscape(n)
-                BuildingKind.BUILDING -> if(n.resultType!=null) { val input=n.inputs.singleOrNull().orEmpty();require(input.isNotEmpty()) { "Connect the graph result" };preview(input) } else if(n.id==resultId) building().plan else Evaluation(graph,palette,forms,modules,n.id).building().plan
+                BuildingKind.BUILDING -> if(n.resultType!=null && n.resultMode!=GraphResultMode.CONSTRUCT) { val input=n.inputs.singleOrNull().orEmpty();require(input.isNotEmpty()) { "Connect the graph result" };preview(input) } else if(n.id==resultId) building().plan else Evaluation(graph,palette,forms,modules,n.id).building().plan
                 BuildingKind.ROOM_LAYOUT -> {
                     val resolved=RoomTopology.resolve(n,::segment);val r=Resolver()
                     for(item in resolved.instances) if(item.definition.policy!=WallPolicy.OPEN) for(entries in item.value.cells.groupBy { it.cell.pos }.values) {
@@ -1574,7 +1601,7 @@ require(n.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,Build
         val graph=b.graph ?: error("Missing building graph")
         val result=graph.resultNode()
         require(result.resultType==null || result.resultType=="BUILDING") { "This card does not output a building" }
-        val source=if(result.resultType==null) result.id else result.inputs.singleOrNull().orEmpty()
+        val source=GraphPrograms.resultSource(result)
         return Evaluation(graph,b.palette,forms,modules,source).building()
     }
 }

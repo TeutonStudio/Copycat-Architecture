@@ -1,3 +1,4 @@
+import { migrateEntry } from './documents.js'
 const DB = 'copycat-architect-graphstudio'
 let connection
 export function database() {
@@ -36,18 +37,23 @@ export async function saveWorkspace(data, expectedRevision) {
       : 'Speichern fehlgeschlagen. Bitte eine Sicherung exportieren; der letzte gespeicherte Stand bleibt erhalten.'))
   })
 }
-export const emptyWorkspace = () => ({ schema: 1, drafts: {}, graphs: [], nodeGroups: [], mods: [] })
+export const emptyWorkspace = () => ({ schema: 1, drafts: {}, graphs: [], nodeGroups: [], mods: [], documentNames: {} })
 export function validateWorkspace(value) {
   if (!value || value.schema !== 1 || !value.drafts || typeof value.drafts !== 'object' || Array.isArray(value.drafts) ||
     !['graphs', 'nodeGroups', 'mods'].every(key => Array.isArray(value[key]))) throw new Error('Keine gültige Graphstudio-Sicherung (Schema 1).')
   if (value.graphs.length > 500 || value.nodeGroups.length > 500 || value.mods.length > 100) throw new Error('Die Sicherung enthält zu viele Einträge.')
   const validMaterials = materials => materials === undefined || (materials && !Array.isArray(materials) && typeof materials === 'object' && Object.values(materials).every(value => typeof value === 'string'))
   const validDoc = entry => entry && ['form', 'building'].includes(entry.mode) && entry.document?.graph && Array.isArray(entry.document.graph.nodes) && validMaterials(entry.materials)
-  if (value.graphs.some(entry => !entry.id || !validDoc(entry)) || Object.values(value.drafts).some(entry => !validDoc(entry)) ||
-    value.nodeGroups.some(entry => !entry.id || !['form', 'building'].includes(entry.mode) || !Array.isArray(entry.nodes) || !Array.isArray(entry.wires) || !Array.isArray(entry.groups) || !validMaterials(entry.materials)) ||
+  const versioned = entry => entry && typeof entry.id === 'string' && (entry.version === undefined || Number.isSafeInteger(entry.version) && entry.version > 0) && (entry.documentId === undefined || typeof entry.documentId === 'string' && entry.documentId.length > 0)
+  if (value.graphs.some(entry => !versioned(entry) || !validDoc(entry)) || Object.values(value.drafts).some(entry => !validDoc(entry)) ||
+    value.nodeGroups.some(entry => !versioned(entry) || !['form', 'building'].includes(entry.mode) || !Array.isArray(entry.nodes) || !Array.isArray(entry.wires) || !Array.isArray(entry.groups) || !validMaterials(entry.materials)) ||
     value.mods.some(entry => !/^[\w.-]+\/[\w.-]+$/.test(entry.repo) || !/^[a-f0-9]{40}$/.test(entry.commit) || !entry.blocks || !entry.models || !entry.textures || !Array.isArray(entry.ids) || !Array.isArray(entry.dependencies))) throw new Error('Die Sicherung enthält unvollständige Einträge.')
   for (const mod of value.mods) for (const values of [mod.blocks, mod.models, mod.textures]) for (const url of Object.values(values)) {
     if (typeof url !== 'string' || !url.startsWith(`https://raw.githubusercontent.com/${mod.repo}/${mod.commit}/`)) throw new Error('Die Sicherung enthält ungültige Ressourcen-Adressen.')
   }
+  if (value.documentNames !== undefined && (!value.documentNames || typeof value.documentNames !== 'object' || Array.isArray(value.documentNames)
+    || Object.values(value.documentNames).some(name => typeof name !== 'string' || !name.trim() || name.length > 64 || /[\x00-\x1f]/.test(name)))) throw new Error('Ungültige gemeinsame Graphnamen in der Sicherung.')
   return value
 }
+
+export const migrateWorkspace = value => ({...value,graphs:value.graphs.map(migrateEntry),nodeGroups:value.nodeGroups.map(migrateEntry)})

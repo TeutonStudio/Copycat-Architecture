@@ -905,5 +905,8 @@
   "copycat_architect.node_int_abs": "Betrag |x|",
   "copycat_architect.node_int_to_count": "Als Anzahl",
   "copycat_architect.node_int_remainder": "Divisionsrest",
-  "copycat_architect.node_int": "Ganzzahl"
+  "copycat_architect.node_int": "Ganzzahl",
+  "gui.copycat_architect.node.result": "Result",
+  "gui.copycat_architect.node.group_input": "Group input",
+  "gui.copycat_architect.node.graph_reference": "Graph reference"
 }

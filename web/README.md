@@ -1,5 +1,10 @@
 # Copycat Architect Graphstudio 0.6.4
 
+Dieser Webadapter wird im Organisationsrepo gepflegt. Start, Tests und Build
+erfolgen über die [Graphstudio-Anleitung](../../../README.md). Die folgenden
+Upstream-Befehle und relativen Modpfade beziehen sich auf die während des Builds
+unter `.cache/copycat-build` zusammengesetzte Mod-/Webstruktur.
+
 Browsereditor für Form- und Gebäudegraphen. Die Beispieldateien stammen aus
 [`examples/`](../examples). Die beiden Editoren verwalten getrennte Entwürfe.
 

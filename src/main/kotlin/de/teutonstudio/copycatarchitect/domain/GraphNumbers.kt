@@ -9,7 +9,7 @@ object GraphNumbers {
     fun modern(nodes:Map<String,*>):Boolean=(nodes as? NumericContext)?.modernNumbers ?: nodes.values.any { when(it) { is GraphNode->it.kind.name in newKinds;is BuildingNode->it.kind.name in newKinds;else->false } }
     fun <T> context(raw:Map<String,T>,modern:Boolean):Map<String,T> = object:Map<String,T> by raw,NumericContext { override val modernNumbers=modern }
     fun shapeContext(graph:NodeGraph)=context(graph.nodes.associateBy { it.id },graph.schema>=9)
-    fun buildingContext(graph:BuildingGraph)=context(graph.nodes.associateBy { it.id },graph.schema>=13)
+    fun buildingContext(graph:BuildingGraph)=context(GraphPrograms.expand(graph).graph.nodes.associateBy { it.id },graph.schema>=13)
     fun compatible(actual:String?,expected:String?)=actual==null || expected==null || actual==expected || actual=="COUNT" && expected=="INT"
     fun producer(kind:String,type:String)=kind in numericKinds && type in setOf("INT","COUNT")
     fun countKeys(n:BuildingNode):Set<String> = when {
@@ -73,7 +73,11 @@ object GraphNumbers {
         val changed=after.nodes.filter { it.id in a && runCatching { GraphTypes.building(a,it.id) }.getOrNull()!=runCatching { GraphTypes.building(b,it.id) }.getOrNull() }.map { it.id }.toSet()
         var nodes=after.nodes.map { n->
             val ports=BuildingPorts.of(n,after,true,true).associateBy { it.key }
-            GraphGroups.remap(n) { key,source->if(source in changed && ports[key]?.let { !GraphTypes.accepts(after,it,b.getValue(source)) }==true) "" else source }
+            val previous=before.nodes.firstOrNull { it.id==n.id }?.let { BuildingPorts.of(it,before,true,true).associateBy { p->p.key } }.orEmpty()
+            GraphGroups.remap(n) { key,source->
+                val port=ports[key];val prior=previous[key]
+                if(source.isNotEmpty() && source in b && port!=null && (source in changed || prior!=null && (prior.valueType!=port.valueType || prior.accepts!=port.accepts)) && !GraphTypes.accepts(after,port,b.getValue(source))) "" else source
+            }
         }
         val faces=groups(after.nodeGroups,{GraphTypes.building(b,it)},changed).map { g->
             val invalid=g.graphInterface?.inputs.orEmpty().filter { input->g.inputConnections[input.id]?.let { it in changed && !compatible(GraphTypes.building(b,it),input.type) }==true }

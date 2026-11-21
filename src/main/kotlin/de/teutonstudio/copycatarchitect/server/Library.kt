@@ -25,7 +25,7 @@ data class PrintSettings(val surfaces:Map<String,String> = emptyMap(),val turn:I
     }
 }
 data class Library(val forms:MutableMap<String,Form> = linkedMapOf(),val modules:MutableMap<String,Module> = linkedMapOf(),val buildings:MutableMap<String,Building> = linkedMapOf(),val history:MutableList<PrintRecord> = mutableListOf(),
-    val printSettings:MutableMap<String,PrintSettings> = linkedMapOf()) {
+    val printSettings:MutableMap<String,PrintSettings> = linkedMapOf(),val graphs:MutableMap<String,GraphDefinition> = linkedMapOf()) {
     companion object { const val MAX_JSON_CHARS=500000 }
     /** Versioned building documents share this bounded persistent library. */
     fun validateStorageSize() {
@@ -41,6 +41,14 @@ data class Library(val forms:MutableMap<String,Form> = linkedMapOf(),val modules
         val candidate=copy(forms=(forms+(key to form)).toMutableMap(),printSettings=(printSettings+(key to settings)).toMutableMap())
         candidate.validateStorageSize()
         forms[key]=form;printSettings[key]=settings;return key
+    }
+    fun saveGraph(key:String,definition:GraphDefinition) {
+        require(key.matches(Regex("[a-zA-Z0-9_-]{1,64}@[1-9][0-9]*")) && graphs.size<128) { "Ungültige Graphversion oder Bibliothek voll" }
+        require(graphs[key]==null || graphs[key]==definition) { "Gespeicherte Graphversionen sind unveränderlich" }
+        BuildingGraphCompiler.validateMetadata(definition.document)
+        BuildingGraphCompiler.structure(requireNotNull(definition.document.graph))
+        copy(graphs=(graphs+(key to definition)).toMutableMap()).validateStorageSize()
+        graphs[key]=definition
     }
     fun seed() {
         if(forms.isNotEmpty()) return

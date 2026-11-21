@@ -67,10 +67,10 @@ test('building templates carry their library without silently replacing another 
 })
 
 test('native roof arrangement references are remapped when saving and inserting a browser selection', () => {
-  const document = { schema: 2, name: 'Roof', graph: { schema: 2, nodes: [
+  const document = { schema: 2, name: 'Roof', graph: { schema: 7, nodes: [
     { ...newNode(true, 'SEGMENT', 'empty_wall', 0, 0), block: 'minecraft:air' },
     newNode(true, 'BUILDING', 'building', 100, 0),
-    { ...newNode(true, 'AREA', 'area', 20, 0), coordinates: [{ x: 0, y: 0, z: 0 }] },
+    { ...newNode(true, 'AREA', 'area', 20, 0), areaMode:'DRAW', coordinates: [{ x: 0, y: 0, z: 0 }] },
     { ...newNode(true, 'ROOF_LEVEL', 'level', 40, 0), roofLevel: { area: 'area' } },
     { ...newNode(true, 'ROOF_LAYOUT', 'layout', 60, 0), inputs: ['level'] },
     { ...newNode(true, 'ROOF', 'roof', 80, 0), assembly: true, layout: 'layout' },

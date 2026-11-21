@@ -23,3 +23,8 @@ export function segmentRegionName(key) {
   })
   return `${category}${names.length ? ` · ${names.join(' · ')}` : ''}`
 }
+
+export const compassDirections = [
+  {label:'Nord (−Z)',x:0,z:-1,axis:'z'}, {label:'Ost (+X)',x:1,z:0,axis:'x'},
+  {label:'Süd (+Z)',x:0,z:1,axis:'z'}, {label:'West (−X)',x:-1,z:0,axis:'x'},
+]

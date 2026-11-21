@@ -56,7 +56,8 @@ object DiagramEdits {
             for(port in ports.getValue(n.id).values) if(port.key !in visible && port.source in byId && (n.id to port.key) !in wires)
                 wires[n.id to port.key]=DiagramConnection(port.source,n.id,port.key)
         }
-        val changed=GraphGroups.synchronize(original,original.copy(nodeGroups=GraphGroups.prune(original.nodeGroups,byId.keys),nodes=original.nodes.filter { it.id in byId }.map { n ->
+        val changed=GraphGroups.synchronize(original,original.copy(groupInputOrder=original.groupInputOrder?.filter { it in byId },nodeGroups=GraphGroups.prune(original.nodeGroups,byId.keys),nodes=original.nodes.filter { it.id in byId }.map { raw ->
+            val n=if(raw.kind==BuildingKind.RESULT && raw.resultMode==GraphResultMode.VALUE) raw else GraphPrograms.producer(raw)
             val p=byId.getValue(n.id);var next=n.copy(x=p.x,y=p.y)
             val changedPorts=ports.getValue(n.id).values.filter { port ->
                 val source=wires[n.id to port.key]?.source.orEmpty()
@@ -66,6 +67,9 @@ object DiagramEdits {
                 val source=wires[n.id to port.key]?.source.orEmpty()
                 if(source.isNotEmpty()) require(original.nodes.first { it.id==source }.kind in port.accepts) { "Incompatible building connection" }
                 when {
+                    port.key=="resultSource" -> next=next.copy(resultSource=source)
+                    port.key=="defaultSource" -> next=next.copy(defaultSource=source)
+                    port.key.startsWith("arg:") -> next=next.copy(arguments=next.arguments.orEmpty()+(port.key.removePrefix("arg:") to source))
                     port.key.startsWith("semantic:") -> next=BuildingSemantics.remapReferences(next) { key,ref -> if("semantic:$key"==port.key) source else ref }
                     port.key=="rotation" -> next=next.copy(rotation=source.takeIf(String::isNotEmpty))
                     port.key=="mirroring" -> next=next.copy(mirroring=source.takeIf(String::isNotEmpty))
@@ -138,9 +142,9 @@ object DiagramEdits {
                 }.toMap()
                 next=next.withLevels(levels)
             }
-            BuildingSemantics.remapReferences(next.copy(regionCopies=next.regionCopies.filterValues { it in byId },roofConfig=next.roofConfig?.let { config->
+            GraphPrograms.restore(raw,GraphGroups.remap(next.copy(regionCopies=next.regionCopies.filterValues { it in byId },roofConfig=next.roofConfig?.let { config->
                 config.copy(wall=config.wall.takeIf { it in byId }.orEmpty(),variants=config.variants.filterValues { it in byId },families=config.families.map { family->family.copy(variants=family.variants.filterValues { it in byId }) })
-            })) { _,ref -> ref.takeIf { it in byId }.orEmpty() }.trimCopycatInputs()
+            })) { _,ref -> ref.takeIf { it in byId }.orEmpty() }.trimCopycatInputs())
         })).withCurrentSchema()
         BuildingGraphCompiler.structure(changed)
         val rewiredRooms=changed.nodes.filter { it.kind==BuildingKind.ROOM && it.geometry!=original.nodes.first { before -> before.id==it.id }.geometry }.map { it.id }.toSet()

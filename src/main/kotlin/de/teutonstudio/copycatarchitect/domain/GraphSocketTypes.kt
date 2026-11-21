@@ -2,6 +2,7 @@ package de.teutonstudio.copycatarchitect.domain
 
 /** Values, rather than implementation node variants, define graph interfaces. */
 fun buildingGraphType(kind:BuildingKind):String=when(kind) {
+    BuildingKind.RESULT,BuildingKind.GROUP_INPUT,BuildingKind.GRAPH_REFERENCE -> "VALUE"
     BuildingKind.COUNT,BuildingKind.INT_ABS,BuildingKind.INT_TO_COUNT -> "COUNT"
     BuildingKind.INT_REMAINDER -> "INT"
     BuildingKind.BOOLEAN,BuildingKind.INT_COMPARE,BuildingKind.BOOLEAN_LOGIC -> "BOOLEAN"

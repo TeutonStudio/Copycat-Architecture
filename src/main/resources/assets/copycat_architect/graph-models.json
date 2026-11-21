@@ -1241,7 +1241,8 @@
       10,
       11,
       12,
-      13
+      13,
+      14
     ],
     "defaultSchema": 2,
     "documentSchemas": [
@@ -6464,6 +6465,68 @@
         ],
         "alwaysExplicit": true,
         "commutativeAssociative": false
+      },
+      "RESULT": {
+        "labelKey": "node.result",
+        "commutativeAssociative": false,
+        "output": null,
+        "defaults": {
+          "resultType": "COPYCAT",
+          "resultMode": "CONSTRUCT",
+          "producerKind": "COPYCAT",
+          "inlinePart": {
+            "source": "copycats:copycat_block"
+          }
+        },
+        "legacyDefaults": {
+          "resultType": "COPYCAT",
+          "resultMode": "CONSTRUCT",
+          "producerKind": "COPYCAT",
+          "inlinePart": {
+            "source": "copycats:copycat_block"
+          }
+        },
+        "alwaysExplicit": true,
+        "ports": [],
+        "fields": {}
+      },
+      "GROUP_INPUT": {
+        "labelKey": "node.group_input",
+        "commutativeAssociative": false,
+        "output": "VALUE",
+        "defaults": {
+          "name": "Eingang",
+          "valueType": "COUNT",
+          "module": "",
+          "form": ""
+        },
+        "legacyDefaults": {
+          "name": "Eingang",
+          "valueType": "COUNT",
+          "module": "",
+          "form": ""
+        },
+        "alwaysExplicit": true,
+        "ports": [],
+        "fields": {}
+      },
+      "GRAPH_REFERENCE": {
+        "labelKey": "node.graph_reference",
+        "commutativeAssociative": false,
+        "output": "VALUE",
+        "defaults": {
+          "valueType": "COPYCAT",
+          "module": "",
+          "form": ""
+        },
+        "legacyDefaults": {
+          "valueType": "COPYCAT",
+          "module": "",
+          "form": ""
+        },
+        "alwaysExplicit": true,
+        "ports": [],
+        "fields": {}
       }
     }
   },

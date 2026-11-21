@@ -14,8 +14,8 @@ const positions=p=>p.meshes.flatMap(m=>m.positions.map(p=>Array.from(p))).sort((
 test('building rotation and mirroring values have typed ports and survive wiring and JSON',()=>{
  const d=doc([node('COPYCAT','copy'),node('ROTATION','r'),node('MIRRORING','m'),node('COPYCAT_ROTATE','rotate',{inputs:['copy']}),node('COPYCAT_MIRROR','mirror',{inputs:['rotate']})])
  const entries=inspect('building',d)
- assert.deepEqual(entries.find(e=>e.node.id==='rotate').ports.find(p=>p.id==='rotation').accepts,['ROTATION'])
- assert.deepEqual(entries.find(e=>e.node.id==='mirror').ports.find(p=>p.id==='mirroring').accepts,['MIRRORING'])
+ assert.deepEqual(entries.find(e=>e.node.id==='rotate').ports.find(p=>p.id==='rotation').accepts,['ROTATION','CONDITIONAL'])
+ assert.deepEqual(entries.find(e=>e.node.id==='mirror').ports.find(p=>p.id==='mirroring').accepts,['MIRRORING','CONDITIONAL'])
  const changed=applyWires('building',d,entries,[...connections(entries),{source:'r',target:'rotate',port:'rotation'},{source:'m',target:'mirror',port:'mirroring'}])
  const round=readGraph(JSON.parse(JSON.stringify(writeGraph('building',changed))),'building')
  assert.equal(round.graph.nodes.find(n=>n.id==='rotate').rotation,'r')

@@ -25,7 +25,7 @@ object GraphTypes {
         } finally { active.remove(id) }
     }
     fun shape(nodes:Map<String,GraphNode>,id:String):String?=infer(id,{nodes.getValue(it).kind.name},{nodes.getValue(it).inputs},{GraphModels.shape(nodes.getValue(it).kind).output},GraphNumbers.modern(nodes),mutableSetOf())
-    fun building(nodes:Map<String,BuildingNode>,id:String):String?=infer(id,{nodes.getValue(it).kind.name},{nodes.getValue(it).inputs},{buildingGraphType(nodes.getValue(it).kind)},GraphNumbers.modern(nodes),mutableSetOf())
+    fun building(nodes:Map<String,BuildingNode>,id:String):String?=infer(id,{GraphPrograms.producer(nodes.getValue(it)).kind.name},{GraphPrograms.producer(nodes.getValue(it)).inputs},{ val n=GraphPrograms.producer(nodes.getValue(it));if(n.kind in setOf(BuildingKind.GROUP_INPUT,BuildingKind.GRAPH_REFERENCE) || n.kind==BuildingKind.RESULT) GraphPrograms.type(n) else buildingGraphType(n.kind) },GraphNumbers.modern(nodes),mutableSetOf())
     fun building(graph:BuildingGraph,id:String)=building(GraphNumbers.buildingContext(graph),id)
     fun expectedShape(nodes:Map<String,GraphNode>,n:GraphNode,slot:Int):String? = if(n.kind==NodeKind.CONDITIONAL) {
         if(slot==1) "BOOLEAN" else shape(nodes,n.id)
@@ -58,7 +58,12 @@ object GraphConditions {
     fun buildingNodes(raw:Map<String,BuildingNode>):Map<String,BuildingNode> {
         val values=GraphValues.building(raw);val active=mutableSetOf<String>()
         fun read(id:String):BuildingNode? {
-            val n=raw[id] ?: return null
+            val n=GraphPrograms.producer(raw[id] ?: return null)
+            val alias=GraphPrograms.source(n)
+            if(alias!=null) {
+                require(active.add(id)) { "Cycle in graph arguments at $id" }
+                try { require(alias.isNotEmpty()) { "Gruppeneingang ${n.name.ifBlank { id }} benötigt einen Wert oder Standardwert" };return read(alias) } finally { active.remove(id) }
+            }
             if(n.kind!=BuildingKind.CONDITIONAL) return n
             require(active.add(id)) { "Cycle in conditional values" }
             try { return read(selected(n.inputs,values::boolean)) } finally { active.remove(id) }

@@ -3,7 +3,7 @@ import de.teutonstudio.copycatarchitect.domain.*
 import kotlin.test.*
 
 class GraphstudioNumbersTest {
-    private fun graph(vararg values:BuildingNode)=GraphCards.starter("INT").let { g->g.copy(schema=13,nodes=g.nodes.filter {it.id!="source"}.map {if(it.resultType!=null)it.copy(inputs=listOf(values.last().id)) else it}+values) }
+    private fun graph(vararg values:BuildingNode)=GraphCards.legacyStarter("INT").let { g->g.copy(schema=13,nodes=g.nodes.filter {it.id!="source"}.map {if(it.resultType!=null)it.copy(inputs=listOf(values.last().id)) else it}+values) }
     private fun value(k:BuildingKind,id:String,n:Int)=BuildingNode(id,k,countValue=n)
     private fun evaluate(g:BuildingGraph,id:String)=GraphValues.building(GraphNumbers.buildingContext(g)).integer(id)
     @Test fun `operator types follow operand types and never the current signs`() {

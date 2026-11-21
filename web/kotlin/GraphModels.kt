@@ -11,6 +11,10 @@ internal object GraphModels {
     private fun ints(value:dynamic)=list(value).map { it.unsafeCast<Int>() }.toSet()
     val copycat=Model(catalog.copycat)
     val building=Model(catalog.building)
+    val operators:Map<String,UnifiedOperators.Family> = names(catalog.operators).associateWith { kind ->
+        val f=catalog.operators[kind]
+        UnifiedOperators.Family(f.label as String,f.description as String,f.output as String,f.default as String,names(f.operations).associateWith { key -> val op=f.operations[key];UnifiedOperators.Operation(op.label as String,op.description as String,list(op.types).map { it as String },op.min as Int,op.max as Int,list(op.optional).map { it as Int },op.commutativeAssociative==true) })
+    }
     val coordinates=-8192..8192
     const val FORM_NODES=64
     const val FORM_SOURCES=32
@@ -34,8 +38,9 @@ internal object GraphModels {
         return value
     }
     fun newShape(kind:NodeKind):GraphNode = decodeGraphNode(defaults(catalog.copycat,kind.name,catalog.copycat.nodes[kind.name].defaults))
-        .copy(inputs=List(inputs(kind).first) { "" })
+        .let { n -> n.copy(inputs=List(if(kind in setOf(NodeKind.MIRROR,NodeKind.UNION,NodeKind.INTERSECTION,NodeKind.BOOLEAN_LOGIC)) 2 else if(kind==NodeKind.POSITION) 3 else UnifiedOperators.shapeInputs(n).min) { "" }) }
     fun newBuilding(kind:BuildingKind,explicit:Boolean):BuildingNode {
+        if(kind==BuildingKind.RESULT) return GraphPrograms.newResult()
         val model=catalog.building.nodes[kind.name]
         return decodeBuildingNode(defaults(catalog.building,kind.name,if(explicit || model.alwaysExplicit==true) model.defaults else model.legacyDefaults))
     }
@@ -47,6 +52,7 @@ internal object GraphModels {
                 val actual=when(field) {
                     "assembly"->node.assembly.toString();"id"->node.id
                     "roomConfig.mode"->node.roomConfig?.mode?.name;"storeyMode"->node.storeyMode;"roofType"->node.roofType
+                    "areaMode"->node.areaMode?.name;"adaptiveRoof"->node.adaptiveRoof.toString();"resultType"->node.resultType
                     else->error("Unknown graph port condition $field")
                 }
                 val value=rule.conditions[field]
@@ -66,13 +72,15 @@ internal object GraphModels {
         val nodes=names(value.nodes).associateWith { NodeModel(value.nodes[it]) }
     }
     class NodeModel(value:dynamic) {
+        val algebraAvailable=value.commutativeAssociative!=null || value.commutative!=null && value.associative!=null
+        // Older pinned catalogs expose the two mathematical flags separately.
+        val commutativeAssociative=if(value.commutativeAssociative!=null) value.commutativeAssociative==true else value.commutative==true && value.associative==true
         val output=value.output?.unsafeCast<String>()
         val inputs=if(value.inputs==null) null else ShapeInputs(value.inputs)
         val ports=list(value.ports).map(::BuildingPortModel)
     }
-    class ShapeInputs(value:dynamic) {
-        val min=value.min.unsafeCast<Int>();val max=value.max.unsafeCast<Int>()
-        private val types=list(value.types).map { it.unsafeCast<String>() }
+    class ShapeInputs(val min:Int,val max:Int,private val types:List<String>) {
+        constructor(value:dynamic):this(value.min.unsafeCast<Int>(),value.max.unsafeCast<Int>(),list(value.types).map { it.unsafeCast<String>() })
         fun type(slot:Int)=types.getOrElse(slot) { types.last() }
     }
     class BuildingPortModel(value:dynamic) {

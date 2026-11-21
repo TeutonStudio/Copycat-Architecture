@@ -6,7 +6,7 @@ import kotlin.test.*
 
 class GraphCardTest {
     @Test fun `result type constrains only the terminal while other value families coexist`() {
-        var g=GraphCards.starter()
+        var g=GraphCards.legacyStarter()
         val count=BuildingNode("number",BuildingKind.INT,countValue=6)
         val vector=BuildingNode("vector",BuildingKind.POSITION,inputs=listOf(count.id,count.id,count.id))
         g=g.copy(nodes=g.nodes+count+vector)
@@ -14,15 +14,15 @@ class GraphCardTest {
         val result=g.resultNode()
         val changed=g.replace(result.copy(resultType="POSITION",inputs=listOf(vector.id)))
         BuildingGraphCompiler.structure(changed)
-        assertEquals(setOf("POSITION"),BuildingPorts.of(changed.resultNode(),changed).single().accepts.filter { it!=BuildingKind.CONDITIONAL }.map(::buildingGraphType).toSet())
+        assertEquals(setOf("POSITION"),BuildingPorts.of(changed.resultNode(),changed).single().accepts.filter { it!=BuildingKind.CONDITIONAL && it !in GraphPrograms.kinds }.map(::buildingGraphType).toSet())
         assertFails { BuildingGraphCompiler.structure(changed.replace(changed.resultNode().copy(inputs=listOf(count.id)))) }
         assertEquals(8,changed.withCurrentSchema().schema)
         assertFails { BuildingGraphCompiler.structure(changed.copy(schema=7)) }
         assertEquals(changed,Gson().fromJson(Gson().toJson(changed),BuildingGraph::class.java))
     }
     @Test fun `every semantic result accepts every producer of its type`() {
-        val base=GraphCards.starter()
-        for(kind in BuildingKind.entries) {
+        val base=GraphCards.legacyStarter()
+        for(kind in BuildingKind.entries.filter { it !in GraphPrograms.kinds }) {
             val type=buildingGraphType(kind)
             val source=GraphModels.newBuilding(kind,true).copy(id="candidate")
             val result=base.resultNode().copy(resultType=type,inputs=listOf(source.id))
@@ -32,7 +32,7 @@ class GraphCardTest {
         }
     }
     @Test fun `inline Copycat sources remain editable geometry with native materials and transforms`() {
-        val base=GraphCards.starter()
+        val base=GraphCards.legacyStarter()
         val source=base.nodes.first { it.id=="source" }.copy(inlinePart=Part("copycats:copycat_byte"),surfaces=mapOf("body" to "minecraft:gold_block"),copycatTransforms=listOf(CopycatTransform(CopycatTransformKind.POSITION,offset=P(1,0,0))))
         val graph=base.replace(source)
         val plan=BuildingGraphCompiler.Evaluation(graph,Building().palette,emptyMap(),emptyMap()).preview(graph.resultNode().id)

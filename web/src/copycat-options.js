@@ -8,7 +8,20 @@ export const copycatShapeNames = {
   layer: 'Schicht', beam: 'Balken', byte: 'Byte', step: 'Feste Leiste',
   vertical_step: 'Feste vertikale Leiste', half_panel: 'Halbes Panel', flat_pane: 'Mittige Scheibe',
   byte_panel: 'Byte-Panel', half_layer: 'Halbe Schicht', vertical_half_layer: 'Vertikale halbe Schicht',
-  stacked_half_layer: 'Gestapelte halbe Schicht', roof_template: 'Dachvorlage',
+  stacked_half_layer: 'Gestapelte halbe Schicht', roof_template: 'Dach', half_disc: 'Halbe Scheibe', quarter_disc: 'Viertelscheibe',
+}
+
+export const baseOptionId = part => `base:${part.source}${part.discCut === 1 ? '#half_disc' : part.discCut === 2 ? '#quarter_disc' : ''}`
+export function copycatShapeName(part) {
+  const shape = model.baseShapes.find(shape => shape.source === part?.source && shape.discCut === (part?.discCut || 0))
+  return copycatShapeNames[shape?.name] || shape?.name || part?.source
+}
+export function copycatPickerSelection(node, basic = false) {
+  const part = node?.inlinePart || (node?.kind === 'INPUT' ? node.part : null)
+  return {
+    initialId: part ? baseOptionId(part) : !basic && node?.kind === 'COPYCAT' ? `library:${node.form}` : null,
+    initialCategory: basic || !node || part ? 'basic' : 'saved',
+  }
 }
 
 const nameOf = (name, fallback) => typeof name === 'string' && name.trim() ? name.trim() : fallback
@@ -21,12 +34,12 @@ export function listCopycatOptions({ savedForms = [], library = {} } = {}) {
     {id:'result',kind:'OUTPUT',inputs:['empty']},
   ]} }
   const emptyOption = {id:'empty',kind:'empty',category:'basic',name:'Leere Copycat',document:empty,materials:{},entry:{id:'empty',name:'Leere Copycat',mode:'form',document:empty,materials:{}}}
-  const basic = model.shapes.map(shape => {
+  const basic = model.baseShapes.map(shape => {
     const name = copycatShapeNames[shape.name] || shape.name
-    const document = { schema: 3, name, parts: [{ source: shape.id }] }
+    const document = { schema: 3, name, parts: [structuredClone(shape.part)] }
     const materials = {}
     return {
-      id: `base:${shape.id}`, kind: 'base', category: 'basic', name, source: shape.id,
+      id: `base:${shape.id}`, kind: 'base', category: 'basic', name, source: shape.source,
       document, materials, entry: { id: `base_${shape.id}`, name, mode: 'form', document, materials },
     }
   })

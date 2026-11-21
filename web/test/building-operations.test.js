@@ -45,7 +45,9 @@ test('all twelve requested building operators can be created with the correct so
     const unary = ['ROTATE', 'MIRROR'].includes(operation)
     assert.equal(operator.inputs.length, unary ? 1 : 2)
     const limits = model.buildingInputs[kind]
-    assert.deepEqual(limits, unary ? undefined : { min: 2, max: operation === 'DIFFERENCE' ? 2 : 16 })
+    const emptyIdentity = family === 'COPYCAT' && ['UNION', 'INTERSECTION'].includes(operation)
+    const minimum = emptyIdentity ? model.form.find(entry => entry.kind === 'UNION').min : 2
+    assert.deepEqual(limits, unary ? undefined : { min: minimum, max: operation === 'DIFFERENCE' ? 2 : 16 })
     inspect('building', document([operator]))
   }
 })

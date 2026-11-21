@@ -5,11 +5,11 @@ import kotlin.test.*
 
 class GraphstudioAuthoringTest {
     private fun graph(vararg nodes:BuildingNode,type:String="COPYCAT",output:String="pick"):BuildingGraph {
-        val base=GraphCards.starter(type)
+        val base=GraphCards.legacyStarter(type)
         return base.copy(nodes=base.nodes.filter { it.id!="source" }.map { if(it.resultType!=null) it.copy(inputs=listOf(output)) else it }+nodes).withCurrentSchema()
     }
     @Test fun `conditional infers every actual type and requires equal branches`() {
-        for(kind in BuildingKind.entries.filter { it!=BuildingKind.CONDITIONAL }) {
+        for(kind in BuildingKind.entries.filter { it!=BuildingKind.CONDITIONAL && it !in GraphPrograms.kinds }) {
             val value=GraphModels.newBuilding(kind,true).copy(id="a").let { if(kind.name in GraphNumbers.derived) it.copy(inputs=listOf("number","number")) else it }
             val pick=BuildingNode("pick",BuildingKind.CONDITIONAL,inputs=listOf("a","flag","a"))
             val g=graph(value,pick,BuildingNode("number",BuildingKind.INT,countValue=1),BuildingNode("flag",BuildingKind.BOOLEAN),type=buildingGraphType(kind))

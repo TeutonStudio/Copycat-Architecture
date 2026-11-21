@@ -1,0 +1,32 @@
+gradle.projectsEvaluated {
+    def p=gradle.rootProject
+    def domain=p.sourceSets.create('graphstudioDomain')
+    domain.java.setSrcDirs([])
+    domain.kotlin.setSrcDirs(['src/main/kotlin'])
+    domain.kotlin.include('de/teutonstudio/copycatarchitect/domain/**', 'de/teutonstudio/copycatarchitect/client/GraphDiagramModels.kt', 'de/teutonstudio/copycatarchitect/client/KilaGroupProjection.kt', 'de/teutonstudio/copycatarchitect/client/GroupGraphInterfaces.kt')
+    domain.resources.setSrcDirs(['src/main/resources'])
+    domain.compileClasspath=p.configurations.compileClasspath
+    domain.runtimeClasspath=domain.output+domain.compileClasspath
+    def checks=p.sourceSets.create('graphstudioDomainTest')
+    checks.java.setSrcDirs([])
+    checks.kotlin.setSrcDirs(['src/test/kotlin'])
+    checks.kotlin.include('**/GraphstudioExchangeTest.kt','**/DirectAreaInputsTest.kt','**/SegmentBooleanTest.kt','**/SegmentArrangementTest.kt','**/DynamicAreaSegmentTest.kt','**/RoofsTest.kt','**/RoomArrangementTest.kt','**/BuildingTransformValuesTest.kt')
+    checks.compileClasspath=domain.output+p.configurations.testCompileClasspath
+    checks.runtimeClasspath=checks.output+domain.output+p.configurations.testRuntimeClasspath
+    p.tasks.named('compileGraphstudioDomainTestKotlin') { compilerOptions.freeCompilerArgs.add('-Xfriend-paths='+p.layout.buildDirectory.dir('classes/kotlin/graphstudioDomain').get().asFile.absolutePath) }
+    p.tasks.register('testGraphstudioBrowserImport',Test) {
+        testClassesDirs=checks.output.classesDirs
+        classpath=checks.runtimeClasspath
+        useJUnitPlatform()
+        filter.includeTestsMatching('*GraphstudioExchangeTest.browserExports')
+        reports.junitXml.outputLocation=p.layout.buildDirectory.dir('test-results/graphstudio-browser-import')
+        reports.html.outputLocation=p.layout.buildDirectory.dir('reports/tests/graphstudio-browser-import')
+    }
+    p.tasks.register('testGraphstudioDomain',Test) {
+        testClassesDirs=checks.output.classesDirs
+        classpath=checks.runtimeClasspath
+        useJUnitPlatform()
+        reports.junitXml.outputLocation=p.layout.buildDirectory.dir('test-results/graphstudio-authoring')
+        reports.html.outputLocation=p.layout.buildDirectory.dir('reports/tests/graphstudio-authoring')
+    }
+}

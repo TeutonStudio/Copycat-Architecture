@@ -38,7 +38,7 @@ internal object GraphModels {
     private val legacyTemplates by lazy { buildingTemplates(false) }
 
     fun newBuilding(kind: BuildingKind, explicit: Boolean): BuildingNode =
-        (if (explicit || building(kind).alwaysExplicit) assemblyTemplates else legacyTemplates).getValue(kind)
+        if(kind==BuildingKind.RESULT) GraphPrograms.newResult() else (if (explicit || building(kind).alwaysExplicit) assemblyTemplates else legacyTemplates).getValue(kind)
 
     private fun buildingTemplates(explicit: Boolean): Map<BuildingKind, BuildingNode> =
         BuildingKind.entries.associateWith { kind ->

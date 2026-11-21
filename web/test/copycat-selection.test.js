@@ -219,3 +219,11 @@ test('invalid choices and exceeded source limits leave all input state unchanged
   assert.equal(replaced.document.graph.nodes.filter(node => ['INPUT', 'SAVED'].includes(node.kind)).length, 32)
   assert.equal(full.graph.nodes[0].kind, 'INPUT')
 })
+
+test('an exact library key supplies the version when an older library omits document metadata',()=>{
+ const library={forms:{'legacy@7':{schema:3,name:'Alter Bestand',parts:[{source:'copycats:copycat_byte'}]}},modules:{}}
+ const result=applyCopycatOption({mode:'form',document:form(),library,option:fromLibrary(library,'legacy@7')})
+ const saved=result.document.graph.nodes.find(node=>node.id===result.nodeId).savedCopycat
+ assert.equal(saved.version,7);assert.equal(saved.id,'legacy')
+ assert.equal(volume(previewGraph(false,result.document,{},result.nodeId)),512)
+})

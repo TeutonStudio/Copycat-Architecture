@@ -1,4 +1,5 @@
 """Exercise the rotation column through the production Graphstudio UI."""
+from icon_select import choose, option_labels
 import argparse
 import json
 import shutil
@@ -20,7 +21,7 @@ with sync_playwright() as p:
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.goto(args.url.rstrip('/') + '/?editor=building')
     studio = page.locator('.studio:not([hidden])')
-    studio.get_by_label('Beispiel öffnen', exact=True).select_option(label='Rotationssegment · Säule')
+    choose(studio.get_by_label('Beispiel öffnen', exact=True),label='Rotationssegment · Säule')
     status = studio.locator('.preview-meta[role="status"]')
     expect(status).to_contain_text('Zinkeinheiten')
     column = studio.locator('.react-flow__node[data-id="column"]')
@@ -40,7 +41,7 @@ with sync_playwright() as p:
         return next(n for n in document['graph']['nodes'] if n['id'] == id)
     original = exported()
     assert node(original, 'column')['dimensions']['length'] == 'count'
-    length.select_option('')
+    choose(length,'')
     expect(studio.locator('[data-inspector-field="length"] input')).to_have_value('4')
     expect(status).to_contain_text('Zinkeinheiten')
     assert not node(exported(), 'column').get('dimensions', {}).get('length')

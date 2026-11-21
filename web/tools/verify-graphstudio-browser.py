@@ -1,3 +1,4 @@
+from icon_select import choose, option_labels
 import json,re,argparse
 from pathlib import Path
 from playwright.sync_api import sync_playwright,expect
@@ -57,7 +58,7 @@ with sync_playwright() as p:
  studio.get_by_role('button',name='Graph speichern',exact=True).click()
  page.get_by_role('button',name='Gebäudegraph',exact=True).click()
  expect(studio.get_by_role('combobox',name='Knotentyp',exact=True)).to_be_visible()
- options=studio.get_by_role('combobox',name='Knotentyp',exact=True).locator('option').all_text_contents()
+ options=option_labels(studio.get_by_role('combobox',name='Knotentyp',exact=True))
  for family in ['Copycat','Segment']:
   for name in (['Copycat rotieren','Copycat spiegeln','Copycat-Vereinigung','Copycat-Schnitt','Copycat-Differenz','Symmetrische Copycat-Differenz'] if family=='Copycat' else ['Segment rotieren','Segment spiegeln','Segment-Vereinigung','Segment-Schnitt','Segment-Differenz','Symmetrische Segment-Differenz']):
    assert name in options,name

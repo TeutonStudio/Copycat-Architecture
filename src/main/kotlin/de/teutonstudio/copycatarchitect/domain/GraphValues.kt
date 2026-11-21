@@ -12,11 +12,14 @@ object GraphValues {
     class IncompleteValue(message:String):IllegalArgumentException(message)
     data class ValueNode(val id:String,val kind:String,val inputs:List<String>,val count:Int?,val point:P?,val boolean:Boolean?=null,val operation:String?=null)
     fun shape(nodes:Map<String,GraphNode>,signed:Boolean=GraphNumbers.modern(nodes))=Evaluation(nodes.mapValues { (_,n)->ValueNode(n.id,n.kind.name,n.inputs,n.countValue,n.translation,n.booleanValue,n.operation) },signed,{ id->UnifiedOperators.value(UnifiedOperators.valueNodes(nodes.values.toList()),id) })
-    fun building(nodes:Map<String,BuildingNode>,signed:Boolean=GraphNumbers.modern(nodes))=Evaluation(nodes.mapValues { (_,n)->ValueNode(n.id,n.kind.name,n.inputs,n.countValue ?: if(n.kind==BuildingKind.INT) 4 else null,n.translation,n.booleanValue,n.operation) },signed,{ id->UnifiedOperators.value(UnifiedOperators.buildingValueNodes(nodes.values.toList()),id) })
+    fun building(nodes:Map<String,BuildingNode>,signed:Boolean=GraphNumbers.modern(nodes))=Evaluation(nodes.mapValues { (_,raw)->val n=GraphPrograms.producer(raw);ValueNode(n.id,n.kind.name,GraphPrograms.source(n)?.let { listOf(it) } ?: n.inputs,n.countValue ?: if(n.kind==BuildingKind.INT) 4 else null,n.translation,n.booleanValue,n.operation) },signed,{ id->UnifiedOperators.value(UnifiedOperators.buildingValueNodes(nodes.values.toList()),id) })
     class Evaluation(private val nodes:Map<String,ValueNode>,private val signed:Boolean=false,private val unified:(String)->Any) {
         private val integers=mutableMapOf<String,Int>();private val vectors=mutableMapOf<String,P>();private val active=mutableSetOf<String>()
         private fun node(id:String):ValueNode {
             val n=nodes[id] ?: error("Missing parameter source $id")
+            if(n.kind in setOf("RESULT","GROUP_INPUT","GRAPH_REFERENCE")) {
+                require(active.add("alias:$id")) { "Cycle in graph arguments" };try { val source=n.inputs.firstOrNull().orEmpty();if(source.isEmpty()) throw IncompleteValue("Gruppeneingang $id benötigt einen Wert oder Standardwert");return node(source) } finally { active.remove("alias:$id") }
+            }
             if(n.kind!="CONDITIONAL") return n
             require(active.add("alias:$id")) { "Cycle in conditional values" }
             try {

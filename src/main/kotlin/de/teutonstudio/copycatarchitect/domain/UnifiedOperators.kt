@@ -55,7 +55,7 @@ internal object UnifiedOperators {
     }
     data class ValueNode(val id:String,val kind:String,val operation:String?,val inputs:List<String>,val number:Int,val comparison:Int,val boolean:Boolean,val position:P,val axis:RotationAxis,val turns:Int,val mirror:CopycatMirror?,val rotations:List<SegmentRotation>?=null,val mirrors:List<CopycatMirror>?=null)
     fun valueNodes(nodes:List<GraphNode>)=nodes.map { ValueNode(it.id,it.kind.name,it.operation,it.inputs,it.numberValue ?: it.countValue ?: 0,it.comparisonValue ?: 0,it.booleanValue ?: false,it.translation ?: P(),it.rotationAxis,it.quarterTurns,it.mirror) }
-    fun buildingValueNodes(nodes:List<BuildingNode>)=nodes.map { ValueNode(it.id,it.kind.name,it.operation,it.inputs,it.numberValue ?: it.countValue ?: 0,it.comparisonValue ?: 0,it.booleanValue ?: false,it.translation ?: P(),it.rotationAxis,it.quarterTurns,it.mirror,it.rotations,it.mirrors) }
+    fun buildingValueNodes(nodes:List<BuildingNode>)=nodes.map { raw->val it=GraphPrograms.producer(raw);val alias=GraphPrograms.source(it);ValueNode(it.id,if(alias!=null) "ALIAS" else it.kind.name,it.operation,if(alias!=null) listOf(alias) else it.inputs,it.numberValue ?: it.countValue ?: 0,it.comparisonValue ?: 0,it.booleanValue ?: false,it.translation ?: P(),it.rotationAxis,it.quarterTurns,it.mirror,it.rotations,it.mirrors) }
     fun value(nodes:List<ValueNode>,id:String):Any {
         val byId=nodes.associateBy { it.id };val active=mutableSetOf<String>();val memo=mutableMapOf<String,Any>()
         fun evaluate(key:String):Any=memo.getOrPut(key) {
@@ -67,6 +67,7 @@ internal object UnifiedOperators {
             fun position(slot:Int)=arg(slot) as? P ?: error("Position input required")
             val op=n.operation ?: if(n.kind in kinds) family(n.kind).default else "VALUE"
             val result:Any=when(n.kind) {
+                "ALIAS"->arg(0)
                 "NUMBER_OPERATOR"->if(op=="VALUE") n.number else {
                     val a=number(0);val b=if(op=="ABS") 0 else number(1)
                     when(op) {

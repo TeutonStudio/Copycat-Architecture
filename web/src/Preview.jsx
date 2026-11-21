@@ -1,8 +1,10 @@
+import { MaterialDialog } from './MaterialDialog.jsx'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { useWorkspace } from './Workspace.jsx'
-import { axisColors, sides } from './orientation.js'
+import { axisColors, compassDirections, sides } from './orientation.js'
+import { exactGeometry } from './preview-geometry.js'
 
 const colors = {
   body: '#8ba4a2', cap: '#d29763', 'minecraft:stone_bricks': '#979999',
@@ -108,13 +110,15 @@ function groundCompass(group, bounds) {
   canvas.width = canvas.height = 1024
   const context = canvas.getContext('2d')
   context.translate(512, 512)
-  context.strokeStyle = '#8fbbb4'; context.fillStyle = '#d9eee9'; context.lineWidth = 7
-  context.beginPath(); context.arc(0, 0, 440, 0, Math.PI * 2); context.stroke()
-  for (const [label, x, z] of [['Nord', 0, -1], ['Ost', 1, 0], ['Süd', 0, 1], ['West', -1, 0]]) {
-    context.beginPath(); context.moveTo(x * 255, z * 255); context.lineTo(x * 300, z * 300); context.stroke()
+  context.strokeStyle = '#8fbbb4'; context.lineWidth = 5
+  context.beginPath(); context.arc(0, 0, 380, 0, Math.PI * 2); context.stroke()
+  for (const {x,z,axis} of compassDirections) {
+    const perpendicular={x:-z,z:x}
+    context.strokeStyle=axisColors[axis];context.fillStyle=axisColors[axis];context.lineWidth=12
+    context.beginPath();context.moveTo(x*300,z*300);context.lineTo(x*426,z*426);context.stroke()
+    // The entire head starts beyond the ring, not at the arrow's inside anchor.
+    context.beginPath();context.moveTo(x*478,z*478);context.lineTo(x*414+perpendicular.x*27,z*414+perpendicular.z*27);context.lineTo(x*414-perpendicular.x*27,z*414-perpendicular.z*27);context.closePath();context.fill()
   }
-  context.fillStyle = '#eead7f'
-  context.beginPath(); context.moveTo(0, -325); context.lineTo(-18, -280); context.lineTo(18, -280); context.closePath(); context.fill()
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(diameter, diameter), new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide, depthWrite: false, toneMapped: false }))
@@ -122,17 +126,17 @@ function groundCompass(group, bounds) {
   plane.position.set(center.x, bounds.min.y - Math.max(size.length() * 0.03, 0.08), center.z)
   group.add(plane)
   const labels = []
-  for (const [label, x, z] of [['Nord', 0, -1], ['Ost', 1, 0], ['Süd', 0, 1], ['West', -1, 0]]) {
+  for (const {label,x,z,axis} of compassDirections) {
     const text = document.createElement('canvas')
     text.width = 384; text.height = 160
     const ink = text.getContext('2d')
-    ink.fillStyle = '#d9eee9'; ink.font = 'bold 112px system-ui'
+    ink.fillStyle = axisColors[axis]; ink.font = 'bold 76px system-ui'
     ink.textAlign = 'center'; ink.textBaseline = 'middle'; ink.fillText(label, 192, 80)
     const map = new THREE.CanvasTexture(text)
     map.colorSpace = THREE.SRGBColorSpace
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(diameter * 384 / 1024, diameter * 160 / 1024), new THREE.MeshBasicMaterial({ map, transparent: true, side: THREE.DoubleSide, depthWrite: false, toneMapped: false }))
     mesh.rotation.x = -Math.PI / 2
-    mesh.position.set(center.x + x * diameter * 360 / 1024, plane.position.y + 0.002, center.z + z * diameter * 360 / 1024)
+    mesh.position.set(center.x + (x*320-z*75) * diameter / 1024, plane.position.y + 0.002, center.z + (z*320+x*75) * diameter / 1024)
     group.add(mesh); labels.push(mesh)
   }
   group.userData.labels = labels
@@ -141,7 +145,7 @@ function groundCompass(group, bounds) {
     new THREE.Vector3(center.x + diameter * 0.55, plane.position.y, center.z + diameter * 0.55))
 }
 
-export function Viewer({ plan, blockFrame, catalog, details }) {
+export function Viewer({ plan, blockFrame, catalog, details, fitKey }) {
   const container = useRef(null)
   const viewer = useRef(null)
   const [activeSide, setActiveSide] = useState('')
@@ -264,7 +268,7 @@ export function Viewer({ plan, blockFrame, catalog, details }) {
     const corner = new THREE.Vector3()
     for (const [material, meshes] of batches) {
       const count = meshes.reduce((sum, mesh) => sum + mesh.boxes.length * mesh.positions.length, 0)
-      if (!count) continue
+      if (!count && !meshes.some(mesh => mesh.faces?.length && mesh.positions.length)) continue
       const surfaceMaterials = Array.from({ length: 6 }, () => {
         const surface = new THREE.MeshLambertMaterial({ color: color(material), alphaTest: 0.1 })
         surface.onBeforeCompile = shader => {
@@ -272,38 +276,53 @@ export function Viewer({ plan, blockFrame, catalog, details }) {
           shader.vertexShader = shader.vertexShader.replace('#include <uv_vertex>', `#include <uv_vertex>
             #ifdef USE_MAP
               vec3 pointInBlock = position * blockSize + blockCenter;
-              vec2 blockUv = normal.x > 0.5 ? vec2(1.0-pointInBlock.z, pointInBlock.y)
-                : normal.x < -0.5 ? vec2(pointInBlock.z, pointInBlock.y)
-                : normal.y > 0.5 ? vec2(pointInBlock.x, 1.0-pointInBlock.z)
-                : normal.y < -0.5 ? vec2(pointInBlock.x, pointInBlock.z)
-                : normal.z > 0.5 ? vec2(pointInBlock.x, pointInBlock.y) : vec2(1.0-pointInBlock.x, pointInBlock.y);
+              vec3 magnitude = abs(normal);
+              vec2 blockUv = magnitude.x >= magnitude.y && magnitude.x >= magnitude.z
+                ? (normal.x > 0.0 ? vec2(1.0-pointInBlock.z, pointInBlock.y) : vec2(pointInBlock.z, pointInBlock.y))
+                : magnitude.y >= magnitude.z
+                  ? (normal.y > 0.0 ? vec2(pointInBlock.x, 1.0-pointInBlock.z) : vec2(pointInBlock.x, pointInBlock.z))
+                  : (normal.z > 0.0 ? vec2(pointInBlock.x, pointInBlock.y) : vec2(1.0-pointInBlock.x, pointInBlock.y));
               vMapUv = (mapTransform * vec3(blockUv, 1.0)).xy;
             #endif`)
         }
-        surface.customProgramCacheKey = () => 'copycat-block-uv-v1'
+        surface.customProgramCacheKey = () => 'copycat-block-uv-v2'
         return surface
       })
-      const geometry = new THREE.BoxGeometry()
-      const blockCenters = new Float32Array(count * 3), blockSizes = new Float32Array(count * 3)
-      geometry.setAttribute('blockCenter', new THREE.InstancedBufferAttribute(blockCenters, 3))
-      geometry.setAttribute('blockSize', new THREE.InstancedBufferAttribute(blockSizes, 3))
-      const draw = new THREE.InstancedMesh(geometry, surfaceMaterials, count)
-      let index = 0
-      for (const mesh of meshes) for (const [px, py, pz] of mesh.positions) {
-        for (const [x, y, z, maxX, maxY, maxZ] of mesh.boxes) {
-          scale.set((maxX - x) / 16, (maxY - y) / 16, (maxZ - z) / 16)
-          translation.set(px + (x + maxX) / 32, py + (y + maxY) / 32, pz + (z + maxZ) / 32)
-          matrix.makeScale(scale.x, scale.y, scale.z).setPosition(translation)
-          blockCenters.set([(x + maxX) / 32, (y + maxY) / 32, (z + maxZ) / 32], index * 3)
-          blockSizes.set([scale.x, scale.y, scale.z], index * 3)
-          draw.setMatrixAt(index++, matrix)
-          bounds.expandByPoint(corner.set(px + x / 16, py + y / 16, pz + z / 16))
-          bounds.expandByPoint(corner.set(px + maxX / 16, py + maxY / 16, pz + maxZ / 16))
+      if (count) {
+        const geometry = new THREE.BoxGeometry()
+        const blockCenters = new Float32Array(count * 3), blockSizes = new Float32Array(count * 3)
+        geometry.setAttribute('blockCenter', new THREE.InstancedBufferAttribute(blockCenters, 3))
+        geometry.setAttribute('blockSize', new THREE.InstancedBufferAttribute(blockSizes, 3))
+        const draw = new THREE.InstancedMesh(geometry, surfaceMaterials, count)
+        let index = 0
+        for (const mesh of meshes) for (const [px, py, pz] of mesh.positions) {
+          for (const [x, y, z, maxX, maxY, maxZ] of mesh.boxes) {
+            scale.set((maxX - x) / 16, (maxY - y) / 16, (maxZ - z) / 16)
+            translation.set(px + (x + maxX) / 32, py + (y + maxY) / 32, pz + (z + maxZ) / 32)
+            matrix.makeScale(scale.x, scale.y, scale.z).setPosition(translation)
+            blockCenters.set([(x + maxX) / 32, (y + maxY) / 32, (z + maxZ) / 32], index * 3)
+            blockSizes.set([scale.x, scale.y, scale.z], index * 3)
+            draw.setMatrixAt(index++, matrix)
+            bounds.expandByPoint(corner.set(px + x / 16, py + y / 16, pz + z / 16))
+            bounds.expandByPoint(corner.set(px + maxX / 16, py + maxY / 16, pz + maxZ / 16))
+          }
         }
+        draw.instanceMatrix.needsUpdate = true
+        draw.computeBoundingSphere()
+        view.model.add(draw)
       }
-      draw.instanceMatrix.needsUpdate = true
-      draw.computeBoundingSphere()
-      view.model.add(draw)
+      for (const mesh of meshes) {
+        if (!mesh.faces?.length || !mesh.positions.length) continue
+        const geometry = exactGeometry(mesh.faces)
+        const draw = new THREE.InstancedMesh(geometry, surfaceMaterials, mesh.positions.length)
+        mesh.positions.forEach(([x, y, z], index) => {
+          draw.setMatrixAt(index, matrix.makeTranslation(x, y, z))
+          bounds.union(geometry.boundingBox.clone().translate(corner.set(x, y, z)))
+        })
+        draw.instanceMatrix.needsUpdate = true
+        draw.computeBoundingSphere()
+        view.model.add(draw)
+      }
       if (catalog.ids.includes(material.split('[')[0])) catalog.resolve(material).then(resolved => {
         if (!live) return
         if (resolved.missing.length || resolved.warning) setTextureWarning(resolved.warning || `Fehlende Texturen: ${resolved.missing.join(', ')}`)
@@ -341,10 +360,10 @@ export function Viewer({ plan, blockFrame, catalog, details }) {
     view.bounds = blockFrame && singleBlock ? referenceFrame(view.guides) : bounds
     dispose(view.ground); view.ground.clear(); view.ground.userData.bounds = null
     groundCompass(view.ground, view.bounds)
-    if (!view.fitted) fit()
+    if (!view.fitted || view.fitKey!==fitKey) { fit();view.fitKey=fitKey }
     view.render()
     return () => { live = false }
-  }, [plan, blockFrame, catalog])
+  }, [plan, blockFrame, catalog,fitKey])
 
   const hasDetails = !!details
   return <div className={`viewer-with-sides${hasDetails ? ' has-details' : ''}`}>
@@ -367,8 +386,9 @@ export function Viewer({ plan, blockFrame, catalog, details }) {
   </div>
 }
 
-export default function Preview({ mode, document, library, selected, previewMode, onMode, collapsed, onToggle, materials }) {
+export default function Preview({ mode, document, library, selected, previewMode, onMode, collapsed, onToggle, materials, onDiagnostics }) {
   const { catalog } = useWorkspace()
+  const [showMaterials,setShowMaterials] = useState(false)
   const worker = useRef(null)
   const sequence = useRef(0)
   const running = useRef(false)
@@ -376,7 +396,7 @@ export default function Preview({ mode, document, library, selected, previewMode
   const [result, setResult] = useState({})
   const target = previewMode === 'selected' ? selected : ''
   const missingSelection = previewMode === 'selected' && !selected
-  const blockFrame = mode === 'form' || (previewMode === 'selected' && document.graph.nodes.find(node => node.id === selected)?.kind?.startsWith('COPYCAT'))
+  const blockFrame = mode === 'form' || document.graph.nodes.some(node=>node.resultType==='COPYCAT') && previewMode==='graph' || (previewMode === 'selected' && document.graph.nodes.find(node => node.id === selected)?.kind?.startsWith('COPYCAT'))
   const latest = useRef(document)
   latest.current = document
   useEffect(() => { setResult({}) }, [mode, target, previewMode])
@@ -395,7 +415,8 @@ export default function Preview({ mode, document, library, selected, previewMode
     instance.onmessage = ({ data }) => {
       running.current = false
       if (data.id === sequence.current) {
-        setResult(previous => data.error ? { plan: previous.plan, error: data.error, pending: false } : data)
+        onDiagnostics?.(data.diagnostics || [])
+        setResult(previous => data.error ? { ...previous, error: data.error, pending: false } : data)
       }
       send()
     }
@@ -415,11 +436,11 @@ export default function Preview({ mode, document, library, selected, previewMode
     }
     const timer = setTimeout(() => {
       setResult(previous => ({ ...previous, pending: true, error: '' }))
-      queued.current = { id, mode, document: latest.current, library, selected: target }
+      queued.current = { id, mode, document: latest.current, library, selected: target, materials,viewKey:`${mode}:${document.id || document.graph.nodes.find(node=>node.resultType)?.id || document.name || "graph"}:${target}` }
       send()
     }, 130)
     return () => clearTimeout(timer)
-  }, [mode, content, library, target, missingSelection])
+  }, [mode, content, library, target, missingSelection, materials])
 
 
   const noun = mode === 'building' ? 'Platzierungen' : 'Rasterzellen'
@@ -434,7 +455,7 @@ export default function Preview({ mode, document, library, selected, previewMode
       <button type="button" aria-expanded={!collapsed} aria-controls={`${mode}-preview`} aria-label={collapsed ? '3D-Vorschau ausklappen' : '3D-Vorschau einklappen'} onClick={onToggle}>{collapsed ? '▸' : '▾'}</button>
     </div></div>
     <div id={`${mode}-preview`} className="preview-body" hidden={collapsed}>
-    <Viewer plan={texturedPlan} blockFrame={blockFrame} catalog={catalog} details={<>
+    <Viewer plan={texturedPlan} fitKey={result.viewKey} blockFrame={blockFrame} catalog={catalog} details={<>
     <div className="preview-meta" role="status">
       {result.error ? <><strong>{result.plan ? 'Letzter gültiger Stand' : 'Vorschau wartet auf einen gültigen Graphen'}</strong><br />{result.error}</>
         : result.pending ? 'Vorschau wird berechnet …'
@@ -445,10 +466,10 @@ export default function Preview({ mode, document, library, selected, previewMode
     {result.plan?.warnings?.map((warning, index) => <p className="preview-meta" key={index}>{warning}</p>)}
     <div className="axis-legend" aria-label="Koordinatenachsen"><span style={{color:axisColors.x}}>West (−X) · Ost (+X)</span><span style={{color:axisColors.y}}>Unten (−Y) · Oben (+Y)</span><span style={{color:axisColors.z}}>Nord (−Z) · Süd (+Z)</span>
       {blockFrame && <span>Rahmen: 16 hB · lange Marke: 8 hB · kurze Marken: 4 / 12 hB</span>}</div>
-    {result.plan?.materials && <details className="materials"><summary>Materialbedarf</summary>
-      {Object.entries(result.plan.materials).map(([id, count]) => <div key={id}><code>{id}</code><span>{count}</span></div>)}
-    </details>}
+    <p className="preview-meta">Ziel: <strong>{previewMode === 'selected' ? 'Selektiert' : 'Graph'}</strong></p>
+    <button type="button" disabled={!result.plan || result.pending || Boolean(result.error)} onClick={() => setShowMaterials(true)}>Materialbedarf …</button>
     </>} />
     </div>
+    {showMaterials && result.plan && !result.pending && !result.error && <MaterialDialog plan={result.plan} target={previewMode === 'selected' ? 'Selektiert' : 'Graph'} onClose={() => setShowMaterials(false)} />}
   </section>
 }

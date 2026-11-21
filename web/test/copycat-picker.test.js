@@ -33,14 +33,14 @@ async function compile(client, worker, source) {
   return await promise
 }
 
-test('the catalogue contains every adapter, personal form and exact library reference without compiling saved documents', () => {
+test('the catalogue contains every native base shape, personal form and exact library reference without compiling saved documents', () => {
   const saved = { id: 'personal', name: 'Persönliche Treppe', mode: 'form', document: form('copycats:copycat_stairs'), materials: { body: 'minecraft:stone' } }
   const invalid = { id: 'broken', name: 'Fehlerhafte Form', mode: 'form', document: form('missing:shape') }
   const reference = form('copycats:copycat_slab', 'Bibliotheksstufe')
   const options = listCopycatOptions({ savedForms: [saved, invalid, { id: 'building', mode: 'building' }], library: { forms: { 'slab@3': reference } } })
   const basic = options.filter(item => item.kind === 'base')
-  assert.deepEqual(basic.map(item => item.source), model.shapes.map(shape => shape.id))
-  assert.equal(options.length, model.shapes.length + 4)
+  assert.deepEqual(basic.map(item => item.id), model.baseShapes.map(shape => `base:${shape.id}`))
+  assert.equal(options.length, model.baseShapes.length + 4)
   assert.equal(new Set(options.map(item => item.id)).size, options.length)
   assert.ok(basic.every(item => item.category === 'basic' && item.entry.document === item.document))
   const personal = options.find(item => item.id === 'saved:personal')

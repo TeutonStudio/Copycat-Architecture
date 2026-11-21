@@ -1,4 +1,5 @@
 """Check the optional roof peak in the production Graphstudio UI."""
+from icon_select import choose, option_labels
 import argparse
 import json
 import shutil
@@ -20,13 +21,13 @@ with sync_playwright() as p:
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.goto(args.url.rstrip('/') + '/?editor=building')
     studio = page.locator('.studio:not([hidden])')
-    studio.get_by_label('Beispiel öffnen', exact=True).select_option(label='Dachspitze bei ungerader Breite')
+    choose(studio.get_by_label('Beispiel öffnen', exact=True),label='Dachspitze bei ungerader Breite')
     roof = studio.locator('.react-flow__node[data-id="roof"]')
     expect(roof.get_by_text('Dachspitze (optional)', exact=True)).to_be_visible()
     roof.click()
     port = studio.get_by_label('Dachspitze (optional)', exact=True)
     expect(port).to_have_value('peak_copycat')
-    assert 'Wall segment' not in port.locator('option').all_text_contents()
+    assert 'Wall segment' not in option_labels(port)
     studio.get_by_role('group', name='Vorschauziel', exact=True).get_by_role('button', name='Selektiert', exact=True).click()
     status = studio.locator('.preview-meta[role="status"]')
     expect(status).to_contain_text('Zinkeinheiten')
@@ -42,7 +43,7 @@ with sync_playwright() as p:
     studio.get_by_role('button', name='3D einpassen', exact=True).click()
     page.wait_for_timeout(1000)
     page.screenshot(path=str(args.artifacts / 'connected.png'), full_page=True)
-    port.select_option('')
+    choose(port,'')
     expect(port).to_have_value('')
     expect(status).to_contain_text('Zinkeinheiten')
     assert not peak(exported())
@@ -59,7 +60,7 @@ with sync_playwright() as p:
     expect(status).to_contain_text('Zinkeinheiten')
     settings = studio.locator('.inspector .native-fields')
     def apply_setting(label, value):
-        settings.get_by_label(label, exact=True).select_option(value)
+        choose(settings.get_by_label(label, exact=True),value)
         settings.get_by_role('button', name='Übernehmen', exact=True).click()
     apply_setting('Dachart', 'flat')
     expect(port).to_have_count(0)

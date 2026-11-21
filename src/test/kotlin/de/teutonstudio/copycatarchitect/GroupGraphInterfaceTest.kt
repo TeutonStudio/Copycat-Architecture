@@ -93,7 +93,7 @@ class GroupGraphInterfaceTest {
     }
 
     @Test fun `every building value kind can be exported by a group`() {
-        for(kind in BuildingKind.entries.filter { it!=BuildingKind.BUILDING }) {
+        for(kind in BuildingKind.entries.filter { it!=BuildingKind.BUILDING && it !in GraphPrograms.kinds }) {
             val node=BuildingAssembly.newNode(kind,"value").let { if(kind==BuildingKind.CONDITIONAL) it.copy(inputs=listOf("group_number","group_flag","group_number")) else it }
             val base=BuildingGraph.starter().let { it.copy(nodes=it.nodes+BuildingNode("group_number",BuildingKind.INT)+BuildingNode("group_flag",BuildingKind.BOOLEAN)) }
             val group=GraphGroup("module","Module",listOf(node.id),graphInterface=GraphGroupInterface(outputs=listOf(GraphGroupOutput("value","Value",if(kind==BuildingKind.CONDITIONAL) "INT" else buildingGraphType(kind),0))))

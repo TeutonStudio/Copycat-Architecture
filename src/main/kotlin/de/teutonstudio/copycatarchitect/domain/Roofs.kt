@@ -657,6 +657,7 @@ internal fun freshAccessInstanceId(instances:List<VerticalAccessInstance>):Strin
 }
 
 fun BuildingGraph.withCurrentSchema():BuildingGraph {
+    if(schema>=14 || nodes.any { it.kind in GraphPrograms.kinds } || !graphDefinitions.isNullOrEmpty()) return GraphNumbers.upgrade(copy(schema=maxOf(schema,14),groupInputOrder=GraphPrograms.parameters(this).map { it.id }),schema)
     if(schema>=13 || nodes.any { it.kind.name in GraphNumbers.newKinds || it.resultType=="COUNT" } || nodeGroups.any { g->g.graphInterface?.let { it.inputs.any {p->p.type=="COUNT"} || it.outputs.any {p->p.type=="COUNT"} }==true }) return GraphNumbers.upgrade(copy(schema=maxOf(schema,13)),schema)
     if(nodes.any { it.kind.name in GraphTypes.newKinds || it.roofInputMode!=null }) return copy(schema=maxOf(schema,12))
     if(nodes.any { it.roofSections!=null || it.operandOffsets!=null ||

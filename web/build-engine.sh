@@ -34,7 +34,7 @@ for file in "$domain"/*.kt; do
     sources+=("$file")
 done
 sources+=(../src/main/kotlin/de/teutonstudio/copycatarchitect/client/{GraphDiagramModels,KilaGroupProjection,GroupGraphInterfaces}.kt)
-sources+=(kotlin/*.kt "$out/Catalog.kt" "$out/Codec.kt")
+sources+=(kotlin/*.kt "$out/Catalog.kt" "$out/Codec.kt" "$out/InputCapabilities.kt" "$out/TransformationCapabilities.kt" "$out/AreaCapabilities.kt" "$out/ConditionalCapabilities.kt")
 stdlib="$cache/kotlin-stdlib-js-$version.klib"
 target="$out/engine.mjs"
 if [[ -f "$target" ]]; then

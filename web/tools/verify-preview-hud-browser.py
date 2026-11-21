@@ -1,4 +1,5 @@
 """Verify side HUD geometry and direct preview switching in the production UI."""
+from icon_select import choose, option_labels
 import argparse
 from pathlib import Path
 import shutil
@@ -32,7 +33,7 @@ with sync_playwright() as p:
     expect(selected).to_have_attribute('aria-pressed', 'true')
     expect(graph).to_have_attribute('aria-pressed', 'false')
     expect(status).to_contain_text('Wähle einen Knoten')
-    studio.get_by_label('Beispiel öffnen', exact=True).select_option(label='Dachspitze bei ungerader Breite')
+    choose(studio.get_by_label('Beispiel öffnen', exact=True),label='Dachspitze bei ungerader Breite')
     studio.locator('.react-flow__node[data-id="roof"]').click()
     expect(status).to_contain_text('Zinkeinheiten')
     panel.get_by_role('button', name='3D einpassen', exact=True).click()

@@ -6,7 +6,7 @@ import kotlin.test.*
 
 class RoomAreaConnectionTest {
     private fun draft(area:BuildingNode):BuildingGraph {
-        val base=GraphCards.starter("ROOM")
+        val base=GraphCards.legacyStarter("ROOM")
         val room=BuildingAssembly.newNode(BuildingKind.ROOM,"room").copy(height=5,
             walls=RoomGeometry.edges(listOf(Rect(width=3,length=3))).associate { it.id to "wall" },floor="floor",ceiling="ceiling")
         return base.copy(nodes=base.nodes.map { if(it.resultType!=null) it.copy(inputs=listOf(room.id)) else it }+listOf(area,room,

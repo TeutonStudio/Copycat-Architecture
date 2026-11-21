@@ -7,12 +7,15 @@ import { parseMaterial } from './materials.js'
 export function loadBuildingCopycat(document, library, entry, nodeId) {
   const compiled = writeGraph('form', readGraph(entry.document, 'form'))
   const source = { ...compiled, groups: formGroups(compiled) }
-  const id = `browser_${entry.id.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 36)}`
+  const id = `browser_${(entry.documentId || entry.id).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 36)}`
   const forms = { ...library.forms }
-  let version = 1
+  let version = entry.version || 1
   let form
-  do { form = { ...source, id, version, name: entry.name || source.name }; version++ }
-  while (forms[`${id}@${form.version}`] && JSON.stringify(forms[`${id}@${form.version}`]) !== JSON.stringify(form))
+  form = { ...source, id, version, name: entry.name || source.name }
+  while (forms[`${id}@${version}`] && JSON.stringify(forms[`${id}@${version}`]) !== JSON.stringify(form)) {
+    if (entry.version) throw new Error('Diese genaue Bibliotheksversion besitzt bereits einen anderen Inhalt.')
+    form = {...form,version:++version}
+  }
   const key = `${id}@${form.version}`
   forms[key] = structuredClone(form)
   const surfaces = Object.fromEntries(Object.entries(entry.materials || {})
@@ -34,7 +37,8 @@ export function loadFormCopycat(document, entry, nodeId) {
 }
 
 export function loadFormCopycatWithMaterials(document, entry, nodeId, materials = {}) {
-  const source = writeGraph('form', readGraph(entry.document, 'form'))
+  const compiled = writeGraph('form', readGraph(entry.document, 'form'))
+  const source = { ...compiled, id: (entry.documentId || entry.id).replace(/[^a-zA-Z0-9_-]/g,'').slice(0,36), version:entry.version || compiled.version || 1 }
   const result = insertSavedCopycat(document, source, nodeId)
   const next = replaceNodes({ ...document, groups: result.groups }, result.nodes)
   inspect('form', next)

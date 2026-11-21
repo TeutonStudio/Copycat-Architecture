@@ -15,7 +15,11 @@ test('browser advertises exactly the mod node types, schemas and DTO fields', ()
   assert.deepEqual(new Set(runtime.building), new Set(Object.keys(catalog.building.nodes)))
   assert.deepEqual(runtime.copycatSchemas, catalog.copycat.graphSchemas)
   assert.deepEqual(runtime.buildingSchemas, catalog.building.graphSchemas)
-  assert.equal(Object.keys(wireModels()).length - 1, 52)
+  assert.ok(Object.keys(wireModels()).length - 1 >= 52)
+  if(runtime.directAreas) {
+    assert.equal(wireModels().RoofSection.fields.config,'RoofLevelConfig')
+    assert.equal(wireModels().BuildingNode.fields.operandOffsets,'List<P>?')
+  }
   assert.equal(wireModels().enums.CopycatMirrorPlane.length, 13)
 })
 

@@ -76,3 +76,14 @@ test('2D dragging keeps the hidden coordinate and respects native bounds', () =>
   assert.equal(arrangementPath([[0, 0], [1, 0], [4, 0]]), 'M0,0h2v1h-2zM4,0h1v1h-1z')
   assert.deepEqual(fitArrangement([{ cells: [[0, 0], [3, 1]] }]), [-2, -3, 8, 8])
 })
+
+test('storey room positioning updates the 2D arrangement and isolated 3D storey together',async()=>{
+ const {editNode}=await import('../src/model.js')
+ const d=JSON.parse(readFileSync(new URL('../../examples/building-graph.json',import.meta.url)))
+ const storey=d.graph.nodes.find(n=>n.kind==='STOREY');storey.inputs=[storey.inputs[0],storey.inputs[0]];storey.offsets=[{x:0,y:0,z:0},{x:8,y:0,z:0}]
+ const before=previewGraph(true,d,library,storey.id),grid=arrangementGraph(d,library,storey.id,'Y')
+ const next=editNode('building',d,{...storey,offsets:[storey.offsets[0],{x:10,y:0,z:-2}]})
+ const after=previewGraph(true,next,library,storey.id),moved=arrangementGraph(next,library,storey.id,'Y')
+ assert.equal(before.count,after.count);assert.deepEqual(moved.items[0],grid.items[0]);assert.deepEqual(moved.items[1].cells,grid.items[1].cells.map(([x,z])=>[x+2,z-2]))
+ assert.notDeepEqual(before.meshes,after.meshes);assert.deepEqual(d.graph.nodes.find(n=>n.id===storey.id).offsets,storey.offsets)
+})

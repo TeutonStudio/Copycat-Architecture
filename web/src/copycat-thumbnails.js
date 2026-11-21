@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { exactGeometry } from './preview-geometry.js'
 
 const colors = {
   body: '#8ba4a2', cap: '#d29763', 'minecraft:stone_bricks': '#979999',
@@ -12,6 +13,47 @@ function color(value) {
   let hash = 0
   for (const char of id) hash = Math.imul(hash, 31) + char.charCodeAt(0) | 0
   return new THREE.Color().setHSL((hash >>> 0) % 360 / 360, 0.32, 0.59)
+}
+
+// Use the same exact polygons as the main viewer. Roofs and clipped forms can
+// have faces without any raster boxes; both representations may share a material.
+export function createCopycatThumbnailMeshes(plan, boxGeometry) {
+  const draws = [], batches = new Map(), matrix = new THREE.Matrix4()
+  for (const mesh of plan.meshes) {
+    const list = batches.get(mesh.material) || []
+    list.push(mesh)
+    batches.set(mesh.material, list)
+  }
+  for (const [material, meshes] of batches) {
+    const count = meshes.reduce((sum, mesh) => sum + mesh.boxes.length * mesh.positions.length, 0)
+    const exact = meshes.filter(mesh => mesh.faces?.length && mesh.positions.length)
+    if (!count && !exact.length) continue
+    const surface = new THREE.MeshLambertMaterial({ color: color(material) })
+    if (count) {
+      const draw = new THREE.InstancedMesh(boxGeometry, surface, count)
+      let index = 0
+      for (const mesh of meshes) for (const [px, py, pz] of mesh.positions) {
+        for (const [x, y, z, maxX, maxY, maxZ] of mesh.boxes) {
+          matrix.makeScale((maxX - x) / 16, (maxY - y) / 16, (maxZ - z) / 16)
+          matrix.setPosition(px + (x + maxX) / 32, py + (y + maxY) / 32, pz + (z + maxZ) / 32)
+          draw.setMatrixAt(index++, matrix)
+        }
+      }
+      draw.instanceMatrix.needsUpdate = true
+      draw.computeBoundingSphere()
+      draws.push(draw)
+    }
+    for (const mesh of exact) {
+      const geometry = exactGeometry(mesh.faces)
+      geometry.clearGroups() // Thumbnail surfaces use one untextured material.
+      const draw = new THREE.InstancedMesh(geometry, surface, mesh.positions.length)
+      mesh.positions.forEach(([x, y, z], index) => draw.setMatrixAt(index, matrix.makeTranslation(x, y, z)))
+      draw.instanceMatrix.needsUpdate = true
+      draw.computeBoundingSphere()
+      draws.push(draw)
+    }
+  }
+  return draws
 }
 
 // Cards contain images. All images are rendered, on demand, through this one
@@ -42,13 +84,16 @@ export function createCopycatThumbnailRenderer() {
   scene.add(frame)
   const group = new THREE.Group()
   scene.add(group)
-  const matrix = new THREE.Matrix4()
   let disposed = false
   const clear = () => {
+    const materials = new Set(), geometries = new Set()
     for (const mesh of group.children) {
-      mesh.material.dispose()
+      materials.add(mesh.material)
+      if (mesh.geometry !== geometry) geometries.add(mesh.geometry)
       mesh.dispose()
     }
+    for (const material of materials) material.dispose()
+    for (const geometry of geometries) geometry.dispose()
     group.clear()
   }
 
@@ -57,29 +102,7 @@ export function createCopycatThumbnailRenderer() {
       if (disposed) throw new Error('Die Miniatur-Vorschau wurde bereits geschlossen.')
       clear()
       try {
-        const batches = new Map()
-        for (const mesh of plan.meshes) {
-          const list = batches.get(mesh.material) || []
-          list.push(mesh)
-          batches.set(mesh.material, list)
-        }
-        for (const [material, meshes] of batches) {
-          const count = meshes.reduce((sum, mesh) => sum + mesh.boxes.length * mesh.positions.length, 0)
-          if (!count) continue
-          const surface = new THREE.MeshLambertMaterial({ color: color(material) })
-          const draw = new THREE.InstancedMesh(geometry, surface, count)
-          let index = 0
-          for (const mesh of meshes) for (const [px, py, pz] of mesh.positions) {
-            for (const [x, y, z, maxX, maxY, maxZ] of mesh.boxes) {
-              matrix.makeScale((maxX - x) / 16, (maxY - y) / 16, (maxZ - z) / 16)
-              matrix.setPosition(px + (x + maxX) / 32, py + (y + maxY) / 32, pz + (z + maxZ) / 32)
-              draw.setMatrixAt(index++, matrix)
-            }
-          }
-          draw.instanceMatrix.needsUpdate = true
-          draw.computeBoundingSphere()
-          group.add(draw)
-        }
+        for (const mesh of createCopycatThumbnailMeshes(plan, geometry)) group.add(mesh)
         if (renderer.getContext().isContextLost()) throw new Error('Der WebGL-Kontext der Miniatur-Vorschau wurde unterbrochen.')
         renderer.render(scene, camera)
         return renderer.domElement.toDataURL('image/png')

@@ -114,7 +114,7 @@ class GraphstudioExchangeTest {
             else -> n
         } }+roofLevel+roofSource).withCurrentSchema()
         building("adaptive-roof-dynamic-segments",Building(schema=2,name="Automatische Dachsegmente",graph=automatic))
-        val mixed=GraphCards.starter().let { g -> g.copy(nodes=g.nodes+BuildingNode("number",BuildingKind.INT,countValue=4)+BuildingNode("vector",BuildingKind.POSITION,inputs=listOf("number","number","number"))) }
+        val mixed=GraphCards.legacyStarter().let { g -> g.copy(nodes=g.nodes+BuildingNode("number",BuildingKind.INT,countValue=4)+BuildingNode("vector",BuildingKind.POSITION,inputs=listOf("number","number","number"))) }
         building("unified-copycat-card",Building(schema=2,name="Copycatkarte",graph=mixed))
         building("unified-count-card",Building(schema=2,name="Anzahlkarte",graph=mixed.replace(mixed.resultNode().copy(resultType="INT",inputs=listOf("number")))))
         val cardResult=BuildingNode("result",BuildingKind.BUILDING,name="Ergebnis",resultType="BUILDING",inputs=listOf("building"))
@@ -138,10 +138,10 @@ class GraphstudioExchangeTest {
         val part=BuildingNode("tile",BuildingKind.COPYCAT,inlinePart=Part("copycats:copycat_block"))
         val template=BuildingNode("template",BuildingKind.ROOF_TEMPLATE,inputs=List(8){part.id},roofSettings=RoofTemplateSettings(overhang16=0))
         val roof=BuildingNode("roof",BuildingKind.ROOF,geometry=area.id,roofInputMode=RoofInputMode.TEMPLATE,roofTemplate=template.id)
-        val roofCard=GraphCards.starter("ROOF").let { g->g.copy(nodes=g.nodes.filter {it.id!="source"}.map {if(it.resultType!=null)it.copy(inputs=listOf(roof.id)) else it}+listOf(area,part,template,roof)).withCurrentSchema() }
+        val roofCard=GraphCards.legacyStarter("ROOF").let { g->g.copy(nodes=g.nodes.filter {it.id!="source"}.map {if(it.resultType!=null)it.copy(inputs=listOf(roof.id)) else it}+listOf(area,part,template,roof)).withCurrentSchema() }
         building("roof-template-eight-variants",Building(schema=2,graph=roofCard))
         val shaft=BuildingNode("shaft",BuildingKind.ELEVATOR_SHAFT_SEGMENT,height=6)
-        val shaftCard=GraphCards.starter("WALL").let { g->g.copy(nodes=g.nodes.filter {it.id!="source"}.map {if(it.resultType!=null)it.copy(inputs=listOf(shaft.id)) else it}+shaft).withCurrentSchema() }
+        val shaftCard=GraphCards.legacyStarter("WALL").let { g->g.copy(nodes=g.nodes.filter {it.id!="source"}.map {if(it.resultType!=null)it.copy(inputs=listOf(shaft.id)) else it}+shaft).withCurrentSchema() }
         building("ordinary-shaft-segment",Building(schema=2,graph=shaftCard))
         }
         val numberPosition=BuildingNode("number_position",BuildingKind.POSITION,translation=P(-3,0,0))
@@ -149,19 +149,25 @@ class GraphstudioExchangeTest {
         val magnitude=BuildingNode("magnitude",BuildingKind.INT_ABS,inputs=listOf(numberX.id))
         val countPart=BuildingNode("count_part",BuildingKind.COPYCAT,inlinePart=Part("copycats:copycat_block"))
         val repetition=BuildingNode("repetition",BuildingKind.ROTATION_SEGMENT,inputs=listOf(countPart.id),dimensions=mapOf("length" to magnitude.id))
-        val numericCard=GraphCards.starter("WALL").let { g->g.copy(schema=13,nodes=g.nodes.filter {it.id!="source"}.map {if(it.resultType!=null)it.copy(inputs=listOf(repetition.id)) else it}+listOf(numberPosition,numberX,magnitude,countPart,repetition)) }
+        val numericCard=GraphCards.legacyStarter("WALL").let { g->g.copy(schema=13,nodes=g.nodes.filter {it.id!="source"}.map {if(it.resultType!=null)it.copy(inputs=listOf(repetition.id)) else it}+listOf(numberPosition,numberX,magnitude,countPart,repetition)) }
         building("signed-position-absolute-repetition",Building(schema=2,graph=numericCard))
         shape("signed-form-numbers",Form(name="Ganzzahlen",graph=NodeGraph(schema=9,nodes=listOf(
             GraphNode("source",part=Part("copycats:copycat_byte",offset=P(4,4,4))),GraphNode("position",NodeKind.POSITION,translation=P(-1,0,0)),
             GraphNode("count",NodeKind.COUNT,countValue=0),GraphNode("x",NodeKind.POSITION_X,listOf("position")),GraphNode("abs",NodeKind.INT_ABS,listOf("x")),
             GraphNode("move",NodeKind.TRANSLATE,listOf("source","position")),GraphNode("result",NodeKind.OUTPUT,listOf("move"))))))
+        building("direct-result-copycat",Building(schema=2,graph=GraphCards.starter()))
+        val roofInput=BuildingNode("tile",BuildingKind.GROUP_INPUT,"Dachbauteil",valueType="COPYCAT",defaultSource="tile_source")
+        val roofDefinition=GraphCards.starter("ROOF_TEMPLATE").let { g->g.copy(nodes=g.nodes.map { n->if(n.id=="result")n.copy(inputs=List(8){roofInput.id},roofSettings=RoofTemplateSettings(overhang16=0)) else n }+roofInput+BuildingNode("tile_source",BuildingKind.COPYCAT,inlinePart=Part("copycats:copycat_block")),groupInputOrder=listOf(roofInput.id)) }
+        val roofRef=BuildingNode("roof_ref",BuildingKind.GRAPH_REFERENCE,valueType="ROOF_TEMPLATE",referenceKey="roof_definition@1")
+        val roofGraph=GraphCards.starter("ROOF").let { g->g.copy(nodes=g.nodes.map { n->if(n.id=="result")n.copy(geometry="roof_area",roofInputMode=RoofInputMode.TEMPLATE,roofTemplate=roofRef.id) else n }+roofRef+BuildingNode("roof_area",BuildingKind.AREA,areaMode=AreaMode.SQUARE,length=3),graphDefinitions=mapOf("roof_definition@1" to GraphDefinition(Building(schema=2,graph=roofDefinition)))) }
+        building("parameterized-roof-template-result",Building(schema=2,graph=roofGraph))
         val formNodes=NodeKind.entries.map { GraphModels.newShape(it).copy(id=it.name) }
         val buildingNodes=BuildingKind.entries.flatMap { kind -> listOf(false,true).map { explicit -> GraphModels.newBuilding(kind,explicit).copy(id=kind.name+if(explicit) "_explicit" else "_legacy") } }
         val buildingSpecs=buildingNodes.map { node ->
-            val graph=BuildingGraph(nodes=listOf(BuildingNode("empty_wall",BuildingKind.SEGMENT,block="minecraft:air",length=1))+
-                (if(node.kind==BuildingKind.BUILDING) emptyList() else listOf(BuildingNode("building",BuildingKind.BUILDING)))+node)
+            val graph=BuildingGraph(schema=if(node.kind in GraphPrograms.kinds) 14 else 1,nodes=listOf(BuildingNode("empty_wall",BuildingKind.SEGMENT,block="minecraft:air",length=1))+
+                (if(node.kind==BuildingKind.BUILDING || node.kind==BuildingKind.RESULT) emptyList() else listOf(BuildingNode("building",BuildingKind.BUILDING)))+node)
             mapOf("document" to Building(schema=2,graph=graph),"id" to node.id,"outputType" to GraphTypes.building(graph,node.id),
-                "ports" to BuildingPorts.of(node,graph,true).map { port -> mapOf("id" to port.key,"source" to port.source,"accepts" to port.accepts.map { it.name },
+                "ports" to BuildingPorts.of(node,graph,true).map { port -> mapOf("id" to port.key,"source" to port.source,"name" to (if(port.key=="defaultSource") "Standardwert" else if(port.key=="resultSource") "Ergebnis" else null),"accepts" to port.accepts.map { it.name },
                     "types" to GraphNumbers.portTypes(port),"length" to port.length,"height" to port.height) })
         }
         val corpus=mapOf("cases" to cases,"formNodes" to formNodes,"buildingNodes" to buildingNodes,"buildingSpecs" to buildingSpecs)

@@ -2,6 +2,7 @@ package de.teutonstudio.copycatarchitect.domain
 
 /** Browser equivalents of the integer operations used by the shared domain. */
 internal object Math {
+    fun addExact(a:Int,b:Int):Int { val v=a.toLong()+b;require(v in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong());return v.toInt() }
     fun floorMod(a:Int,b:Int)=a.mod(b)
     fun floorDiv(a:Int,b:Int)=a.floorDiv(b)
     fun multiplyExact(a:Int,b:Int):Int {

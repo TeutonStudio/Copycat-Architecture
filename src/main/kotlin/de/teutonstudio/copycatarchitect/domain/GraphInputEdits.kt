@@ -48,7 +48,7 @@ object GraphInputEdits {
             nodeGroups=groups(graph.nodeGroups,ids,order,false)).withTransformSchema()
     }
     fun building(graph:BuildingGraph,id:String,order:List<Int>):BuildingGraph {
-        val node=graph.nodes.single { it.id==id };val spec=GraphModels.building.nodes.getValue(node.kind.name)
+        val node=GraphPrograms.producer(graph.nodes.single { it.id==id });val spec=GraphModels.building.nodes.getValue(node.kind.name)
         val operation=if(node.kind.name in UnifiedOperators.kinds) UnifiedOperators.spec(node.kind.name,node.operation) else null
         val limits=if(operation==null) GraphModels.buildingPort(node,"in:0") else null
         validate(order,node.inputs.size,operation?.min ?: limits?.min ?: 2,operation?.max ?: limits?.max ?: GraphModels.building.maxInputs,(operation?.commutativeAssociative ?: spec.commutativeAssociative) || permutation(node.kind.name,order,node.inputs.size) || node.kind.name in UnifiedOperators.kinds && order.size==node.inputs.size && order.sorted()==node.inputs.indices.toList())

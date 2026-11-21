@@ -42,6 +42,10 @@ private fun Collection<P>.orderedCoordinates()=sortedWith(compareBy({ it.z },{ i
 
 /** Resolve connected sources for display. Incomplete drafts retain their local preview until connected. */
 fun BuildingGraph.resolvedNode(node:BuildingNode):BuildingNode {
+    if(node.kind in GraphPrograms.kinds) {
+        if(node.kind==BuildingKind.RESULT && node.resultMode!=GraphResultMode.VALUE) return resolvedNode(GraphPrograms.producer(node))
+        return runCatching { resolvedNode(GraphConditions.buildingNode(this,node.id)) }.getOrDefault(node)
+    }
     if(node.kind==BuildingKind.CONDITIONAL) return resolvedNode(GraphConditions.buildingNode(this,node.id))
     var resolved=BuildingCounts.resolve(this,node)
     if(node.kind==BuildingKind.SEGMENT && node.dynamicAxes.isNullOrEmpty() && node.layout.isNotEmpty()) {

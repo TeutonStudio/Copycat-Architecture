@@ -1,4 +1,4 @@
-import { applyGraphDiagram, replaceGraphNodes, exportDocument, editInspectorNode, normalizeDocument, wireModels, compileForm, graphModels, inspectGraph, prepareForm } from './generated/engine.mjs'
+import { promoteNumberGraph, editGraphInputs, duplicateGraph, applyGraphDiagram, replaceGraphNodes, exportDocument, editInspectorNode, normalizeDocument, wireModels, compileForm, graphModels, inspectGraph, prepareForm } from './generated/engine.mjs'
 
 export const model = { ...graphModels(), mirrorPlanes: wireModels().enums.CopycatMirrorPlane }
 export const defaults = [{ id: 'body', name: 'Body', role: 'surface', priority: 0 }]
@@ -27,12 +27,12 @@ function retainShape(raw, before, after) {
   return result
 }
 function retainedGraph(document, graph) {
-  const building = document.graph.nodes.some(node => node.kind === 'BUILDING')
+  const building = document.graph.nodes.some(node => (node.kind === 'BUILDING' || node.kind === 'RESULT'))
   return retainShape(document.graph, normalizeDocument(building, document).graph, graph)
 }
 export function replaceNodes(document, nodes) {
   const candidate = { ...document, graph: { ...document.graph, nodes } }
-  return { ...candidate, graph: retainedGraph(candidate, replaceGraphNodes(nodes.some(node => node.kind === 'BUILDING'), document, nodes)) }
+  return { ...candidate, graph: retainedGraph(candidate, replaceGraphNodes(nodes.some(node => (node.kind === 'BUILDING' || node.kind === 'RESULT')), document, nodes)) }
 }
 
 export function readGraph(raw, mode) {
@@ -41,8 +41,8 @@ export function readGraph(raw, mode) {
   if (!bare && !raw.graph && !Array.isArray(raw.parts) && !raw.wings && !raw.patterns && !raw.palette) {
     throw new Error('Die Datei enthält weder einen Copycat-Graphen noch eine Form.')
   }
-  const isBuilding = bare ? raw.nodes.some(node => node.kind === 'BUILDING')
-    : raw.graph ? raw.graph.nodes?.some(node => node.kind === 'BUILDING')
+  const isBuilding = bare ? raw.nodes.some(node => (node.kind === 'BUILDING' || node.kind === 'RESULT'))
+    : raw.graph ? raw.graph.nodes?.some(node => (node.kind === 'BUILDING' || node.kind === 'RESULT'))
       : !raw.parts && (raw.wings || raw.patterns || raw.palette)
   if (Boolean(isBuilding) !== (mode === 'building')) throw new Error('Die Datei gehört zum anderen Editor.')
   let document = bare ? { name: 'Importierter Graph', schema: isBuilding ? 2 : 3, graph: raw } : raw
@@ -66,11 +66,13 @@ export function connections(entries) {
     .map(port => ({ source: port.source, target: node.id, port: port.id })))
 }
 
-export function protectedNode(node) {
-  return node.id === 'empty_wall' || ['OUTPUT', 'BUILDING'].includes(node.kind)
+export function protectedNode(node,document) {
+  return node.id === 'empty_wall' || node.resultType!=null || node.kind==='OUTPUT' || node.kind==='BUILDING' && !document?.graph.nodes.some(n=>n.resultType!=null)
 }
 
 export function applyWires(mode, document, entries, wires, removed = []) {
+  const same=(a,b)=>a.length===b.length && a.every(wire=>b.some(other=>wire.source===other.source && wire.target===other.target && wire.port===other.port))
+  if(!removed.length && same(wires,connections(entries))) return document
   const layout = entries.map(({ node }) => node).filter(node => !removed.includes(node.id))
   const graph = applyGraphDiagram(mode === 'building', document, layout, wires)
   return { ...document, graph: retainedGraph(document, graph) }
@@ -78,10 +80,10 @@ export function applyWires(mode, document, entries, wires, removed = []) {
 }
 
 export function validateLibrary(data) {
-  if (!data || typeof data !== 'object' || Array.isArray(data) || !('forms' in data || 'modules' in data)) {
+  if (!data || typeof data !== 'object' || Array.isArray(data) || !('forms' in data || 'modules' in data || 'graphs' in data)) {
     throw new Error('Erwartet wird eine Copycat-Bibliothek mit forms und/oder modules.')
   }
-  for (const key of ['forms', 'modules']) {
+  for (const key of ['forms', 'modules', 'graphs']) {
     if (key in data && (!data[key] || typeof data[key] !== 'object' || Array.isArray(data[key]))) {
       throw new Error(`Der Bibliothekseintrag ${key} muss ein Objekt sein.`)
     }
@@ -92,3 +94,25 @@ export function validateLibrary(data) {
 export function editNode(mode, document, node) {
   return { ...document, graph: retainedGraph(document, editInspectorNode(mode === 'building', document, node)) }
 }
+
+// The domain owns IDs, positions and rewiring. The browser also retains extension
+// metadata on original nodes and their copies, just as every other edit does.
+export function duplicateSelection(mode, document, ids, copies) {
+  const result=duplicateGraph(mode === 'building',document,ids,copies)
+  const mapping=new Map(ids.map((id,index)=>[id,copies[index]]))
+  const copied=ids.map((id,index)=>({...structuredClone(document.graph.nodes.find(node=>node.id === id)),id:copies[index]}))
+  const groups=result.graph.nodeGroups || []
+  const copiedGroups=groups.filter(group=>!document.graph.nodeGroups?.some(old=>old.id === group.id)).map(group=>{
+    const source=document.graph.nodeGroups?.find(old=>old.nodes.length === group.nodes.length && old.nodes.every(id=>group.nodes.includes(mapping.get(id))))
+    return source ? {...structuredClone(source),...group} : group
+  })
+  const candidate={...document,graph:{...document.graph,nodes:[...document.graph.nodes,...copied],nodeGroups:[...(document.graph.nodeGroups || []),...copiedGroups]}}
+  return retainShape(candidate,normalizeDocument(mode === 'building',candidate),result)
+}
+
+
+export function editInputs(mode,document,id,order) {
+  return {...document,graph:retainedGraph(document,editGraphInputs(mode==='building',document,id,order))}
+}
+
+export const promoteNumbers=(mode,document)=>({...document,graph:retainedGraph(document,promoteNumberGraph(mode==='building',document))})

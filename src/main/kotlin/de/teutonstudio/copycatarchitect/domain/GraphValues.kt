@@ -6,14 +6,14 @@ import java.math.BigInteger
 object GraphValues {
     val operations=listOf("ADD","SUBTRACT","MULTIPLY","DIVIDE","MIN","MAX")
     val variadicKinds=setOf("INT_ADD","INT_MULTIPLY","INT_MIN","INT_MAX","POSITION_ADD","POSITION_MULTIPLY","POSITION_MIN","POSITION_MAX")
-    val integerKinds=setOf("COUNT","INT_ABS","INT_TO_COUNT","INT_REMAINDER","INT","POSITION_X","POSITION_Y","POSITION_Z")+operations.map { "INT_$it" }
-    val vectorKinds=setOf("POSITION")+operations.map { "POSITION_$it" }
+    val integerKinds=setOf("NUMBER_OPERATOR","COUNT","INT_ABS","INT_TO_COUNT","INT_REMAINDER","INT","POSITION_X","POSITION_Y","POSITION_Z")+operations.map { "INT_$it" }
+    val vectorKinds=setOf("POSITION_OPERATOR","POSITION")+operations.map { "POSITION_$it" }
     val kinds=integerKinds+vectorKinds+GraphTypes.logicKinds
     class IncompleteValue(message:String):IllegalArgumentException(message)
     data class ValueNode(val id:String,val kind:String,val inputs:List<String>,val count:Int?,val point:P?,val boolean:Boolean?=null,val operation:String?=null)
-    fun shape(nodes:Map<String,GraphNode>,signed:Boolean=GraphNumbers.modern(nodes))=Evaluation(nodes.mapValues { (_,n)->ValueNode(n.id,n.kind.name,n.inputs,n.countValue,n.translation,n.booleanValue,n.operation) },signed)
-    fun building(nodes:Map<String,BuildingNode>,signed:Boolean=GraphNumbers.modern(nodes))=Evaluation(nodes.mapValues { (_,n)->ValueNode(n.id,n.kind.name,n.inputs,n.countValue ?: if(n.kind==BuildingKind.INT) 4 else null,n.translation,n.booleanValue,n.operation) },signed)
-    class Evaluation(private val nodes:Map<String,ValueNode>,private val signed:Boolean=false) {
+    fun shape(nodes:Map<String,GraphNode>,signed:Boolean=GraphNumbers.modern(nodes))=Evaluation(nodes.mapValues { (_,n)->ValueNode(n.id,n.kind.name,n.inputs,n.countValue,n.translation,n.booleanValue,n.operation) },signed,{ id->UnifiedOperators.value(UnifiedOperators.valueNodes(nodes.values.toList()),id) })
+    fun building(nodes:Map<String,BuildingNode>,signed:Boolean=GraphNumbers.modern(nodes))=Evaluation(nodes.mapValues { (_,n)->ValueNode(n.id,n.kind.name,n.inputs,n.countValue ?: if(n.kind==BuildingKind.INT) 4 else null,n.translation,n.booleanValue,n.operation) },signed,{ id->UnifiedOperators.value(UnifiedOperators.buildingValueNodes(nodes.values.toList()),id) })
+    class Evaluation(private val nodes:Map<String,ValueNode>,private val signed:Boolean=false,private val unified:(String)->Any) {
         private val integers=mutableMapOf<String,Int>();private val vectors=mutableMapOf<String,P>();private val active=mutableSetOf<String>()
         private fun node(id:String):ValueNode {
             val n=nodes[id] ?: error("Missing parameter source $id")
@@ -29,6 +29,7 @@ object GraphValues {
             try {
                 val n=node(id)
                 return when(n.kind) {
+                    "RELATION_OPERATOR","STATEMENT_OPERATOR"->unified(id) as Boolean
                     "BOOLEAN"->n.boolean ?: false
                     "INT_COMPARE"->{ val a=integer(input(n,0));val b=integer(input(n,1))
                         when(n.operation ?: "EQUAL") { "EQUAL"->a==b;"NOT_EQUAL"->a!=b;"LESS"->a<b;"LESS_EQUAL"->a<=b;"GREATER"->a>b;"GREATER_EQUAL"->a>=b;"DIVISIBLE"->{require(b!=0) { "Teilbarkeit: Divisor 0 ist ungültig" };a.toLong()%b.toLong()==0L};else->error("Unbekannter Zahlenvergleich") }
@@ -65,6 +66,7 @@ object GraphValues {
             try {
                 val n=node(id);require(n.kind in integerKinds) { "Anzahl input requires an integer value" }
                 val result=when(n.kind) {
+                    "NUMBER_OPERATOR"->unified(id) as Int
                     "INT"->n.count ?: 0
                     "COUNT"->(n.count ?: 0).also { require(it>=0) { "Anzahl muss mindestens 0 sein" } }
                     "INT_ABS"->integer(input(n,0)).let { require(it!=Int.MIN_VALUE) { "Integer overflow" };kotlin.math.abs(it) }
@@ -79,7 +81,7 @@ object GraphValues {
             vectors[id]?.let { return it };require(active.add(id)) { "Cycle in parameter graph at $id" }
             try {
                 val n=node(id);require(n.kind in vectorKinds) { "Position input requires a vector value" }
-                val result=if(n.kind=="POSITION") {
+                val result=if(n.kind=="POSITION_OPERATOR") unified(id) as P else if(n.kind=="POSITION") {
                     val fallback=n.point ?: P()
                     fun component(index:Int,value:Int)=n.inputs.getOrNull(index)?.takeIf(String::isNotEmpty)?.let(::integer) ?: value
                     P(component(0,fallback.x),component(1,fallback.y),component(2,fallback.z))
@@ -88,7 +90,7 @@ object GraphValues {
                     val values=n.inputs.indices.map { vector(input(n,it)) }
                     P(calculateAll(operation,values.map { it.x }),calculateAll(operation,values.map { it.y }),calculateAll(operation,values.map { it.z }))
                 }
-                require(signed || n.kind=="POSITION" && n.inputs.isEmpty() || listOf(result.x,result.y,result.z).all { it>=0 }) { "hB coordinates must be non-negative integers" }
+                require(signed || n.kind=="POSITION_OPERATOR" || n.kind=="POSITION" && n.inputs.isEmpty() || listOf(result.x,result.y,result.z).all { it>=0 }) { "hB coordinates must be non-negative integers" }
                 vectors[id]=result;return result
             } finally { active.remove(id) }
         }

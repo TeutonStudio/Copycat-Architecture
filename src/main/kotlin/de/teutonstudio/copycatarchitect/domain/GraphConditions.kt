@@ -29,7 +29,7 @@ object GraphTypes {
     fun building(graph:BuildingGraph,id:String)=building(GraphNumbers.buildingContext(graph),id)
     fun expectedShape(nodes:Map<String,GraphNode>,n:GraphNode,slot:Int):String? = if(n.kind==NodeKind.CONDITIONAL) {
         if(slot==1) "BOOLEAN" else shape(nodes,n.id)
-    } else GraphModels.shape(n.kind).inputs?.type(slot)
+    } else UnifiedOperators.shapeInputs(n).type(slot)
     fun accepts(graph:BuildingGraph,port:BuildingPort,source:BuildingNode):Boolean {
         val actual=building(graph,source.id) ?: return true
         if(port.valueType!=null) return GraphNumbers.compatible(actual,port.valueType)

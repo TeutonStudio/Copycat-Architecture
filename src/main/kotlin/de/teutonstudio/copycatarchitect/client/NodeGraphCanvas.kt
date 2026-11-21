@@ -36,7 +36,7 @@ class NodeGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Form,pr
         get()=view.inspectorScroll
         set(value) { view.inspectorScroll=value }
     private var inspectorContentHeight=0
-    private enum class Field { SELECT,CONNECT,INSERT,SOURCE,DEFINITION,TURN,TOP,SIZE,GROUP,TILT,X,Y,Z,GROUPED,SEPARATED,MATERIAL,PREVIEW,ADD,REMOVE,SWAP,ROTATION_AXIS,ROTATE,INPUT_GROUP,ROOF_CONFIG,MIRROR_PLANE,TRANSFORMS }
+    private enum class Field { TRANSFORMATION_EDIT, OPERATOR_EDIT, SELECT,CONNECT,INSERT,SOURCE,DEFINITION,TURN,TOP,SIZE,GROUP,TILT,X,Y,Z,GROUPED,SEPARATED,MATERIAL,PREVIEW,ADD,REMOVE,SWAP,ROTATION_AXIS,ROTATE,INPUT_GROUP,ROOF_CONFIG,MIRROR_PLANE,TRANSFORMS }
     private data class Control(val field:Field,val x:Int,val y:Int,val w:Int,val label:String,val slot:Int=-1,val active:Boolean=false,val enabled:Boolean=true,val icon:String="",val floating:Boolean=false) {
         fun contains(px:Double,py:Double)=px>=x && px<x+w && py>=y && py<y+18
     }
@@ -178,6 +178,9 @@ class NodeGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Form,pr
         val third=(w-6)/3;val half=(w-4)/2
         val hasDefinition=inspector && sourceDefinition(n)!=null
         return (when(n.kind) {
+            NodeKind.TRANSFORMATION -> listOf(Control(Field.TRANSFORMATION_EDIT,px,py,w,ui("copycat_transforms")))
+            NodeKind.COPYCAT_TRANSFORM -> emptyList()
+            NodeKind.COPYCAT_OPERATOR,NodeKind.POSITION_OPERATOR,NodeKind.NUMBER_OPERATOR,NodeKind.RELATION_OPERATOR,NodeKind.STATEMENT_OPERATOR -> listOf(Control(Field.OPERATOR_EDIT,px,py,w,"Operator bearbeiten …"))
             NodeKind.SAVED -> listOf(Control(Field.SOURCE,px,py,w,n.savedCopycat?.let { "${it.name} · v${it.version}" } ?: ui("node_saved")))+
                 rotationControls(n,px,py+21,w)
             NodeKind.INPUT -> listOf(
@@ -360,6 +363,8 @@ class NodeGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Form,pr
     }
     private fun activate(n:GraphNode,c:Control,px:Double,button:Int) {
         if(!c.enabled) return
+        if(c.field==Field.TRANSFORMATION_EDIT) { TransformationValueEditor.open(n) { edit(it) };return }
+        if(c.field==Field.OPERATOR_EDIT) { UnifiedOperatorSettings.open(n,graph.nodes) { edit(it) };return }
         if(readOnly && c.field!=Field.SELECT && c.field!=Field.DEFINITION) return
         if(c.field==Field.TRANSFORMS) { CopycatTransformEditor.open(n) { edit(it) };return }
         if(c.field==Field.DEFINITION) { openSourceDefinition(n.id);return }

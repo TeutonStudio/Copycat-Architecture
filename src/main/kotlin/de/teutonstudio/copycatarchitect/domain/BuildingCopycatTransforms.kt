@@ -42,6 +42,7 @@ object SemanticPorts {
         raw.equals("position",true)->"position"
         raw.equals("transformation",true)->"transformation"
         raw=="INT"->"INT"
+        raw=="BOOLEAN"->"BOOLEAN"
         raw.startsWith("SEGMENT") || raw in setOf("WALL","FLOOR","CEILING","PATTERN","ROTATION_SEGMENT")->"segment"
         raw in setOf("ROOM","BAY_WINDOW","ROOM_LAYOUT","ROOM_GEOMETRY")->"room"
         raw=="STOREY"->"storey"

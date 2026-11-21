@@ -489,6 +489,12 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
             if(n.kind==BuildingKind.STOREY) row(g,ui("bg_storey_mode",ui("bg_storey_"+n.storeyMode))+" ▾",n.x+8,by-22,w-16)
             if(n.kind in BuildingCopycatTransforms.sourceKinds || n.kind in setOf(BuildingKind.ROTATION,BuildingKind.MIRRORING,BuildingKind.POSITION)) row(g,ui("copycat_transforms"),n.x+8,by+details(n)-22,w-16)
             when(layoutKind(n)) {
+                BuildingKind.TRANSFORMATION -> {
+                    row(g,ui("copycat_transforms"),n.x+8,by,w-16)
+                    text(g,(n.transformationOrder ?: TransformationOrder.SRP).name,n.x+8,by+24,ArchitectTheme.brass)
+                }
+                BuildingKind.COPYCAT_TRANSFORM,BuildingKind.SEGMENT_TRANSFORM -> materialRows(g,n,by)
+                BuildingKind.COPYCAT_OPERATOR,BuildingKind.SEGMENT_OPERATOR,BuildingKind.POSITION_OPERATOR,BuildingKind.NUMBER_OPERATOR,BuildingKind.RELATION_OPERATOR,BuildingKind.STATEMENT_OPERATOR -> { row(g,"Operator bearbeiten …",n.x+8,by,w-16);text(g,UnifiedOperators.spec(n.kind.name,n.operation).label,n.x+8,by+24,ArchitectTheme.brass) }
                 BuildingKind.POSITION,BuildingKind.COPYCAT_POSITION,BuildingKind.INT_ADD,BuildingKind.INT_SUBTRACT,BuildingKind.INT_MULTIPLY,BuildingKind.INT_DIVIDE,BuildingKind.INT_MIN,BuildingKind.INT_MAX,BuildingKind.POSITION_ADD,BuildingKind.POSITION_SUBTRACT,BuildingKind.POSITION_MULTIPLY,BuildingKind.POSITION_DIVIDE,BuildingKind.POSITION_MIN,BuildingKind.POSITION_MAX,BuildingKind.POSITION_X,BuildingKind.POSITION_Y,BuildingKind.POSITION_Z -> Unit
                 BuildingKind.INT -> row(g,ui("bg_count_value",n.countValue ?: 0),n.x+8,by,w-16)
                 BuildingKind.ROTATION_SEGMENT -> {
@@ -955,6 +961,9 @@ class BuildingGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Bui
                 }
                 if(inside(details(n)-22) && (n.kind in BuildingCopycatTransforms.sourceKinds || n.kind in setOf(BuildingKind.ROTATION,BuildingKind.MIRRORING,BuildingKind.POSITION))) { CopycatTransformEditor.open(n) { edit(it) };return@safe }
                 when(layoutKind(n)) {
+                    BuildingKind.TRANSFORMATION -> if(inside(0)) TransformationValueEditor.open(n) { edit(it) }
+                    BuildingKind.COPYCAT_TRANSFORM,BuildingKind.SEGMENT_TRANSFORM -> material(0)
+                    BuildingKind.COPYCAT_OPERATOR,BuildingKind.SEGMENT_OPERATOR,BuildingKind.POSITION_OPERATOR,BuildingKind.NUMBER_OPERATOR,BuildingKind.RELATION_OPERATOR,BuildingKind.STATEMENT_OPERATOR -> { if(inside(0)) UnifiedOperatorSettings.open(n,graph.nodes) { edit(it) } }
                     BuildingKind.POSITION,BuildingKind.COPYCAT_POSITION,BuildingKind.INT_ADD,BuildingKind.INT_SUBTRACT,BuildingKind.INT_MULTIPLY,BuildingKind.INT_DIVIDE,BuildingKind.INT_MIN,BuildingKind.INT_MAX,BuildingKind.POSITION_ADD,BuildingKind.POSITION_SUBTRACT,BuildingKind.POSITION_MULTIPLY,BuildingKind.POSITION_DIVIDE,BuildingKind.POSITION_MIN,BuildingKind.POSITION_MAX,BuildingKind.POSITION_X,BuildingKind.POSITION_Y,BuildingKind.POSITION_Z -> Unit
                     BuildingKind.INT -> if(inside(0)) open("number:count_value",0)
                     BuildingKind.ROTATION_SEGMENT -> when {

@@ -663,6 +663,7 @@ fun BuildingGraph.withCurrentSchema():BuildingGraph {
         it.kind==BuildingKind.SEGMENT && nodes.any { source -> source.id==it.layout && source.kind==BuildingKind.AREA } ||
         it.kind==BuildingKind.ROOM && nodes.any { source -> source.id==it.geometry && source.kind==BuildingKind.AREA } }) return copy(schema=maxOf(schema,11))
     if(nodes.any { it.kind in setOf(BuildingKind.TRANSFORMATION,BuildingKind.COPYCAT_TRANSFORM,BuildingKind.SEGMENT_TRANSFORM) } || nodeGroups.any { g->g.graphInterface?.let { it.inputs.any { p->p.type=="TRANSFORMATION" } || it.outputs.any { p->p.type=="TRANSFORMATION" } }==true }) return copy(schema=maxOf(schema,10))
+    if(nodes.any { it.kind.name in UnifiedOperators.kinds }) return copy(schema=maxOf(schema,9))
     val value=withLegacySchema()
     if(nodes.any { it.kind.name in GraphValues.variadicKinds && it.inputs.size>2 || it.kind in CopycatSetInputs.buildingKinds && it.inputs.size<2 }) return value.copy(schema=maxOf(value.schema,9))
     if(nodes.any { it.resultType!=null || it.inlinePart!=null }) return value.copy(schema=maxOf(value.schema,8))

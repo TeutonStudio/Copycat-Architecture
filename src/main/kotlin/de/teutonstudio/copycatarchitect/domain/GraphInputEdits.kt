@@ -40,8 +40,8 @@ object GraphInputEdits {
     private fun <T> reorder(values:List<T>,order:List<Int>,fallback:T):List<T> =
         if(values.isEmpty()) values else order.map { values.getOrElse(it) { fallback } }
     fun shape(graph:NodeGraph,id:String,order:List<Int>):NodeGraph {
-        val node=graph.nodes.single { it.id==id };val spec=GraphModels.shape(node.kind);val limits=requireNotNull(spec.inputs)
-        validate(order,node.inputs.size,limits.min,limits.max,spec.commutativeAssociative || permutation(node.kind.name,order,node.inputs.size))
+        val node=graph.nodes.single { it.id==id };val spec=GraphModels.shape(node.kind);val limits=UnifiedOperators.shapeInputs(node)
+        validate(order,node.inputs.size,limits.min,limits.max,(if(node.kind.name in UnifiedOperators.kinds) UnifiedOperators.spec(node.kind.name,node.operation).commutativeAssociative else spec.commutativeAssociative) || permutation(node.kind.name,order,node.inputs.size) || node.kind.name in UnifiedOperators.kinds && order.size==node.inputs.size && order.sorted()==node.inputs.indices.toList())
         val ids=affected(graph.nodeGroups,id)
         return graph.copy(nodes=graph.nodes.map { n -> if(n.id !in ids) n else n.copy(
             inputs=order.map { n.inputs.getOrElse(it) { "" } },inputGroups=reorder(n.inputGroups,order,"")) },
@@ -49,8 +49,9 @@ object GraphInputEdits {
     }
     fun building(graph:BuildingGraph,id:String,order:List<Int>):BuildingGraph {
         val node=graph.nodes.single { it.id==id };val spec=GraphModels.building.nodes.getValue(node.kind.name)
-        val limits=GraphModels.buildingPort(node,"in:0")
-        validate(order,node.inputs.size,limits.min ?: 2,limits.max ?: GraphModels.building.maxInputs,spec.commutativeAssociative || permutation(node.kind.name,order,node.inputs.size))
+        val operation=if(node.kind.name in UnifiedOperators.kinds) UnifiedOperators.spec(node.kind.name,node.operation) else null
+        val limits=if(operation==null) GraphModels.buildingPort(node,"in:0") else null
+        validate(order,node.inputs.size,operation?.min ?: limits?.min ?: 2,operation?.max ?: limits?.max ?: GraphModels.building.maxInputs,(operation?.commutativeAssociative ?: spec.commutativeAssociative) || permutation(node.kind.name,order,node.inputs.size) || node.kind.name in UnifiedOperators.kinds && order.size==node.inputs.size && order.sorted()==node.inputs.indices.toList())
         val ids=affected(graph.nodeGroups,id)
         return graph.copy(nodes=graph.nodes.map { n -> if(n.id !in ids) n else n.copy(
             inputs=order.map { n.inputs.getOrElse(it) { "" } },offsets=reorder(n.offsets,order,P()),operandOffsets=n.operandOffsets?.let { values -> order.map { values.getOrElse(it) { P() } } },transforms=reorder(n.transforms,order,SegmentTransform())) },

@@ -5,6 +5,8 @@ object SegmentBooleans {
     val kinds=setOf(BuildingKind.SEGMENT_UNION,BuildingKind.SEGMENT_INTERSECTION,
         BuildingKind.SEGMENT_DIFFERENCE,BuildingKind.SEGMENT_SYMMETRIC_DIFFERENCE)
 
+    val operations=setOf("UNION","INTERSECTION","DIFFERENCE","SYMMETRIC_DIFFERENCE")
+    fun arrangeable(node:BuildingNode)=node.kind in kinds || node.kind==BuildingKind.SEGMENT_OPERATOR && (node.operation ?: "UNION") in operations
     fun offset(node:BuildingNode,index:Int):P = node.operandOffsets?.getOrNull(index)
         ?: if(node.operandOffsets==null && node.kind==BuildingKind.SEGMENT_UNION) node.offsets.getOrNull(index) ?: P() else P()
 

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {newCard,selectionCard} from '../src/cards.js'
+import {newCard,selectionCard,openCard} from '../src/cards.js'
 import {emptyWorkspace,validateWorkspace} from '../src/storage.js'
 import {cardResult} from '../src/card-types.js'
 import {newNode,previewGraph,graphParameters,orderGraphParameters} from '../src/generated/engine.mjs'
@@ -69,4 +69,17 @@ test('saved selections become isolated native definitions with inferred stable b
  let rows=inspect('building',inserted.document)
  const connected=applyWires('building',inserted.document,rows,[...connections(rows),...parameters.map((p,i)=>({source:['a','b'][i],target:inserted.nodeId,port:`arg:${p.id}`}))])
  assert.equal(previewGraph(true,connected,inserted.library,inserted.nodeId).value,'Anzahl: 11')
+})
+
+test('legacy named signed dimensions open as stable parameters through explicit count conversion',()=>{
+ const face={inputs:[{id:'size',name:'Breite',type:'INT',targets:[{member:0,port:'length'}]}],outputs:[{id:'out',name:'Fläche',type:'AREA',member:0}]}
+ const entry={name:'Alte Fläche',mode:'building',collection:'nodeGroups',nodes:[{id:'area',kind:'AREA',areaMode:'SQUARE',length:16,dimensions:{length:''}}],wires:[],groups:[],nodeGroups:[{id:'legacy_group',name:'Fläche',nodes:['area'],graphInterface:face,inputConnections:{}}],graphInterface:face}
+ const saved=openCard(entry,library),parameters=graphParameters(saved.document)
+ assert.deepEqual(parameters.map(p=>[p.id,p.type]),[['size','INT']])
+ assert.equal(saved.document.graph.nodes.filter(n=>n.kind==='INT_TO_COUNT').length,1)
+ const inserted=insertSavedReference({mode:'building',document:newCard(),library,materials:{},entry:{...saved,name:entry.name,mode:'building',id:'old-v1',documentId:'old',version:1,collection:'graphs'}})
+ let d=replaceNodes(inserted.document,[...inserted.document.graph.nodes,n('INT','width',{countValue:32})]),rows=inspect('building',d)
+ d=applyWires('building',d,rows,[...connections(rows),{source:'width',target:inserted.nodeId,port:'arg:size'}])
+ assert.equal(inspect('building',d).find(e=>e.node.id===inserted.nodeId).outputType,'AREA')
+ assert.equal(d.graph.nodes.find(n=>n.id===inserted.nodeId).arguments.size,'width')
 })

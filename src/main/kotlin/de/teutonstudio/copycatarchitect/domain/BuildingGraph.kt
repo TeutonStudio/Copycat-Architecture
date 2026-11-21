@@ -77,10 +77,10 @@ data class BuildingGraph(val schema:Int=1,val nodes:List<BuildingNode> = emptyLi
             serviceShaft=n.serviceShaft?.let { it.copy(enclosure=it.enclosure.takeUnless { s->s==id }.orEmpty()) },
             roofConfig=n.roofConfig?.let { it.copy(wall=it.wall.takeUnless { s->s==id }.orEmpty(),variants=it.variants.filterValues { s->s!=id },families=it.families.map { family->family.copy(variants=family.variants.filterValues { s->s!=id }) }) }).withLevels(n.levels.filterValues { it!=id }).trimCopycatInputs() }).withCurrentSchema()
     }
-    fun connect(target:String,key:String,source:String):BuildingGraph {
+    internal fun connectedNode(target:String,key:String,source:String):BuildingNode {
         val original=nodes.first { it.id==target };val n=GraphPrograms.producer(original)
         require(BuildingPorts.of(n,this,true).any { it.key==key }) { "Unknown building socket" }
-        var changed=when {
+        val changed=when {
             key=="resultSource" -> n.copy(resultSource=source)
             key=="defaultSource" -> n.copy(defaultSource=source)
             key.startsWith("arg:") -> n.copy(arguments=n.arguments.orEmpty()+(key.removePrefix("arg:") to source))
@@ -135,6 +135,11 @@ data class BuildingGraph(val schema:Int=1,val nodes:List<BuildingNode> = emptyLi
             key.startsWith("semantic:") -> BuildingSemantics.remapReferences(n) { refKey,ref -> if(refKey==key.removePrefix("semantic:")) source else ref }
             else -> error("Unknown building socket")
         }
+        return GraphPrograms.restore(original,changed).trimCopycatInputs()
+    }
+    fun connect(target:String,key:String,source:String):BuildingGraph {
+        val original=nodes.first { it.id==target };val n=GraphPrograms.producer(original)
+        var changed=GraphPrograms.producer(connectedNode(target,key,source))
         if(key=="geometry" && n.kind==BuildingKind.ROOM && source.isNotEmpty()) {
             val connected=replace(GraphPrograms.restore(original,changed)).resolvedNode(changed)
             changed=RoomGeometry.reshape(resolvedNode(n),connected.rectangles).copy(geometry=source,assembly=true,rectangles=n.rectangles)

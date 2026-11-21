@@ -81,6 +81,21 @@ class GraphProgramsTest {
         BuildingGraphCompiler.structure(changed)
         assertEquals("five",g.nodes.first { it.id=="argument" }.defaultSource)
     }
+    @Test fun `legacy named signed dimensions retain their public IDs with explicit count conversion`() {
+        val face=GraphGroupInterface(inputs=listOf(GraphGroupInput("size","Breite","INT",listOf(GraphGroupTarget(0,"length")))))
+        for(schema in listOf(12,14)) {
+            val g=GraphCards.starter().copy(schema=schema,nodes=GraphCards.starter().nodes+BuildingNode("area",BuildingKind.AREA,areaMode=AreaMode.SQUARE),
+                nodeGroups=listOf(GraphGroup("legacy","Fläche",listOf("area"),graphInterface=face)))
+            val imported=GraphPrograms.importInterface(g,face,listOf("area"))
+            BuildingGraphCompiler.structure(imported)
+            assertEquals("size",GraphPrograms.parameters(imported).single().id)
+            assertEquals("INT",GraphPrograms.parameters(imported).single().type)
+            val adapter=imported.nodes.single { it.kind==BuildingKind.INT_TO_COUNT }
+            assertEquals(listOf("size"),adapter.inputs)
+            assertEquals(adapter.id,imported.nodes.first { it.id=="area" }.dimensions!!["length"])
+            assertEquals("size",imported.nodeGroups.single().inputConnections["size"])
+        }
+    }
     @Test fun `nested references keep their exact typed roof template`() {
         val child=GraphCards.starter("ROOF_TEMPLATE")
         val ref=BuildingNode("ref",BuildingKind.GRAPH_REFERENCE,valueType="ROOF_TEMPLATE",referenceKey="roof@1")

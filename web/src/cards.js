@@ -23,8 +23,10 @@ export function openCard(entry, fallbackLibrary={forms:{},modules:{}}) {
     // A definition keeps its own IDs and local values; only external references are detached.
     document.graph.nodeGroups=document.graph.nodeGroups.map(group=>({...group,inputConnections:Object.fromEntries(Object.entries(group.inputConnections || {}).filter(([,source])=>ids.has(source)))}))
     document.graph.nodes=document.graph.nodes.map(n=>ids.has(n.id)?remapBuildingReferences(n,Object.fromEntries([...ids].map(id=>[id,id]))):n)
+    if(template.graphInterface?.inputs?.length) {document={...document,cardInterface:null,graph:importGraphInterface(document,template.graphInterface,template.nodes.map(n=>n.id))}}
     document=replaceNodes(document,document.graph.nodes)
-    document=applyWires('building',document,inspect('building',document),template.wires)
+    const existing=inspect('building',document)
+    document=applyWires('building',document,existing,[...connections(existing),...template.wires])
     const rows=inspect('building',document),used=new Set(template.wires.map(w=>w.source))
     const output=template.graphInterface?.outputs.find(o=>o.member>=0)
     const source=output?template.nodes[output.member]?.id:template.nodes.find(n=>!used.has(n.id))?.id || template.nodes.at(-1)?.id
@@ -32,7 +34,6 @@ export function openCard(entry, fallbackLibrary={forms:{},modules:{}}) {
     const type=rows.find(row=>row.node.id===source)?.outputType || declared || 'COPYCAT'
     const result=cardResult(document)
     document=replaceNodes(document,document.graph.nodes.map(n=>n.id===result.id?{...n,resultType:type,resultMode:'VALUE',resultSource:source||'',inputs:source?[source]:[]}:n))
-    if(template.graphInterface?.inputs?.length) {document={...document,cardInterface:null,graph:importGraphInterface(document,template.graphInterface,template.nodes.map(n=>n.id))}}
     return {document,library:{...library,forms:{...library.forms,...template.library?.forms},modules:{...library.modules,...template.library?.modules}},materials}
   }
   const raw=entry.document || entry

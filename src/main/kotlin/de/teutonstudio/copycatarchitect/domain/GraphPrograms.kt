@@ -105,7 +105,7 @@ object GraphPrograms {
             val source=target?.let { t->graph.nodes.firstOrNull { it.id==members.getOrNull(t.member) }?.let { n->BuildingPorts.of(n,graph,true).firstOrNull { it.key==t.port }?.source } }
             BuildingNode(input.id,BuildingKind.GROUP_INPUT,input.name,0,i*180,valueType=logical(input.type),defaultSource=source?.takeIf(String::isNotEmpty))
         }
-        var next=graph.copy(nodes=graph.nodes+parameters,groupInputOrder=(graph.groupInputOrder.orEmpty()+graph.nodes.filter { it.kind==BuildingKind.GROUP_INPUT }.map { it.id }+parameters.map { it.id }).distinct()).withCurrentSchema()
+        var next=graph.copy(nodes=graph.nodes+parameters,groupInputOrder=(graph.groupInputOrder.orEmpty()+graph.nodes.filter { it.kind==BuildingKind.GROUP_INPUT }.map { it.id }+parameters.map { it.id }).distinct())
         val replacements=mutableMapOf<String,MutableMap<String,String>>()
         for(input in face.inputs) for(target in input.targets) {
             val targetId=members[target.member]
@@ -113,7 +113,15 @@ object GraphPrograms {
             var source=input.id
             if(logical(input.type)=="INT" && port.valueType=="COUNT") {
                 val conversion="gc_${next.nodes.size}"
-                next=next.copy(nodes=next.nodes+BuildingNode(conversion,BuildingKind.INT_TO_COUNT,inputs=listOf(input.id)))
+                val adapter=BuildingNode(conversion,BuildingKind.INT_TO_COUNT,inputs=listOf(input.id))
+                val groups=next.nodeGroups.map { group ->
+                    val member=group.nodes.indexOf(targetId)
+                    if(member<0) group else group.copy(nodes=group.nodes+conversion,graphInterface=group.graphInterface?.let { iface->iface.copy(
+                        inputs=iface.inputs.map { portInput->portInput.copy(targets=portInput.targets.map { t->if(t.member==member && t.port==target.port) GraphGroupTarget(group.nodes.size,"in:0") else t }) },
+                        positions=iface.positions?.plus(GraphGroupPosition(adapter.x,adapter.y))) })
+                }
+                next=next.copy(nodes=next.nodes+adapter,nodeGroups=groups)
+                replacements.getOrPut(conversion){mutableMapOf()}["in:0"]=input.id
                 source=conversion
             }
             replacements.getOrPut(targetId){mutableMapOf()}[target.port]=source
@@ -121,7 +129,11 @@ object GraphPrograms {
         val groups=next.nodeGroups.map { group->group.copy(inputConnections=group.inputConnections+group.graphInterface?.inputs.orEmpty().mapNotNull { input->
             input.targets.firstNotNullOfOrNull { target->replacements[group.nodes[target.member]]?.get(target.port) }?.let { input.id to it }
         }.toMap()) }
-        next=next.copy(nodes=next.nodes.map { n->GraphGroups.remap(n) { key,source->replacements[n.id]?.get(key) ?: source } },nodeGroups=groups).withCurrentSchema()
+        for((id,ports) in replacements) for((key,source) in ports) {
+            val changed=next.connectedNode(id,key,source)
+            next=next.copy(nodes=next.nodes.map { if(it.id==id) changed else it })
+        }
+        next=next.copy(nodeGroups=groups).withCurrentSchema()
         BuildingGraphCompiler.structure(next)
         return next
     }

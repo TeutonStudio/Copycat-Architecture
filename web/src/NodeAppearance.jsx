@@ -1,3 +1,4 @@
+import {GroupParameters} from './GroupParameters.jsx'
 import { IconSelect } from './IconSelect.jsx'
 import {OperatorChoice} from './OperatorChoice.jsx'
 import {inputsReorderable,moveInput} from './input-list.js'
@@ -18,7 +19,7 @@ function Socket({preview,...props}) {
 }
 
 // Canvas and picker share the same node rendering; picker sockets are static.
-export function NodeAppearance({data:{node,ports=[],groupName,outputType,producedType,hasOutput,diagnostic,reference,dynamicAxes=[],outputs=[],mode='building',onOperation,onControl,onInputOrder},selected=false,preview=false}) {
+export function NodeAppearance({data:{node,ports=[],groupName,outputType,producedType,hasOutput,diagnostic,reference,dynamicAxes=[],outputs=[],mode='building',onOperation,onControl,onInputOrder,parameters=[],onParameterOrder},selected=false,preview=false}) {
   const [dropIndex,setDropIndex]=useState(null)
   const recipe=node.kind==='RESULT'&&node.resultMode!=='VALUE'?{...node,kind:node.producerKind,resultType:null}:node
   const canSort=!!onInputOrder && inputsReorderable(recipe,model.nodeProperties[mode]?.[recipe.kind])
@@ -48,6 +49,7 @@ export function NodeAppearance({data:{node,ports=[],groupName,outputType,produce
     {nodeControls(mode,node).map(control=><div key={control.path} className="node-operation nodrag nopan" onPointerDown={event=>event.stopPropagation()} onClick={event=>event.stopPropagation()}>{control.choices
       ? <label>{control.label}<IconSelect domain={control.domain || 'type'} aria-label={control.label} value={control.value} disabled={!onControl} onChange={event=>onControl(control.path,event.target.value)}>{control.choices.map(choice=>{const [value,label]=Array.isArray(choice)?choice:[choice,choice];return <option value={value} key={value}>{label}</option>})}</IconSelect></label>
       : <IntegerField disabled={!onControl} label={control.label} value={control.value} min={control.min} max={control.max} onChange={value=>onControl?.(control.path,value)}/>}</div>)}
+    <GroupParameters parameters={parameters} onOrder={onParameterOrder}/>
     {outputs.length>1 && <div className="ports-output">{outputs.map(output=><div className="port" key={output.id}><span>{output.name}</span><Socket preview={preview} type="source" position={Position.Right} id={output.id} style={{background:portStyle(output.type).color}} title={`${output.name} · ${output.type}`} aria-label={`Ausgang ${output.name} · ${output.type}`}/></div>)}</div>}
     {dynamicAxes.length>0 && <div className="node-reference">Dynamisch · {dynamicAxes.join(" / ")}</div>}
     {reference && <div className="node-reference" title={`${reference.documentId}@${reference.version}`}>↗ {reference.name} · v{reference.version}</div>}

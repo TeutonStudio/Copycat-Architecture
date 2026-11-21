@@ -650,3 +650,7 @@ button.icon-select.operator-choice {display:flex;width:calc(100% - 12px);margin:
 @media(pointer:coarse) {.icon-select-option {min-height:44px}button.icon-select {min-height:36px}}
 @media(forced-colors:active) {.icon-select-popup {border:1px solid CanvasText}.icon-select-option.is-active {outline:2px solid Highlight}.choice-icon {color:ButtonText!important}}
 svg.icon-select-check {width:14px;height:14px}
+
+.node-parameters {border-top:1px solid var(--line);padding:6px 8px;font-size:11px}
+.node-parameters summary {cursor:pointer}
+.node-parameters .hint {font-size:10px;white-space:normal;margin:5px 0}

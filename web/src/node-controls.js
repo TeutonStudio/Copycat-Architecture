@@ -16,7 +16,7 @@ export function nodeControls(mode,node) {
   pick('resultMode','Erzeugungsmodus',node.kind==='RESULT'?node.resultMode||'CONSTRUCT':'VALUE',[['CONSTRUCT','Direkt erzeugen'],['VALUE','Wert übernehmen']])
   if(node.kind==='RESULT'&&node.resultMode!=='VALUE') {
    pick('producerKind','Erzeugungsart',node.producerKind||'COPYCAT',(model.resultConstructors[node.resultType]||[]).map(k=>[k,names[k]||k]))
-   if(/^POSITION_[XYZ]$/.test(node.producerKind))pick('producerOutput','Ergebnisausgang',node.producerOutput||'X',['X','Y','Z'])
+   if(/^POSITION_[XYZ]$/.test(node.producerKind))pick('producerOutput','Ergebnisausgang',node.producerOutput||node.producerKind.slice(-1),['X','Y','Z'])
    const effective={...node,kind:node.producerKind,resultType:null}
    result.push(...nodeControls(mode,effective))
   }

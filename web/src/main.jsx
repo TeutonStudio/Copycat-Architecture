@@ -40,7 +40,7 @@ import buildingRoofPeak from '../../examples/building-roof-peak.json'
 import buildingRoofEave from '../../examples/building-roof-eave.json'
 
 import { cardResult,cardTypeLabel } from './card-types.js'
-import { newCard, openCard, graphCardEntry, copycatCardEntry } from './cards.js'
+import { newCard, openCard, selectionCard, graphCardEntry, copycatCardEntry } from './cards.js'
 import { AreaPreview } from './AreaPreview.jsx'
 
 // Keep the picker in the main bundle: switching dialogs must not depend on a stale deployment chunk.
@@ -378,10 +378,9 @@ function Studio({ mode, active }) {
   })
   const saveGroup = () => transact(() => {
     if(readOnly || !editableIds.length) return
-    const entry=saveNodeGroup(mode,document,editableIds,groupName,materials,library)
-    if(entry.nodes.length === 1) {try {entry.preview=previewGraph(mode === 'building',document,library,entry.nodes[0].id,materials);if(mode === 'form') entry.preview.meshes=entry.preview.meshes.map(mesh=>({...mesh,material:materials[mesh.material] || mesh.material}))} catch {}}
-    const existing=savedData.nodeGroups.find(item=>item.mode === mode && item.name === entry.name)
-    updateWorkspace(data=>({...data,nodeGroups:appendVersion(data.nodeGroups,{...entry,document},existing ? identityOf(existing) : null)}))
+    const entry=selectionCard(mode,document,editableIds,groupName,materials,library)
+    const existing=savedData.nodeGroups.find(item=>item.name===entry.name)
+    updateWorkspace(data=>({...data,nodeGroups:appendVersion(data.nodeGroups,{...entry,references:savedReferences(entry.document)},existing?identityOf(existing):null)}))
     setMessage({text:'Knotengruppe in der Bibliothek gespeichert.'})
   })
   const save = (asNew = false) => transact(() => {
@@ -390,9 +389,7 @@ function Studio({ mode, active }) {
     if(savedData.graphs.length >= 500) throw new Error('Höchstens 500 Speicherstände. Nicht benötigte Versionen zuerst löschen.')
     const identity=asNew ? null : fileIdentity
     const collection=!asNew && savedData.nodeGroups.some(e=>identityOf(e)===fileIdentity)?"nodeGroups":"graphs"
-    let payload=collection==="nodeGroups" && !document.graph.nodes.some(n=>n.kind==='GROUP_INPUT')?{...saveNodeGroup(mode,document,document.graph.nodes.filter(n=>!protectedNode(n,document)).map(n=>n.id),name,materials,library),graphInterface:document.cardInterface}:null
-    if(payload) {const result=cardResult(document);payload.graphInterface={inputs:document.cardInterface?.inputs || [],outputs:[{id:'result',name:'Ergebnis',type:result.resultType,member:payload.nodes.findIndex(n=>n.id===result.inputs[0])}]}}
-    const next=appendVersion(savedData[collection],{...payload,name,mode,isGroup:document.graph.nodes.some(n=>n.kind==='GROUP_INPUT'),document:writeGraph(mode,{...document,name}),library,materials,references:savedReferences(document)},identity)
+    const next=appendVersion(savedData[collection],{name,mode,isGroup:document.graph.nodes.some(n=>n.kind==='GROUP_INPUT'),document:writeGraph(mode,{...document,name}),library,materials,references:savedReferences(document)},identity)
     const proposed=next.at(-1)
     const accepted=updateWorkspace(data => renameDocument({...data,[collection]:appendVersion(data[collection],{...proposed},identity || proposed.documentId)},identity || proposed.documentId,name))
     const entry=accepted[collection].at(-1)

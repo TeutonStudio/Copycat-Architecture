@@ -47,12 +47,13 @@ if (!existsSync(transformationsOutput) || readFileSync(transformationsOutput,'ut
 
 const numbers = existsSync(new URL('GraphNumbers.kt', domain))
 const conditions = existsSync(new URL('GraphConditions.kt', domain))
+const programs = existsSync(new URL('GraphPrograms.kt', domain))
 const directAreas = existsSync(new URL('DirectAreaInputs.kt', domain))
 const areaCapabilities = `package de.teutonstudio.copycatarchitect.web
 import de.teutonstudio.copycatarchitect.domain.*
 internal const val graphDirectAreasAvailable = ${directAreas}
 internal fun operandOffset(node:BuildingNode,index:Int):P = ${directAreas ? 'SegmentBooleans.offset(node,index)' : 'if(node.kind==BuildingKind.SEGMENT_UNION) node.offsets.getOrNull(index) ?: P() else P()'}
-internal fun authoringNode(node:BuildingNode):BuildingNode = ${conditions ? 'if(node.kind==BuildingKind.ROOF) node.copy(roofInputMode=RoofInputMode.TEMPLATE,inputs=List(8) { "" }) else node' : directAreas ? 'if(node.kind==BuildingKind.ROOF) node.copy(roofSections=listOf(RoofSection())) else node' : 'node'}
+internal fun authoringNode(node:BuildingNode):BuildingNode = ${programs ? 'GraphPrograms.authoring(node)' : conditions ? 'if(node.kind==BuildingKind.ROOF) node.copy(roofInputMode=RoofInputMode.TEMPLATE,inputs=List(8) { "" }) else node' : directAreas ? 'if(node.kind==BuildingKind.ROOF) node.copy(roofSections=listOf(RoofSection())) else node' : 'node'}
 internal fun authoringStarter():BuildingGraph = ${directAreas ? 'BuildingAssembly.directStarter()' : 'BuildingGraph.explicitStarter()'}
 `
 const areaOutput = new URL('src/generated/AreaCapabilities.kt', import.meta.url)

@@ -78,7 +78,7 @@ export function libraryReferenceEntries(library) {
 function bareBuilding() {return {schema:2,name:'Vorschau',graph:{schema:1,nodes:[{id:'empty_wall',kind:'SEGMENT',block:'minecraft:air',length:1},{id:'result',kind:'BUILDING',name:'Ergebnis'}]}}}
 export function previewReferenceEntry(entry,library) {
   if(entry.preview) return entry.preview
-  if(entry.collection==='nodeGroups'&&!entry.document?.graph) {
+  if(entry.collection==='nodeGroups'&&Array.isArray(entry.nodes)) {
     const base=entry.mode==='building'?bareBuilding():{schema:3,name:'Vorschau',graph:{schema:2,nodes:[{id:'result',kind:'OUTPUT',inputs:['']}]}}
     const inserted=insertNodeGroup(base,entry),added=inserted.document.graph.nodes.filter(node=>!base.graph.nodes.some(old=>old.id===node.id)), used=new Set(connections(inspect(entry.mode,inserted.document)).map(w=>w.source))
     const terminal=added.find(node=>!used.has(node.id)) || added.at(-1)
@@ -154,7 +154,7 @@ function insertGroup({mode,document,library,materials,entry,placement}) {
 export function insertSavedReference({mode,document,library,materials,entry,currentIdentity,targetId}) {
   const reason=referenceDisabled(entry,currentIdentity,false,mode)
   if(reason) throw new Error(reason)
-  if(mode==='building' && entry.document?.graph && entry.mode!=='form') return insertGraphReference({document,library,materials,entry,targetId})
+  if(mode==='building' && entry.document?.graph && entry.mode!=='form' && !(entry.collection==='nodeGroups'&&Array.isArray(entry.nodes))) return insertGraphReference({document,library,materials,entry,targetId})
   const originalEntries=inspect(mode,document), originalGroups=groupViews(document,originalEntries), oldGroup=originalGroups.find(group=>group.id===targetId)
   const oldNode=originalEntries.find(entry=>entry.node.id===targetId)?.node,placement=oldGroup?.position || (oldNode?{x:oldNode.x,y:oldNode.y}:null)
   if(targetId && !placement) throw new Error('Der zu ersetzende Knoten existiert nicht mehr.')

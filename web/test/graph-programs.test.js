@@ -1,8 +1,10 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {newCard} from '../src/cards.js'
+import {newCard,selectionCard} from '../src/cards.js'
+import {emptyWorkspace,validateWorkspace} from '../src/storage.js'
 import {cardResult} from '../src/card-types.js'
 import {newNode,previewGraph,graphParameters,orderGraphParameters} from '../src/generated/engine.mjs'
+import {nodePreview} from '../src/node-picker.js'
 import {configureDocument,nodeControls} from '../src/node-controls.js'
 import {replaceNodes,inspect,applyWires,connections,editNode,readGraph,writeGraph} from '../src/model.js'
 import {insertSavedReference} from '../src/reference-groups.js'
@@ -17,6 +19,9 @@ test('new cards generate their native default directly and share all eight roof-
  assert.equal(previewGraph(true,d,library,'').value,'Dachvorlage · 0 / 8 Bauteile')
  const before=JSON.stringify(d);d=configure(configure(d,'resultMode','VALUE'),'resultMode','CONSTRUCT');assert.equal(JSON.stringify(d),before)
  assert.equal(nodeControls('building',cardResult(d)).find(c=>c.path==='producerKind').value,'ROOF_TEMPLATE')
+ const roof=configure(newCard(),'resultType','ROOF'),normal=nodePreview('building','ROOF')
+ assert.equal(cardResult(roof).roofInputMode,'TEMPLATE')
+ assert.deepEqual(inspect('building',roof).find(e=>e.node.id===cardResult(roof).id).ports,normal.ports)
 })
 test('native references expose stable named arguments and evaluate defaults and two overrides independently',()=>{
  const source=definition(),entry={id:'version-1',documentId:'quantity',version:1,name:'Menge',mode:'building',collection:'graphs',document:source,library}
@@ -48,4 +53,20 @@ test('open parameters remain editable and explicit ordering survives rename dele
  assert.throws(()=>previewGraph(true,d,library,'a'),/Gruppeneingang/)
  const before=d;d=applyWires('building',d,inspect('building',d),[],['a','b'])
  assert.equal(graphParameters(d).length,0);assert.equal(graphParameters(before).length,2)
+})
+
+test('saved selections become isolated native definitions with inferred stable boundary parameters',()=>{
+ let d=replaceNodes(newCard(),[...newCard().graph.nodes,n('COUNT','a',{countValue:3}),n('COUNT','b',{countValue:8}),n('INT_ADD','sum',{inputs:['a','b']})])
+ const saved=selectionCard('building',d,['sum'],'Summe',{},library)
+ assert.equal(saved.nodes,undefined)
+ assert.equal(saved.graphInterface,undefined)
+ const workspace=emptyWorkspace();workspace.nodeGroups=[{...saved,id:'selection',documentId:'selection',version:1}]
+ assert.equal(validateWorkspace(workspace).nodeGroups.length,1)
+ assert.ok(!saved.document.graph.nodes.some(n=>['a','b'].includes(n.id)))
+ const parameters=graphParameters(saved.document);assert.equal(parameters.length,2)
+ assert.deepEqual(parameters.map(p=>p.type),['COUNT','COUNT'])
+ const inserted=insertSavedReference({mode:'building',document:d,library,materials:{},entry:{...saved,id:'selection-version',documentId:'selection',version:1,collection:'nodeGroups'}})
+ let rows=inspect('building',inserted.document)
+ const connected=applyWires('building',inserted.document,rows,[...connections(rows),...parameters.map((p,i)=>({source:['a','b'][i],target:inserted.nodeId,port:`arg:${p.id}`}))])
+ assert.equal(previewGraph(true,connected,inserted.library,inserted.nodeId).value,'Anzahl: 11')
 })

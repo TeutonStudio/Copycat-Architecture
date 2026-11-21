@@ -24,7 +24,7 @@ object GraphPrograms {
         if(n.resultMode==GraphResultMode.VALUE) return BuildingNode(n.id,BuildingKind.RESULT,n.name,n.x,n.y,resultType=n.resultType,resultMode=n.resultMode,resultSource=n.resultSource)
         var kind=n.producerKind ?: BuildingKind.COPYCAT
         require(kind !in setOf(BuildingKind.RESULT,BuildingKind.GROUP_INPUT)) { "Diese Knotenart kann kein Ergebnis erzeugen" }
-        if(kind in setOf(BuildingKind.POSITION_X,BuildingKind.POSITION_Y,BuildingKind.POSITION_Z)) kind=when(n.producerOutput ?: "X") { "Y"->BuildingKind.POSITION_Y;"Z"->BuildingKind.POSITION_Z;else->BuildingKind.POSITION_X }
+        if(kind in setOf(BuildingKind.POSITION_X,BuildingKind.POSITION_Y,BuildingKind.POSITION_Z)) kind=when(n.producerOutput ?: kind.name.takeLast(1)) { "Y"->BuildingKind.POSITION_Y;"Z"->BuildingKind.POSITION_Z;else->BuildingKind.POSITION_X }
         return n.copy(kind=kind)
     }
     fun restore(original:BuildingNode,changed:BuildingNode)=if(original.kind==BuildingKind.RESULT) changed.copy(kind=BuildingKind.RESULT) else changed
@@ -42,8 +42,9 @@ object GraphPrograms {
     fun constructors(type:String):List<BuildingKind> = BuildingKind.entries.filter { kind ->
         kind !in setOf(BuildingKind.RESULT,BuildingKind.GROUP_INPUT) && (kind==BuildingKind.CONDITIONAL || kind==BuildingKind.GRAPH_REFERENCE || GraphNumbers.producer(kind.name,type) || buildingGraphType(kind)==type)
     }
+    fun authoring(node:BuildingNode):BuildingNode=if(node.kind==BuildingKind.ROOF) node.copy(roofInputMode=RoofInputMode.TEMPLATE,inputs=List(8){""}) else node
     fun newResult(type:String="COPYCAT",kind:BuildingKind=when(type) { "WALL"->BuildingKind.SEGMENT;"COUNT"->BuildingKind.COUNT;"INT"->BuildingKind.INT;else->BuildingKind.entries.first { buildingGraphType(it)==type } }):BuildingNode {
-        val n=GraphModels.newBuilding(kind,true)
+        val n=authoring(GraphModels.newBuilding(kind,true))
         return n.copy(kind=BuildingKind.RESULT,name="Ergebnis",resultType=type,resultMode=GraphResultMode.CONSTRUCT,producerKind=kind,
             inlinePart=if(kind==BuildingKind.COPYCAT) Part("copycats:copycat_block") else n.inlinePart)
     }
@@ -72,7 +73,7 @@ object GraphPrograms {
             "producerKind"->{
                 val kind=BuildingKind.valueOf(value)
                 require(kind in constructors(before.resultType ?: "COPYCAT")) { "Unpassende Erzeugungsart" }
-                val factory=GraphModels.newBuilding(kind,true)
+                val factory=authoring(GraphModels.newBuilding(kind,true))
                 factory.copy(id=before.id,name=before.name,x=before.x,y=before.y,kind=BuildingKind.RESULT,
                     resultType=before.resultType,resultMode=GraphResultMode.CONSTRUCT,resultSource=before.resultSource,producerKind=kind,
                     inlinePart=if(kind==BuildingKind.COPYCAT) Part("copycats:copycat_block") else factory.inlinePart)
@@ -96,15 +97,16 @@ object GraphPrograms {
         return graph.replace(next)
     }
     fun importInterface(graph:BuildingGraph,face:GraphGroupInterface,members:List<String>):BuildingGraph {
-        if(parameters(graph).isNotEmpty() || face.inputs.isEmpty()) return graph
-        require(face.inputs.none { input->graph.nodes.any { it.id==input.id } }) { "Gruppeneingangskennung kollidiert mit einem internen Knoten" }
+        if(face.inputs.isEmpty()) return graph
+        require(face.inputs.none { input->graph.nodes.any { it.id==input.id && it.kind!=BuildingKind.GROUP_INPUT } }) { "Gruppeneingangskennung kollidiert mit einem internen Knoten" }
         fun logical(type:String)=when(type) { "shape"->"COPYCAT";"segment"->"WALL";else->type.uppercase() }
-        val parameters=face.inputs.mapIndexed { i,input->
+        val parameters=face.inputs.filter { input->graph.nodes.none { it.id==input.id } }.mapIndexed { i,input->
             val target=input.targets.firstOrNull()
             val source=target?.let { t->graph.nodes.firstOrNull { it.id==members.getOrNull(t.member) }?.let { n->BuildingPorts.of(n,graph,true).firstOrNull { it.key==t.port }?.source } }
             BuildingNode(input.id,BuildingKind.GROUP_INPUT,input.name,0,i*180,valueType=logical(input.type),defaultSource=source?.takeIf(String::isNotEmpty))
         }
-        var next=graph.copy(nodes=graph.nodes+parameters,groupInputOrder=parameters.map { it.id }).withCurrentSchema()
+        var next=graph.copy(nodes=graph.nodes+parameters,groupInputOrder=(graph.groupInputOrder.orEmpty()+graph.nodes.filter { it.kind==BuildingKind.GROUP_INPUT }.map { it.id }+parameters.map { it.id }).distinct()).withCurrentSchema()
+        val replacements=mutableMapOf<String,MutableMap<String,String>>()
         for(input in face.inputs) for(target in input.targets) {
             val targetId=members[target.member]
             val port=BuildingPorts.of(next.nodes.first { it.id==targetId },next,true).first { it.key==target.port }
@@ -114,8 +116,13 @@ object GraphPrograms {
                 next=next.copy(nodes=next.nodes+BuildingNode(conversion,BuildingKind.INT_TO_COUNT,inputs=listOf(input.id)))
                 source=conversion
             }
-            next=next.connect(targetId,target.port,source)
+            replacements.getOrPut(targetId){mutableMapOf()}[target.port]=source
         }
+        val groups=next.nodeGroups.map { group->group.copy(inputConnections=group.inputConnections+group.graphInterface?.inputs.orEmpty().mapNotNull { input->
+            input.targets.firstNotNullOfOrNull { target->replacements[group.nodes[target.member]]?.get(target.port) }?.let { input.id to it }
+        }.toMap()) }
+        next=next.copy(nodes=next.nodes.map { n->GraphGroups.remap(n) { key,source->replacements[n.id]?.get(key) ?: source } },nodeGroups=groups).withCurrentSchema()
+        BuildingGraphCompiler.structure(next)
         return next
     }
     fun diagnostic(graph:BuildingGraph,n:BuildingNode):String? {

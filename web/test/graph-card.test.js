@@ -36,7 +36,7 @@ test('opening a node group creates a dedicated card and saving it does not inclu
  const source=fixture('building-graph-assembly')
  source.graph.nodes.push({...newNode(true,'INT','value',0,0,true),countValue:12})
  const entry={...saveNodeGroup('building',source,['value'],'Zahl',{},library),collection:'nodeGroups',documentId:'number',version:1}
- const opened=openCard(entry,library)
+ const opened=openCard({...entry,document:source},library)
  assert.deepEqual(opened.document.graph.nodes.filter(n=>n.id!=='empty_wall' && !n.resultType).map(n=>n.id),['value'])
  assert.equal(cardResult(opened.document).resultType,'INT')
  assert.equal(previewGraph(true,opened.document,opened.library,'').value,'Ganzzahl: 12')

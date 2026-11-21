@@ -13,7 +13,7 @@ export function saveNodeGroup(mode, document, ids, name, materials = {}, library
   ])])
   const sourceGroup=document.graph.nodeGroups?.find(group=>group.nodes.length===selected.size && group.nodes.every(id=>selected.has(id)))
   const groupNodes=sourceGroup ? sourceGroup.nodes.map(id=>document.graph.nodes.find(node=>node.id===id)) : document.graph.nodes.filter(node=>selected.has(node.id))
-  return { nodeGroups:structuredClone((document.graph.nodeGroups || []).filter(group=>group.nodes.every(id=>selected.has(id)))), graphInterface:sourceGroup?.graphInterface?structuredClone(sourceGroup.graphInterface):undefined,id: crypto.randomUUID(), name: name.trim() || 'Knotengruppe', mode, palette:mode==='building'?structuredClone(document.palette):undefined, materials: structuredClone(materials), library: mode === 'building' ? structuredClone(library) : null,
+  return { graphDefinitions:mode==='building'?structuredClone(document.graph.graphDefinitions):undefined,nodeGroups:structuredClone((document.graph.nodeGroups || []).filter(group=>group.nodes.every(id=>selected.has(id)))), graphInterface:sourceGroup?.graphInterface?structuredClone(sourceGroup.graphInterface):undefined,id: crypto.randomUUID(), name: name.trim() || 'Knotengruppe', mode, palette:mode==='building'?structuredClone(document.palette):undefined, materials: structuredClone(materials), library: mode === 'building' ? structuredClone(library) : null,
     nodes: structuredClone(groupNodes),
     wires: connections(entries).filter(wire => selected.has(wire.source) && selected.has(wire.target)),
     groups: mode === 'form' ? structuredClone(formGroups(document).filter(group => used.has(group.id))) : [] }
@@ -77,7 +77,7 @@ export function insertNodeGroup(document, template, idFactory = () => `node_${cr
     }
     return node
   })
-  const result = replaceNodes(mode === 'form' ? { ...document, groups } : document, [...document.graph.nodes, ...nodes])
+  const result = replaceNodes(mode === 'form' ? { ...document, groups } : {...document,graph:{...document.graph,graphDefinitions:{...template.graphDefinitions,...document.graph.graphDefinitions}}}, [...document.graph.nodes, ...nodes])
   const entries = inspect(mode, result)
   const wires = [...connections(inspect(mode, document)), ...template.wires.map(wire => ({ ...wire, source: ids.get(wire.source), target: ids.get(wire.target) }))]
   return { nodeIds:[...ids.values()], document: applyWires(mode, result, entries, wires), materials: Object.fromEntries(Object.entries(template.materials || {}).filter(([id]) => groupIds.has(id)).map(([id, material]) => [groupIds.get(id), material])) }

@@ -26,6 +26,9 @@ class GraphProgramsTest {
             assertEquals(BuildingPorts.of(GraphPrograms.producer(n).copy(resultType=null),g),BuildingPorts.of(n,g),"$type $kind")
         }
         val g=GraphCards.starter("ROOF_TEMPLATE");assertEquals(8,BuildingPorts.of(g.resultNode(),g).size)
+        val roof=GraphCards.starter("ROOF")
+        assertEquals(RoofInputMode.TEMPLATE,roof.resultNode().roofInputMode)
+        assertEquals(listOf("geometry","roofTemplate"),BuildingPorts.of(roof.resultNode(),roof).map { it.key })
     }
     @Test fun `value-mode diagram edits retain inactive producer settings and wires`() {
         val source=BuildingNode("tile",BuildingKind.COPYCAT,inlinePart=Part("copycats:copycat_block"))
@@ -42,6 +45,13 @@ class GraphProgramsTest {
             val g=GraphCards.starter(type).let { base->base.copy(nodes=base.nodes.map { if(it.kind==BuildingKind.RESULT)it.copy(resultMode=GraphResultMode.VALUE,resultSource=param.id) else it }+param) }
             BuildingGraphCompiler.structure(g)
         }
+    }
+    @Test fun `direct multi-output construction retains the selected native component`() {
+        val source=BuildingNode("vector",BuildingKind.POSITION,translation=P(-3,7,9))
+        var g=GraphCards.starter("INT").let { base->base.copy(nodes=base.nodes.map { if(it.id=="result")GraphPrograms.newResult("INT",BuildingKind.POSITION_Z).copy(id="result",inputs=listOf(source.id)) else it }+source) }
+        assertEquals(9,number(g,"result"))
+        g=GraphPrograms.configure(g,"result","producerOutput","Y")
+        assertEquals(7,number(g,"result"))
     }
     @Test fun `instances override defaults lazily with independent arguments and cache`() {
         val bad=BuildingNode("bad",BuildingKind.INT_DIVIDE,inputs=listOf("zero","zero"))

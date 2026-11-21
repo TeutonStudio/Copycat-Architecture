@@ -123,7 +123,7 @@ function LibraryPanel({ tab, setTab, onClose }) {
     try {
       if (file.size > 30_000_000) throw new Error('Die Sicherung ist größer als 30 MB.')
       const restored = validateWorkspace(JSON.parse(await file.text()))
-      for (const entry of [...restored.graphs, ...Object.values(restored.drafts)]) readGraph(entry.document, entry.mode)
+      for (const entry of [...restored.graphs, ...restored.nodeGroups.filter(entry=>entry.document), ...Object.values(restored.drafts)]) readGraph(entry.document, entry.mode)
       // Merge named entries; current unsaved drafts stay intact.
       const recovered = [...new Map(Object.values(restored.drafts).map(entry => [JSON.stringify(entry),entry])).values()].map(entry => ({ ...entry, id: crypto.randomUUID(), name: `Wiederhergestellt · ${entry.document.name || entry.mode}` }))
       const graphs=mergeVersions(data.graphs,[...restored.graphs,...recovered]), nodeGroups=mergeVersions(data.nodeGroups,restored.nodeGroups)

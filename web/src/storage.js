@@ -46,7 +46,7 @@ export function validateWorkspace(value) {
   const validDoc = entry => entry && ['form', 'building'].includes(entry.mode) && entry.document?.graph && Array.isArray(entry.document.graph.nodes) && validMaterials(entry.materials)
   const versioned = entry => entry && typeof entry.id === 'string' && (entry.version === undefined || Number.isSafeInteger(entry.version) && entry.version > 0) && (entry.documentId === undefined || typeof entry.documentId === 'string' && entry.documentId.length > 0)
   if (value.graphs.some(entry => !versioned(entry) || !validDoc(entry)) || Object.values(value.drafts).some(entry => !validDoc(entry)) ||
-    value.nodeGroups.some(entry => !versioned(entry) || !['form', 'building'].includes(entry.mode) || !Array.isArray(entry.nodes) || !Array.isArray(entry.wires) || !Array.isArray(entry.groups) || !validMaterials(entry.materials)) ||
+    value.nodeGroups.some(entry => !versioned(entry) || !(validDoc(entry) || ['form', 'building'].includes(entry.mode) && Array.isArray(entry.nodes) && Array.isArray(entry.wires) && Array.isArray(entry.groups) && validMaterials(entry.materials))) ||
     value.mods.some(entry => !/^[\w.-]+\/[\w.-]+$/.test(entry.repo) || !/^[a-f0-9]{40}$/.test(entry.commit) || !entry.blocks || !entry.models || !entry.textures || !Array.isArray(entry.ids) || !Array.isArray(entry.dependencies))) throw new Error('Die Sicherung enthält unvollständige Einträge.')
   for (const mod of value.mods) for (const values of [mod.blocks, mod.models, mod.textures]) for (const url of Object.values(values)) {
     if (typeof url !== 'string' || !url.startsWith(`https://raw.githubusercontent.com/${mod.repo}/${mod.commit}/`)) throw new Error('Die Sicherung enthält ungültige Ressourcen-Adressen.')

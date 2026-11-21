@@ -1,4 +1,4 @@
-export const names = { BOOLEAN:'Booleanwert',INT_COMPARE:'Zahlenvergleich',BOOLEAN_LOGIC:'Booleanoperator',CONDITIONAL:'Bedingte Abbildung',ROOF_TEMPLATE:'Dachvorlage',SERVICE_SHAFT_SEGMENT:'Schachtsegment',ELEVATOR_SHAFT_SEGMENT:'Aufzugssegment', REFERENCE:'Referenz',VECTOR_SPLIT:'Position zerlegen',
+export const names = { COPYCAT_OPERATOR:'Copycat-Operator',SEGMENT_OPERATOR:'Segment-Operator',POSITION_OPERATOR:'Positionsoperator',NUMBER_OPERATOR:'Zahlenoperator',RELATION_OPERATOR:'Zahlenvergleich',STATEMENT_OPERATOR:'Booleanoperator', BOOLEAN:'Booleanwert',INT_COMPARE:'Zahlenvergleich',BOOLEAN_LOGIC:'Booleanoperator',CONDITIONAL:'Bedingte Abbildung',ROOF_TEMPLATE:'Dachvorlage',SERVICE_SHAFT_SEGMENT:'Schachtsegment',ELEVATOR_SHAFT_SEGMENT:'Aufzugssegment', REFERENCE:'Referenz',VECTOR_SPLIT:'Position zerlegen',
   INT_ADD: 'Anzahl addieren',
   INT_SUBTRACT: 'Anzahl subtrahieren',
   INT_MULTIPLY: 'Anzahl multiplizieren',

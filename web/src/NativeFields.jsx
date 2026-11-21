@@ -11,15 +11,16 @@ import { contract, getPath, inspectorFields, setPath } from './inspector-model.j
 import { TransformationFields } from './TransformationFields.jsx'
 import { TransformValues } from './TransformValues.jsx'
 import { WallThicknessFields } from './WallThicknessFields.jsx'
+import {copycatShapeName} from './copycat-options.js'
 import { model } from './model.js'
 import { MaterialField } from './Workspace.jsx'
 
 const models = wireModels()
 const contextCarpets = model.carpets
 const Context = createContext({})
-const choiceLabels = { SQUARE:'Quadrat', RECTANGLE:'Rechteck', DRAW:'Anklicken', OVERLAY:'Vier Rotationen überlagern', ADJACENT:'Rotiert aneinander · 2×2 Blöcke', SEPARATED: 'Separiert', GROUPED: 'Gruppiert', NORMAL: 'Lokale Normale', FOOTPRINT: 'Aus Grundriss', SEGMENTS: 'Aus Segmenten', FLAT: 'Flachdach', PENT: 'Pultdach', GABLE: 'Satteldach', HIP: 'Walmdach', MANSARD: 'Mansarddach', CROSS:'Kreuzdach', HEIGHT: 'Firsthöhe', ANGLE: 'Dachneigung', rooms: 'Aus Räumen', walls: 'Aus Wänden', horizontal: 'Horizontal', vertical: 'Vertikal', depth: 'Tiefe', transform: 'Frei anordnen', flat: 'Flachdach', gable: 'Satteldach', AUTO: 'Automatisch', EXPLICIT: 'Explizit', OPEN: 'Offen', BOUNDARY: 'Raumgrenze', OPENING: 'Öffnung', STRUCTURE: 'Tragwerk', DECORATION: 'Dekoration' }
+const choiceLabels = { ...Object.fromEntries(model.shapes.map(shape=>[shape.id,copycatShapeName({source:shape.id})])), SQUARE:'Quadrat', RECTANGLE:'Rechteck', DRAW:'Anklicken', OVERLAY:'Vier Rotationen überlagern', ADJACENT:'Rotiert aneinander · 2×2 Blöcke', SEPARATED: 'Separiert', GROUPED: 'Gruppiert', NORMAL: 'Lokale Normale', FOOTPRINT: 'Aus Grundriss', SEGMENTS: 'Aus Segmenten', FLAT: 'Flachdach', PENT: 'Pultdach', GABLE: 'Satteldach', HIP: 'Walmdach', MANSARD: 'Mansarddach', CROSS:'Kreuzdach', HEIGHT: 'Firsthöhe', ANGLE: 'Dachneigung', rooms: 'Aus Räumen', walls: 'Aus Wänden', horizontal: 'Horizontal', vertical: 'Vertikal', depth: 'Tiefe', transform: 'Frei anordnen', flat: 'Flachdach', gable: 'Satteldach', AUTO: 'Automatisch', EXPLICIT: 'Explizit', OPEN: 'Offen', BOUNDARY: 'Raumgrenze', OPENING: 'Öffnung', STRUCTURE: 'Tragwerk', DECORATION: 'Dekoration' }
 const labels = {
-  columnMode: 'Säulenaufbau', countValue: 'Anzahl', roofType: 'Dachart', ridge: 'Firstrichtung', overhang: 'Dachüberhang', coordinates: 'Koordinaten', layoutCells: 'Zellenbelegung', assembly: 'Expliziter Aufbau', depth: 'Tiefe',
+  columnMode: 'Säulenaufbau', countValue: 'Anzahl', roofType: 'Dachart', ridge: 'Firstrichtung', coordinates: 'Koordinaten', layoutCells: 'Zellenbelegung', assembly: 'Expliziter Aufbau', depth: 'Tiefe',
   roofSettings:'Dachparameter',booleanValue:'Booleanwert',operation:'Operation',roofInputMode:'Dachaufbau',roofTemplate:'Dachvorlage',roofSections:'Dachflächen', config:'Dachparameter', regionCopies: 'Copycats je Bereich', roofLevel: 'Dachebene', roofConfig: 'Dachaufbau', levelIds: 'Geschosskennungen',
   stairwell: 'Treppenhaus', elevatorShaft: 'Aufzugsschacht', serviceShaft: 'Installationsschacht',
   accessInstances: 'Vertikale Erschließung', roomLayout: 'Raumanordnung', roomConfig: 'Raumaufbau', facade: 'Fassade',
@@ -30,7 +31,7 @@ const labels = {
   landscapeOffset: 'Geländeversatz', buildingOffset: 'Gebäudeversatz', sitePaths: 'Wegeverläufe',
   discCut: 'Scheibenanteil', top: 'Oben', rise: 'Anstieg', run: 'Lauflänge', phase: 'Phase', slice: 'Periodenschnitt', variant: 'Dachvariante', projection: 'Position am Architektentisch', table: 'Tischposition', turn: 'Drehung', exact: 'Exakte Geometrie',
   exactClip: 'Exakter Ausschnitt', roof: 'Dachgeometrie', x: 'X', y: 'Y', z: 'Z', width: 'Breite', height: 'Höhe',
-  length: 'Länge', position: 'Position', sourceIndex: 'Eingang', quarterTurns: 'Vierteldrehungen',
+  length: 'Länge', offset:'Versatz',tilt:'Kippen',spin:'Eigenrotation', quarterTurns: 'Vierteldrehungen',
   instances: 'Instanzen', boundary: 'Umriss', boundaryRules: 'Randregeln', filler: 'Füllsegment',
   mode: 'Modus', heightOverride: 'Eigene Raumhöhe', interiorSource: 'Innenraumquelle', defaultPartition: 'Trennwand',
   front: 'Front', wall: 'Wand', floor: 'Boden', ceiling: 'Decke', geometry: 'Geometriequelle', layout: 'Anordnung',
@@ -172,7 +173,7 @@ export function NativeFields({ mode, node: rawNode, edit, document, library, onI
   const [draft, setDraft] = useState(() => structuredClone(node))
   useEffect(() => setDraft(structuredClone(node)), [JSON.stringify(node)])
   const structural=new Set(nodeControls(mode,node).map(control=>control.path))
-  const fields = inspectorFields(mode, node).filter(field=>!(node.inlinePart && field.path==='form')).filter(field=>!structural.has(field.path)).filter(field=>!(node.kind==='ROOF'&&node.roofInputMode!=null&&(['roofConfig','roofSections','roofType','ridge','overhang'].includes(field.path)||field.path==='roofSettings'&&node.roofInputMode==='TEMPLATE'))).filter(field=>!(draft.dynamicAxes?.length && ['module','block'].includes(field.path))).filter(field => !(['INPUT','SAVED','COPYCAT'].includes(node.kind) && ['rotationAxis','quarterTurns','rotationPivot','translation','offset','turn','tilt','spin','top','part.top'].includes(field.path))).filter(field => !(['rotationPivot','translation'].includes(field.path) || field.path==='roofSections' && (!model.directAreas || draft.roofSections==null) || draft.roofSections!=null && ['roofType','ridge','overhang'].includes(field.path))).filter(field => !(mode === 'form' && formWidgets[node.kind]?.includes(field.path)))
+  const fields = inspectorFields(mode, node).filter(field=>!(rawNode.kind==='COPYCAT'&&field.path.startsWith('inlinePart.')&&!['inlinePart.roof','inlinePart.discCut'].includes(field.path))).filter(field=>!(node.inlinePart && field.path==='form')).filter(field=>!structural.has(field.path)).filter(field=>!(node.kind==='ROOF'&&node.roofInputMode!=null&&(['roofConfig','roofSections','roofType','ridge','overhang'].includes(field.path)||field.path==='roofSettings'&&node.roofInputMode==='TEMPLATE'))).filter(field=>!(draft.dynamicAxes?.length && ['module','block'].includes(field.path))).filter(field => !(['INPUT','SAVED','COPYCAT'].includes(node.kind) && ['rotationAxis','quarterTurns','rotationPivot','translation','offset','turn','tilt','spin','top','part.top'].includes(field.path))).filter(field => !(['rotationPivot','translation'].includes(field.path) || field.path==='roofSections' && (!model.directAreas || draft.roofSections==null) || draft.roofSections!=null && ['roofType','ridge','overhang'].includes(field.path))).filter(field => !(mode === 'form' && formWidgets[node.kind]?.includes(field.path)))
   const context = useMemo(() => {
     if (mode !== 'building') return { mode, library, node: draft, slopes: model.roofSlopes }
     try {

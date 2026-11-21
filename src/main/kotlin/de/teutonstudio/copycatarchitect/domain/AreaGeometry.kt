@@ -36,9 +36,10 @@ data class SegmentVolume(val area:Area,val depth:Int) {
     }
 }
 
-fun BuildingGraph.areaOf(node:BuildingNode):Area? {
-    val source=if(node.kind==BuildingKind.AREA) node else nodes.firstOrNull { it.id==node.geometry && it.kind==BuildingKind.AREA }
-    return source?.let { BuildingCounts.resolve(this,it) }?.let { resolved ->
+fun BuildingGraph.areaOf(node:BuildingNode,strict:Boolean=false):Area? {
+    val direct=if(node.kind==BuildingKind.CONDITIONAL) GraphConditions.buildingNode(this,node.id) else node
+    val source=if(direct.kind==BuildingKind.AREA) direct else direct.geometry.takeIf(String::isNotEmpty)?.let { GraphConditions.buildingNode(this,it) }?.takeIf { it.kind==BuildingKind.AREA }
+    return source?.let { BuildingCounts.resolve(this,it,strict) }?.let { resolved ->
         val points=when(resolved.areaMode) {
             AreaMode.SQUARE,AreaMode.RECTANGLE -> (0 until if(resolved.areaMode==AreaMode.SQUARE) resolved.length else resolved.height).flatMap { z -> (0 until resolved.length).map { x -> P(x,0,z) } }
             else -> resolved.coordinates

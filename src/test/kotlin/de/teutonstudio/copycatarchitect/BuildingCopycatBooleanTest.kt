@@ -53,8 +53,13 @@ class BuildingCopycatBooleanTest {
             assertTrue(ports.all { port -> kinds.all { it in port.accepts } })
             assertFails { graph.connect(op.id,"in:0","wall") }
             assertFails { graph.connect(op.id,"in:0",op.id) }
-            assertFails { BuildingGraphCompiler.structure(graph.replace(op.copy(inputs=listOf("a")))) }
-            assertFails { eval(graph.replace(op.copy(inputs=listOf("a","")))).preview(op.id) }
+            if(kind in CopycatSetInputs.buildingKinds) {
+                BuildingGraphCompiler.structure(graph.replace(op.copy(inputs=listOf("a"))))
+                assertEquals(eval(graph).preview("a"),eval(graph.replace(op.copy(inputs=listOf("a","")))).preview(op.id))
+            } else {
+                assertFails { BuildingGraphCompiler.structure(graph.replace(op.copy(inputs=listOf("a")))) }
+                assertFails { eval(graph.replace(op.copy(inputs=listOf("a","")))).preview(op.id) }
+            }
         }
         assertFails { BuildingGraphCompiler.structure(graph(operation(BuildingKind.COPYCAT_DIFFERENCE,listOf("a","b","a")))) }
         val g=graph(operation(BuildingKind.COPYCAT_UNION))

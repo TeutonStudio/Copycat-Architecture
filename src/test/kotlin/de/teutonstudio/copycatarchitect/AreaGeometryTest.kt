@@ -73,7 +73,7 @@ class AreaGeometryTest {
         val graph=original.copy(nodes=original.nodes+area).replace(geometry).replace(room)
             .replace(node(original,"plate_layout").copy(length=4,height=5))
         BuildingGraphCompiler.structure(graph)
-        assertEquals(setOf(BuildingKind.AREA),BuildingPorts.of(geometry,graph).single().accepts)
+        assertEquals(setOf(BuildingKind.AREA,BuildingKind.CONDITIONAL),BuildingPorts.of(geometry,graph).single().accepts)
         assertEquals(points,graph.resolvedNode(geometry).coordinates)
         assertEquals(points.toSet(),RoomGeometry.cells(graph.resolvedNode(room).rectangles))
         assertEquals(6,graph.resolvedNode(room).height)

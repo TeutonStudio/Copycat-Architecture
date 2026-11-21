@@ -2,7 +2,7 @@ package de.teutonstudio.copycatarchitect.domain
 
 /** One typed card can contain every building/Copycat/value recipe. Legacy graphs retain their terminal. */
 object GraphCards {
-    val types=BuildingKind.entries.map(::buildingGraphType).toSet()
+    val types=BuildingKind.entries.filter { it!=BuildingKind.CONDITIONAL }.map(::buildingGraphType).toSet()
     fun validate(n:BuildingNode) {
         require(n.resultType==null || n.kind==BuildingKind.BUILDING && n.resultType in types && n.inputs.size<=1) { "Graph results need a supported output type and one input" }
         require(n.inlinePart==null || n.kind==BuildingKind.COPYCAT) { "Inline Copycat parts belong to Copycat sources" }

@@ -27,7 +27,8 @@ data class RoofTemplateFamily(val id:String="builtin",val name:String="Roof",val
 data class RoofConfig(val family:String="builtin",val families:List<RoofTemplateFamily> = emptyList(),val variants:Map<String,String> = emptyMap(),val wall:String="")
 data class BuildingStoreyInstance(val id:String,val level:Int,val source:String)
 fun BuildingGraph.storeyInstances(resultId:String=resultNode().id):List<BuildingStoreyInstance> {
-    val result=nodes.first { it.id==resultId && it.kind==BuildingKind.BUILDING }
+    val selected=nodes.first { it.id==resultId && it.kind==BuildingKind.BUILDING }
+    val result=if(selected.resultType=="BUILDING") nodes.firstOrNull { it.id==selected.inputs.firstOrNull() && it.kind==BuildingKind.BUILDING } ?: selected else selected
     return result.levels.toSortedMap().map { (level,source)->BuildingStoreyInstance(result.levelIds[level] ?: "storey_$level",level,source) }
 }
 /** Preserve identity while logical floor numbers compact after a disconnection. */
@@ -93,29 +94,29 @@ object Roofs {
         wallSegment:(String)->FixedSegment={ error("Gaubenwand fehlt: $it") },
         wallPlacement:(P,List<SegmentCell>,Int)->Placement={ _,_,_->error("Gaubenwand fehlt") },
         ceilingCuts:MutableMap<P,ExactVolume>?=null,validateDormersOnly:Boolean=false,sizedSegmentSource:((String,P)->RoofSegmentTemplate?)?=null):Plan {
-        require(roof.layout.isNotEmpty()) { "Connect a roof arrangement source" }
-        val layout=graph.nodes.first { it.id==roof.layout && it.kind==BuildingKind.ROOF_LAYOUT }
-        require(layout.inputs.isNotEmpty() && layout.inputs.all(String::isNotEmpty)) { "Roof arrangement is pending definition; connect roof levels" }
-        require(roof.inputs.drop(if(roof.adaptiveRoof==true) 5 else 6).all(String::isEmpty)) { "An explicit roof accepts six ordered variants: slope, eave, edge, ridge, hip, valley" }
+        val levelNodes=RoofSections.levels(graph,roof)
+        require(levelNodes.isNotEmpty()) { "Roof arrangement is a pending definition: define at least one roof area" }
+        require(roof.inputs.drop(if(roof.roofInputMode!=null) 8 else if(roof.adaptiveRoof==true) 5 else 6).all(String::isEmpty)) { "An explicit roof accepts six ordered variants: slope, eave, edge, ridge, hip, valley" }
         val shared=roof.roofConfig ?: RoofConfig()
         require(shared.families.size<=16 && shared.families.map { it.id }.distinct().size==shared.families.size && shared.families.none { it.id=="builtin" }) { "Custom roof families need unique IDs" }
         val validatedPeriods=mutableSetOf<String>()
         val segmentCache=mutableMapOf<String,RoofSegmentTemplate>()
         val variantOrder=listOf("slope","eave","edge","ridge","hip","valley")
         fun segmentOverride(variant:String,slope:RoofSlope):RoofSegmentTemplate? {
-            val index=if(roof.adaptiveRoof==true) when(variant) { "slope","eave"->0;"ridge"->1;"valley"->2;"edge","hip"->3;else->-1 } else variantOrder.indexOf(variant)
+            val index=if(roof.roofInputMode!=null) RoofTemplates.index(variant) else if(roof.adaptiveRoof==true) when(variant) { "slope","eave"->0;"ridge"->1;"valley"->2;"edge","hip"->3;else->-1 } else variantOrder.indexOf(variant)
             if(index<0) return null
             val id=roof.inputs.getOrNull(index)?.takeIf(String::isNotEmpty) ?: return null
+            if(roof.roofInputMode!=null && GraphTypes.building(graph,id)=="COPYCAT") return null
             val pitch=slope.reduced()
             val key="$id:${pitch.p}:${pitch.q}"
             return segmentCache.getOrPut(key) { (sizedSegmentSource?.invoke(id,P(pitch.q,pitch.p+2,1)) ?: segmentSource(id)) ?: error("Missing roof segment template $id") }
         }
-        val levels=layout.inputs.map { id ->
-            val n=graph.nodes.first { it.id==id && it.kind==BuildingKind.ROOF_LEVEL };val c=n.roofLevel ?: RoofLevelConfig();validate(c)
+        val levels=levelNodes.map { n ->
+            val c=n.roofLevel ?: RoofLevelConfig();validate(c)
             var support=(if(c.storey.isEmpty()) supports.maxByOrNull { it.level } else supports.firstOrNull { it.instanceId==c.storey }) ?: error("Roof level targets a missing storey instance")
             var blocked=supports.filter { it.level>support.level }.flatMap { it.footprint }.toSet()
             val exposed=support.footprint-blocked
-            val mask=if(c.area.isEmpty()) exposed else graph.nodes.first { it.id==c.area && it.kind==BuildingKind.AREA }.coordinates.toSet().also { require(it.all(exposed::contains)) { "Roof area must lie on the exposed selected storey" } }
+            val mask=if(c.area.isEmpty()) exposed else graph.areaOf(GraphConditions.buildingNode(graph,c.area),true)?.points.orEmpty().toSet().also { require(it.all(exposed::contains)) { "Roof area must lie on the exposed selected storey" } }
             require(mask.isNotEmpty() && mask.size<=4096) { "Roof level needs an exposed area" }
             require(mask.all { it.y==0 } && mask.maxOf { it.x }-mask.minOf { it.x }<128 && mask.maxOf { it.z }-mask.minOf { it.z }<128) { "Roof footprint exceeds 128 blocks" }
             val ceilingHeights=mask.map { support.ceilingByCell[it] ?: support.ceiling16 }.distinct()
@@ -162,7 +163,7 @@ object Roofs {
         val wallPeriods=mutableMapOf<P,RoofSegmentTemplate>()
         fun wallPeriod(width:Int,height:Int):RoofSegmentTemplate? {
             val node=wallNode ?: return null
-            if(node.kind !in (setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE)+SegmentBooleans.kinds)) return null
+            if(node.kind !in (setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_MIRROR,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_TRANSFORM)+SegmentBooleans.kinds)) return null
             val size=P(width.coerceIn(1,128),height.coerceIn(1,128),1)
             return wallPeriods.getOrPut(size) {
                 (sizedSegmentSource?.invoke(node.id,size) ?: segmentSource(node.id))?.also { require(it.width in 1..128 && it.height in 1..128 && it.depth==1) { "Roof wall periods need positive dimensions and depth 1" } } ?: error("Missing roof wall segment ${node.id}")
@@ -214,7 +215,7 @@ object Roofs {
                 val aboveSupport=ExactVolume.convex(listOf(ExactPlane(0,-1,0,y*16L-winner.support.ceiling16)))
                 val reinforcement=down.minus(lower).intersect(jointBand).intersect(aboveSupport)
                 val cap=capSkin.union(reinforcement)
-                for((kind,band) in joints) {
+                for((kind,band) in (if(roof.roofInputMode!=null && !cap.isEmpty()) mapOf(templateJunction(active,block,cap,joints.keys) to jointBand) else joints)) {
                     val piece=cap.intersect(band)
                     if(!piece.isEmpty()) templatePlacement(winner,block,piece,kind,shared,roof,palette,source,formSource,::segmentOverride,cap=true)?.let(pieces::add)
                 }
@@ -269,7 +270,12 @@ object Roofs {
         if(contacts!=null) for(level in levels) contacts+=RoofContact(level.node.id,level.support.instanceId,level.coverage,
             level.support.ceiling16,ceil(level.expectedPeak.value()).toInt()+16,
             { block->clippedBody(level,block).minus(contactBlocking[block] ?: ExactVolume()) })
-        return withDormers(result.plan(emptyList()),dormers,contacts)
+        val plan=withDormers(result.plan(emptyList()),dormers,contacts)
+        if(roof.roofSections!=null && contacts!=null) for(index in contacts.indices) {
+            val contact=contacts[index]
+            if(contact.id.startsWith("${roof.id}:")) contacts[index]=contact.copy(id=roof.id)
+        }
+        return plan
     }
     private data class DormerGeometry(val definition:BuildingNode,val instance:DormerInstance,val level:Level,
         val coverage:Set<P>,val body:(P,Int)->ExactVolume,val additions:List<Placement>,val maxY:Int)
@@ -490,8 +496,11 @@ object Roofs {
     private fun templatePlacement(l:Level,block:P,target:ExactVolume,variant:String,shared:RoofConfig,roof:BuildingNode,palette:Map<String,String>,source:(String)->Placement,formSource:(String)->Placement,segmentOverride:(String,RoofSlope)->RoofSegmentTemplate?,cap:Boolean=false,required:ExactVolume=target):Placement? {
         val face=selectFace(l,block)
         val period=if(shared.variants[variant].isNullOrEmpty()) l.family.cells.filter { it.slope.reduced()==face.slope && it.variant==variant } else emptyList()
-        val override=shared.variants[variant] ?: l.family.variants[variant]
-        val segment=if(period.isEmpty() && override.isNullOrEmpty()) segmentOverride(variant,face.slope) else null
+        val selected=if(roof.roofInputMode!=null) roof.inputs.getOrNull(RoofTemplates.index(variant)).orEmpty().also {
+            require(it.isNotEmpty()) { "Dachart ${RoofTemplates.labels[RoofTemplates.index(variant)]} fehlt bei $block" }
+        } else ""
+        val override=if(selected.isNotEmpty()) selected else shared.variants[variant] ?: l.family.variants[variant]
+        val segment=if(period.isEmpty() && (roof.roofInputMode!=null || override.isNullOrEmpty())) segmentOverride(variant,face.slope) else null
         if(period.isEmpty() && override.isNullOrEmpty() && segment==null) {
             val prototype=Part(RoofPartParameters.SOURCE,roof=RoofPartParameters(face.slope.p,face.slope.q,Math.floorMod(face.slope.p*face.phase,face.slope.q),variant=variant,thickness=l.family.thickness16))
             val key=if(cap) when(variant) { "ridge"->"roof_ridge";"hip"->"roof_hip";"valley"->"roof_valley";else->"roof_transition" }
@@ -517,10 +526,33 @@ object Roofs {
                 segment.cells.filter { it.first.x==face.phase }.map { (cell,p)->p to P(0,(cell.y+origin)*16,0) }
             }
             period.isNotEmpty() -> period.filter { it.phase==face.phase }.map { formSource(it.form) to P(0,it.slice*16,0) }
-            else -> listOf(source(checkNotNull(override)) to P())
+            else -> if(roof.roofInputMode!=null) listOf(-16,0,16).map { source(checkNotNull(override)) to P(0,it,0) } else listOf(source(checkNotNull(override)) to P())
         }
-        val fitted=RoofTemplatePlacement.fitManyOrNull(members,face.upper,face.slope,face.phase,0,required,envelope=target) ?: return null
+        val fitted=RoofTemplatePlacement.fitManyOrNull(members,face.upper,face.slope,face.phase,0,required,envelope=target)
+        if(roof.roofInputMode!=null) require(fitted!=null) { "Dachbauteil ${RoofTemplates.labels[RoofTemplates.index(variant)]} passt geometrisch nicht bei $block" }
+        if(fitted==null) return null
         return fitted.copy(pos=block,component="roof")
+    }
+    /** Classify the visible ridge rays, independently from block parity and camera orientation. */
+    private fun templateJunction(levels:List<Level>,block:P,target:ExactVolume,kinds:Set<String>):String {
+        fun height(x:Double,z:Double)=levels.maxOf { it.height(x,z) }
+        val planes=levels.flatMap { it.patches }.flatMap { it.planes }
+        val xs=mutableListOf<Double>();val zs=mutableListOf<Double>()
+        for(a in planes) for(b in planes) {
+            if(a.x*b.x<0 && a.z==0L && b.z==0L) xs+=(a.d*b.q-b.d*a.q).toDouble()/(a.x*b.q-b.x*a.q)
+            if(a.z*b.z<0 && a.x==0L && b.x==0L) zs+=(a.d*b.q-b.d*a.q).toDouble()/(a.z*b.q-b.z*a.q)
+        }
+        val vertices=target.cells.flatMap { it.vertices() }
+        val x=xs.filter { it>=block.x*16-0.01 && it<=(block.x+1)*16+0.01 }.minByOrNull { kotlin.math.abs(it-(block.x*16+8)) } ?: (block.x*16+vertices.map { it.x.toDouble() }.average())
+        val z=zs.filter { it>=block.z*16-0.01 && it<=(block.z+1)*16+0.01 }.minByOrNull { kotlin.math.abs(it-(block.z*16+8)) } ?: (block.z*16+vertices.map { it.z.toDouble() }.average())
+        val h=height(x,z)
+        val directions=RoomGeometry.directions.indices.filter { i ->
+            val d=RoomGeometry.directions[i];val rx=x+d.x*4;val rz=z+d.z*4
+            kotlin.math.abs(height(rx,rz)-h)<1e-7 && height(rx-d.z,rz+d.x)<h-1e-7 && height(rx+d.z,rz-d.x)<h-1e-7
+        }.toSet()
+        val point=directions.isEmpty() && xs.any { kotlin.math.abs(it-x)<1e-7 } && zs.any { kotlin.math.abs(it-z)<1e-7 }
+        return if(directions.isNotEmpty()) RoofTemplates.junction(directions)
+            else if(point && "valley" !in kinds) "peak" else if("valley" in kinds) "valley" else "hip"
     }
     /** Flush joint caps replace the outer skin and add a real two-pixel reinforcement below it. */
     private fun jointBands(levels:List<Level>,block:P):Map<String,ExactVolume> {
@@ -625,9 +657,16 @@ internal fun freshAccessInstanceId(instances:List<VerticalAccessInstance>):Strin
 }
 
 fun BuildingGraph.withCurrentSchema():BuildingGraph {
+    if(schema>=13 || nodes.any { it.kind.name in GraphNumbers.newKinds || it.resultType=="COUNT" } || nodeGroups.any { g->g.graphInterface?.let { it.inputs.any {p->p.type=="COUNT"} || it.outputs.any {p->p.type=="COUNT"} }==true }) return GraphNumbers.upgrade(copy(schema=maxOf(schema,13)),schema)
+    if(nodes.any { it.kind.name in GraphTypes.newKinds || it.roofInputMode!=null }) return copy(schema=maxOf(schema,12))
+    if(nodes.any { it.roofSections!=null || it.operandOffsets!=null ||
+        it.kind==BuildingKind.SEGMENT && nodes.any { source -> source.id==it.layout && source.kind==BuildingKind.AREA } ||
+        it.kind==BuildingKind.ROOM && nodes.any { source -> source.id==it.geometry && source.kind==BuildingKind.AREA } }) return copy(schema=maxOf(schema,11))
+    if(nodes.any { it.kind in setOf(BuildingKind.TRANSFORMATION,BuildingKind.COPYCAT_TRANSFORM,BuildingKind.SEGMENT_TRANSFORM) } || nodeGroups.any { g->g.graphInterface?.let { it.inputs.any { p->p.type=="TRANSFORMATION" } || it.outputs.any { p->p.type=="TRANSFORMATION" } }==true }) return copy(schema=maxOf(schema,10))
     val value=withLegacySchema()
+    if(nodes.any { it.kind.name in GraphValues.variadicKinds && it.inputs.size>2 || it.kind in CopycatSetInputs.buildingKinds && it.inputs.size<2 }) return value.copy(schema=maxOf(value.schema,9))
     if(nodes.any { it.resultType!=null || it.inlinePart!=null }) return value.copy(schema=maxOf(value.schema,8))
     if(nodes.any { it.areaMode!=null || !it.dynamicAxes.isNullOrEmpty() || it.adaptiveRoof==true }) return value.copy(schema=maxOf(value.schema,7))
     if(nodes.any { it.kind.name in GraphValues.kinds && (it.kind !in setOf(BuildingKind.INT,BuildingKind.POSITION) || it.kind==BuildingKind.POSITION && it.inputs.isNotEmpty()) || it.columnMode==RotationSegmentMode.ADJACENT }) return value.copy(schema=maxOf(value.schema,6))
-    return if(nodeGroups.any { group -> group.graphInterface?.let { face -> face.inputs.any { it.type=="POSITION" } || face.outputs.any { it.type=="POSITION" } }==true } || nodes.any { !it.copycatTransforms.isNullOrEmpty() || it.kind in setOf(BuildingKind.POSITION,BuildingKind.COPYCAT_POSITION) || it.rotationPivot!=null && it.rotationPivot!=P(8,8,8) }) value.copy(schema=maxOf(value.schema,5)) else value
+    return if(nodeGroups.any { group -> group.graphInterface?.let { face -> face.inputs.any { it.type=="POSITION" } || face.outputs.any { it.type=="POSITION" } }==true } || nodes.any { !it.copycatTransforms.isNullOrEmpty() || it.kind in setOf(BuildingKind.POSITION,BuildingKind.COPYCAT_POSITION,BuildingKind.COPYCAT_TRANSFORM) || it.rotationPivot!=null && it.rotationPivot!=P(8,8,8) }) value.copy(schema=maxOf(value.schema,5)) else value
 }

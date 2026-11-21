@@ -208,6 +208,7 @@ class NodeGraphCanvas(x:Int,y:Int,w:Int,h:Int,private val definition:()->Form,pr
             NodeKind.INTERSECTION -> listOf(
                 Control(Field.ADD,px,py,half,"+ ${ui("input")}",enabled=n.inputs.size<checkNotNull(GraphModels.shape(n.kind).inputs).max),
                 Control(Field.REMOVE,px+half+4,py,w-half-4,"− ${ui("input")}",enabled=n.inputs.size>checkNotNull(GraphModels.shape(n.kind).inputs).min))
+                    else -> emptyList()
         }+(if(n.kind==NodeKind.OUTPUT) emptyList() else listOf(Control(Field.TRANSFORMS,px,py+propertyHeight(n)-21,w,ui("copycat_transforms"))))).map { it.copy(enabled=it.enabled && (!readOnly || it.field==Field.DEFINITION)) }
     }
     /** Actual inspector eye hit region, including scroll; absent for primitive sources. */

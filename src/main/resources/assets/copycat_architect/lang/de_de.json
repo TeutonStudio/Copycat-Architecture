@@ -884,5 +884,20 @@
   "gui.copycat_architect.position_max": "Position Maximum",
   "gui.copycat_architect.position_x": "Position zerlegen · X",
   "gui.copycat_architect.position_y": "Position zerlegen · Y",
-  "gui.copycat_architect.position_z": "Position zerlegen · Z"
+  "gui.copycat_architect.position_z": "Position zerlegen · Z",
+  "gui.copycat_architect.transformation": "Transformation",
+  "gui.copycat_architect.copycat_transform": "Copycat transformieren",
+  "gui.copycat_architect.segment_transform": "Segment transformieren",
+  "gui.copycat_architect.node_boolean": "Booleanwert",
+  "gui.copycat_architect.node_int_compare": "Zahlenvergleich",
+  "gui.copycat_architect.node_boolean_logic": "Booleanoperator",
+  "gui.copycat_architect.node_conditional": "Bedingte Abbildung",
+  "gui.copycat_architect.node_roof_template": "Dachvorlage",
+  "gui.copycat_architect.node_service_shaft_segment": "Schachtsegment",
+  "gui.copycat_architect.node_elevator_shaft_segment": "Aufzugssegment",
+  "copycat_architect.node_count": "Anzahl",
+  "copycat_architect.node_int_abs": "Betrag |x|",
+  "copycat_architect.node_int_to_count": "Als Anzahl",
+  "copycat_architect.node_int_remainder": "Divisionsrest",
+  "copycat_architect.node_int": "Ganzzahl"
 }

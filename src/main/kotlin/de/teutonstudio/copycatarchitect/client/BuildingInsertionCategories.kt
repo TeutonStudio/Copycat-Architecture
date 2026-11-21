@@ -15,5 +15,6 @@ object BuildingInsertionCategories {
         BuildingKind.BAY_WINDOW -> "node_category_special_rooms"
         BuildingKind.DORMER -> "node_category_roofs"
         BuildingKind.GARDEN,BuildingKind.PATH -> "node_category_landscape"
+            else -> "node_category_geometry"
     }
 }

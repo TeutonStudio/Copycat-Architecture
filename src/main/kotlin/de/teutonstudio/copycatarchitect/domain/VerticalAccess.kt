@@ -26,7 +26,7 @@ data class VerticalAccessInstance(
 )
 data class AccessDefinition(
     val id:String,val kind:VerticalAccessKind,val stairwell:StairwellConfig=StairwellConfig(),
-    val elevatorShaft:ElevatorShaftConfig=ElevatorShaftConfig(),val serviceShaft:ServiceShaftConfig=ServiceShaftConfig()
+    val elevatorShaft:ElevatorShaftConfig=ElevatorShaftConfig(),val serviceShaft:ServiceShaftConfig=ServiceShaftConfig(),val segment:Boolean=false
 )
 /** Plan coordinates include this instance's base, but not the building's site offset. */
 data class AccessStorey(val instanceId:String,val level:Int,val base:Int,val plan:Plan,val footprint:Set<P>)
@@ -89,7 +89,7 @@ object VerticalAccess {
     }
     fun compile(
         instances:List<VerticalAccessInstance>,storeys:List<AccessStorey>,definition:(String)->AccessDefinition,
-        copycat:(String,String)->Placement,palette:Map<String,String>
+        copycat:(String,String)->Placement,palette:Map<String,String>,segment:((String,Int,List<Int>)->Plan)?=null
     ):AccessCompilation {
         require(instances.size<=16) { "A building supports at most sixteen vertical access instances" }
         val connected=instances.filter { it.source.isNotEmpty() }
@@ -108,7 +108,13 @@ object VerticalAccess {
             require(floors.zipWithNext().all { (a,b)->b>a }) { "Vertical access requires ascending floor surfaces" }
             val stops=if(instance.stops.isEmpty()) selected.map { it.instanceId }.toSet() else instance.stops.toSet()
             require(stops.all { id->selected.any { it.instanceId==id } }) { "Elevator stops must belong to the selected storey range" }
-            val local=when(d.kind) {
+            val local=if(d.segment) {
+                val bottom=floors.first();val top=ceilingLevel(selected.last(),instance.position)
+                val plan=requireNotNull(segment) { "Schachtsegment-Auswertung fehlt" }(instance.source,top-bottom,floors.filterIndexed { i,_->selected[i].instanceId in stops }.map { it-bottom })
+                val moved=plan.placements.map { it.copy(pos=it.pos+P(0,bottom,0)) }
+                val clear=plan.clear.map { it+P(0,bottom,0) }.toSet()
+                LocalCore(moved,emptyList(),clear,(moved.map { it.pos }+clear).map { it.copy(y=0) }.toSet())
+            } else when(d.kind) {
                 VerticalAccessKind.STAIRWELL -> {
                     d.stairwell.validate();require(selected.size>=2) { "A stairwell must connect at least two storeys" }
                     stairs(d.stairwell,floors,copycat,palette)

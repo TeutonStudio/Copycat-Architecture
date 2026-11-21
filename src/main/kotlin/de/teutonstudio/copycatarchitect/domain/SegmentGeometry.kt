@@ -39,7 +39,7 @@ object SegmentGeometry {
     /** The same local box used by composition, without applying its world offset. */
     fun rotated(segment:FixedSegment,axis:RotationAxis,quarterTurns:Int):FixedSegment {
         val box=transform(segment,SegmentTransform(axis=axis,quarterTurns=quarterTurns))
-        return FixedSegment(box.dimensions.x,box.dimensions.y,box.cells,segment.air,box.dimensions.z,box.metadata)
+        return FixedSegment(box.dimensions.x,box.dimensions.y,box.cells.map { it.copy(cell=it.cell.copy(pos=it.cell.pos+segment.origin)) },segment.air,box.dimensions.z,(if(segment.origin==P()) box.metadata else box.metadata.moved(segment.origin,"origin")),segment.origin)
     }
 
     /** The selected axis is normal to the mirror plane through this segment's center. */
@@ -48,7 +48,7 @@ object SegmentGeometry {
         require(segment.length in 1..128 && segment.height in 1..128 && segment.depth in 1..128) { "Segment dimensions must be between 1 and 128" }
         require(segment.length.toLong()*segment.height*segment.depth<=262144) { "Segment exceeds 262144 cells" }
         val cells=segment.cells.map { entry ->
-            val cell=entry.cell;val p=cell.pos
+            val cell=entry.cell;val p=cell.pos+P(-segment.origin.x,-segment.origin.y,-segment.origin.z)
             require(p.x in 0 until segment.length && p.y in 0 until segment.height && p.z in 0 until segment.depth) { "Segment cell lies outside its dimensions" }
             val position=when(axis) {
                 RotationAxis.X->p.copy(x=segment.length-1-p.x)
@@ -56,9 +56,9 @@ object SegmentGeometry {
                 RotationAxis.Z->p.copy(z=segment.depth-1-p.z)
                 RotationAxis.NORMAL->error("A segment reflection needs a world axis")
             }
-            entry.copy(cell=if(positionsOnly) cell.copy(pos=position) else cell.copy(pos=position,rotations=cell.rotations+SegmentRotation(axis,0,true)))
+            entry.copy(cell=if(positionsOnly) cell.copy(pos=position+segment.origin) else cell.copy(pos=position+segment.origin,rotations=cell.rotations+SegmentRotation(axis,0,true)))
         }
-        return segment.copy(cells=cells,metadata=segment.metadata.transformed(SemanticTransform.reflection(axis,P(segment.length,segment.height,segment.depth),positionsOnly)))
+        return segment.copy(cells=cells,metadata=if(segment.origin==P()) segment.metadata.transformed(SemanticTransform.reflection(axis,P(segment.length,segment.height,segment.depth),positionsOnly)) else segment.metadata.moved(P(-segment.origin.x,-segment.origin.y,-segment.origin.z),"origin").transformed(SemanticTransform.reflection(axis,P(segment.length,segment.height,segment.depth),positionsOnly)).moved(segment.origin,"origin"))
     }
 
     /** Offsets refer to the minimum corner of each rotated box, before final normalization. */
@@ -111,7 +111,7 @@ object SegmentGeometry {
         val source=if(segment.air) buildList {
             for(x in 0 until segment.length) for(y in 0 until segment.height) for(z in 0 until segment.depth)
                 add(SegmentCell(Cell(P(x,y,z),block="minecraft:air",empty=true)))
-        } else segment.cells
+        } else segment.cells.map { it.copy(cell=it.cell.copy(pos=it.cell.pos+P(-segment.origin.x,-segment.origin.y,-segment.origin.z))) }
         require(source.all { it.cell.pos.let { p -> p.x in 0 until dimensions.x && p.y in 0 until dimensions.y && p.z in 0 until dimensions.z } }) { "Segment cell lies outside its dimensions" }
         var cells=source
         repeat(q) {
@@ -138,8 +138,8 @@ object SegmentGeometry {
                 else cell.copy(rotations=cell.rotations+SegmentRotation(transform.axis,q))
             entry.copy(cell=rotated)
         }
-        val metadata=segment.metadata.transformed(SemanticTransform.rotation(transform.axis,q,P(segment.length,segment.height,segment.depth)))
-        return Box(transform.offset,dimensions,cells,metadata)
+        val metadata=(if(segment.origin==P()) segment.metadata else segment.metadata.moved(P(-segment.origin.x,-segment.origin.y,-segment.origin.z),"origin")).transformed(SemanticTransform.rotation(transform.axis,q,P(segment.length,segment.height,segment.depth)))
+        return Box(transform.offset+segment.origin,dimensions,cells,metadata)
     }
 
     /** Source Y rotation, ordered nested segment transformations, then mounting on a room wall. */

@@ -4,12 +4,14 @@ package de.teutonstudio.copycatarchitect.domain
 internal object ExactGraphCompiler {
     private data class Contribution(val leaf:String,val group:String,val part:Part)
     fun intermediate(graph:NodeGraph,nodeId:String,groups:List<MaterialGroup>):List<Part> {
-        val nodes=graph.nodes.associateBy { it.id }
+        val nodes=GraphConditions.shapeNodes(GraphNumbers.shapeContext(graph))
         val memo=mutableMapOf<String,Map<Contribution,ExactVolume>>()
         fun total(value:Map<Contribution,ExactVolume>)=value.values.fold(ExactVolume()) { a,b -> a.union(b) }
         fun evaluate(id:String):Map<Contribution,ExactVolume> = memo.getOrPut(id) {
-            val n=nodes.getValue(id)
-            val base=if(n.kind==NodeKind.INPUT || n.kind==NodeKind.SAVED) {
+            val n=CopycatSetInputs.connected(nodes.getValue(id))
+            val base=if(n.kind in CopycatSetInputs.shapeKinds && n.inputs.isEmpty()) {
+                CopycatSetInputs.identity(n,groups).associate { part -> Contribution(n.id,part.group,part) to ExactGeometry.part(part) }
+            } else if(n.kind==NodeKind.INPUT || n.kind==NodeKind.SAVED) {
                 val contributions=linkedMapOf<Contribution,ExactVolume>()
                 GraphCompiler.sources(n).forEach { (leaf,source) ->
                     val part=PartRotations.rotate(source,n.rotationAxis,n.quarterTurns)

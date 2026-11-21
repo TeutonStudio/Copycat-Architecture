@@ -132,28 +132,28 @@ object GraphGroups {
     }
 
     fun validate(graph:NodeGraph) {
-        val nodes=graph.nodes.associateBy { it.id }
+        val nodes=GraphNumbers.shapeContext(graph)
         validate(graph.nodeGroups,nodes.keys,graph.nodes.filter { it.kind==NodeKind.OUTPUT }.map { it.id }.toSet())
         graph.nodeGroups.groupBy { it.effectiveDefinitionId }.values.forEach { instances ->
             require(instances.map { group -> group.nodes.map { shapeTemplate(nodes.getValue(it),group) } }.distinct().size==1) { "Instances of a node group must share the same definition" }
         }
         graph.nodeGroups.forEach { group -> group.graphInterface?.let { face ->
             face.inputs.forEach { input ->
-                require(input.type in setOf("shape","rotation","mirroring","position","INT")) { "Unknown Copycat graph input type" }
+                require(input.type in setOf("shape","rotation","mirroring","position","transformation","INT","COUNT","BOOLEAN")) { "Unknown Copycat graph input type" }
                 val connection=group.inputConnections[input.id].orEmpty()
-                require(connection.isEmpty() || GraphModels.shape(nodes.getValue(connection).kind).output==input.type) { "Incompatible Copycat group instance connection" }
+                require(connection.isEmpty() || GraphNumbers.compatible(GraphTypes.shape(nodes,connection),input.type)) { "Incompatible Copycat group instance connection" }
                 input.targets.forEach { target ->
                     val node=nodes.getValue(group.nodes[target.member]);val slot=target.port.toIntOrNull()
-                    require(slot!=null && slot in node.inputs.indices && GraphModels.shape(node.kind).inputs?.type(slot)==input.type) { "Incompatible Copycat group input" }
+                    require(slot!=null && slot in node.inputs.indices && GraphTypes.expectedShape(nodes,node,slot).let { GraphNumbers.compatible(input.type,it) }) { "Incompatible Copycat group input" }
                     require(node.inputs[slot]==connection) { "Connect named group inputs on the instance node" }
                 }
             }
-            face.outputs.forEach { output -> require(output.type in setOf("shape","rotation","mirroring","position","INT") && (output.member==-1 || GraphModels.shape(nodes.getValue(group.nodes[output.member]).kind).output==output.type)) { "Incompatible Copycat group output" } }
+            face.outputs.forEach { output -> require(output.type in setOf("shape","rotation","mirroring","position","transformation","INT","COUNT","BOOLEAN") && (output.member==-1 || GraphNumbers.compatible(GraphTypes.shape(nodes,group.nodes[output.member]),output.type))) { "Incompatible Copycat group output" } }
         } }
     }
 
     fun validate(graph:BuildingGraph) {
-        val nodes=graph.nodes.associateBy { it.id }
+        val nodes=GraphNumbers.buildingContext(graph)
         validate(graph.nodeGroups,nodes.keys,graph.nodes.filter { n -> n.id=="empty_wall" || n.kind==BuildingKind.BUILDING && graph.nodeGroups.none { n.id in it.nodes } }.mapTo(hashSetOf()) { it.id })
         graph.nodeGroups.groupBy { it.effectiveDefinitionId }.values.forEach { instances ->
             require(instances.map { group -> group.nodes.map { buildingTemplate(nodes.getValue(it),group) } }.distinct().size==1) { "Instances of a node group must share the same definition" }
@@ -163,15 +163,15 @@ object GraphGroups {
             face.inputs.forEach { input ->
                 require(input.type in types) { "Unknown building graph input type" }
                 val connection=group.inputConnections[input.id].orEmpty()
-                require(connection.isEmpty() || buildingGraphType(nodes.getValue(connection).kind)==input.type) { "Incompatible building group instance connection" }
+                require(connection.isEmpty() || GraphNumbers.compatible(GraphTypes.building(nodes,connection),input.type)) { "Incompatible building group instance connection" }
                 input.targets.forEach { target ->
                     val node=nodes.getValue(group.nodes[target.member])
                     val port=BuildingPorts.of(node,graph,true,includeInactive=true).firstOrNull { it.key==target.port }
-                    require(port!=null && port.accepts.any { buildingGraphType(it)==input.type }) { "Incompatible building group input" }
+                    require(port!=null && GraphNumbers.portTypes(port).any { GraphNumbers.compatible(input.type,it) }) { "Incompatible building group input" }
                     require(port.source==connection) { "Connect named group inputs on the instance node" }
                 }
             }
-            face.outputs.forEach { output -> require(output.type in types && (output.member==-1 || buildingGraphType(nodes.getValue(group.nodes[output.member]).kind)==output.type)) { "Incompatible building group output" } }
+            face.outputs.forEach { output -> require(output.type in types && (output.member==-1 || GraphNumbers.compatible(GraphTypes.building(nodes,group.nodes[output.member]),output.type))) { "Incompatible building group output" } }
         } }
     }
 
@@ -318,17 +318,20 @@ object GraphGroups {
     internal fun remap(node:BuildingNode,reference:(String,String)->String):BuildingNode = BuildingSemantics.remapReferences(node.copy(
         dimensions=node.dimensions?.mapValues { (key,ref) -> reference(key,ref) },
         positionValue=node.positionValue?.let { reference("positionValue",it) },
+        transformationValue=node.transformationValue?.let { reference("transformationValue",it) },
         inputs=node.inputs.mapIndexed { i,ref -> reference("in:$i",ref) },
         rotation=node.rotation?.let { reference("rotation",it) },mirroring=node.mirroring?.let { reference("mirroring",it) },
         walls=node.walls.mapValues { (key,ref) -> reference("wall:$key",ref) },
         verticalEdges=node.verticalEdges?.mapValues { (key,ref) -> reference("edge:$key",ref) },
         floor=reference("floor",node.floor),ceiling=reference("ceiling",node.ceiling),corner=reference("corner",node.corner),
+        roofTemplate=node.roofTemplate?.let { reference("roofTemplate",it) },
         roofPeak=node.roofPeak?.let { reference("roofPeak",it) },
         roofEave=node.roofEave?.let { reference("roofEave",it) },
         roof=reference("roof",node.roof),layout=reference("layout",node.layout),geometry=reference("geometry",node.geometry),
         levels=node.levels.mapValues { (key,ref) -> reference("level:$key",ref) },
         regionCopies=node.regionCopies.mapValues { (key,ref) -> reference(key,ref) },
         roofLevel=node.roofLevel?.let { it.copy(area=reference("area",it.area)) },
+        roofSections=node.roofSections?.map { section -> section.copy(config=section.config.copy(area=reference("area:${section.id}",section.config.area)),dormers=section.dormers.map { it.copy(source=reference("sectionDormer:${section.id}:${it.id}",it.source)) }) },
         stairwell=node.stairwell?.let { it.copy(tread=reference("tread",it.tread),landing=reference("landing",it.landing),enclosure=reference("enclosure",it.enclosure)) },
         elevatorShaft=node.elevatorShaft?.let { it.copy(enclosure=reference("enclosure",it.enclosure)) },
         serviceShaft=node.serviceShaft?.let { it.copy(enclosure=reference("enclosure",it.enclosure)) },

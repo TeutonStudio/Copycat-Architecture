@@ -1,17 +1,18 @@
 package de.teutonstudio.copycatarchitect.domain
 
 /** Edges point to source node IDs. Empty strings are unconnected editor sockets. */
-enum class NodeKind { INPUT, UNION, INTERSECTION, DIFFERENCE, SYMMETRIC_DIFFERENCE, ROTATE, ROTATION, OUTPUT, MIRROR, SAVED, MIRRORING, POSITION, TRANSLATE, INT, INT_ADD, INT_SUBTRACT, INT_MULTIPLY, INT_DIVIDE, INT_MIN, INT_MAX, POSITION_ADD, POSITION_SUBTRACT, POSITION_MULTIPLY, POSITION_DIVIDE, POSITION_MIN, POSITION_MAX, POSITION_X, POSITION_Y, POSITION_Z }
+enum class NodeKind { COUNT, INT_ABS, INT_TO_COUNT, INT_REMAINDER, BOOLEAN, INT_COMPARE, BOOLEAN_LOGIC, CONDITIONAL, INPUT, UNION, INTERSECTION, DIFFERENCE, SYMMETRIC_DIFFERENCE, ROTATE, ROTATION, OUTPUT, MIRROR, SAVED, MIRRORING, POSITION, TRANSLATE, INT, INT_ADD, INT_SUBTRACT, INT_MULTIPLY, INT_DIVIDE, INT_MIN, INT_MAX, POSITION_ADD, POSITION_SUBTRACT, POSITION_MULTIPLY, POSITION_DIVIDE, POSITION_MIN, POSITION_MAX, POSITION_X, POSITION_Y, POSITION_Z, TRANSFORMATION, COPYCAT_TRANSFORM }
 enum class MaterialMode { SEPARATED, GROUPED }
 data class GraphNode(val id:String="",val kind:NodeKind=NodeKind.INPUT,val inputs:List<String> = emptyList(),
                      val part:Part=Part(),val x:Int=0,val y:Int=0,
                      val materialMode:MaterialMode=MaterialMode.SEPARATED,val materialGroup:String="",val previewGroup:String="",
                      val inputGroups:List<String> = emptyList(),val rotationAxis:RotationAxis=RotationAxis.NORMAL,val quarterTurns:Int=0,
                      val mirror:CopycatMirror?=null,val savedCopycat:SavedCopycat?=null,
-                     val libraryReference:GraphLibraryReference?=null,val countValue:Int?=null,val rotationPivot:P?=null,val translation:P?=null,val copycatTransforms:List<CopycatTransform>?=null)
+                     val booleanValue:Boolean?=null,val operation:String?=null,
+                     val libraryReference:GraphLibraryReference?=null,val countValue:Int?=null,val rotationPivot:P?=null,val translation:P?=null,val transformationOrder:TransformationOrder?=null,val copycatTransforms:List<CopycatTransform>?=null)
 data class NodeGraph(val schema:Int=GraphModels.copycat.defaultSchema,val nodes:List<GraphNode> = listOf(GraphNode("result",NodeKind.OUTPUT,listOf(""),x=520,y=70)),
                      val nodeGroups:List<GraphGroup> = emptyList()) {
-    fun replace(node:GraphNode)=GraphGroups.synchronize(this,copy(nodes=nodes.map { if(it.id==node.id) node else it })).withTransformSchema()
+    fun replace(node:GraphNode)=GraphNumbers.edit(this,GraphGroups.synchronize(this,copy(nodes=nodes.map { if(it.id==node.id) node else it })).withTransformSchema())
     fun remove(id:String)=GraphGroups.synchronize(this,removeLocal(id))
     internal fun removeLocal(id:String)=copy(nodes=nodes.filter { it.id!=id }.map { it.copy(inputs=it.inputs.map { input -> if(input==id) "" else input }) },
         nodeGroups=GraphGroups.prune(nodeGroups,nodes.map { it.id }.toSet()-id))
@@ -39,7 +40,7 @@ object GraphCompiler {
     private fun supportsInputGroups(kind:NodeKind)=kind==NodeKind.UNION || kind==NodeKind.SYMMETRIC_DIFFERENCE
     /** Empty saved assignments inherit the connected branch, including legacy source materials. */
     fun inputMaterialGroups(graph:NodeGraph,node:GraphNode,slot:Int,groups:List<MaterialGroup> = DEFAULT_GROUPS):Set<String> {
-        val nodes=graph.nodes.associateBy { it.id }
+        val nodes=GraphNumbers.shapeContext(graph)
         val active=mutableSetOf<String>()
         fun assigned(n:GraphNode)=n.materialGroup.ifEmpty { groups.first().id }
         lateinit var output:(String)->Set<String>
@@ -53,8 +54,8 @@ object GraphCompiler {
             if(n==null || !active.add(id)) emptySet() else {
                 val result=when(n.kind) {
                     NodeKind.INPUT,NodeKind.SAVED->sourceParts(n).map { it.group }.toSet()
-                    NodeKind.ROTATION,NodeKind.MIRRORING,NodeKind.POSITION->emptySet()
-                    NodeKind.OUTPUT,NodeKind.ROTATE,NodeKind.MIRROR,NodeKind.TRANSLATE->input(n,0)
+                    NodeKind.ROTATION,NodeKind.MIRRORING,NodeKind.POSITION,NodeKind.TRANSFORMATION->emptySet()
+                    NodeKind.OUTPUT,NodeKind.ROTATE,NodeKind.MIRROR,NodeKind.TRANSLATE,NodeKind.COPYCAT_TRANSFORM->input(n,0)
                     else->if(n.materialMode==MaterialMode.GROUPED) setOf(assigned(n)) else when(n.kind) {
                         NodeKind.INTERSECTION,NodeKind.DIFFERENCE->input(n,0)
                         else->n.inputs.indices.flatMap { input(n,it) }.toSet()
@@ -72,7 +73,7 @@ object GraphCompiler {
     fun structure(graph:NodeGraph,groups:List<MaterialGroup>) {
         require(graph.schema in GraphModels.copycat.graphSchemas && graph.nodes.size in 1..GraphModels.copycat.maxNodes) { "Unsupported form graph schema ${graph.schema} or node count; supported schemas: ${GraphModels.copycat.graphSchemas}" }
         require(graph.schema>=graph.withTransformSchema().schema) { "These Copycat functions require form graph schema ${graph.withTransformSchema().schema}" }
-        val nodes=graph.nodes.associateBy { it.id }
+        val nodes=GraphNumbers.shapeContext(graph)
         require(nodes.size==graph.nodes.size && nodes.keys.all { it.matches(Regex("[a-zA-Z0-9_-]{1,36}")) }) { "Node IDs must be unique" }
         GraphGroups.validate(graph)
         require(graph.nodes.count { it.kind==NodeKind.OUTPUT }==1) { "Node graph needs exactly one result node" }
@@ -82,18 +83,23 @@ object GraphCompiler {
             CopycatTransforms.validate(n.copycatTransforms.orEmpty())
             require(n.copycatTransforms.isNullOrEmpty() || GraphModels.shape(n.kind).output=="shape") { "Only Copycat outputs accept transformations" }
             require(listOf((n.rotationPivot ?: P(8,8,8)).x,(n.rotationPivot ?: P(8,8,8)).y,(n.rotationPivot ?: P(8,8,8)).z).all { it in 0..16 }) { "Invalid rotation pivot" }
-            require(n.kind.name in GraphValues.vectorKinds || listOf((n.translation ?: P()).x,(n.translation ?: P()).y,(n.translation ?: P()).z).all { it in -16..16 }) { "Invalid position" }
+            require(n.kind.name in GraphValues.vectorKinds || n.kind==NodeKind.TRANSFORMATION || listOf((n.translation ?: P()).x,(n.translation ?: P()).y,(n.translation ?: P()).z).all { it in -16..16 }) { "Invalid position" }
             require(n.materialMode in MaterialMode.entries) { "Invalid node material mode" }
             require(n.materialGroup.isEmpty() || groups.any { it.id==n.materialGroup }) { "Unknown node material group" }
             require(n.previewGroup.isEmpty() || groups.any { it.id==n.previewGroup }) { "Unknown preview material group" }
             require(n.inputGroups.size<=n.inputs.size && n.inputGroups.all { id -> id.isEmpty() || groups.any { it.id==id } }) { "Unknown input material group" }
             // NORMAL is retained only for older serialized rotations. New nodes use X/Y/Z.
-            require(n.countValue==null || n.kind==NodeKind.INT) { "Anzahl values belong to INT nodes" }
+            require(n.countValue==null || n.kind in setOf(NodeKind.INT,NodeKind.COUNT)) { "Anzahl values belong to INT nodes" }
             require(n.rotationAxis in RotationAxis.entries && n.quarterTurns in 0..3) { "Invalid node rotation" }
-            require(n.mirror==null || n.kind in setOf(NodeKind.MIRROR,NodeKind.MIRRORING)) { "Mirror settings belong to a mirror node" }
+            require(n.mirror==null || n.kind in setOf(NodeKind.MIRROR,NodeKind.MIRRORING,NodeKind.TRANSFORMATION)) { "Mirror settings belong to a mirror node" }
             require(n.savedCopycat==null || n.kind==NodeKind.SAVED) { "Saved Copycats belong to a saved source node" }
             if(n.kind==NodeKind.MIRROR) require((n.mirror ?: CopycatMirror()).plane in CopycatMirrorPlane.entries) { "Invalid Copycat mirror plane" }
             require(n.x in -8192..8192 && n.y in -8192..8192) { "Node position exceeds graph bounds" }
+            if(n.kind.name in GraphTypes.logicKinds || n.kind==NodeKind.CONDITIONAL) {
+                require(n.inputs.size==when(n.kind) { NodeKind.BOOLEAN->0;NodeKind.CONDITIONAL->3;NodeKind.BOOLEAN_LOGIC->if(n.operation=="NOT") 1 else 2;else->2 }) { "Invalid Boolean socket count" }
+            }
+            if(n.kind==NodeKind.INT_COMPARE) require((n.operation ?: "EQUAL") in setOf("EQUAL","NOT_EQUAL","LESS","LESS_EQUAL","GREATER","GREATER_EQUAL","DIVISIBLE"))
+            if(n.kind==NodeKind.BOOLEAN_LOGIC) require((n.operation ?: "AND") in setOf("AND","OR","XOR","NOT"))
             val sockets=checkNotNull(GraphModels.shape(n.kind).inputs)
             require(n.inputs.size in sockets.min..sockets.max) { "Invalid socket count on ${n.id}" }
             if(n.kind==NodeKind.INPUT) {
@@ -105,9 +111,9 @@ object GraphCompiler {
                 if(saved.parts.isNotEmpty()) Geometry.normalized(saved.parts,groups)
             }
             n.inputs.forEachIndexed { slot,input -> if(input.isNotEmpty()) {
-                val source=nodes[input]?.let { GraphModels.shape(it.kind).output }
-                require(source!=null) { "Unknown or invalid source at ${n.id}" }
-                require(source==sockets.type(slot)) { "Incompatible socket types at ${n.id}" }
+                val source=nodes[input]?.let { GraphTypes.shape(nodes,it.id) }
+                require(input in nodes && (source!=null || nodes.getValue(input).kind==NodeKind.CONDITIONAL)) { "Unknown or invalid source at ${n.id}" }
+                require(GraphNumbers.compatible(source,GraphTypes.expectedShape(nodes,n,slot))) { "Incompatible socket types at ${n.id}" }
             } }
         }
         val active=mutableSetOf<String>();val done=mutableSetOf<String>()
@@ -126,7 +132,7 @@ object GraphCompiler {
             fun explicitEmpty(id:String):Boolean {
                 if(!seen.add(id)) return false
                 val n=nodes[id] ?: return false
-                return n.kind==NodeKind.SAVED && n.savedCopycat?.parts?.isEmpty()==true || n.inputs.any(::explicitEmpty)
+                return n.kind==NodeKind.SAVED && n.savedCopycat?.parts?.isEmpty()==true || n.kind==NodeKind.UNION && n.inputs.none(String::isNotEmpty) || n.inputs.any(::explicitEmpty)
             }
             require(it.isNotEmpty() || explicitEmpty(graph.nodes.single { n -> n.kind==NodeKind.OUTPUT }.id)) { "Result is empty; change the connected shapes" }
         }
@@ -136,7 +142,7 @@ object GraphCompiler {
         val key=Key(graph,groups.toList(),nodeId)
         cache[key]?.let { return it }
         structure(graph,groups)
-        val nodes=graph.nodes.associateBy { it.id }
+        val nodes=GraphConditions.shapeNodes(GraphNumbers.shapeContext(graph))
         require(nodes[nodeId]!=null) { "Unknown preview node: $nodeId" }
         require(nodes.getValue(nodeId).kind !in CopycatTransforms.valueKinds) { "A rotation value has no geometry" }
         val exactAncestors=mutableMapOf<String,Boolean>()
@@ -154,8 +160,10 @@ object GraphCompiler {
         val memo=mutableMapOf<String,Map<Contribution,Solid>>()
         fun total(value:Map<Contribution,Solid>)=value.values.fold(Solid()) { a,b -> a.union(b) }
         fun evaluate(id:String):Map<Contribution,Solid> = memo.getOrPut(id) {
-            val n=nodes.getValue(id)
-            if(n.kind==NodeKind.INPUT || n.kind==NodeKind.SAVED) {
+            val n=CopycatSetInputs.connected(nodes.getValue(id))
+            if(n.kind in CopycatSetInputs.shapeKinds && n.inputs.isEmpty()) {
+                CopycatSetInputs.identity(n,groups).associate { part -> Contribution(n.id,part.group,part) to Solid.part(part) }
+            } else if(n.kind==NodeKind.INPUT || n.kind==NodeKind.SAVED) {
                 val contributions=linkedMapOf<Contribution,Solid>()
                 sources(n).forEach { (leaf,source) ->
                     val part=PartRotations.rotate(source,n.rotationAxis,n.quarterTurns)

@@ -13,7 +13,7 @@ object DynamicSegments {
         listOf(RotationAxis.X,RotationAxis.Y,RotationAxis.Z).single { component(rotated,it)==1 }
     }.toSet()
     fun axes(graph:BuildingGraph,id:String):Set<RotationAxis> {
-        val nodes=graph.nodes.associateBy { it.id };val visiting=mutableSetOf<String>();val cache=mutableMapOf<String,Set<RotationAxis>>()
+        val nodes=GraphNumbers.buildingContext(graph);val visiting=mutableSetOf<String>();val cache=mutableMapOf<String,Set<RotationAxis>>()
         fun read(key:String):Set<RotationAxis> {
             if(key.isEmpty()) return emptySet()
             cache[key]?.let { return it }
@@ -21,7 +21,10 @@ object DynamicSegments {
             val n=nodes[key] ?: error("Missing segment $key")
             val result=when(n.kind) {
                 BuildingKind.SEGMENT -> n.dynamicAxes.orEmpty()
+                BuildingKind.SERVICE_SHAFT_SEGMENT,BuildingKind.ELEVATOR_SHAFT_SEGMENT -> setOf(RotationAxis.Y)
+                BuildingKind.CONDITIONAL -> if(n.inputs.size==3 && n.inputs.all(String::isNotEmpty)) runCatching { read(GraphConditions.buildingNode(graph,key).id) }.getOrDefault(emptySet()) else emptySet()
                 BuildingKind.SEGMENT_ROTATE -> BuildingTransformValues.rotations(n,graph).fold(read(n.inputs.single())) { axes,step -> turnAxes(axes,step.axis,step.quarterTurns) }
+                BuildingKind.SEGMENT_TRANSFORM -> n.transformationValue?.takeIf(String::isNotEmpty)?.let { TransformationValues.building(nodes.getValue(it).copy(translation=null,positionValue=null),nodes) }.orEmpty().fold(read(n.inputs.single())) { axes,step -> if(step.kind==CopycatTransformKind.ROTATE) turnAxes(axes,step.axis,step.quarterTurns) else axes }
                 BuildingKind.SEGMENT_MIRROR -> read(n.inputs.single())
                 in SegmentBooleans.kinds -> n.inputs.flatMap { read(it) }.toSet()
                 BuildingKind.PATTERN -> n.inputs.flatMapIndexed { i,source ->
@@ -45,6 +48,15 @@ object DynamicSegments {
     /** Propagate constraints through composition before evaluating geometry. Fixed operands stay fixed. */
     fun requests(graph:BuildingGraph,n:BuildingNode,target:P?,base:(String)->P):List<P?> {
         if(target==null) return n.inputs.map { null }
+        if(n.kind==BuildingKind.SEGMENT_TRANSFORM) {
+            val steps=n.transformationValue?.takeIf(String::isNotEmpty)?.let { TransformationValues.building(GraphConditions.buildingNode(graph,it),GraphConditions.buildingNodes(GraphNumbers.buildingContext(graph))) }.orEmpty()
+            val local=steps.asReversed().fold(target) { size,step -> when(step.kind) {
+                CopycatTransformKind.ROTATE->turnSize(size,step.axis,step.quarterTurns)
+                CopycatTransformKind.POSITION->P(size.x-if(Math.floorMod(step.offset.x,16)>0) 1 else 0,size.y-if(Math.floorMod(step.offset.y,16)>0) 1 else 0,size.z-if(Math.floorMod(step.offset.z,16)>0) 1 else 0)
+                else->size
+            } }
+            return listOf(local)
+        }
         if(n.kind==BuildingKind.SEGMENT_ROTATE) {
             val size=BuildingTransformValues.rotations(n,graph).asReversed().fold(target) { p,step -> turnSize(p,step.axis,step.quarterTurns) }
             return listOf(size)
@@ -59,8 +71,8 @@ object DynamicSegments {
             return n.inputs.indices.map { index -> if(index !in dynamic) target else with(target,axis,remaining/dynamic.size+if(dynamic.indexOf(index)<remaining%dynamic.size) 1 else 0) }
         }
         if(n.kind==BuildingKind.SEGMENT_UNION || n.kind==BuildingKind.PATTERN && n.patternAxis=="transform") {
-            val offsets=n.inputs.indices.map { i -> if(n.kind==BuildingKind.PATTERN) n.transforms.getOrNull(i)?.offset ?: P() else n.offsets.getOrNull(i) ?: P() }
-            val lower=P(minOf(if(n.kind==BuildingKind.PATTERN) Int.MAX_VALUE else 0,offsets.minOf { it.x }),minOf(if(n.kind==BuildingKind.PATTERN) Int.MAX_VALUE else 0,offsets.minOf { it.y }),minOf(if(n.kind==BuildingKind.PATTERN) Int.MAX_VALUE else 0,offsets.minOf { it.z }))
+            val offsets=n.inputs.indices.map { i -> if(n.kind==BuildingKind.PATTERN) n.transforms.getOrNull(i)?.offset ?: P() else SegmentBooleans.offset(n,i) }
+            val lower=P(minOf(if(n.kind==BuildingKind.PATTERN || n.operandOffsets!=null) Int.MAX_VALUE else 0,offsets.minOf { it.x }),minOf(if(n.kind==BuildingKind.PATTERN || n.operandOffsets!=null) Int.MAX_VALUE else 0,offsets.minOf { it.y }),minOf(if(n.kind==BuildingKind.PATTERN || n.operandOffsets!=null) Int.MAX_VALUE else 0,offsets.minOf { it.z }))
             return offsets.mapIndexed { i,p ->
                 var size=P(target.x-(p.x-lower.x),target.y-(p.y-lower.y),target.z-(p.z-lower.z))
                 if(n.kind==BuildingKind.PATTERN) n.transforms.getOrNull(i)?.let { size=turnSize(size,it.axis,it.quarterTurns) }

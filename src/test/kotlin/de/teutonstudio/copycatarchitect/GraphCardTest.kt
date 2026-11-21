@@ -14,7 +14,7 @@ class GraphCardTest {
         val result=g.resultNode()
         val changed=g.replace(result.copy(resultType="POSITION",inputs=listOf(vector.id)))
         BuildingGraphCompiler.structure(changed)
-        assertEquals(setOf("POSITION"),BuildingPorts.of(changed.resultNode(),changed).single().accepts.map(::buildingGraphType).toSet())
+        assertEquals(setOf("POSITION"),BuildingPorts.of(changed.resultNode(),changed).single().accepts.filter { it!=BuildingKind.CONDITIONAL }.map(::buildingGraphType).toSet())
         assertFails { BuildingGraphCompiler.structure(changed.replace(changed.resultNode().copy(inputs=listOf(count.id)))) }
         assertEquals(8,changed.withCurrentSchema().schema)
         assertFails { BuildingGraphCompiler.structure(changed.copy(schema=7)) }

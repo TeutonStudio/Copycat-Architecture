@@ -70,6 +70,7 @@ object DiagramEdits {
                     port.key=="rotation" -> next=next.copy(rotation=source.takeIf(String::isNotEmpty))
                     port.key=="mirroring" -> next=next.copy(mirroring=source.takeIf(String::isNotEmpty))
                     port.key=="positionValue" -> next=next.copy(positionValue=source.takeIf(String::isNotEmpty))
+                    port.key=="transformationValue" -> next=next.copy(transformationValue=source.takeIf(String::isNotEmpty))
                     port.key=="layout" -> next=next.copy(layout=source,assembly=true)
                     port.key.startsWith("region:") -> next=next.copy(regionCopies=original.resolvedNode(next).withRegionCopy(port.key,source).regionCopies)
                     port.key=="geometry" && n.kind!=BuildingKind.ROOM -> next=next.copy(geometry=source)
@@ -85,6 +86,7 @@ object DiagramEdits {
                     port.key=="corner" -> next=next.copy(corner=source)
                     port.key.startsWith("edge:") -> next=next.copy(verticalEdges=if(source.isEmpty()) next.verticalEdges.orEmpty()-port.key.removePrefix("edge:") else next.verticalEdges.orEmpty()+(port.key.removePrefix("edge:") to source))
                     port.key in setOf("length","height") -> next=next.copy(dimensions=if(source.isEmpty()) next.dimensions.orEmpty()-port.key else next.dimensions.orEmpty()+(port.key to source))
+                    port.key=="roofTemplate" -> next=next.copy(roofTemplate=source.takeIf(String::isNotEmpty))
                     port.key=="roofPeak" -> next=next.copy(roofPeak=source.takeIf(String::isNotEmpty))
                     port.key=="roofEave" -> next=next.copy(roofEave=source.takeIf(String::isNotEmpty))
                     port.key=="roof" -> next=next.copy(roof=source)
@@ -95,7 +97,7 @@ object DiagramEdits {
                     port.key=="landing" -> next=next.copy(stairwell=(next.stairwell ?: StairwellConfig()).copy(landing=source))
                     port.key=="enclosure" -> next=when(next.kind) {
                         BuildingKind.STAIRWELL->next.copy(stairwell=(next.stairwell ?: StairwellConfig()).copy(enclosure=source))
-                        BuildingKind.ELEVATOR_SHAFT->next.copy(elevatorShaft=(next.elevatorShaft ?: ElevatorShaftConfig()).copy(enclosure=source))
+                        BuildingKind.ELEVATOR_SHAFT,BuildingKind.ELEVATOR_SHAFT_SEGMENT->next.copy(elevatorShaft=(next.elevatorShaft ?: ElevatorShaftConfig()).copy(enclosure=source))
                         else->next.copy(serviceShaft=(next.serviceShaft ?: ServiceShaftConfig()).copy(enclosure=source))
                     }
                     port.key.startsWith("wall:") -> {

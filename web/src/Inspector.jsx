@@ -115,7 +115,7 @@ export function NodeFields({ mode, node, document, edit, library, onChooseCopyca
   const number = (key, label, min, max) => field(key, label, undefined, 'number', min, max)
   const groups = formGroups(document)
   const source = model.shapes.find(shape => shape.id === (node.inlinePart || node.part)?.source)
-  const sourceName = node.inlinePart ? copycatShapeNames[source?.name] || source?.name : node.kind === 'INPUT' ? copycatShapeNames[source?.name] || source?.name
+  const sourceName = node.inlinePart ? copycatShapeName(node.inlinePart) : node.kind === 'INPUT' ? copycatShapeName(node.part)
     : node.kind === 'SAVED' ? node.savedCopycat?.name : library.forms?.[node.form]?.name || node.form
   const copycatPicker = <button type="button" className="copycat-source-button" aria-label={mode==='building'?'Referenz auswählen':'Copycat auswählen'} onClick={onChooseCopycat}>
     <span>{mode==='building'?'Referenz auswählen …':'Copycat auswählen …'}</span><small>{sourceName || 'Grundform oder gespeicherte Form'}</small>

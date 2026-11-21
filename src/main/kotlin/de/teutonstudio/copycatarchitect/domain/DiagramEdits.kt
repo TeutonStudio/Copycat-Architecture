@@ -140,7 +140,7 @@ object DiagramEdits {
             BuildingSemantics.remapReferences(next.copy(regionCopies=next.regionCopies.filterValues { it in byId },roofConfig=next.roofConfig?.let { config->
                 config.copy(wall=config.wall.takeIf { it in byId }.orEmpty(),variants=config.variants.filterValues { it in byId },families=config.families.map { family->family.copy(variants=family.variants.filterValues { it in byId }) })
             })) { _,ref -> ref.takeIf { it in byId }.orEmpty() }.trimCopycatInputs()
-        }))
+        })).withCurrentSchema()
         BuildingGraphCompiler.structure(changed)
         val rewiredRooms=changed.nodes.filter { it.kind==BuildingKind.ROOM && it.geometry!=original.nodes.first { before -> before.id==it.id }.geometry }.map { it.id }.toSet()
         changed.validateRoomPlacements(rewiredRooms)

@@ -26454,7 +26454,8 @@
                 "p": 1,
                 "q": 3
               },
-              "family": ""
+              "family": "",
+              "contourMode": "BOUNDS"
             },
             "levelIds": {},
             "accessInstances": []
@@ -26547,7 +26548,8 @@
                 "p": 1,
                 "q": 3
               },
-              "family": ""
+              "family": "",
+              "contourMode": "BOUNDS"
             },
             "levelIds": {},
             "accessInstances": []
@@ -26640,7 +26642,8 @@
                 "p": 1,
                 "q": 3
               },
-              "family": ""
+              "family": "",
+              "contourMode": "BOUNDS"
             },
             "levelIds": {},
             "accessInstances": []

@@ -25,7 +25,7 @@ class GraphProgramsTest {
             val g=GraphCards.starter().let {it.copy(nodes=it.nodes.map {old->if(old.id=="result")n else old})}
             assertEquals(BuildingPorts.of(GraphPrograms.producer(n).copy(resultType=null),g),BuildingPorts.of(n,g),"$type $kind")
         }
-        val g=GraphCards.starter("ROOF_TEMPLATE");assertEquals(8,BuildingPorts.of(g.resultNode(),g).size)
+        val g=GraphCards.starter("ROOF_TEMPLATE");assertEquals(RoofTemplates.variantCount+1,BuildingPorts.of(g.resultNode(),g).size)
         val roof=GraphCards.starter("ROOF")
         assertEquals(RoofInputMode.TEMPLATE,roof.resultNode().roofInputMode)
         assertEquals(listOf("geometry","roofTemplate"),BuildingPorts.of(roof.resultNode(),roof).map { it.key })

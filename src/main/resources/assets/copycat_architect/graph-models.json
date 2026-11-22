@@ -1242,7 +1242,10 @@
       11,
       12,
       13,
-      14
+      14,
+      15,
+      16,
+      17
     ],
     "defaultSchema": 2,
     "documentSchemas": [
@@ -3165,7 +3168,9 @@
               "GROUPED"
             ]
           },
-          "roofSections": {}
+          "roofSections": {},
+          "roofContourMode": {},
+          "dormers": {}
         },
         "commutativeAssociative": false
       },
@@ -6087,6 +6092,11 @@
             "",
             "",
             "",
+            "",
+            "",
+            "",
+            "",
+            "",
             ""
           ],
           "roofSettings": {}
@@ -6218,6 +6228,98 @@
               "ELEVATOR_SHAFT_SEGMENT",
               "COPYCAT_OPERATOR",
               "SEGMENT_OPERATOR"
+            ]
+          },
+          {
+            "key": "in:8",
+            "path": [
+              "inputs",
+              "8"
+            ],
+            "accepts": [
+              "COPYCAT",
+              "ROOF",
+              "ROTATION_SEGMENT",
+              "SERVICE_SHAFT_SEGMENT",
+              "ELEVATOR_SHAFT_SEGMENT",
+              "COPYCAT_OPERATOR",
+              "SEGMENT_OPERATOR"
+            ]
+          },
+          {
+            "key": "in:9",
+            "path": [
+              "inputs",
+              "9"
+            ],
+            "accepts": [
+              "COPYCAT",
+              "ROOF",
+              "ROTATION_SEGMENT",
+              "SERVICE_SHAFT_SEGMENT",
+              "ELEVATOR_SHAFT_SEGMENT",
+              "COPYCAT_OPERATOR",
+              "SEGMENT_OPERATOR"
+            ]
+          },
+          {
+            "key": "in:10",
+            "path": [
+              "inputs",
+              "10"
+            ],
+            "accepts": [
+              "COPYCAT",
+              "ROOF",
+              "ROTATION_SEGMENT",
+              "SERVICE_SHAFT_SEGMENT",
+              "ELEVATOR_SHAFT_SEGMENT",
+              "COPYCAT_OPERATOR",
+              "SEGMENT_OPERATOR"
+            ]
+          },
+          {
+            "key": "in:11",
+            "path": [
+              "inputs",
+              "11"
+            ],
+            "accepts": [
+              "COPYCAT",
+              "ROOF",
+              "ROTATION_SEGMENT",
+              "SERVICE_SHAFT_SEGMENT",
+              "ELEVATOR_SHAFT_SEGMENT",
+              "COPYCAT_OPERATOR",
+              "SEGMENT_OPERATOR"
+            ]
+          },
+          {
+            "key": "in:12",
+            "path": [
+              "inputs",
+              "12"
+            ],
+            "accepts": [
+              "COPYCAT",
+              "ROOF",
+              "ROTATION_SEGMENT",
+              "SERVICE_SHAFT_SEGMENT",
+              "ELEVATOR_SHAFT_SEGMENT",
+              "COPYCAT_OPERATOR",
+              "SEGMENT_OPERATOR"
+            ]
+          },
+          {
+            "key": "geometry",
+            "path": [
+              "geometry"
+            ],
+            "accepts": [
+              "AREA",
+              "CONDITIONAL",
+              "GROUP_INPUT",
+              "GRAPH_REFERENCE"
             ]
           }
         ],

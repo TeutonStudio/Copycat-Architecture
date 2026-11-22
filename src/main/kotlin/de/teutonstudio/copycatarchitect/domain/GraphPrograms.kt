@@ -42,7 +42,7 @@ object GraphPrograms {
     fun constructors(type:String):List<BuildingKind> = BuildingKind.entries.filter { kind ->
         kind !in setOf(BuildingKind.RESULT,BuildingKind.GROUP_INPUT) && (kind==BuildingKind.CONDITIONAL || kind==BuildingKind.GRAPH_REFERENCE || GraphNumbers.producer(kind.name,type) || buildingGraphType(kind)==type)
     }
-    fun authoring(node:BuildingNode):BuildingNode=if(node.kind==BuildingKind.ROOF) node.copy(roofInputMode=RoofInputMode.TEMPLATE,inputs=List(8){""}) else node
+    fun authoring(node:BuildingNode):BuildingNode=if(node.kind==BuildingKind.ROOF) node.copy(roofInputMode=RoofInputMode.TEMPLATE,inputs=List(RoofTemplates.variantCount){""}) else node
     fun newResult(type:String="COPYCAT",kind:BuildingKind=when(type) { "WALL"->BuildingKind.SEGMENT;"COUNT"->BuildingKind.COUNT;"INT"->BuildingKind.INT;else->BuildingKind.entries.first { buildingGraphType(it)==type } }):BuildingNode {
         val n=authoring(GraphModels.newBuilding(kind,true))
         return n.copy(kind=BuildingKind.RESULT,name="Ergebnis",resultType=type,resultMode=GraphResultMode.CONSTRUCT,producerKind=kind,

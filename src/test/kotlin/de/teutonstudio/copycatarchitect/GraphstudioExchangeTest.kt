@@ -72,6 +72,18 @@ class GraphstudioExchangeTest {
             cases+=mapOf("name" to name,"building" to true,"document" to value,"library" to mapOf("forms" to sourceForms,"modules" to sourceModules),
                 "count" to plan.placements.size,"raw" to plan.raw)
         }
+        for(templateMode in listOf(false,true)) {
+            val copy=BuildingNode("dormer_copy",BuildingKind.COPYCAT,inlinePart=Part("copycats:copycat_block"))
+            val area=BuildingNode("dormer_area",BuildingKind.AREA,areaMode=AreaMode.RECTANGLE,length=10,height=14)
+            val wallArea=BuildingNode("dormer_wall_area",BuildingKind.AREA,areaMode=AreaMode.SQUARE,length=1,height=1)
+            val wall=BuildingNode("dormer_wall",BuildingKind.SEGMENT,assembly=true,layout=wallArea.id,inputs=listOf(copy.id),length=1,height=1,module="")
+            val definition=BuildingNode("dormer_definition",BuildingKind.DORMER,dormer=DormerConfig(wall=wall.id,front=wall.id,roof=copy.id))
+            val settings=RoofTemplateSettings(axis=1,overhang16=0,contourMode=RoofContourMode.CONTOUR)
+            val roofTemplate=BuildingNode("dormer_template",BuildingKind.ROOF_TEMPLATE,inputs=List(13) { copy.id },roofSettings=settings)
+            val result=GraphPrograms.newResult("ROOF").copy(id="result",geometry=area.id,inputs=List(13) { copy.id },roofInputMode=if(templateMode) RoofInputMode.TEMPLATE else RoofInputMode.SEGMENTS,roofTemplate=if(templateMode) roofTemplate.id else null,roofSettings=if(templateMode) null else settings,dormers=listOf(DormerInstance("first",definition.id,P(2,0,0))))
+            val graph=GraphCards.starter().copy(nodes=listOf(GraphCards.starter().nodes.first(),copy,area,wallArea,wall,definition,roofTemplate,result)).withCurrentSchema()
+            building("modern-dormer-${if(templateMode) "template" else "segments"}",Building(schema=2,graph=graph),emptyMap(),emptyMap())
+        }
         val transformSource=Form(id="transform_byte",version=3,name="Byte v3",parts=listOf(Part("copycats:copycat_byte")))
         val assembly=BuildingGraph.explicitStarter()
         val transformedBuilding=assembly.copy(schema=5,nodes=assembly.nodes.map { node ->

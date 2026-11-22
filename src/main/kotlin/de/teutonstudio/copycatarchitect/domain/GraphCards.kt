@@ -10,7 +10,7 @@ object GraphCards {
     }
     fun starter(type:String="COPYCAT"):BuildingGraph = BuildingGraph(schema=14,groupInputOrder=emptyList(),nodes=listOf(
         BuildingNode("empty_wall",BuildingKind.SEGMENT,"Empty wall",block="minecraft:air",length=1),
-        GraphPrograms.newResult(type).copy(id="result",x=340,y=100)))
+        GraphPrograms.newResult(type).copy(id="result",x=340,y=100))).withCurrentSchema()
     fun legacyStarter(type:String="COPYCAT"):BuildingGraph {
         require(type in types) { "Unknown graph output type" }
         return BuildingGraph(schema=8,nodes=listOf(

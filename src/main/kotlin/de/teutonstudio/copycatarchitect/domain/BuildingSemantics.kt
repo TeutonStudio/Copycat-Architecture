@@ -124,7 +124,7 @@ object BuildingSemantics {
         bayWindow=node.bayWindow?.let { it.copy(wall=reference("bay:wall",it.wall),front=reference("bay:front",it.front),floor=reference("bay:floor",it.floor),ceiling=reference("bay:ceiling",it.ceiling)) },
         dormer=node.dormer?.let { it.copy(wall=reference("dormer:wall",it.wall),front=reference("dormer:front",it.front),roof=reference("dormer:roof",it.roof)) },
         bayWindows=node.bayWindows?.mapIndexed { i,it -> it.copy(source=reference("bay:$i:source",it.source)) },
-        dormers=node.dormers?.mapIndexed { i,it -> it.copy(source=reference("dormer:$i:source",it.source)) },
+        dormers=node.dormers?.mapIndexed { i,it -> it.copy(source=reference("dormer:${if((node.kind==BuildingKind.ROOF || node.kind==BuildingKind.RESULT && node.producerKind==BuildingKind.ROOF && node.resultMode!=GraphResultMode.VALUE) && node.roofInputMode!=null) it.id else i.toString()}:source",it.source)) },
         roomLayout=node.roomLayout?.let { it.copy(filler=reference("room:filler",it.filler)) },
         roomConfig=node.roomConfig?.let { it.copy(interiorSource=reference("room:interior",it.interiorSource),defaultPartition=reference("room:partition",it.defaultPartition)) },
         facade=node.facade?.let { it.copy(source=reference("facade:source",it.source),filler=reference("facade:filler",it.filler)) },

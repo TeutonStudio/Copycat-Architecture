@@ -15,7 +15,7 @@ object SpecialRooms {
         require(n.bayWindow==null || n.kind==BuildingKind.BAY_WINDOW) { "Erkereinstellungen benötigen einen Erkerknoten" }
         require(n.dormer==null || n.kind==BuildingKind.DORMER) { "Gaubeneinstellungen benötigen einen Gaubenknoten" }
         require(n.bayWindowInstances.isEmpty() || n.kind==BuildingKind.ROOM) { "Erkerinstanzen gehören zu einem Raum" }
-        require(n.dormerInstances.isEmpty() || n.kind==BuildingKind.ROOF_LEVEL) { "Gaubeninstanzen gehören zu einer Dachebene" }
+        require(n.dormerInstances.isEmpty() || (n.kind==BuildingKind.ROOF_LEVEL || n.kind==BuildingKind.ROOF && n.roofInputMode!=null)) { "Gaubeninstanzen gehören zu einer Dachebene oder einem Dach mit Vorlage/Segmenten" }
         fun source(id:String,kinds:Set<BuildingKind>) { require(id.isEmpty() || nodes[id]?.kind in kinds) { "Unpassende Quelle für Erker oder Gaube: $id" } }
         n.bayWindow?.let { c ->
             require(c.width in 1..32 && c.depth in 1..32) { "Erkermaße müssen zwischen 1 und 32 Blöcken liegen" }

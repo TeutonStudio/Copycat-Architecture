@@ -232,7 +232,7 @@ object Geometry {
                     if(!clipped.isEmpty()) owned[g.id]=clipped
                     occupied=occupied.union(whole)
                 }
-                return@computeIfAbsent ResolvedGeometry(occupied.solid(),owned.mapValues { it.value.solid() },occupied,owned)
+                return@computeIfAbsent ResolvedGeometry(Solid(),emptyMap(),occupied,owned)
             }
             var occupied=Solid();val owned=linkedMapOf<String,Solid>()
             for(g in groups.sortedByDescending { it.priority }) {
@@ -298,8 +298,12 @@ object Geometry {
     }
     fun rotate(parts:List<Part>,q:Int) = parts.map { p -> p.copy(turn=Math.floorMod(p.turn+q,4),offset=p.offset.turn(q),cutMask=if(p.cutMask.isEmpty()) "" else Solid.fromMask(p.cutMask).rotate(q).mask(),exactClip=p.exactClip?.rotate(RotationAxis.Y,q)) }
 }
-class ResolvedGeometry(val solid:Solid,val owned:Map<String,Solid>,val exactSolid:ExactVolume?=null,val exactOwned:Map<String,ExactVolume> = emptyMap()) {
-    private val owners=Array<String?>(4096) { null }.apply { owned.forEach { (id,s) -> s.voxels { x,y,z -> this[x+16*z+256*y]=id } } }
+class ResolvedGeometry(private val rasterSolid:Solid,private val rasterOwned:Map<String,Solid>,val exactSolid:ExactVolume?=null,val exactOwned:Map<String,ExactVolume> = emptyMap()) {
+    // Roof fitting and exact material unions need no collision raster. Compute it
+    // only for callers that actually request voxel ownership or physical cost.
+    val solid:Solid by lazy { exactSolid?.solid() ?: rasterSolid }
+    val owned:Map<String,Solid> by lazy { if(exactSolid==null) rasterOwned else exactOwned.mapValues { it.value.solid() } }
+    private val owners by lazy { Array<String?>(4096) { null }.apply { owned.forEach { (id,s) -> s.voxels { x,y,z -> this[x+16*z+256*y]=id } } } }
     fun owner(x:Int,y:Int,z:Int):String? = if(x in 0..15 && y in 0..15 && z in 0..15) owners[x+16*z+256*y] else null
     fun materialSolids(base:String,surfaces:Map<String,String>):Map<String,Solid> {
         val result=linkedMapOf<String,Solid>()

@@ -23,7 +23,7 @@ object RoofTemplates {
             val id=n.roofTemplate?.takeIf(String::isNotEmpty) ?: error("Dachvorlage verbinden")
             GraphConditions.buildingNode(graph,id).also { require(it.kind==BuildingKind.ROOF_TEMPLATE) { "Dachvorlage erforderlich" } }
         } else n
-        val settings=(source.roofSettings ?: RoofTemplateSettings()).level(n.geometry).let { it.copy(contourMode=n.roofContourMode ?: it.contourMode) }
+        val settings=(source.roofSettings ?: RoofTemplateSettings()).level(n.geometry).let { if(n.roofEdges==null) it.copy(contourMode=n.roofContourMode ?: it.contourMode) else it.copy(mode=RoofMode.ANGLE,knee16=0,contourMode=RoofContourMode.CONTOUR) }
         require(n.geometry.isNotEmpty()) { "Dachfläche verbinden" }
         return n.copy(inputs=List(variantCount) { source.inputs.getOrNull(it).orEmpty() },assembly=true,adaptiveRoof=false,layout="",roofSettings=source.roofSettings,
             roofConfig=(n.roofConfig ?: RoofConfig()).copy(wall=input(source,"wall").ifEmpty { n.roofConfig?.wall.orEmpty() }),

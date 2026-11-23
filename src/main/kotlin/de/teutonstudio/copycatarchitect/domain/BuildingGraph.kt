@@ -34,7 +34,7 @@ data class BuildingNode(
     val bayWindow:BayWindowConfig?=null,val dormer:DormerConfig?=null,
     val bayWindows:List<BayWindowInstance>?=null,val dormers:List<DormerInstance>?=null,
     val booleanValue:Boolean?=null,val operation:String?=null,val numberValue:Int?=null,val comparisonValue:Int?=null,
-    val roofInputMode:RoofInputMode?=null,val roofTemplate:String?=null,val roofSettings:RoofTemplateSettings?=null,val roofContourMode:RoofContourMode?=null,
+    val roofInputMode:RoofInputMode?=null,val roofTemplate:String?=null,val roofSettings:RoofTemplateSettings?=null,val roofContourMode:RoofContourMode?=null,val roofEdges:List<RoofEdgeSetting>?=null,
     val libraryReference:GraphLibraryReference?=null,val columnMode:RotationSegmentMode?=null,val countValue:Int?=null,val dimensions:Map<String,String>?=null,
     val resultType:String?=null,val inlinePart:Part?=null,
     val resultMode:GraphResultMode?=null,val producerKind:BuildingKind?=null,val producerOutput:String?=null,val resultSource:String?=null,
@@ -296,7 +296,13 @@ object BuildingPorts {
             if(n.kind==BuildingKind.ROOF_TEMPLATE) return variants+BuildingPort("geometry",n.geometry,setOf(BuildingKind.AREA,BuildingKind.CONDITIONAL)+programKinds)
             return listOf(BuildingPort("geometry",n.geometry,setOf(BuildingKind.AREA,BuildingKind.CONDITIONAL)+programKinds))+
                 (if(n.roofInputMode==RoofInputMode.TEMPLATE || includeInactive) listOf(BuildingPort("roofTemplate",n.roofTemplate.orEmpty(),setOf(BuildingKind.ROOF_TEMPLATE,BuildingKind.CONDITIONAL)+programKinds)) else emptyList())+
-                (if(n.roofInputMode==RoofInputMode.SEGMENTS || includeInactive) variants else emptyList())+semanticPorts(n).map { it.copy(accepts=it.accepts+programKinds+BuildingKind.CONDITIONAL,valueType="DORMER") }
+                (if(n.roofInputMode==RoofInputMode.SEGMENTS || includeInactive) variants else emptyList())+semanticPorts(n).filter { port ->
+                    if(includeInactive || !port.key.startsWith("semantic:roofEdge:")) true else {
+                        val id=port.key.removePrefix("semantic:roofEdge:").removeSuffix(":source")
+                        n.roofEdges.orEmpty().any { it.id==id && it.mode==RoofEdgeMode.FACADE } &&
+                            runCatching { RoofEdges.runs(graph,n).any { it.id==id } }.getOrDefault(false)
+                    }
+                }.map { port->if(port.key.startsWith("semantic:roofEdge:")) typed(port.key,port.source,"WALL") else port.copy(accepts=port.accepts+programKinds+BuildingKind.CONDITIONAL,valueType="DORMER") }
         }
         val nodes=GraphNumbers.buildingContext(graph)
         if(n.kind==BuildingKind.BUILDING && n.resultType!=null) return listOf(BuildingPort("in:0",n.inputs.firstOrNull().orEmpty(),
@@ -411,6 +417,8 @@ object BuildingGraphCompiler {
             require(n.roofInputMode==null || n.kind==BuildingKind.ROOF) { "Dachmodus gehört an einen Dachknoten" }
             require(n.roofSettings==null || n.kind in setOf(BuildingKind.ROOF,BuildingKind.ROOF_TEMPLATE)) { "Dachparameter gehören an Dach oder Dachvorlage" }
             require(n.roofContourMode==null || n.kind==BuildingKind.ROOF && n.roofInputMode!=null) { "Dachkontur gehört an ein Dach mit Vorlage oder Segmenten" }
+            RoofEdges.validate(n)
+            require(n.roofEdges==null || graph.schema>=18) { "Individuelle Dachkanten benötigen Graphschema 18" }
             n.roofSettings?.let { Roofs.validate(it.level()) }
             if(n.kind==BuildingKind.ROOF_TEMPLATE) require(n.inputs.size in 8..RoofTemplates.variantCount) { "Dachvorlagen benötigen acht bis ${RoofTemplates.variantCount} Anschlussplätze" }
             BuildingCounts.validate(n)
@@ -706,7 +714,7 @@ object BuildingGraphCompiler {
             val cells=value.cells.filter { !it.cell.empty && it.cell.block!="minecraft:air" }.groupBy { it.cell.pos }.map { (pos,entries)->
                 pos to if(entries.first().cell.block.isNotEmpty()) Placement(block=entries.first().cell.block) else segmentUnionPlacement(P(),entries,"roof")
             }
-            return RoofSegmentTemplate(value.length,value.height,value.depth,cells)
+            return RoofSegmentTemplate(value.length,value.height,value.depth,cells,value.origin)
         }
         private fun copycatCell(id:String):SegmentCell=SegmentCell(sourceCell(P(),copycat(id)))
         private fun segmentFromPlan(plan:Plan,id:String):FixedSegment {
@@ -997,6 +1005,30 @@ require(n.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,Build
             val result=Resolver();addPlateLayers(result,layer,copies,floor,start,RoomGeometry.cells(graph.resolvedNode(context).rectangles),RoomGeometry.shell(graph.resolvedNode(context).rectangles),context.height)
             return result.plan(listOf("Grundriss: "+context.name.ifEmpty { context.id }))
         }
+        fun roofEdgeModel(id:String):RoofEdgeModel {
+            val selected=node(id)
+            require(selected.kind==BuildingKind.ROOF && selected.roofInputMode!=null) { "Dach mit Vorlage oder Segmenten auswählen" }
+            val mask=graph.areaOf(selected,true)?.points.orEmpty().toSet()
+            val source=if(selected.roofInputMode==RoofInputMode.TEMPLATE) selected.roofTemplate?.takeIf(String::isNotEmpty)?.let { node(it) } else selected
+            val settings=source?.roofSettings ?: RoofTemplateSettings()
+            val shared=source?.inputs?.getOrNull(RoofTemplates.index("wall")).orEmpty().ifEmpty { selected.roofConfig?.wall.orEmpty() }
+            val defaultSource=shared.takeIf { it.isNotEmpty() && GraphTypes.building(graph,it)=="WALL" }.orEmpty()
+            val entries=selected.roofEdges.orEmpty().associateBy { it.id }
+            return RoofEdgeModel(mask,RoofEdges.runs(mask).map { run ->
+                val n=RoomGeometry.directions[run.direction];val along=P(-n.z,0,n.x);val inside=run.cells.first()-n
+                val start=inside+P(if(n.x>0 || along.x<0) 1 else 0,0,if(n.z>0 || along.z<0) 1 else 0)
+                val entry=entries[run.id] ?: RoofEdgeSetting(run.id,if(selected.roofEdges==null) RoofEdges.defaultMode(run,settings) else RoofEdgeMode.ROOF,defaultSource)
+                var height:Int?=null
+                val diagnostic=if(entry.mode==RoofEdgeMode.FACADE && selected.roofEdges!=null) runCatching {
+                    require(entry.source.isNotEmpty()) { "Fassadensegment anschließen" }
+                    require(RotationAxis.Y !in DynamicSegments.axes(graph,GraphConditions.buildingNode(graph,entry.source).id)) { "Segmenthöhe muss fest vorgegeben sein" }
+                    val fixed=segment(entry.source)
+                    require(fixed.height in 1..128 && fixed.depth==1) { "Segment benötigt feste Höhe und Tiefe 1" }
+                    height=fixed.height
+                }.exceptionOrNull()?.message.orEmpty() else ""
+                RoofEdgeView(run.id,run.direction,start,start+P(along.x*run.length,0,along.z*run.length),run.length,entry.mode,height,diagnostic)
+            })
+        }
         /** Read-only exact placement query; skips all main-roof meshing. */
         fun roofDormerWorkspace(id:String):RoofDormerWorkspace {
             val selected=node(id)
@@ -1005,7 +1037,7 @@ require(n.kind in setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,Build
                 val roof=RoofTemplates.expand(graph,selected)
                 val area=graph.areaOf(GraphConditions.buildingNode(graph,roof.geometry),true)?.points?.toSet() ?: error("Dachfläche ist leer")
                 Roofs.compile(graph,roof,listOf(RoofSupport("area",0,0,area)),palette,
-                    { ref->sourcePlacement(P(),copycat(ref),"roof") },wallSegment={ref->segment(ref)},wallPlacement=::dormerWallPlacement,
+                    { ref->sourcePlacement(P(),copycat(ref),"roof") },segmentSource={ref->roofSegmentValue(ref,null)},wallSegment={ref->segment(ref)},wallPlacement=::dormerWallPlacement,
                     workspace={ result=it })
             } else if(selected.kind==BuildingKind.ROOF) explicitRoof(selected,preview=true,workspace={ result=it })
             else {

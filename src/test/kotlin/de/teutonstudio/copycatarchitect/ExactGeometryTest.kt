@@ -199,4 +199,18 @@ class ExactGeometryTest {
         assertNotNull(form.parts.single().cutMask.takeIf { it.isNotEmpty() })
         assertNull(form.parts.single().exactClip)
     }
+    @Test fun `collision witnesses preserve exact voxel intersections including thin slivers`() {
+        val fixtures=listOf(
+            ExactGeometry.roof(RoofPartParameters(rise=2,run=3,phase=1,thickness=2)),
+            ExactVolume.convex(listOf(ExactPlane(0,32,0,1))),
+            ExactVolume.convex(listOf(ExactPlane(-3,5,2,31),ExactPlane(7,-2,3,11))))
+        for(volume in fixtures) {
+            val raster=volume.solid()
+            for(y in 0..15) for(z in 0..15) for(x in 0..15) {
+                val expected=!volume.intersect(ExactVolume.box(x,y,z,x+1,y+1,z+1)).isEmpty()
+                assertEquals(expected,raster.has(x,y,z),"Collision at $x/$y/$z for $volume")
+            }
+        }
+    }
+
 }

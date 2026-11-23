@@ -8,10 +8,10 @@ internal object RoofFaceDomains {
         return if(x==0L && z==0L) { if(d>=0) cube else ExactVolume() }
         else ExactVolume.convex(listOf(ExactPlane(x,0,z,d))).intersect(cube)
     }
-    fun visible(face:ExactPlane,own:List<ExactPlane>,others:List<List<ExactPlane>>):ExactVolume {
-        var area=own.fold(cube) { v,p->v.intersect(below(face,p)) }
+    fun visible(face:ExactPlane,own:List<ExactPlane>,others:List<List<ExactPlane>>,lower:Boolean=false):ExactVolume {
+        var area=own.fold(cube) { v,p->v.intersect(if(lower) below(p,face) else below(face,p)) }
         for(planes in others) {
-            val choices=planes.map { below(it,face) }
+            val choices=planes.map { if(lower) below(face,it) else below(it,face) }
             val region=if(choices.any { it==cube }) cube else {
                 val cells=choices.flatMap { it.cells }.distinct().filterNot { it.isEmpty() }
                 ExactVolume(cells.filterIndexed { i,c->cells.indices.none { j->i!=j && ExactGeometry.cellContains(cells[j],c) && (j<i || !ExactGeometry.cellContains(c,cells[j])) } })

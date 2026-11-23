@@ -28,3 +28,5 @@ Ein kleiner Grundriss kann für die gewählte Gaube zu eng sein. In diesem Fall 
 ## Austausch
 
 Gauben am modernen Dach sowie an Kreuz-/Konturdächern verwenden Graphschema **17**. Die vorhandene optionale `dormers`-Liste enthält weiterhin Quelle, Instanzkennung, X/Z-Position, Richtung und Deckenausschnitt. Ältere Dachebenen und eingebettete Dachflächen bleiben unterstützt. Die Gaubenanschlüsse des modernen Dachs behalten ihre Identität anhand der Instanzkennung beim Entfernen anderer Instanzen.
+
+Individuelle [Dach-/Fassadenkanten](ROOF-EDGES.md) verwenden Schema 18. Die Gaubenprüfung verwendet auch dort die tatsächlich sichtbaren Dachschrägen und die exakte Firsthöhe.

@@ -134,4 +134,13 @@ class RoofDormerWorkflowTest {
         for(p in original.placements.filter { it.pos.copy(y=0) !in occupied }) assertTrue(p.sameVisual(actual.getValue(p.pos)),"Roof changed outside dormer at ${p.pos}")
     }
 
+    @Test fun `dormer placement uses the visible slopes of an edge-controlled roof`() {
+        val g=graph();val n=g.resultNode()
+        val mask=(0 until 14).flatMap { x->(0 until 18).map { z->P(x,0,z) } }.toSet()
+        val edges=RoofEdges.runs(mask).map { run->RoofEdgeSetting(run.id,if(run.direction%2==1) RoofEdgeMode.FACADE else RoofEdgeMode.ROOF,if(run.direction%2==1) "wall" else "") }
+        val controlled=g.replace(n.copy(roofEdges=edges));val w=workspace(controlled);val area=w.areas.single().id
+        w.check(area,item(p=P(4,0,0))).let { assertTrue(it.valid,it.message) }
+        assertFalse(w.check(area,item(p=P(0,0,0))).valid)
+    }
+
 }

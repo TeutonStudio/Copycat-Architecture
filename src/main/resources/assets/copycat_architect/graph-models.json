@@ -1245,7 +1245,8 @@
       14,
       15,
       16,
-      17
+      17,
+      18
     ],
     "defaultSchema": 2,
     "documentSchemas": [
@@ -1653,6 +1654,27 @@
         ],
         "accepts": [
           "DORMER"
+        ]
+      },
+      {
+        "key": "semantic:roofEdge:*:source",
+        "path": [
+          "roofEdges",
+          "*",
+          "source"
+        ],
+        "accepts": [
+          "SEGMENT",
+          "PATTERN",
+          "ROTATION_SEGMENT",
+          "SEGMENT_MIRROR",
+          "SEGMENT_ROTATE",
+          "SEGMENT_TRANSFORM",
+          "SEGMENT_UNION",
+          "SEGMENT_INTERSECTION",
+          "SEGMENT_DIFFERENCE",
+          "SEGMENT_SYMMETRIC_DIFFERENCE",
+          "SEGMENT_OPERATOR"
         ]
       }
     ],
@@ -3170,7 +3192,13 @@
           },
           "roofSections": {},
           "roofContourMode": {},
-          "dormers": {}
+          "dormers": {},
+          "roofEdges": {},
+          "roofSettings": {
+            "when": {
+              "roofInputMode": "SEGMENTS"
+            }
+          }
         },
         "commutativeAssociative": false
       },

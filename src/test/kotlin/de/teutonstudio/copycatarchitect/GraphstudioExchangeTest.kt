@@ -173,6 +173,19 @@ class GraphstudioExchangeTest {
         val roofRef=BuildingNode("roof_ref",BuildingKind.GRAPH_REFERENCE,valueType="ROOF_TEMPLATE",referenceKey="roof_definition@1")
         val roofGraph=GraphCards.starter("ROOF").let { g->g.copy(nodes=g.nodes.map { n->if(n.id=="result")n.copy(geometry="roof_area",roofInputMode=RoofInputMode.TEMPLATE,roofTemplate=roofRef.id) else n }+roofRef+BuildingNode("roof_area",BuildingKind.AREA,areaMode=AreaMode.SQUARE,length=3),graphDefinitions=mapOf("roof_definition@1" to GraphDefinition(Building(schema=2,graph=roofDefinition)))) }
         building("parameterized-roof-template-result",Building(schema=2,graph=roofGraph))
+        val edgeArea=BuildingNode("edge_area",BuildingKind.AREA,areaMode=AreaMode.RECTANGLE,length=6,height=8,x=40,y=40)
+        val edgeCopy=BuildingNode("edge_copy",BuildingKind.COPYCAT,inlinePart=Part("copycats:copycat_block"),x=40,y=200)
+        val edgeWallArea=BuildingNode("edge_wall_area",BuildingKind.AREA,areaMode=AreaMode.RECTANGLE,length=2,height=2,x=40,y=430)
+        val edgeWall=BuildingNode("edge_wall",BuildingKind.SEGMENT,module="",assembly=true,layout=edgeWallArea.id,inputs=listOf(edgeCopy.id),x=320,y=430)
+        fun edgeCard(areaNode:BuildingNode,slope:RoofSlope=RoofSlope(),facades:Boolean=true):BuildingGraph {
+            val mask=if(areaNode.areaMode==AreaMode.DRAW) areaNode.coordinates.toSet() else (0 until areaNode.length).flatMap { x->(0 until areaNode.height).map { z->P(x,0,z) } }.toSet()
+            val edges=RoofEdges.runs(mask).map { run->RoofEdgeSetting(run.id,if(facades && run.direction%2==0) RoofEdgeMode.FACADE else RoofEdgeMode.ROOF,if(facades && run.direction%2==0) edgeWall.id else "") }
+            val result=GraphPrograms.newResult("ROOF").copy(id="result",geometry=areaNode.id,roofInputMode=RoofInputMode.SEGMENTS,inputs=List(13) { edgeCopy.id },roofSettings=RoofTemplateSettings(slope=slope,overhang16=0),roofEdges=edges,x=650,y=160)
+            return GraphCards.starter().copy(nodes=listOf(GraphCards.starter().nodes.first(),areaNode,edgeCopy,edgeWallArea,edgeWall,result)).withCurrentSchema()
+        }
+        building("roof-edge-partial-gable",Building(schema=2,name="Kantendach mit begrenztem Giebel",graph=edgeCard(edgeArea)))
+        val edgeCross=(0..6).flatMap { z->(if(z in 2..4) -1..3 else 0..2).map { x->P(x,0,z) } }
+        building("roof-edge-rational-cross",Building(schema=2,name="Kantendach auf Kreuzgrundriss",graph=edgeCard(edgeArea.copy(areaMode=AreaMode.DRAW,coordinates=edgeCross),RoofSlope(2,3),false)))
         val formNodes=NodeKind.entries.map { GraphModels.newShape(it).copy(id=it.name) }
         val buildingNodes=BuildingKind.entries.flatMap { kind -> listOf(false,true).map { explicit -> GraphModels.newBuilding(kind,explicit).copy(id=kind.name+if(explicit) "_explicit" else "_legacy") } }
         val buildingSpecs=buildingNodes.map { node ->

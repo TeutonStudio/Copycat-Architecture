@@ -125,6 +125,7 @@ object BuildingSemantics {
         dormer=node.dormer?.let { it.copy(wall=reference("dormer:wall",it.wall),front=reference("dormer:front",it.front),roof=reference("dormer:roof",it.roof)) },
         bayWindows=node.bayWindows?.mapIndexed { i,it -> it.copy(source=reference("bay:$i:source",it.source)) },
         dormers=node.dormers?.mapIndexed { i,it -> it.copy(source=reference("dormer:${if((node.kind==BuildingKind.ROOF || node.kind==BuildingKind.RESULT && node.producerKind==BuildingKind.ROOF && node.resultMode!=GraphResultMode.VALUE) && node.roofInputMode!=null) it.id else i.toString()}:source",it.source)) },
+        roofEdges=node.roofEdges?.map { it.copy(source=reference("roofEdge:${it.id}:source",it.source)) },
         roomLayout=node.roomLayout?.let { it.copy(filler=reference("room:filler",it.filler)) },
         roomConfig=node.roomConfig?.let { it.copy(interiorSource=reference("room:interior",it.interiorSource),defaultPartition=reference("room:partition",it.defaultPartition)) },
         facade=node.facade?.let { it.copy(source=reference("facade:source",it.source),filler=reference("facade:filler",it.filler)) },
@@ -139,6 +140,7 @@ object BuildingSemantics {
         val segmentKinds=(setOf(BuildingKind.ROTATION_SEGMENT,BuildingKind.SEGMENT,BuildingKind.PATTERN,BuildingKind.SEGMENT_ROTATE,BuildingKind.SEGMENT_TRANSFORM,BuildingKind.SEGMENT_MIRROR)+SegmentBooleans.kinds)
         val copycatKinds=CopycatBooleans.sourceKinds
         fun source(id:String,kinds:Set<BuildingKind>,message:String) { if(id.isNotEmpty()) require(nodes.getValue(id).kind in kinds) { message } }
+        node.roofEdges.orEmpty().forEach { edge->if(edge.source.isNotEmpty()) require(GraphConditions.buildingNodes(nodes).getValue(edge.source).kind in segmentKinds+BuildingKind.SEGMENT_OPERATOR) { "Fassadenkante ${edge.id}: Segmentquelle erforderlich" } }
         node.roomLayout?.let { source(it.filler,segmentKinds,"Room filler requires a segment source") }
         node.roomConfig?.let { source(it.interiorSource,segmentKinds,"Room interior requires a segment source");source(it.defaultPartition,segmentKinds,"Room partition requires a segment source") }
         node.facade?.let { source(it.source,segmentKinds,"Facade requires a segment source");source(it.filler,segmentKinds,"Facade filler requires a segment source") }

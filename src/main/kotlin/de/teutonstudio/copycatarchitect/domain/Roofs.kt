@@ -44,7 +44,7 @@ fun BuildingNode.withLevels(next:Map<Int,String>):BuildingNode {
 }
 private fun freshStoreyId(used:Collection<String>,level:Int):String { var value="storey_$level";var i=1;while(value in used) value="storey_${level}_${i++}";return value }
 
-data class RoofSegmentTemplate(val width:Int,val height:Int,val depth:Int=1,val cells:List<Pair<P,Placement>> = emptyList()) {
+data class RoofSegmentTemplate(val width:Int,val height:Int,val depth:Int=1,val cells:List<Pair<P,Placement>> = emptyList(),val origin:P=P()) {
     internal val validatedPeriods=mutableSetOf<String>()
 }
 data class RoofSupport(val instanceId:String,val level:Int,val ceiling:Int,val footprint:Set<P>,val ceiling16:Int=ceiling*16,val ceilingByCell:Map<P,Int> = emptyMap())
@@ -82,10 +82,93 @@ object Roofs {
             (d-q*shift-x*block.x*16-q*block.y*16-z*block.z*16)*raise.d+q*raise.n)
     }
     private data class Patch(val planes:List<Plane>) { fun height(x:Double,z:Double)=planes.minOf { it.height(x,z) };fun exactHeight(x:Int,z:Int)=planes.minOf { it.exactHeight(x,z) } }
-    private data class Level(val node:BuildingNode,val c:RoofLevelConfig,val support:RoofSupport,val mask:Set<P>,val coverage:Set<P>,val patches:List<Patch>,val raise:Ratio,val family:RoofTemplateFamily,val blocked:Set<P>,val rectangles:List<Rect>,val expectedPeak:Ratio,val faceDomains:MutableMap<Pair<ExactPlane,P>,ExactVolume> = mutableMapOf()) {
-        fun height(x:Double,z:Double)=raise.value()+patches.maxOf { it.height(x,z) }
+    /** A delayed roof wave starts at every real boundary run. Each distance is a maximum
+     * of affine planes; the complete roof is their minimum. Finite runs retain concave
+     * corners and holes instead of clipping the whole footprint by infinite wall lines. */
+    private class EdgeField(val mask:Set<P>,val runs:List<Pair<WallRun,Int>>,val slope:RoofSlope,val overhang:Int) {
+        private val origins=mutableMapOf<Plane,Int>()
+        val patches=runs.map { (run,height) ->
+            val normal=RoomGeometry.directions[run.direction]
+            val inside=run.cells.map { it-normal }
+            val first=inside.first()
+            val line=if(normal.x!=0) (first.x+if(normal.x>0) 1 else 0)*16 else (first.z+if(normal.z>0) 1 else 0)*16
+            val low=inside.minOf { if(normal.x==0) it.x else it.z }*16
+            val high=(inside.maxOf { if(normal.x==0) it.x else it.z }+1)*16
+            fun plane(x:Int,z:Int,anchor:Int):Plane {
+                val coefficient=if(x!=0) x else z
+                return Plane(x*slope.p.toLong(),z*slope.p.toLong(),coefficient*anchor*slope.p.toLong()+height*16L*slope.q,slope.q.toLong()).also { origins[it]=anchor/16 }
+            }
+            Patch(listOf(plane(normal.x,normal.z,line),plane(-normal.x,-normal.z,line),
+                plane(if(normal.x==0) 1 else 0,if(normal.x==0) 0 else 1,low),
+                plane(if(normal.x==0) -1 else 0,if(normal.x==0) 0 else -1,high)))
+        }
+        private val cache=mutableMapOf<P,List<Patch>>()
+        fun at(block:P):List<Patch> = cache.getOrPut(block.copy(y=0)) {
+            val corners=listOf(block.x*16 to block.z*16,(block.x+1)*16 to block.z*16,block.x*16 to (block.z+1)*16,(block.x+1)*16 to (block.z+1)*16)
+            val groups=patches.mapIndexed { index,patch ->
+                val run=runs[index].first;val n=RoomGeometry.directions[run.direction]
+                val inside=run.cells.map { it-n }
+                val plane=patch.planes.first()
+                val outside=block.copy(y=0) !in mask && plane.height((block.x+.5)*16,(block.z+.5)*16)<runs[index].second*16 &&
+                    (if(n.x==0) block.x*16<(inside.maxOf { it.x }+1)*16+overhang && (block.x+1)*16>inside.minOf { it.x }*16-overhang
+                    else block.z*16<(inside.maxOf { it.z }+1)*16+overhang && (block.z+1)*16>inside.minOf { it.z }*16-overhang)
+                val planes=if(outside) listOf(plane) else patch.planes
+                Patch(planes.filterIndexed { i,p->planes.indices.none { j -> j!=i && corners.all { (x,z)->planes[j].exactHeight(x,z)>=p.exactHeight(x,z) } &&
+                    (j<i || corners.any { (x,z)->planes[j].exactHeight(x,z)>p.exactHeight(x,z) }) } })
+            }.distinct()
+            val cap=groups.minOf { g->g.planes.maxOf { p->corners.maxOf { (x,z)->p.exactHeight(x,z) } } }
+            groups.filter { g->g.planes.maxOf { p->corners.minOf { (x,z)->p.exactHeight(x,z) } }<=cap }
+        }
+        fun height(x:Double,z:Double)=at(P(floor(x/16).toInt(),0,floor(z/16).toInt())).minOf { p->p.planes.maxOf { it.height(x,z) } }
+        fun exactHeight(x:Int,z:Int)=at(P(Math.floorDiv(x,16),0,Math.floorDiv(z,16))).minOf { p->p.planes.maxOf { it.exactHeight(x,z) } }
+        private data class Piece(val planes:List<Plane>,val domain:ExactVolume)
+        private val pieceCache=mutableMapOf<P,List<Piece>>()
+        /** Partition the X/Z domain before intersecting roof heights. Unpartitioned
+         * unions multiply overlapping solids at reentrant corners exponentially. */
+        private fun pieces(block:P):List<Piece> = pieceCache.getOrPut(block.copy(y=0)) {
+            val cube=ExactVolume.box(0,0,0,16,16,16)
+            var result=listOf(Piece(emptyList(),cube))
+            for(group in at(block)) {
+                val local=group.planes.map { it.local(block.copy(y=0),Ratio(0),0) }
+                val choices=group.planes.mapIndexed { i,plane -> Piece(listOf(plane),RoofFaceDomains.visible(local[i],local,emptyList(),lower=true)) }
+                result=result.flatMap { previous->choices.mapNotNull { choice ->
+                    val domain=previous.domain.intersect(choice.domain)
+                    if(domain.isEmpty()) null else Piece((previous.planes+choice.planes).distinct(),domain)
+                } }.distinct()
+            }
+            result
+        }
+        private val domainCache=mutableMapOf<Pair<Plane,P>,ExactVolume>()
+        fun domain(face:Plane,block:P):ExactVolume=domainCache.getOrPut(face to block.copy(y=0)) {
+            val local=face.local(block.copy(y=0),Ratio(0),0)
+            pieces(block).filter { face in it.planes }.fold(ExactVolume()) { area,piece ->
+                val visible=RoofFaceDomains.visible(local,piece.planes.map { it.local(block.copy(y=0),Ratio(0),0) },emptyList())
+                area.union(piece.domain.intersect(visible))
+            }
+        }
+        fun volume(block:P,raise:Ratio,shift:Int=0,box:ExactVolume=ExactVolume.box(0,0,0,16,16,16)):ExactVolume {
+            return ExactVolume(pieces(block).flatMap { piece -> piece.domain.cells.flatMap { region ->
+                val planes=region.planes.filter { it.y==0L }+piece.planes.map { it.local(block,raise,shift) }
+                box.cells.mapNotNull { bounds->ExactCell(bounds.planes+planes).canonical().takeUnless { it.isEmpty() } }
+            } }.distinct())
+        }
+        fun peak():Ratio {
+            val column=ExactVolume.box(0,0,0,16,8192,16)
+            return mask.maxOf { block->volume(block,Ratio(0),box=column).cells.flatMap { it.vertices() }.maxOfOrNull { Ratio(it.y.numerator.toString().toLong(),it.y.denominator.toString().toLong()).reduce() } ?: Ratio(0) }
+        }
+        fun phase(plane:Plane,block:P,period:Int):Int {
+            val anchor=origins.getValue(plane)
+            val column=when { plane.x<0->block.x-anchor;plane.x>0->anchor-block.x-1;plane.z<0->block.z-anchor;else->anchor-block.z-1 }
+            return Math.floorMod(column,period)
+        }
+    }
+    private data class Level(val node:BuildingNode,val c:RoofLevelConfig,val support:RoofSupport,val mask:Set<P>,val coverage:Set<P>,val patches:List<Patch>,val raise:Ratio,val family:RoofTemplateFamily,val blocked:Set<P>,val rectangles:List<Rect>,val expectedPeak:Ratio,val edgeField:EdgeField?=null,val faceDomains:MutableMap<Pair<ExactPlane,P>,ExactVolume> = mutableMapOf()) {
+        fun rawHeight(x:Int,z:Int)=edgeField?.exactHeight(x,z) ?: patches.maxOf { it.exactHeight(x,z) }
+        fun height(x:Double,z:Double)=raise.value()+(edgeField?.height(x,z) ?: patches.maxOf { it.height(x,z) })
+        fun patchesAt(block:P)=edgeField?.at(block) ?: patches
         fun body(block:P,shift:Int=0):ExactVolume {
             if(block.copy(y=0) !in coverage) return ExactVolume()
+            edgeField?.let { return it.volume(block,raise,shift) }
             val local=ExactVolume.box(0,0,0,16,16,16)
             return patches.fold(ExactVolume()) { all,p->all.union(ExactVolume.convex(p.planes.map { it.local(block,raise,shift) }).intersect(local)) }
         }
@@ -133,18 +216,32 @@ object Roofs {
                 if(members.first().variant=="slope" && validatedPeriods.add(family.id+":"+key)) validatePeriod(members,pitch,family.thickness16,formSource)
             }
             require(c.slope.reduced() in family.slopes.map(RoofSlope::reduced) && (c.form!=RoofForm.MANSARD || c.upperSlope.reduced() in family.slopes.map(RoofSlope::reduced)) && family.thickness16 in 1..16) { "Roof family does not support this ratio" }
-            val patches=patches(mask,c)
-            val structuralRise=mask.flatMap { p->listOf(p.x*16 to p.z*16,(p.x+1)*16 to p.z*16,p.x*16 to (p.z+1)*16,(p.x+1)*16 to (p.z+1)*16,p.x*16+8 to p.z*16+8) }.maxOf { (x,z)->patches.maxOf { it.exactHeight(x,z) } }
+            val edgeField=roof.roofEdges?.let { settings ->
+                val byId=settings.associateBy { it.id }
+                EdgeField(mask,RoofEdges.runs(mask).map { run ->
+                    val setting=byId[run.id] ?: RoofEdgeSetting(run.id)
+                    val height=if(setting.mode==RoofEdgeMode.ROOF) 0 else {
+                        require(setting.source.isNotEmpty()) { "Fassadenkante ${run.id}: Segment anschließen" }
+                        require(RotationAxis.Y !in DynamicSegments.axes(graph,GraphConditions.buildingNode(graph,setting.source).id)) { "Fassadenkante ${run.id}: Segmenthöhe muss fest vorgegeben sein" }
+                        val segment=segmentCache.getOrPut("facade:${setting.source}") { segmentSource(setting.source) ?: error("Fassadenkante ${run.id}: Segmentquelle fehlt") }
+                        require(segment.width in 1..128 && segment.height in 1..128 && segment.depth==1) { "Fassadenkante ${run.id}: Segment benötigt feste Höhe und Tiefe 1" }
+                        segment.height
+                    }
+                    run to height
+                },c.slope.reduced(),c.overhang16)
+            }
+            val patches=edgeField?.patches ?: patches(mask,c)
+            val structuralRise=edgeField?.peak() ?: mask.flatMap { p->listOf(p.x*16 to p.z*16,(p.x+1)*16 to p.z*16,p.x*16 to (p.z+1)*16,(p.x+1)*16 to (p.z+1)*16,p.x*16+8 to p.z*16+8) }.maxOf { (x,z)->patches.maxOf { it.exactHeight(x,z) } }
             val rise=structuralRise
             val finished=rise+Ratio(family.thickness16.toLong())
             val knee=if(c.mode==RoofMode.HEIGHT) Ratio(c.height16.toLong())-finished else Ratio(c.knee16.toLong())
             require(knee.n>=0) { "Roof height needs at least ${ceil(finished.value())/16} blocks for this ratio and span" }
             require((knee+finished)<=Ratio(2048)) { "Roof exceeds 128 blocks above its storey" }
-            val (overhangX,overhangZ)=overhangAxes(c)
+            val (overhangX,overhangZ)=if(edgeField!=null) c.overhang16 to c.overhang16 else overhangAxes(c)
             val ex=ceil(overhangX/16.0).toInt();val ez=ceil(overhangZ/16.0).toInt()
             val coverage=buildSet { for(p in mask) for(dx in -ex..ex) for(dz in -ez..ez) if(p+P(dx,0,dz) !in blocked) add(p+P(dx,0,dz)) }
             require(coverage.size<=8192) { "Roof exceeds 8192 cells" }
-            Level(n,c,support,mask,coverage,patches,Ratio(support.ceiling16.toLong())+knee+Ratio(family.thickness16.toLong()),family,blocked,maximalRectangles(mask),Ratio(support.ceiling16.toLong())+knee+finished)
+            Level(n,c,support,mask,coverage,patches,Ratio(support.ceiling16.toLong())+knee+Ratio(family.thickness16.toLong()),family,blocked,maximalRectangles(mask),Ratio(support.ceiling16.toLong())+knee+finished,edgeField)
         }
         // An internal end of one complete roof must meet its neighbor without a vertical step.
         for(a in levels) for(b in levels) if(a!==b && a.support.ceiling16==b.support.ceiling16) for(p in a.mask) for(d in RoomGeometry.directions) {
@@ -213,7 +310,7 @@ object Roofs {
                         // An odd span puts both flanks in one block. Fit each actual face,
                         // rather than treating the block-center winner as its only slope.
                         var remaining=visibleSkin
-                        val faces=winner.patches.flatMapIndexed { index,patch->patch.planes.map { selectedFace(winner,block,index,it) } }.distinct()
+                        val faces=winner.patchesAt(block).flatMapIndexed { index,patch->patch.planes.map { selectedFace(winner,block,index,it) } }.distinct()
                         for(face in faces) {
                             val band=ExactVolume.convex(listOf(face.upper,face.upper.opposite().copy(d=-face.upper.d+winner.family.thickness16*face.upper.y)))
                             val facet=remaining.intersect(band)
@@ -256,7 +353,26 @@ object Roofs {
                 if(boundary && (y+1)*16>winner.support.ceiling16) {
                     val wall=down.minus(skin).minus(frame).minus(cap).intersect(aboveSupport)
                     if(!wall.isEmpty()) {
-                        if(wallNode==null) pieces+=semanticPlacement(block,listOf(Triple("roof_wall",wall,"gable")),Part("copycats:copycat_block"),palette,palette["gable"] ?: palette.getValue("wall"),"gable")
+                        if(winner.edgeField!=null) {
+                            for((run,height) in winner.edgeField.runs.filter { (run,h)->h>0 && p in run.cells.map { it-RoomGeometry.directions[run.direction] } }) {
+                                val setting=roof.roofEdges.orEmpty().single { it.id==run.id }
+                                val period=segmentCache.getValue("facade:${setting.source}")
+                                val index=run.cells.indexOf(p+RoomGeometry.directions[run.direction])
+                                val column=Math.floorMod(index,period.width)
+                                var added=false
+                                for((cell,template) in period.cells.filter { it.first.x-period.origin.x==column }) {
+                                    val dy=winner.support.ceiling16+(cell.y-period.origin.y)*16-y*16
+                                    if(dy<=-16 || dy>=16) continue
+                                    require(template.block.isEmpty()) { "Fassadenkante ${run.id}: Copycat-Geometrie für exakte Dachanschlüsse verwenden" }
+                                    val parts=template.parts.mapNotNull { part->
+                                        val exact=ExactGeometry.part(part).rotate(RotationAxis.Y,run.direction).translated(P(0,dy,0)).intersect(wall)
+                                        if(exact.isEmpty()) null else part.copy(top=false,turn=0,spin=0,tilt=0,offset=P(),cutMask="",exact=exact,exactClip=null)
+                                    }
+                                    if(parts.isNotEmpty()) { pieces+=template.copy(pos=block,component="gable",parts=parts);added=true }
+                                }
+                                if(!added) wallAir+=block
+                            }
+                        } else if(wallNode==null) pieces+=semanticPlacement(block,listOf(Triple("roof_wall",wall,"gable")),Part("copycats:copycat_block"),palette,palette["gable"] ?: palette.getValue("wall"),"gable")
                         else {
                             var added=false
                             for((direction,index,width) in wallRuns[p].orEmpty().filter { (direction,_,_)->p+RoomGeometry.directions[direction] !in winner.blocked }) {
@@ -309,12 +425,13 @@ object Roofs {
         val coverage:Set<P>,val body:(P,Int)->ExactVolume,val additions:List<Placement>,val maxY:Int)
 
     private fun visibleFaceDomain(level:Level,face:Plane,block:P):ExactVolume {
+        level.edgeField?.let { return it.domain(face,block) }
         val key=ExactPlane(face.x,face.q,face.z,face.d).normalized()
         return level.faceDomains.getOrPut(key to block) {
-            val groups=level.patches.map { patch -> patch.planes.map { it.local(block,level.raise,0) } }
+            val groups=level.patchesAt(block).map { patch -> patch.planes.map { it.local(block,level.raise,0) } }
             val local=face.local(block,level.raise,0).normalized()
             groups.mapIndexedNotNull { i,own ->
-                if(own.none { it.normalized()==local }) null else RoofFaceDomains.visible(local,own,groups.filterIndexed { j,_->j!=i })
+                if(own.none { it.normalized()==local }) null else RoofFaceDomains.visible(local,own,groups.filterIndexed { j,_->j!=i },lower=level.edgeField!=null)
             }.fold(ExactVolume()) { v,part -> v.union(part) }
         }
     }
@@ -375,7 +492,7 @@ object Roofs {
             val corners=listOf(P(),P(width,0,0),P(0,0,depth),P(width,0,depth)).map(frame::point)
             val planes=level.patches.flatMap { it.planes }.distinctBy { ExactPlane(it.x,it.q,it.z,it.d).normalized() }
             val main=planes.firstOrNull { face ->
-                corners.all { p -> face.exactHeight(p.x*16,p.z*16)==level.patches.maxOf { it.exactHeight(p.x*16,p.z*16) } } &&
+                corners.all { p -> face.exactHeight(p.x*16,p.z*16)==level.rawHeight(p.x*16,p.z*16) } &&
                     coverage.all { block -> visibleFaceDomain(level,face,block).contains(SpecialRooms.cube) }
             } ?: error("${label}: Dachschräge bietet zu wenig zusammenhängenden Platz; First, Grat oder Kehle wird überschritten")
             val outward=RoomGeometry.directions[q]
@@ -482,8 +599,8 @@ object Roofs {
     private fun edgeProfile(level:Level,x:Int,z:Int,dx:Int,dz:Int):List<EdgeSegment> {
         fun line(p:Plane)=EdgeLine(level.raise+Ratio(p.d-p.x*x-p.z*z,p.q).reduce(),Ratio(-p.x*dx-p.z*dz,p.q).reduce())
         fun profile(p:Plane)=listOf(EdgeSegment(Ratio(0),Ratio(1),line(p)))
-        return level.patches.map { patch->patch.planes.map(::profile).reduce { a,b->mergeEdgeProfiles(a,b,false) } }
-            .reduce { a,b->mergeEdgeProfiles(a,b,true) }
+        return level.patches.map { patch->patch.planes.map(::profile).reduce { a,b->mergeEdgeProfiles(a,b,level.edgeField!=null) } }
+            .reduce { a,b->mergeEdgeProfiles(a,b,level.edgeField==null) }
     }
     private fun mergeEdgeProfiles(a:List<EdgeSegment>,b:List<EdgeSegment>,upper:Boolean):List<EdgeSegment> {
         val result=mutableListOf<EdgeSegment>();var i=0;var j=0
@@ -553,8 +670,8 @@ object Roofs {
     private data class SelectedFace(val upper:ExactPlane,val slope:RoofSlope,val phase:Int)
     private fun selectFace(l:Level,block:P):SelectedFace {
         val x=(block.x+.5)*16;val z=(block.z+.5)*16
-        val patch=l.patches.withIndex().maxBy { it.value.height(x,z) }
-        val plane=patch.value.planes.minBy { it.height(x,z) }
+        val patch=l.patchesAt(block).withIndex().let { ps->if(l.edgeField==null) ps.maxBy { it.value.height(x,z) } else ps.minBy { p->p.value.planes.maxOf { it.height(x,z) } } }
+        val plane=if(l.edgeField==null) patch.value.planes.minBy { it.height(x,z) } else patch.value.planes.maxBy { it.height(x,z) }
         return selectedFace(l,block,patch.index,plane)
     }
     private fun selectedFace(l:Level,block:P,patchIndex:Int,plane:Plane):SelectedFace {
@@ -562,6 +679,7 @@ object Roofs {
         fun gcd(a:Long,b:Long):Long=if(b==0L) a else gcd(b,a%b)
         val g=gcd(rise,plane.q).coerceAtLeast(1)
         val slope=if(rise==0L) l.c.slope.reduced() else RoofSlope((rise/g).toInt(),(plane.q/g).toInt())
+        l.edgeField?.let { return SelectedFace(plane.local(block,l.raise,0),slope,it.phase(plane,block,slope.q)) }
         val r=if(l.c.form in setOf(RoofForm.HIP,RoofForm.MANSARD) || l.c.contourMode==RoofContourMode.CONTOUR && l.c.form in setOf(RoofForm.GABLE,RoofForm.CROSS)) l.rectangles[patchIndex] else Rect(l.mask.minOf { it.x },l.mask.minOf { it.z },l.mask.maxOf { it.x }-l.mask.minOf { it.x }+1,l.mask.maxOf { it.z }-l.mask.minOf { it.z }+1)
         val column=when { plane.x<0->block.x-r.x;plane.x>0->r.x+r.width-block.x-1;plane.z<0->block.z-r.z;else->r.z+r.length-block.z-1 }
         return SelectedFace(plane.local(block,l.raise,0),slope,Math.floorMod(column,slope.q))
@@ -643,18 +761,19 @@ object Roofs {
     }
     /** Flush joint caps replace the outer skin and add a real two-pixel reinforcement below it. */
     private fun jointBands(levels:List<Level>,block:P,skin:ExactVolume):Map<String,ExactVolume> {
-        data class Face(val level:Int,val patch:Int,val plane:ExactPlane)
-        val candidates=levels.flatMapIndexed { li,l->l.patches.flatMapIndexed { pi,p->p.planes.map { Face(li,pi,it.local(block,l.raise,0)) } } }
+        data class Face(val level:Int,val patch:Int,val plane:ExactPlane,val original:Plane)
+        val candidates=levels.flatMapIndexed { li,l->l.patchesAt(block).flatMapIndexed { pi,p->p.planes.map { Face(li,pi,it.local(block,l.raise,0),it) } } }
         // Intersections of hidden wing planes are not roof corners. The legacy
         // mode keeps its existing layout; contour mode uses only visible faces.
-        val top=if(levels.any { it.c.contourMode==RoofContourMode.CONTOUR }) skin.surfaces().filter { it.plane.y>0 }.map { it.plane.normalized() }.toSet() else null
+        val top=if(levels.any { it.c.contourMode==RoofContourMode.CONTOUR || it.edgeField!=null }) skin.surfaces().filter { it.plane.y>0 }.map { it.plane.normalized() }.toSet() else null
         val faces=if(top==null) candidates else candidates.filter { it.plane.normalized() in top }
         val cube=ExactVolume.box(0,0,0,16,16,16)
         val patches=candidates.groupBy { it.level to it.patch }
         val domains=mutableMapOf<Face,ExactVolume>()
         fun domain(face:Face):ExactVolume=domains.getOrPut(face) {
+            if(levels.size==1) levels[face.level].edgeField?.let { return@getOrPut it.domain(face.original,block) }
             RoofFaceDomains.visible(face.plane,patches.getValue(face.level to face.patch).map { it.plane },
-                patches.filterKeys { it!=(face.level to face.patch) }.values.map { group -> group.map { it.plane } })
+                patches.filterKeys { it!=(face.level to face.patch) }.values.map { group -> group.map { it.plane } },lower=levels[face.level].edgeField!=null)
         }
         val result=linkedMapOf<String,ExactVolume>()
         for(i in faces.indices) for(j in i+1 until faces.size) {
@@ -663,7 +782,8 @@ object Roofs {
             val constant=a.plane.d*b.plane.y-b.plane.d*a.plane.y;val denominator=a.plane.y*b.plane.y
             val dot=a.plane.x*b.plane.x+a.plane.z*b.plane.z
             val mansardKink=a.level==b.level && levels[a.level].c.form==RoofForm.MANSARD && dot>0
-            val kind=if(mansardKink) "edge" else if(a.level!=b.level || a.patch!=b.patch) "valley" else if(dot<0) "ridge" else if(dot==0L) "hip" else "edge"
+            val valley=if(a.level!=b.level) true else if(levels[a.level].edgeField!=null) a.patch==b.patch else a.patch!=b.patch
+            val kind=if(mansardKink) "edge" else if(valley) "valley" else if(dot<0) "ridge" else if(dot==0L) "hip" else "edge"
             val band=ExactVolume.convex(listOf(ExactPlane(x,0,z,2*denominator-constant),ExactPlane(-x,0,-z,2*denominator+constant),
                 a.plane.copy(d=a.plane.d+a.plane.y*2),a.plane.opposite().copy(d=-a.plane.d+a.plane.y*6)))
             val visible=if(top==null) band else band.intersect(domain(a).union(domain(b)))
@@ -673,6 +793,7 @@ object Roofs {
     }
     /** Eaves follow the low edges parallel to the ridge, including the gable extension. */
     private fun isEave(l:Level,p:P):Boolean {
+        if(l.edgeField!=null) return l.edgeField.runs.any { (run,height)->height==0 && run.cells.any { it-RoomGeometry.directions[run.direction]==p } }
         val lowEdges=when(l.c.form) {
             RoofForm.GABLE,RoofForm.CROSS -> if(l.c.axis%2==0) listOf(P(-1,0,0),P(1,0,0)) else listOf(P(0,0,-1),P(0,0,1))
             RoofForm.PENT -> listOf(listOf(P(-1,0,0),P(0,0,-1),P(1,0,0),P(0,0,1))[l.c.axis])
@@ -693,7 +814,7 @@ object Roofs {
         else -> c.overhang16 to c.overhang16
     }
     private fun coverageVolume(l:Level,block:P):ExactVolume {
-        val (ex,ez)=overhangAxes(l.c)
+        val (ex,ez)=if(l.edgeField!=null) l.c.overhang16 to l.c.overhang16 else overhangAxes(l.c)
         return l.rectangles.filter { r->r.x*16-ex<(block.x+1)*16+2 && (r.x+r.width)*16+ex>block.x*16-2 && r.z*16-ez<(block.z+1)*16+2 && (r.z+r.length)*16+ez>block.z*16-2 }.fold(ExactVolume()) { v,r->
             val x=r.x*16-block.x*16;val z=r.z*16-block.z*16
             v.union(ExactVolume.box(x-ex,0,z-ez,x+r.width*16+ex,16,z+r.length*16+ez))
@@ -767,6 +888,7 @@ internal fun freshAccessInstanceId(instances:List<VerticalAccessInstance>):Strin
 }
 
 fun BuildingGraph.withCurrentSchema():BuildingGraph {
+    if(nodes.any { GraphPrograms.producer(it).roofEdges!=null }) return GraphNumbers.upgrade(copy(schema=maxOf(schema,18),groupInputOrder=if(nodes.any { it.kind in GraphPrograms.kinds }) GraphPrograms.parameters(this).map { it.id } else groupInputOrder),schema)
     if(nodes.any { raw -> val n=GraphPrograms.producer(raw)
         n.kind==BuildingKind.ROOF && n.roofInputMode!=null && n.dormerInstances.isNotEmpty() ||
         n.dormerInstances.isNotEmpty() && n.roofLevel?.let { it.form==RoofForm.CROSS || it.contourMode==RoofContourMode.CONTOUR }==true ||

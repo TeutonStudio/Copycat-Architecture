@@ -214,8 +214,20 @@ data class ExactVolume(val cells:List<ExactCell> = emptyList()) {
         var result=Solid()
         for(cell in cells) {
             val vertices=cell.vertices();if(vertices.isEmpty()) continue
+            val axes=rasterAxes(cell,vertices)
             for(y in 0..15) for(z in 0..15) for(x in 0..15) {
                 if(result.has(x,y,z)) continue
+                if(axes!=null) {
+                    // SAT uses all face normals and edge/cube-edge cross products.
+                    // Range comparisons are integer products below 2^52, so doubles
+                    // are exact here on both JVM and JS. Touching alone stays empty.
+                    if(axes.none { a->
+                        val low=a[0]*(if(a[0]>=0) x else x+1)+a[1]*(if(a[1]>=0) y else y+1)+a[2]*(if(a[2]>=0) z else z+1)
+                        val high=a[0]*(if(a[0]>=0) x+1 else x)+a[1]*(if(a[1]>=0) y+1 else y)+a[2]*(if(a[2]>=0) z+1 else z)
+                        low*a[6]>=a[5] || high*a[4]<=a[3]
+                    }) result.set(x,y,z)
+                    continue
+                }
                 var outside=false;var inside=true
                 for(p in cell.planes) {
                     val minimum=p.x*(if(p.x>=0) x else x+1)+p.y*(if(p.y>=0) y else y+1)+p.z*(if(p.z>=0) z else z+1)
@@ -228,6 +240,30 @@ data class ExactVolume(val cells:List<ExactCell> = emptyList()) {
             }
         }
         return result
+    }
+    /** Small integer SAT axes avoid thousands of rational polygon clips per block.
+     * Large coefficients/ranges retain the arbitrary-precision fallback above. */
+    private fun rasterAxes(cell:ExactCell,vertices:List<ExactPoint>):List<DoubleArray>? {
+        if(cell.planes.any { p->listOf(p.x,p.y,p.z).any { it !in -4096L..4096L } }) return null
+        val normals=cell.planes.map { P(it.x.toInt(),it.y.toInt(),it.z.toInt()) }.distinct()
+        val cube=listOf(P(1,0,0),P(0,1,0),P(0,0,1))
+        fun cross(a:P,b:P)=P(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x)
+        val axes=(normals+cube+normals.indices.flatMap { i->(i+1 until normals.size).flatMap { j->cube.map { cross(cross(normals[i],normals[j]),it) } } })
+            .filter { it!=P() }.map { n->
+                fun gcd(a:Int,b:Int):Int=if(b==0) abs(a) else gcd(b,a%b)
+                val sign=if(listOf(n.x,n.y,n.z).first { it!=0 }<0) -1 else 1
+                val g=gcd(gcd(n.x,n.y),n.z)*sign
+                P(n.x/g,n.y/g,n.z/g)
+            }.distinct()
+        return axes.map { a->
+            val values=vertices.map { it.x*a.x.toLong()+it.y*a.y.toLong()+it.z*a.z.toLong() }
+            val low=values.min();val high=values.max()
+            val ln=low.numerator.toString().toDouble();val ld=low.denominator.toString().toDouble()
+            val hn=high.numerator.toString().toDouble();val hd=high.denominator.toString().toDouble()
+            val span=(abs(a.x.toDouble())+abs(a.y.toDouble())+abs(a.z.toDouble()))*16
+            if(listOf(abs(ln),abs(hn),span*ld,span*hd).any { !it.isFinite() || it>4503599627370496.0 }) return null
+            doubleArrayOf(a.x.toDouble(),a.y.toDouble(),a.z.toDouble(),ln,ld,hn,hd)
+        }
     }
     companion object {
         fun box(x:Int,y:Int,z:Int,maxX:Int,maxY:Int,maxZ:Int)=if(maxX<=x || maxY<=y || maxZ<=z) ExactVolume() else ExactVolume(listOf(boxCell(x,y,z,maxX,maxY,maxZ)))
